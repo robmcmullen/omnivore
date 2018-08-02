@@ -6,6 +6,7 @@ import numpy as np
 from atrcopy import find_diskimage
 
 from .debugger import Debugger
+from .debugger.dtypes import FRAME_STATUS_DTYPE
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,8 +37,9 @@ class EmulatorBase(Debugger):
         Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
         self.input = self.input_raw.view(dtype=self.input_array_dtype)
-        self.output_raw = np.zeros([self.output_array_dtype.itemsize], dtype=np.uint8)
-        self.output = self.output_raw.view(dtype=self.output_array_dtype)
+        self.output_raw = np.zeros([FRAME_STATUS_DTYPE.itemsize + self.output_array_dtype.itemsize], dtype=np.uint8)
+        self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
+        self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
 
         self.bootfile = None
         self.frame_count = 0
@@ -74,39 +76,39 @@ class EmulatorBase(Debugger):
 
     @property
     def memory_access_array(self):
-        return self.output['memory_access'][0]
+        return self.status['memory_access'][0]
 
     @property
     def access_type_array(self):
-        return self.output['access_type'][0]
+        return self.status['access_type'][0]
 
     @property
     def current_frame_number(self):
-        return self.output['frame_number'][0]
+        return self.status['frame_number'][0]
 
     @property
     def is_frame_finished(self):
-        return self.output['frame_status'][0] == FRAME_FINISHED
+        return self.status['frame_status'][0] == FRAME_FINISHED
 
     @property
     def current_cycle_in_frame(self):
-        return self.output['current_cycle_in_frame'][0]
+        return self.status['current_cycle_in_frame'][0]
 
     @property
     def cycles_user(self):
-        return self.output['cycles_user'][0]
+        return self.status['cycles_user'][0]
 
     @property
     def cycles_since_power_on(self):
-        return self.output['cycles_since_power_on'][0]
+        return self.status['cycles_since_power_on'][0]
 
     @property
     def break_condition(self):
-        if self.output['frame_status'][0] == FRAME_BREAKPOINT:
-            bpid = self.output['breakpoint_id'][0]
+        if self.status['frame_status'][0] == FRAME_BREAKPOINT:
+            bpid = self.status['breakpoint_id'][0]
             return self.get_breakpoint(bpid)
-        elif self.output['frame_status'][0] == FRAME_WATCHPOINT:
-            bpid = self.output['breakpoint_id'][0]
+        elif self.status['frame_status'][0] == FRAME_WATCHPOINT:
+            bpid = self.status['breakpoint_id'][0]
             return self.get_watchpoint(bpid)
         else:
             return None
@@ -169,12 +171,12 @@ class EmulatorBase(Debugger):
 
     def configure_emulator(self, emu_args=None, *args, **kwargs):
         self.args = self.process_args(emu_args)
-        self.low_level_interface.clear_state_arrays(self.input, self.output)
+        self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
         self.low_level_interface.start_emulator(self.args)
         self.configure_io_arrays()
 
     def configure_io_arrays(self):
-        self.low_level_interface.configure_state_arrays(self.input, self.output)
+        self.low_level_interface.configure_state_arrays(self.input, self.output_raw)
         self.parse_state()
         self.generate_save_state_memory_blocks()
         self.cpu_state = self.calc_cpu_data_array()
@@ -227,7 +229,7 @@ class EmulatorBase(Debugger):
         self.coldstart()
 
     def parse_state(self):
-        base = np.byte_bounds(self.output)[0]
+        base = np.byte_bounds(self.output_raw)[0]
         self.state_start_offset = np.byte_bounds(self.state_array)[0] - base
 
         memaccess_offset = np.byte_bounds(self.memory_access_array)[0] - base
@@ -248,7 +250,7 @@ class EmulatorBase(Debugger):
         self.process_key_state()
         if not self.is_frame_finished:
             print(f"next_frame: continuing frame from cycle {self.current_cycle_in_frame} of frame {self.current_frame_number}")
-        self.low_level_interface.next_frame(self.input, self.output, self.debug_cmd)
+        self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd)
         if self.is_frame_finished:
             self.frame_count += 1
             self.process_frame_events()
@@ -341,13 +343,13 @@ class EmulatorBase(Debugger):
         self.low_level_interface.load_disk(drive_num, pathname)
 
     def calc_current_state(self):
-        return self.output.copy()
+        return self.output_raw.copy()
 
     def save_history(self):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
-        frame_number = int(self.output['frame_number'][0])
+        frame_number = int(self.status['frame_number'][0])
         if self.frame_count % 10 == 0:
             print(f"Saving history at {frame_number}")
             d = self.calc_current_state()
@@ -366,14 +368,16 @@ class EmulatorBase(Debugger):
             pass
         else:
             self.low_level_interface.restore_state(d)
-            self.output[:] = d
+            self.output_raw[:] = d
             # self.history[(frame_number + 1):] = []  # remove frames newer than this
             # print(("  %d items remain in history" % len(self.history)))
             # self.frame_event = []
 
     def print_history(self, frame_number):
         d = self.history[frame_number]
-        print("history[%d] of %d: %d %s" % (d['frame_number'], len(self.history), len(d), d['state'][0][0:8]))
+        status = d[:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
+        output = d[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
+        print("history[%d] of %d: %d %s" % (status['frame_number'], len(self.history), len(d), output['state'][0][0:8]))
 
     def get_previous_history(self, frame_cursor):
         n = frame_cursor - 1

@@ -36,7 +36,7 @@ class Generic6502(EmulatorBase):
         dtype = d.STATESAV_DTYPE
         state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
         # print("raw: %s" % self.raw_array[0:32])
-        return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cyc=%ld instr=%ld" % (a, x, y, sp, p, pc, self.output['cycles_since_power_on'][0], self.output['instructions_since_power_on'][0])
+        return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x cyc=%ld instr=%ld" % (a, x, y, sp, p, pc, self.status['cycles_since_power_on'][0], self.status['instructions_since_power_on'][0])
 
     @property
     def stack_pointer(self):
@@ -79,7 +79,7 @@ class Generic6502(EmulatorBase):
         log.debug(f"Copying {segment} to memory: {start:#04x}-{end:#04x}")
         self.main_memory[start:end] = segment.data
         self.cpu_state[0] = segment.origin
-        lib6502.restore_state(self.output)
+        lib6502.restore_state(self.output_raw)
         self.debug_state()
         self.last_boot_state = self.calc_current_state()
 

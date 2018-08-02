@@ -1,6 +1,24 @@
 # Debugger breakpoint definition
 import numpy as np
 
+MAIN_MEMORY_SIZE = 1<<16
+
+FRAME_STATUS_DTYPE = np.dtype([
+    ("cycles_since_power_on", np.uint64),
+    ("instructions_since_power_on", np.uint64),
+    ("cycles_user", np.uint64),
+    ("instructions_user", np.uint64),
+    ("frame_number", np.uint32),
+    ("current_cycle_in_frame", np.uint32),
+    ("final_cycle_in_frame", np.uint32),
+    ("current_instruction_in_frame", np.uint32),
+    ("frame_status", np.uint8),
+    ("breakpoint_id", np.uint8),
+    ("unused1", np.uint8),
+    ("unused2", np.uint8),
+    ("memory_access", np.uint8, MAIN_MEMORY_SIZE),
+    ("access_type", np.uint8, MAIN_MEMORY_SIZE),
+])
 
 ACCESS_TYPE_READ = 1
 ACCESS_TYPE_WRITE = 2
