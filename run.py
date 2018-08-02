@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 import omni8bit
-import omni8bit.generic6502.dtypes as d
+import omni8bit.debugger.dtypes as d
 
 
 if __name__ == "__main__":
