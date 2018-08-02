@@ -18,8 +18,7 @@ typedef struct {
 
         uint8_t frame_status;
         uint8_t breakpoint_id;
-        uint8_t unused1;
-        uint8_t unused2;
+        uint8_t unused[6]; /* to maintain 64 bit alignment */
 
         uint8_t memory_access[MAIN_MEMORY_SIZE];
         uint8_t access_type[MAIN_MEMORY_SIZE];

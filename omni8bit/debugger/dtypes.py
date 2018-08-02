@@ -14,8 +14,7 @@ FRAME_STATUS_DTYPE = np.dtype([
     ("current_instruction_in_frame", np.uint32),
     ("frame_status", np.uint8),
     ("breakpoint_id", np.uint8),
-    ("unused1", np.uint8),
-    ("unused2", np.uint8),
+    ("unused", np.uint8, 6), # needed to maintain 64 bit alignment
     ("memory_access", np.uint8, MAIN_MEMORY_SIZE),
     ("access_type", np.uint8, MAIN_MEMORY_SIZE),
 ])
