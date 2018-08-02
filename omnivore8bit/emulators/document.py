@@ -177,7 +177,7 @@ class EmulationDocument(SegmentedDocument):
     def ready_for_next_frame(self):
         now = time.time()
         breakpoint = self.emulator.next_frame()
-        frame_number = self.emulator.output['frame_number']
+        frame_number = self.emulator.status['frame_number']
         log.debug(f"showing frame {frame_number}, breakpoint_id={breakpoint}")
         if breakpoint is None:
             self.emulator_update_screen_event = True
@@ -226,7 +226,7 @@ class EmulationDocument(SegmentedDocument):
             log.warning("No previous frame")
         else:
             emu.restore_history(desired)
-            frame_number = self.emulator.output['frame_number']
+            frame_number = self.emulator.status['frame_number']
             log.debug(f"showing frame {frame_number}")
             self.emulator_update_screen_event = True
             self.priority_level_refresh_event = 100
@@ -239,7 +239,7 @@ class EmulationDocument(SegmentedDocument):
             log.warning(f"No next frame: current = {emu.current_frame_number}")
         else:
             emu.restore_history(desired)
-            frame_number = self.emulator.output['frame_number']
+            frame_number = self.emulator.status['frame_number']
             log.debug(f"showing frame {frame_number}")
             self.emulator_update_screen_event = True
             self.priority_level_refresh_event = 100
