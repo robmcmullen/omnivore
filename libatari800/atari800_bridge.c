@@ -38,6 +38,7 @@
 #include "libatari800/input.h"
 #include "libatari800/video.h"
 #include "libatari800/statesav.h"
+#include "libatari800/libatari800.h"
 
 #include "tinycthread.h"
 
@@ -319,17 +320,6 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 		copy_screen(output->video);
 	}
 	return bpid;
-}
-
-int a8bridge_mount_disk_image(int diskno, const char *filename, int readonly)
-{
-	return SIO_Mount(diskno, filename, readonly);
-}
-
-int a8bridge_reboot_with_file(const char *filename)
-{
-	AFILE_OpenFile(filename, FALSE, 1, FALSE);
-	Atari800_Coldstart();
 }
 
 void a8bridge_get_current_state(output_template_t *output)

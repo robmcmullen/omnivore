@@ -6,11 +6,12 @@ cdef extern:
     int a8bridge_init(int, char **)
     void a8bridge_clear_state_arrays(void *input, void *output)
     void a8bridge_configure_state_arrays(void *input, void *output)
-    int a8bridge_mount_disk_image(int diskno, const char *filename, int readonly)
-    void a8bridge_reboot_with_file(const char *filename)
     void a8bridge_get_current_state(void *output)
     void a8bridge_restore_state(void *restore)
     void a8bridge_next_frame(void *input, void *output, void *breakpoints)
+
+    int libatari800_mount_disk_image(int diskno, const char *filename, int readonly)
+    int libatari800_reboot_with_file(const char *filename)
 
 
 cdef char ** to_cstring_array(list_str):
@@ -71,11 +72,11 @@ def get_current_state(np.ndarray output not None):
 
 def load_disk(int disknum, pathname, int readonly=0):
     filename = pathname.encode('utf-8')
-    a8bridge_mount_disk_image(disknum, filename, readonly)
+    libatari800_mount_disk_image(disknum, filename, readonly)
 
 def reboot_with_file(pathname):
     filename = pathname.encode('utf-8')
-    a8bridge_reboot_with_file(filename)
+    libatari800_reboot_with_file(filename)
 
 def restore_state(np.ndarray state not None):
     cdef np.uint8_t[:] sbuf
