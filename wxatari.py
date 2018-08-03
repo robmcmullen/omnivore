@@ -97,7 +97,7 @@ class EmulatorControlBase(object):
         def on_timer(self, evt):
             now = time.time()
             self.emulator.next_frame()
-            print(f"showing frame {self.emulator.output['frame_number']} {self.emulator.current_cpu_status}")
+            print(f"showing frame {self.emulator.status['frame_number']} {self.emulator.current_cpu_status}")
             self.emulator_panel.show_frame()
             self.show_audio()
 
@@ -120,19 +120,19 @@ class EmulatorControlBase(object):
                 print(("now=%f delta=%f framerate=%f" % (now, delta, self.framerate)))
                 if delta >= self.framerate:
                     self.emulator.next_frame()
-                    print(("showing frame %d" % self.emulator.output['frame_number']))
+                    print(("showing frame %d" % self.emulator.status['frame_number']))
                     self.emulator_panel.show_frame()
                     self.show_audio()
                     if delta > 2 * self.framerate:
                         self.emulator.next_frame()
-                        print(("got extra frame %d" % self.emulator.output['frame_number']))
+                        print(("got extra frame %d" % self.emulator.status['frame_number']))
                         self.emulator_panel.show_frame()
                         self.show_audio()
                         self.last_update_time = now  # + (delta % self.framerate)
                     else:
                         self.last_update_time += self.framerate
                 else:
-                    print(("pausing a tick after frame %d" % self.emulator.output['frame_number']))
+                    print(("pausing a tick after frame %d" % self.emulator.status['frame_number']))
                     #self.last_update_time += self.tickrate
             evt.Skip()
     elif wx.Platform == "__WXMSW__":
@@ -153,13 +153,13 @@ class EmulatorControlBase(object):
                     delta = now - self.next_update_time
                     if delta > self.framerate:
                         self.emulator.next_frame()
-                        print(("got extra frame %d" % self.emulator.output['frame_number']))
+                        print(("got extra frame %d" % self.emulator.status['frame_number']))
                         self.emulator_panel.show_frame()
                         self.show_audio()
                         self.next_update_time += self.framerate
                     self.next_update_time += self.framerate
                 else:
-                    print(("pausing a tick after frame %d" % self.emulator.output['frame_number']))
+                    print(("pausing a tick after frame %d" % self.emulator.status['frame_number']))
                     #self.last_update_time += self.tickrate
             evt.Skip()
 
