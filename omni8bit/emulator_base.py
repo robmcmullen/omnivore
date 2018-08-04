@@ -345,16 +345,23 @@ class EmulatorBase(Debugger):
     def calc_current_state(self):
         return self.output_raw.copy()
 
-    def save_history(self):
+    def save_history(self, force=False):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
         frame_number = int(self.status['frame_number'][0])
-        if self.frame_count % 10 == 0:
+        if force or self.frame_count % 10 == 0:
             print(f"Saving history at {frame_number}")
             d = self.calc_current_state()
             self.history[frame_number] = d
             self.print_history(frame_number)
+
+    def get_history(self, frame_number):
+        frame_number = int(frame_number)
+        raw = self.history[frame_number]
+        status = raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
+        output = raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
+        return status, output
 
     def restore_history(self, frame_number):
         print(("restoring state from frame %d" % frame_number))

@@ -402,15 +402,20 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
         print("pause")
         self.on_pause()
         self.pause_item.SetItemLabel("Resume")
+        self.emulator.save_history(True)
         self.update_ui()
     
     def history_previous(self):
+        print(f"frame_cursor: {self.frame_cursor} current: {self.emulator.current_frame_number}")
         if self.frame_cursor < 0:
             self.frame_cursor = self.emulator.current_frame_number
+        print(f"frame_cursor: {self.frame_cursor} current: {self.emulator.current_frame_number}")
         try:
             self.frame_cursor = self.emulator.get_previous_history(self.frame_cursor)
+            print(f"frame_cursor: {self.frame_cursor} current: {self.emulator.current_frame_number}")
             #self.emulator.restore_history(frame_number)
         except IndexError:
+            print(f"No previous frame before {self.frame_cursor}")
             return
         self.emulator_panel.show_frame(self.frame_cursor)
         self.update_ui()

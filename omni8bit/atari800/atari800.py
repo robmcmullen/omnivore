@@ -219,7 +219,7 @@ class Atari800(EmulatorBase):
         if frame_number < 0:
             output = self.output
         else:
-            output = self.history[frame_number]
+            _, output = self.get_history(frame_number)
         raw = output['video'].reshape((self.height, self.width))
         #print "get_raw_screen", frame_number, raw
         return raw
