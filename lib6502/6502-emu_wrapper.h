@@ -53,31 +53,16 @@ typedef struct {
  forcing as an array of bytes of the proper size works around this. */
 
 typedef struct {
-        uint64_t cycles_since_power_on;
-        uint64_t instructions_since_power_on;
-        uint64_t cycles_user;
-        uint64_t instructions_user;
-        uint32_t frame_number;
-        uint32_t current_cycle_in_frame;
-        uint32_t final_cycle_in_frame;
-        uint32_t current_instruction_in_frame;
+    frame_status_t status;
 
-        uint8_t frame_status;
-        uint8_t breakpoint_id;
-        uint8_t unused1;
-        uint8_t unused2;
+    uint8_t PC[2];
+    uint8_t A;
+    uint8_t X;
+    uint8_t Y;
+    uint8_t SP;
+    uint8_t SR;
 
-        uint8_t memory_access[MAIN_MEMORY_SIZE];
-        uint8_t access_type[MAIN_MEMORY_SIZE];
-
-        uint8_t PC[2];
-        uint8_t A;
-        uint8_t X;
-        uint8_t Y;
-        uint8_t SP;
-        uint8_t SR;
-
-        uint8_t memory[1<<16];
+    uint8_t memory[1<<16];
 } output_t;
 
 extern long cycles_per_frame;
