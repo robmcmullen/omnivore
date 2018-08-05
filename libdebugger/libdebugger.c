@@ -7,6 +7,8 @@
 /*#define DEBUG_STACK */
 #define DEBUG_BREAKPOINT 
 
+int access_color_step = 5;
+
 
 void libdebugger_init_array(breakpoints_t *breakpoints) {
 	memset(breakpoints, 0, sizeof(breakpoints_t));
@@ -191,7 +193,6 @@ next: ;
 	return -1;
 }
 
-#define ACCESS_COLOR_STEP 10
 #define ACCESS_COLOR_NORMAL_MAX 128
 
 /* Reduce brightness of each access at start of each frame */
@@ -200,7 +201,7 @@ void libdebugger_memory_access_start_frame(frame_status_t *output) {
 
 	for (ptr=output->memory_access; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++) {
 		val = *ptr;
-		if (val > ACCESS_COLOR_STEP) *ptr = val - ACCESS_COLOR_STEP;
+		if (val > access_color_step) *ptr = val - access_color_step;
 		else *ptr = 0;
 	}
 }
