@@ -169,8 +169,9 @@ class ByteEditor(FrameworkEditor):
                     skip = int(args["skip_frames"])
                 else:
                     skip = 0
+                source_doc = doc
                 doc = emu.EmulationDocument(source_document=doc, emulator_type=args.get('emulator', '6502'), skip_frames_on_boot=skip)
-                doc.boot()
+                doc.boot(source_doc.container_segment)
         try:
             doc.emulator_type
             self.has_emulator = True
