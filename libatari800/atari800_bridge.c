@@ -49,6 +49,8 @@ thrd_t frame_thread;
 
 breakpoints_t *LIBATARI800_Breakpoints = NULL;
 frame_status_t *LIBATARI800_Status = NULL;
+uint8_t *memory_access;
+uint8_t *access_type;
 
 int threaded_frame(void *arg);
 
@@ -97,6 +99,9 @@ void a8bridge_configure_state_arrays(input_template_t *input, output_template_t 
 	/* Initialize input array and calculate size of output array based on the
 	machine type*/
 	LIBATARI800_Input_array = input;
+	LIBATARI800_Status = &output->status;
+	memory_access = output->status.memory_access;
+	access_type = output->status.access_type;
 
 	INPUT_key_code = AKEY_NONE;
 	LIBATARI800_Mouse();
@@ -253,6 +258,8 @@ int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints) {
 
 	LIBATARI800_Breakpoints = breakpoints;
 	LIBATARI800_Status = status;
+	memory_access = status->memory_access;
+	access_type = status->access_type;
 
 	err = cnd_broadcast(&talking_stick);
 	if (err == thrd_error) {

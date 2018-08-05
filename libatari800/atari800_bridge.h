@@ -28,6 +28,8 @@ typedef struct {
 extern long cycles_per_frame;
 
 
+void ANTIC_Frame2(frame_status_t *status);
+
 /*
 vim:ts=4:sw=4:
 */
