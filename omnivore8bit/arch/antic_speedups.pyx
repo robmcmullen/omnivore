@@ -130,9 +130,9 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
             if s & 1:
                 #define ACCESS_TYPE_READ 1
                 if c == 255:
-                    r = 128
+                    r = 255
                     g = c
-                    b = 128
+                    b = 255
                 else:
                     r = 0
                     g = c
@@ -141,8 +141,8 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
                 #define ACCESS_TYPE_WRITE 2
                 if c == 255:
                     r = c
-                    g = 128
-                    b = 128
+                    g = 255
+                    b = 255
                 else:
                     r = c
                     g = 0
@@ -152,7 +152,7 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
                 if c == 255:
                     r = c
                     g = c
-                    b = 128
+                    b = 255
                 else:
                     r = c
                     g = c
@@ -160,8 +160,8 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
             elif s & 8:
                 #define ACCESS_TYPE_VIDEO 8
                 if c == 255:
-                    r = 128
-                    g = 128
+                    r = 255
+                    g = 255
                     b = c
                 else:
                     r = 0
@@ -171,7 +171,7 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
                 #define ACCESS_TYPE_DISPLAY_LIST 16
                 if c == 255:
                     r = c
-                    g = 128
+                    g = 255
                     b = c
                 else:
                     r = c
