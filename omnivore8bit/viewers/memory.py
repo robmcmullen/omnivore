@@ -82,6 +82,8 @@ class MemoryAccessViewer(SegmentViewer):
 
     zoom_text = "bitmap zoom factor"
 
+    priority_refresh_frame_count = 1
+
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
