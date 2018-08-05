@@ -217,6 +217,7 @@ UBYTE CPU_IRQ;
 #define PEEK_CODE_WORD()    MEMORY_dGetWord(PC)
 #endif /* PC_PTR */
 
+
 /* Cycle-exact Read-Modify-Write instructions.
    RMW instructions: ASL, LSR, ROL, ROR, INC, DEC
    (+ some undocumented) write to the specified address
@@ -557,6 +558,31 @@ void CPU_GO(int limit)
 
 	UWORD addr;
 	UBYTE data;
+
+#undef GET_CODE_BYTE
+#undef PEEK_CODE_BYTE
+#undef PEEK_CODE_WORD
+
+UBYTE GET_CODE_BYTE() {
+	memory_access[PC]=255;
+	access_type[PC]=ACCESS_TYPE_EXECUTE;
+	return MEMORY_mem[PC++];
+}
+
+UBYTE PEEK_CODE_BYTE() {
+	memory_access[PC]=255;
+	access_type[PC]=ACCESS_TYPE_EXECUTE;
+	return MEMORY_mem[PC];
+}
+
+UWORD PEEK_CODE_WORD() {
+	memory_access[PC]=255;
+	memory_access[PC+1]=255;
+	access_type[PC]=ACCESS_TYPE_EXECUTE;
+	access_type[PC+1]=ACCESS_TYPE_EXECUTE;
+	return MEMORY_dGetWord(PC);
+}
+
 #define insn data
 
 /*
