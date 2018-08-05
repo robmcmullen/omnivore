@@ -50,6 +50,8 @@
 
 #include "libdebugger.h"
 extern frame_status_t *LIBATARI800_Status;
+extern UBYTE *memory_access;
+extern UBYTE *access_type;
 
 
 #define LCHOP 3			/* do not build leftmost 0..3 characters in wide mode */
@@ -2774,6 +2776,8 @@ UBYTE ANTIC_GetDLByte(UWORD *paddr)
 		result = ANTIC_xe_ptr[addr - 0x4000];
 	else
 		result = MEMORY_GetByte((UWORD) addr);
+	memory_access[addr] = 255;
+	access_type[addr] = ACCESS_TYPE_DISPLAY_LIST;
 	addr++;
 	if ((addr & 0x3FF) == 0)
 		addr -= 0x400;
