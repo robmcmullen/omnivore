@@ -1877,8 +1877,12 @@ static void prepare_an_antic_4(int nchars, const UBYTE *antic_memptr, const ULON
 	const UBYTE *chptr;
 	if (ANTIC_xe_ptr != NULL && chbase_20 < 0x8000 && chbase_20 >= 0x4000)
 		chptr = ANTIC_xe_ptr + (((anticmode == 4 ? dctr : dctr >> 1) ^ chbase_20) & 0x3c07);
-	else
+	else {
 		chptr = MEMORY_mem + (((anticmode == 4 ? dctr : dctr >> 1) ^ chbase_20) & 0xfc07);
+		int index = chptr - MEMORY_mem;
+		memory_access[index] = 255;
+		access_type[index] = ACCESS_TYPE_CHARACTER | ACCESS_TYPE_READ;
+	}
 #endif
 
 	ADD_FONT_CYCLES;
@@ -1912,8 +1916,12 @@ static void draw_antic_6(int nchars, const UBYTE *antic_memptr, UWORD *ptr, cons
 	const UBYTE *chptr;
 	if (ANTIC_xe_ptr != NULL && chbase_20 < 0x8000 && chbase_20 >= 0x4000)
 		chptr = ANTIC_xe_ptr + (((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20) - 0x4000);
-	else
+	else {
 		chptr = MEMORY_mem + ((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20);
+		int index = chptr - MEMORY_mem;
+		memory_access[index] = 255;
+		access_type[index] = ACCESS_TYPE_CHARACTER | ACCESS_TYPE_READ;
+	}
 #endif
 
 	ADD_FONT_CYCLES;
@@ -1992,8 +2000,12 @@ static void prepare_an_antic_6(int nchars, const UBYTE *antic_memptr, const ULON
 	const UBYTE *chptr;
 	if (ANTIC_xe_ptr != NULL && chbase_20 < 0x8000 && chbase_20 >= 0x4000)
 		chptr = ANTIC_xe_ptr + (((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20) - 0x4000);
-	else
+	else {
 		chptr = MEMORY_mem + ((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20);
+		int index = chptr - MEMORY_mem;
+		memory_access[index] = 255;
+		access_type[index] = ACCESS_TYPE_CHARACTER | ACCESS_TYPE_READ;
+	}
 #endif
 
 	ADD_FONT_CYCLES;
