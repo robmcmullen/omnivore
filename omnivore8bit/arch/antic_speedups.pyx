@@ -119,7 +119,7 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
     cdef np.ndarray[np.uint8_t, ndim=3] array = np.empty([num_rows, width, 3], dtype=np.uint8)
 
     cdef int y = 0
-    cdef int x, i, j, r, g, b
+    cdef int x, i, j, r, g, b, write
     cdef np.uint8_t c, s
     cdef np.uint16_t h
     for j in range(num_rows):
@@ -127,65 +127,108 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
         for i in range(start_col, end_col):
             c = access_value[j, i]
             s = access_type[j, i]
-            if s & 1:
-                #define ACCESS_TYPE_READ 1
-                if c == 255:
-                    r = 255
-                    g = c
-                    b = 255
+            # if s & 1:
+            #     #define ACCESS_TYPE_READ 1
+            #     if c == 255 and False:
+            #         r = 255
+            #         g = c
+            #         b = 255
+            #     else:
+            #         r = 0
+            #         g = c
+            #         b = 0
+            # elif s & 2:
+            #     #define ACCESS_TYPE_WRITE 2
+            #     if c == 255 and False:
+            #         r = c
+            #         g = 255
+            #         b = 255
+            #     else:
+            #         r = c
+            #         g = 0
+            #         b = 0
+            # elif s & 4:
+            #     #define ACCESS_TYPE_EXECUTE 4
+            #     if c == 255 and False:
+            #         r = c
+            #         g = c
+            #         b = 255
+            #     else:
+            #         r = c
+            #         g = c
+            #         b = 0
+            # elif s & 8:
+            #     #define ACCESS_TYPE_VIDEO 8
+            #     if c == 255 and False:
+            #         r = 255
+            #         g = 255
+            #         b = c
+            #     else:
+            #         r = 0
+            #         g = 0
+            #         b = c
+            # elif s & 16:
+            #     #define ACCESS_TYPE_DISPLAY_LIST 16
+            #     if c == 255 and False:
+            #         r = c
+            #         g = 255
+            #         b = c
+            #     else:
+            #         r = c
+            #         g = 0
+            #         b = c
+            # else:
+            #     r = 0
+            #     g = 0
+            #     b = 0
+
+            #define ACCESS_TYPE_READ 0
+            #define ACCESS_TYPE_WRITE 0x80
+            write = s & 0x80
+            s = s & 0x7f
+            if s == 1:
+                #define ACCESS_TYPE_NORMAL 1
+                if write:
+                    r = c
+                    g = 0
+                    b = 0
                 else:
                     r = 0
                     g = c
                     b = 0
-            elif s & 2:
-                #define ACCESS_TYPE_WRITE 2
-                if c == 255:
-                    r = c
-                    g = 255
-                    b = 255
-                else:
-                    r = c
-                    g = 0
-                    b = 0
-            elif s & 4:
-                #define ACCESS_TYPE_EXECUTE 4
-                if c == 255:
-                    r = c
-                    g = c
-                    b = 255
-                else:
-                    r = c
-                    g = c
-                    b = 0
-            elif s & 8:
-                #define ACCESS_TYPE_VIDEO 8
-                if c == 255:
-                    r = 255
-                    g = 255
-                    b = c
-                else:
-                    r = 0
-                    g = 0
-                    b = c
-            elif s & 16:
-                #define ACCESS_TYPE_DISPLAY_LIST 16
-                if c == 255:
-                    r = c
-                    g = 255
-                    b = c
-                else:
-                    r = c
-                    g = 0
-                    b = c
-            else:
+            elif s == 2:
+                #define ACCESS_TYPE_EXECUTE 2
+                r = c
+                g = c
+                b = 0
+            elif s == 3:
+                #define ACCESS_TYPE_VIDEO 3
                 r = 0
                 g = 0
-                b = 0
+                b = c
+            elif s == 4:
+                #define ACCESS_TYPE_DISPLAY_LIST 4
+                r = c
+                g = 0
+                b = c
+                #define ACCESS_TYPE_CHBAS 5
+                #define ACCESS_TYPE_PMBAS 6
+                #define ACCESS_TYPE_SELF_MODIFYING_CODE 7
+            elif s == 0x7f:
+                #define ACCESS_TYPE_HARDWARE 0x7f
+                if write:
+                    r = c
+                    g = 0
+                    b = c >> 2
+                else:
+                    r = 0
+                    g = c
+                    b = c >> 2
 
-            if s & 0x80:
-                r = (sr * r) >> 8
-                g = (sr * g) >> 8
-                b = (sr * b) >> 8
+            # if s & 0x80:
+            #     r = (sr * r) >> 8
+            #     g = (sr * g) >> 8
+            #     b = (sr * b) >> 8
 
 
             array[y,x,0] = r
