@@ -211,9 +211,26 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
                 r = c
                 g = 0
                 b = c
+            elif s == 4:
                 #define ACCESS_TYPE_CHBAS 5
+                r = c
+                g = c
+                b = c
+            elif s == 4:
                 #define ACCESS_TYPE_PMBAS 6
+                r = c
+                g = c
+                b = c
+            elif s == 4:
                 #define ACCESS_TYPE_SELF_MODIFYING_CODE 7
+                r = c
+                g = c
+                b = c
+            elif s == 8:
+                #define ACCESS_TYPE_CHARACTER 8
+                r = c
+                g = c
+                b = c
             elif s == 0x7f:
                 #define ACCESS_TYPE_HARDWARE 0x7f
                 if write:
