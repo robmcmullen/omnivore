@@ -194,6 +194,7 @@ next: ;
 }
 
 #define ACCESS_COLOR_NORMAL_MAX 128
+#define ACCESS_COLOR_NORMAL_MIN 32
 
 /* Reduce brightness of each access at start of each frame */
 void libdebugger_memory_access_start_frame(frame_status_t *output) {
@@ -202,8 +203,8 @@ void libdebugger_memory_access_start_frame(frame_status_t *output) {
 	for (ptr=output->memory_access; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++) {
 		val = *ptr;
 		if (val > ACCESS_COLOR_NORMAL_MAX) *ptr = ACCESS_COLOR_NORMAL_MAX;
-		else if (val > access_color_step) *ptr = val - access_color_step;
-		else *ptr = access_color_step;
+		else if (val > ACCESS_COLOR_NORMAL_MIN) *ptr = val - access_color_step;
+		else *ptr = ACCESS_COLOR_NORMAL_MIN;
 	}
 }
 
