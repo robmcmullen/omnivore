@@ -86,7 +86,7 @@ extern UBYTE *access_type;
 
 UBYTE MEMORY_dGetByte(UWORD x) {
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_READ;
+	access_type[x]=ACCESS_TYPE_READ_NORMAL;
 	return MEMORY_mem[x];
 }
 
@@ -105,13 +105,13 @@ UBYTE MEMORY_dSafeHwGetByte(UWORD x) {
 void MEMORY_dPutByte(UWORD x, UBYTE y) {
 	MEMORY_mem[x]=y;
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_WRITE;
+	access_type[x]=ACCESS_TYPE_WRITE_NORMAL;
 }
 
 void MEMORY_dHwPutByte(UWORD x, UBYTE y) {
 	MEMORY_HwPutByte(x, y);
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_WRITE;
+	access_type[x]=ACCESS_TYPE_WRITE_NORMAL;
 }
 
 

@@ -201,8 +201,9 @@ void libdebugger_memory_access_start_frame(frame_status_t *output) {
 
 	for (ptr=output->memory_access; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++) {
 		val = *ptr;
-		if (val > access_color_step) *ptr = val - access_color_step;
-		else *ptr = 0;
+		if (val > ACCESS_COLOR_NORMAL_MAX) *ptr = ACCESS_COLOR_NORMAL_MAX;
+		else if (val > access_color_step) *ptr = val - access_color_step;
+		else *ptr = access_color_step;
 	}
 }
 
@@ -239,7 +240,7 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, 
 	bpid = calc(output, breakpoints);
 	if (bpid < 0) {
 		output->frame_status = FRAME_FINISHED;
-		libdebugger_memory_access_finish_frame(output);
+		// libdebugger_memory_access_finish_frame(output);
 	}
 	return bpid;
 }
