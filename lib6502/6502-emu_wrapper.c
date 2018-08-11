@@ -114,14 +114,14 @@ int lib6502_step_cpu(frame_status_t *status)
 		index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
 		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
 			status->memory_access[(uint16_t)index] = 255;
-			status->access_type[(uint16_t)index] = ACCESS_TYPE_READ_NORMAL;
+			status->access_type[(uint16_t)index] = ACCESS_TYPE_READ;
 		}
 	}
 	if (write_addr != NULL) {
 		index = (intptr_t)write_addr - (intptr_t)(&memory[0]);
 		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
 			status->memory_access[(uint16_t)index] = 255;
-			status->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE_NORMAL;
+			status->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
 		}
 	}
 
@@ -129,30 +129,30 @@ int lib6502_step_cpu(frame_status_t *status)
 	if (last_sp < SP) {
 		last_sp++;
 		status->memory_access[0x100 + last_sp] = 255;
-		status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ_NORMAL;
+		status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
 		if (last_sp < SP) {
 			last_sp++;
 			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ_NORMAL;
+			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
 		}
 		if (last_sp < SP) {
 			last_sp++;
 			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ_NORMAL;
+			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
 		}
 	}
 	else if (last_sp > SP) {
 		status->memory_access[0x100 + last_sp] = 255;
-		status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE_NORMAL;
+		status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
 		last_sp--;
 		if (last_sp > SP) {
 			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE_NORMAL;
+			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
 			last_sp--;
 		}
 		if (last_sp > SP) {
 			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE_NORMAL;
+			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
 			last_sp--;
 		}
 	}

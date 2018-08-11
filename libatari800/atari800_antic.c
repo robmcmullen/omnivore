@@ -52,6 +52,13 @@
 extern frame_status_t *LIBATARI800_Status;
 extern UBYTE *memory_access;
 extern UBYTE *access_type;
+void memory_type_range(int addr, int count, int type) {
+	UBYTE *t = access_type + addr;
+	while (count > 0) {
+		*t++ |= type;
+		count--;
+	}
+}
 
 
 #define LCHOP 3			/* do not build leftmost 0..3 characters in wide mode */
@@ -1880,8 +1887,7 @@ static void prepare_an_antic_4(int nchars, const UBYTE *antic_memptr, const ULON
 	else {
 		chptr = MEMORY_mem + (((anticmode == 4 ? dctr : dctr >> 1) ^ chbase_20) & 0xfc07);
 		int index = chptr - MEMORY_mem;
-		memory_access[index] = 255;
-		access_type[index] = ACCESS_TYPE_CHARACTER | ACCESS_TYPE_READ;
+		access_type[index] = ACCESS_TYPE_CHARACTER;
 	}
 #endif
 
@@ -1918,9 +1924,7 @@ static void draw_antic_6(int nchars, const UBYTE *antic_memptr, UWORD *ptr, cons
 		chptr = ANTIC_xe_ptr + (((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20) - 0x4000);
 	else {
 		chptr = MEMORY_mem + ((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20);
-		int index = chptr - MEMORY_mem;
-		memory_access[index] = 255;
-		access_type[index] = ACCESS_TYPE_CHARACTER | ACCESS_TYPE_READ;
+		access_type[chptr - MEMORY_mem] = ACCESS_TYPE_CHARACTER;
 	}
 #endif
 
@@ -1934,7 +1938,9 @@ static void draw_antic_6(int nchars, const UBYTE *antic_memptr, UWORD *ptr, cons
 #ifdef PAGED_MEM
 		chdata = MEMORY_dGetByte(t_chbase + ((UWORD) (screendata & 0x3f) << 3));
 #else
-		chdata = chptr[(screendata & 0x3f) << 3];
+		int index = (screendata & 0x3f) << 3;
+		access_type[chptr - MEMORY_mem + index] = ACCESS_TYPE_CHARACTER;
+		chdata = chptr[index];
 #endif
 		do {
 			if (IS_ZERO_ULONG(t_pm_scanline_ptr)) {
@@ -2003,8 +2009,7 @@ static void prepare_an_antic_6(int nchars, const UBYTE *antic_memptr, const ULON
 	else {
 		chptr = MEMORY_mem + ((anticmode == 6 ? dctr & 7 : dctr >> 1) ^ chbase_20);
 		int index = chptr - MEMORY_mem;
-		memory_access[index] = 255;
-		access_type[index] = ACCESS_TYPE_CHARACTER | ACCESS_TYPE_READ;
+		access_type[index] = ACCESS_TYPE_CHARACTER;
 	}
 #endif
 
@@ -2016,7 +2021,9 @@ static void prepare_an_antic_6(int nchars, const UBYTE *antic_memptr, const ULON
 #ifdef PAGED_MEM
 		chdata = MEMORY_dGetByte(t_chbase + ((UWORD) (screendata & 0x3f) << 3));
 #else
-		chdata = chptr[(screendata & 0x3f) << 3];
+		int index = (screendata & 0x3f) << 3;
+		access_type[chptr - MEMORY_mem + index] = ACCESS_TYPE_CHARACTER;
+		chdata = chptr[index];
 #endif
 		*an_ptr++ = chdata & 0x80 ? an : 0;
 		*an_ptr++ = chdata & 0x40 ? an : 0;
@@ -2788,7 +2795,6 @@ UBYTE ANTIC_GetDLByte(UWORD *paddr)
 		result = ANTIC_xe_ptr[addr - 0x4000];
 	else
 		result = MEMORY_GetByte((UWORD) addr);
-	memory_access[addr] = 255;
 	access_type[addr] = ACCESS_TYPE_DISPLAY_LIST;
 	addr++;
 	if ((addr & 0x3FF) == 0)
@@ -2853,6 +2859,7 @@ static void antic_load(void)
 			MEMORY_CopyFromMem(screenaddr, antic_memory + ANTIC_margin, chars_read[md]);
 		else
 			MEMORY_dCopyFromMem(screenaddr, antic_memory + ANTIC_margin, chars_read[md]);
+		memory_type_range(screenaddr, chars_read[md], ACCESS_TYPE_VIDEO);
 		screenaddr = new_screenaddr;
 	}
 #endif

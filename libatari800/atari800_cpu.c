@@ -86,32 +86,32 @@ extern UBYTE *access_type;
 
 UBYTE MEMORY_dGetByte(UWORD x) {
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_READ_NORMAL;
+	access_type[x]|=ACCESS_TYPE_READ;
 	return MEMORY_mem[x];
 }
 
 UBYTE MEMORY_dHwGetByte(UWORD x) {
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_READ_HARDWARE;
+	access_type[x]|=ACCESS_TYPE_READ | ACCESS_TYPE_HARDWARE;
 	return MEMORY_HwGetByte(x, FALSE);
 }
 
 UBYTE MEMORY_dSafeHwGetByte(UWORD x) {
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_READ_HARDWARE;
+	access_type[x]|=ACCESS_TYPE_READ | ACCESS_TYPE_HARDWARE;
 	return MEMORY_HwGetByte(x, TRUE);
 }
 
 void MEMORY_dPutByte(UWORD x, UBYTE y) {
 	MEMORY_mem[x]=y;
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_WRITE_NORMAL;
+	access_type[x]|=ACCESS_TYPE_WRITE;
 }
 
 void MEMORY_dHwPutByte(UWORD x, UBYTE y) {
 	MEMORY_HwPutByte(x, y);
 	memory_access[x]=255;
-	access_type[x]=ACCESS_TYPE_WRITE_NORMAL;
+	access_type[x]|=ACCESS_TYPE_WRITE | ACCESS_TYPE_HARDWARE;
 }
 
 
@@ -565,21 +565,21 @@ void CPU_GO(int limit)
 
 UBYTE GET_CODE_BYTE() {
 	memory_access[PC]=255;
-	access_type[PC]=ACCESS_TYPE_EXECUTE;
+	access_type[PC]|=ACCESS_TYPE_EXECUTE;
 	return MEMORY_mem[PC++];
 }
 
 UBYTE PEEK_CODE_BYTE() {
 	memory_access[PC]=255;
-	access_type[PC]=ACCESS_TYPE_EXECUTE;
+	access_type[PC]|=ACCESS_TYPE_EXECUTE;
 	return MEMORY_mem[PC];
 }
 
 UWORD PEEK_CODE_WORD() {
 	memory_access[PC]=255;
 	memory_access[PC+1]=255;
-	access_type[PC]=ACCESS_TYPE_EXECUTE;
-	access_type[PC+1]=ACCESS_TYPE_EXECUTE;
+	access_type[PC]|=ACCESS_TYPE_EXECUTE;
+	access_type[PC+1]|=ACCESS_TYPE_EXECUTE;
 	return MEMORY_dGetWord(PC);
 }
 
