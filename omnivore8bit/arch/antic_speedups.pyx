@@ -119,128 +119,85 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
     cdef np.ndarray[np.uint8_t, ndim=3] array = np.empty([num_rows, width, 3], dtype=np.uint8)
 
     cdef int y = 0
-    cdef int x, i, j, r, g, b, write
-    cdef np.uint8_t c, s
+    cdef int x, i, j
+    cdef np.uint8_t c, s, lo, hi, r, g, b
     cdef np.uint16_t h
     for j in range(num_rows):
         x = 0
         for i in range(start_col, end_col):
             c = access_value[j, i]
             s = access_type[j, i]
-            # if s & 1:
-            #     #define ACCESS_TYPE_READ 1
-            #     if c == 255 and False:
-            #         r = 255
-            #         g = c
-            #         b = 255
-            #     else:
-            #         r = 0
-            #         g = c
-            #         b = 0
-            # elif s & 2:
-            #     #define ACCESS_TYPE_WRITE 2
-            #     if c == 255 and False:
-            #         r = c
-            #         g = 255
-            #         b = 255
-            #     else:
-            #         r = c
-            #         g = 0
-            #         b = 0
-            # elif s & 4:
-            #     #define ACCESS_TYPE_EXECUTE 4
-            #     if c == 255 and False:
-            #         r = c
-            #         g = c
-            #         b = 255
-            #     else:
-            #         r = c
-            #         g = c
-            #         b = 0
-            # elif s & 8:
-            #     #define ACCESS_TYPE_VIDEO 8
-            #     if c == 255 and False:
-            #         r = 255
-            #         g = 255
-            #         b = c
-            #     else:
-            #         r = 0
-            #         g = 0
-            #         b = c
-            # elif s & 16:
-            #     #define ACCESS_TYPE_DISPLAY_LIST 16
-            #     if c == 255 and False:
-            #         r = c
-            #         g = 255
-            #         b = c
-            #     else:
-            #         r = c
-            #         g = 0
-            #         b = c
-            # else:
-            #     r = 0
-            #     g = 0
-            #     b = 0
 
-            #define ACCESS_TYPE_READ 0
-            #define ACCESS_TYPE_WRITE 0x80
-            write = s & 0x80
-            s = s & 0x7f
-            if s == 1:
-                #define ACCESS_TYPE_NORMAL 1
-                if write:
-                    r = c
-                    g = 0
-                    b = 0
-                else:
+            #/* lower 4 bits: bit access flags */
+            #/* upper 4 bits: type of access, not a bit field */
+            lo = s & 0x0f
+            hi = s & 0xf0
+            if c > 64 or hi == 0:
+                #define ACCESS_TYPE_READ 1
+                #define ACCESS_TYPE_WRITE 2
+                #define ACCESS_TYPE_EXECUTE 4
+                if lo & 0x04:
                     r = 0
                     g = c
                     b = 0
-            elif s == 2:
-                #define ACCESS_TYPE_EXECUTE 2
-                r = c
-                g = c
-                b = 0
-            elif s == 3:
-                #define ACCESS_TYPE_VIDEO 3
-                r = 0
-                g = 0
-                b = c
-            elif s == 4:
-                #define ACCESS_TYPE_DISPLAY_LIST 4
-                r = c
-                g = 0
-                b = c
-            elif s == 4:
-                #define ACCESS_TYPE_CHBAS 5
-                r = c
-                g = c
-                b = c
-            elif s == 4:
-                #define ACCESS_TYPE_PMBAS 6
-                r = c
-                g = c
-                b = c
-            elif s == 4:
-                #define ACCESS_TYPE_SELF_MODIFYING_CODE 7
-                r = c
-                g = c
-                b = c
-            elif s == 8:
-                #define ACCESS_TYPE_CHARACTER 8
-                r = c
-                g = c
-                b = c
-            elif s == 0x7f:
-                #define ACCESS_TYPE_HARDWARE 0x7f
-                if write:
+                elif lo & 0x03 == 0x03:
                     r = c
                     g = 0
-                    b = c >> 2
+                    b = c
+                elif lo & 0x02:
+                    r = c
+                    g = 0
+                    b = 0
+                elif lo & 0x01:
+                    r = 0
+                    g = 0
+                    b = c
                 else:
                     r = 0
-                    g = c
-                    b = c >> 2
+                    g = 0
+                    b = 0
+            else:
+                #define ACCESS_TYPE_VIDEO 0x10
+                #define ACCESS_TYPE_DISPLAY_LIST 0x20
+                #define ACCESS_TYPE_CHBASE 0x30
+                #define ACCESS_TYPE_PMBASE 0x40
+                #define ACCESS_TYPE_CHARACTER 0x50
+                #define ACCESS_TYPE_HARDWARE 0x60
+                if hi == 0x10:
+                    #define ACCESS_TYPE_VIDEO 0x10
+                    r = 50
+                    g = 50
+                    b = 150
+                elif hi == 0x20:
+                    #define ACCESS_TYPE_DISPLAY_LIST 0x20
+                    r = 150
+                    g = 0
+                    b = 150
+                elif hi == 0x30:
+                    #define ACCESS_TYPE_CHBAS 5
+                    r = 150
+                    g = 150
+                    b = 0
+                elif hi == 0x40:
+                    #define ACCESS_TYPE_PMBAS 6
+                    r = 150
+                    g = 0
+                    b = 0
+                elif hi == 0x50:
+                    #define ACCESS_TYPE_CHARACTER 8
+                    r = 50
+                    g = 150
+                    b = 150
+                elif hi == 0x60:
+                    #define ACCESS_TYPE_HARDWARE 0x7f
+                    r = 150
+                    g = 150
+                    b = 50
+                else:
+                    r = 0
+                    g = 0
+                    b = 0
+
 
             # if s & 0x80:
             #     r = (sr * r) >> 8
