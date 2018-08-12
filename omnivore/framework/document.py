@@ -332,6 +332,22 @@ class BaseDocument(HasTraits):
 
         fs.close()
 
+    def save_next_to_on_filesystem(self, ext, data, mode="w"):
+        path = self.filesystem_path()
+        if not path:
+            raise RuntimeError("Not on local filesystem")
+        dirname = os.path.dirname(path)
+        if dirname:
+            if not ext.startswith("."):
+                ext = "." + ext
+            basename = self.root_name + ext
+            filename = os.path.join(dirname, basename)
+            with open(filename, mode) as fh:
+                fh.write(data)
+        else:
+            raise RuntimeError(f"Unable to determine path of {path}")
+        return basename
+
     #### Cleanup functions
 
     def add_cleanup_function(self, func):
