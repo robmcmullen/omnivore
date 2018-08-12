@@ -72,7 +72,11 @@ class Generic6502(EmulatorBase):
         raw = self.raw_array[offset:offset + d.MAIN_MEMORY_SIZE]
         return raw
 
-    def boot_from_segment(self, segment):
+    def boot_from_segment(self, segment, all_segments):
+        if segment is None or segment.origin == 0:
+            s = self.find_default_boot_segment(all_segments)
+            if s is not None:
+                segment = s
         # for now, simply copies data into main memory
         start = segment.origin
         end = start + len(segment)

@@ -194,7 +194,13 @@ class EmulatorBase(Debugger):
 
     ##### Machine boot
 
-    def boot_from_segment(self, boot_segment):
+    def find_default_boot_segment(self, segments):
+        for segment in segments:
+            if segment.origin > 0:
+                return segment
+        return None
+
+    def boot_from_segment(self, boot_segment, all_segments):
         if self.bootfile is not None:
             try:
                 os.remove(self.bootfile)
