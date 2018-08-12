@@ -124,18 +124,10 @@ class EmulationDocument(SegmentedDocument):
     def calc_layout_template_name(self, task_id):
         return "%s.emulator_layout" % task_id
 
-    def find_default_boot_segment(self):
-        for segment in self.source_document.segments:
-            if segment.origin > 0:
-                return segment
-        return self.source_document.container_segment
-
     def boot(self, segment=None):
-        if segment is None:
-            segment = self.find_default_boot_segment()
         emu = self.emulator
         emu.configure_emulator([])
-        emu.boot_from_segment(segment)
+        emu.boot_from_segment(segment, self.source_document.segments)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
         self.raw_bytes = emu.raw_array
