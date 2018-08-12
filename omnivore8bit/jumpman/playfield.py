@@ -1,3 +1,7 @@
+import os
+
+import wx
+
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
 
@@ -278,7 +282,7 @@ class JumpmanPlayfieldModel(object):
         if not path:
             if show_info:
                 # only display error message on user-initiated compilation
-                self.editor.window.error("Please save the level before\ncompiling the assembly source", "Assembly Error")
+                self.linked_base.window.error("Please save the level before\ncompiling the assembly source", "Assembly Error")
             return
         dirname = os.path.dirname(d.filesystem_path())
         if dirname:
@@ -289,7 +293,7 @@ class JumpmanPlayfieldModel(object):
                 self.manual_recompile_needed = False
             except SyntaxError as e:
                 log.error("Assembly error: %s" % e.msg)
-                self.linked_base.editor.window.error(e.msg, "Assembly Error")
+                self.linked_base.window.error(e.msg, "Assembly Error")
                 self.manual_recompile_needed = True
             except ImportError:
                 log.error("Please install pyatasm to compile custom code.")
@@ -307,7 +311,7 @@ class JumpmanPlayfieldModel(object):
         code = self.custom_code
         if not code:
             return
-        source, level_addr, harvest_addr = self.current_level.get_level_addrs()
+        source, level_addr, harvest_addr = self.get_level_addrs()
         ranges, data = code.get_ranges(source)
         cmd = jc.MoveObjectCommand(source, ranges, data)
         self.linked_base.editor.process_command(cmd)

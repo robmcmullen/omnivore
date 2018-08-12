@@ -245,9 +245,9 @@ class AssemblySourceAction(ViewerAction):
     name = 'Custom Code...'
 
     def perform(self, event):
-        filename = prompt_for_string(self.viewer.control, "Enter MAC/65 assembly source filename for custom code", "Source File For Custom Code", self.viewer.assembly_source)
+        filename = prompt_for_string(self.viewer.control, "Enter MAC/65 assembly source filename for custom code", "Source File For Custom Code", self.viewer.current_level.assembly_source)
         if filename is not None:
-            self.viewer.set_assembly_source(filename)
+            self.linked_base.jumpman_playfield_model.set_assembly_source(filename)
 
 
 class RecompileAction(ViewerAction):
@@ -260,7 +260,7 @@ class RecompileAction(ViewerAction):
     name = 'Recompile Code'
 
     def perform(self, event):
-        self.viewer.compile_assembly_source(True)
+        self.linked_base.jumpman_playfield_model.compile_assembly_source(True)
 
 
 class UseLevelAction(UseSegmentAction):
