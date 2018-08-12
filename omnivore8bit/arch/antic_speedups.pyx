@@ -153,9 +153,9 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
                     g = 0
                     b = c
                 else:
-                    r = 0
-                    g = 0
-                    b = 0
+                    r = c
+                    g = c
+                    b = c
             else:
                 #define ACCESS_TYPE_VIDEO 0x10
                 #define ACCESS_TYPE_DISPLAY_LIST 0x20
@@ -165,38 +165,38 @@ def get_numpy_memory_access_image(segment_viewer, int bytes_per_row, int num_row
                 #define ACCESS_TYPE_HARDWARE 0x60
                 if hi == 0x10:
                     #define ACCESS_TYPE_VIDEO 0x10
-                    r = 50
-                    g = 50
-                    b = 150
+                    r = c
+                    g = c
+                    b = c + 96
                 elif hi == 0x20:
                     #define ACCESS_TYPE_DISPLAY_LIST 0x20
-                    r = 150
+                    r = c + 96
                     g = 0
-                    b = 150
+                    b = c + 96
                 elif hi == 0x30:
                     #define ACCESS_TYPE_CHBAS 5
-                    r = 150
-                    g = 150
+                    r = c + 96
+                    g = c + 96
                     b = 0
                 elif hi == 0x40:
                     #define ACCESS_TYPE_PMBAS 6
-                    r = 150
+                    r = c + 96
                     g = 0
                     b = 0
                 elif hi == 0x50:
                     #define ACCESS_TYPE_CHARACTER 8
-                    r = 50
-                    g = 150
-                    b = 150
+                    r = c
+                    g = c + 96
+                    b = c + 96
                 elif hi == 0x60:
                     #define ACCESS_TYPE_HARDWARE 0x7f
-                    r = 150
-                    g = 150
-                    b = 50
+                    r = c + 96
+                    g = c + 96
+                    b = c
                 else:
-                    r = 0
-                    g = 0
-                    b = 0
+                    r = c
+                    g = c
+                    b = c
 
 
             # if s & 0x80:
