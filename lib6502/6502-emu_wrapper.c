@@ -244,7 +244,7 @@ int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoi
 
 	memory[0xc000] = input->keychar;
 	status->final_cycle_in_frame = cycles_per_frame - 1;
-	libdebugger_calc_frame(&lib6502_calc_frame, (frame_status_t *)output, breakpoints);
+	libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints);
 	lib6502_get_current_state(output);
 	return bpid;
 }

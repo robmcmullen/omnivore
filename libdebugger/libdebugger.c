@@ -197,10 +197,10 @@ next: ;
 #define ACCESS_COLOR_NORMAL_MIN 64
 
 /* Reduce brightness of each access at start of each frame */
-void libdebugger_memory_access_start_frame(frame_status_t *output) {
-	uint8_t val, *ptr, *a;
+void libdebugger_memory_access_start_frame(uint8_t *memory, frame_status_t *output) {
+	uint8_t val, *ptr, *a, *mem;
 
-	for (ptr=output->memory_access, a=output->access_type; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++, a++) {
+	for (ptr=output->memory_access, a=output->access_type, mem=memory; ptr<&output->memory_access[MAIN_MEMORY_SIZE]; ptr++, a++, mem++) {
 		val = *ptr;
 		if (val > ACCESS_COLOR_NORMAL_MAX) *ptr = ACCESS_COLOR_NORMAL_MAX;
 		else {
@@ -209,7 +209,7 @@ void libdebugger_memory_access_start_frame(frame_status_t *output) {
 				*a = *a & 0x0f;
 			}
 			else {
-				*ptr = ACCESS_COLOR_NORMAL_MIN;
+				*ptr = *mem >> 2;
 				*a = 0;
 			}
 		}
@@ -230,7 +230,7 @@ void libdebugger_memory_access_finish_frame(frame_status_t *output) {
 	}
 }
 
-int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, breakpoints_t *breakpoints) {
+int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints) {
 	int bpid;
 
 	switch (output->frame_status) {
@@ -243,7 +243,7 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, frame_status_t *output, 
 		output->frame_number += 1;
 		output->current_instruction_in_frame = 0;
 		output->current_cycle_in_frame = 0;
-		libdebugger_memory_access_start_frame(output);
+		libdebugger_memory_access_start_frame(memory, output);
 	}
 	output->frame_status = FRAME_INCOMPLETE;
 	bpid = calc(output, breakpoints);
