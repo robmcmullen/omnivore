@@ -492,19 +492,7 @@ class LevelSummaryViewer(BaseInfoViewer):
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
-        fields = [
-            ("text", "Level Number", 0x00, 2),
-            ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
-            ("uint", "Points per Peanut", 0x33, 2, 250),
-            ("label", "# Peanuts", "num_peanuts", 42),
-            ("peanuts_needed", "Peanuts Needed", 0x3e, 1, ["All", "All except 1", "All except 2", "All except 3", "All except 4"]),
-            ("uint", "Bonus Value", 0x35, 2, 2500),
-            ("dropdown", "Number of Bullets", 0x3d, 1, ["None", "1", "2", "3", "4"]),
-            ("antic_colors", "Game Colors", 0x2a, 9),
-            ("label", "# Columns with Ladders", "num_ladders", 12),
-            ("label", "# Columns with Downropes", "num_downropes", 6),
-        ]
-        control = JumpmanInfoPanel(parent, linked_base, fields, size=(350, 150))
+        control = JumpmanInfoPanel(parent, linked_base, size=(350, 150))
         return control
 
     def recalc_data_model(self):

@@ -491,10 +491,11 @@ class InfoPanel(PANELTYPE):
     VALUE_SPACING = 3
     SIDE_SPACING = 5
 
-    def __init__(self, parent, linked_base, fields, **kwargs):
+    def __init__(self, parent, linked_base, fields=None, **kwargs):
         self.linked_base = linked_base
 
-        self.fields = fields
+        if fields is not None:
+            self.fields = fields
         self.focus_on_input = None
         self.last_change_count = -1
 
@@ -506,7 +507,7 @@ class InfoPanel(PANELTYPE):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
 
-        self.init_fields(fields)
+        self.init_fields(self.fields)
 
     def recalc_view(self):
         self.set_fields()
