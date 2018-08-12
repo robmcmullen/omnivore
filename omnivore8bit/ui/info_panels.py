@@ -495,8 +495,15 @@ class CustomCodeField(InfoField):
         name = linked_base.jumpman_playfield_model.assembly_source
         if name:
             self.ctrl.SetLabel(name)
-        else:
+        elif linked_base.document.is_on_local_filesystem:
             self.ctrl.SetLabel("Import Assembly Source")
+        else:
+            self.ctrl.SetLabel("Save level before importing custom code")
+
+    def enable(self, state=True):
+        self.parent.Enable(state)
+        state = self.panel.linked_base.document.is_on_local_filesystem
+        self.ctrl.Enable(state)
 
     def clear_data(self):
         pass

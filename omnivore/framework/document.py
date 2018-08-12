@@ -144,6 +144,11 @@ class BaseDocument(HasTraits):
         _, ext = os.path.splitext(self.name)
         return ext
 
+    @property
+    def is_on_local_filesystem(self):
+        path = self.filesystem_path()
+        return bool(path)
+
     @classmethod
     def get_blank(cls):
         return cls(raw_bytes=b"")
