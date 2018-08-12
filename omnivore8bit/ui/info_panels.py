@@ -479,6 +479,45 @@ class PeanutsNeededField(DropDownField):
         self.panel.linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 
+class CustomCodeField(InfoField):
+    keyword = "custom_code"
+    same_line = True
+
+    def set_args(self, args):
+        self.field_name = args[0]
+
+    def create_control(self):
+        c = wx.Button(self.parent, -1, "assembly")
+        c.Bind(wx.EVT_BUTTON, self.on_load)
+        return c
+
+    def fill_data(self, linked_base):
+        name = linked_base.jumpman_playfield_model.assembly_source
+        if name:
+            self.ctrl.SetLabel(name)
+        else:
+            self.ctrl.SetLabel("Import Assembly Source")
+
+    def clear_data(self):
+        pass
+
+    def on_load(self, evt):
+        linked_base = self.panel.linked_base
+        path = linked_base.task.prompt_local_file_dialog("Assembly Source File")
+        if path is not None:
+            try:
+                with open(path, "r") as fh:
+                    text = fh.read()
+                filename = linked_base.document.save_next_to_on_filesystem(".asm", text)
+            except (IOError, RuntimeError) as e:
+                log.error(f"Assembly load error: {e}")
+                linked_base.window.error(str(e), "Assembly Load Error")
+            else:
+                linked_base.jumpman_playfield_model.set_assembly_source(filename, False)
+                self.fill_data(linked_base)
+                linked_base.jumpman_playfield_model.compile_assembly_source()
+
+
 PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel
 
 

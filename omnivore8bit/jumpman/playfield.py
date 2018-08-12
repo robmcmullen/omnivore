@@ -263,14 +263,15 @@ class JumpmanPlayfieldModel(object):
 
     ##### Custom code handling
 
-    def set_assembly_source(self, src):
+    def set_assembly_source(self, src, do_compile=True):
         """Assembly source file is required to be in the same directory as the
         jumpman disk image. It's also assumed to be on the local filesystem
         since pyatasm can't handle the virtual filesystem.
         """
         self.assembly_source = src
         self.manual_recompile_needed = False
-        self.compile_assembly_source()
+        if do_compile:
+            self.compile_assembly_source()
 
     def compile_assembly_source(self, show_info=False):
         self.custom_code = None

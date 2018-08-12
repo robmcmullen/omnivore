@@ -478,6 +478,7 @@ class JumpmanInfoPanel(InfoPanel):
         ("antic_colors", "Game Colors", 0x2a, 9),
         ("label", "# Columns with Ladders", "num_ladders", 12),
         ("label", "# Columns with Downropes", "num_downropes", 6),
+        ("custom_code", "Custom Code"),
     ]
 
     def is_valid_data(self):
