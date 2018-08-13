@@ -479,6 +479,7 @@ class JumpmanInfoPanel(InfoPanel):
         ("label", "# Columns with Ladders", "num_ladders", 12),
         ("label", "# Columns with Downropes", "num_downropes", 6),
         ("custom_code", "Custom Code"),
+        ("multi_line_label", "Code Summary", "custom_code_info"),
     ]
 
     def is_valid_data(self):

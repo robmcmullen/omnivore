@@ -215,6 +215,27 @@ class LabelField(InfoField):
         self.set_background(self.panel.linked_base, True)
 
 
+class MultiLineLabelField(InfoField):
+    keyword = "multi_line_label"
+    same_line = False
+    extra_vertical_spacing = 3
+
+    def set_args(self, args):
+        self.field_name = args[0]
+        self.attr_name = args[1]
+
+    def create_control(self):
+        c = GenStaticText(self.parent, style=wx.ALIGN_LEFT)
+        return c
+
+    def fill_data(self, linked_base):
+        value = getattr(self.panel.linked_base.jumpman_playfield_model, self.attr_name)
+        self.ctrl.SetLabel(str(value))
+
+    def clear_data(self):
+        self.ctrl.SetLabel("")
+
+
 class TextEditField(InfoField):
     keyword = "text"
     same_line = True

@@ -307,6 +307,13 @@ class JumpmanPlayfieldModel(object):
                     dlg.ShowModal()
                 self.save_assembly()
 
+    @property
+    def custom_code_info(self):
+        try:
+            return self.custom_code.info
+        except AttributeError:
+            return "No custom code"
+
     def save_assembly(self):
         log.debug("save_assembly: code=%s" % self.custom_code)
         code = self.custom_code
