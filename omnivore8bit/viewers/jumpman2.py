@@ -263,7 +263,7 @@ class JumpmanViewer(BitmapViewer):
         # ignore bitmap renderer in restore because we always want to use the
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
         if 'assembly_source' in e:
-            self.current_level.assembly_source = e['assembly_source']
+            self.current_level.set_assembly_source(e['assembly_source'], False)
         if 'old_trigger_mapping' in e:
             self.current_level.old_trigger_mapping = e['old_trigger_mapping']
 

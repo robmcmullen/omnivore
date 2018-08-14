@@ -29,6 +29,7 @@ class JumpmanPlayfieldModel(object):
         self.can_select_objects = False
         self.can_erase_objects = False
         self.assembly_source = ""
+        self.assembly_error = ""
         self.custom_code = None
         self.manual_recompile_needed = False
         self.old_trigger_mapping = {}
@@ -57,6 +58,8 @@ class JumpmanPlayfieldModel(object):
         self.generate_display_objects()
         self.level_colors = self.calc_level_colors()
         self.draw_playfield(True)
+        if self.manual_recompile_needed:
+            self.compile_assembly_source()
 
     @property
     def mouse_mode(self):
@@ -269,11 +272,13 @@ class JumpmanPlayfieldModel(object):
         since pyatasm can't handle the virtual filesystem.
         """
         self.assembly_source = src
-        self.manual_recompile_needed = False
         if do_compile:
+            self.manual_recompile_needed = False
             self.compile_assembly_source()
+        else:
+            self.manual_recompile_needed = True
 
-    def compile_assembly_source(self, show_info=False):
+    def compile_assembly_source(self):
         self.custom_code = None
         if not self.assembly_source:
             return
@@ -281,9 +286,8 @@ class JumpmanPlayfieldModel(object):
         d = self.linked_base.document
         path = d.filesystem_path()
         if not path:
-            if show_info:
-                # only display error message on user-initiated compilation
-                self.linked_base.window.error("Please save the level before\ncompiling the assembly source", "Assembly Error")
+            self.assembly_error = f"Assembly error:\nPlease save the level before\ncompiling the assembly source"
+            log.error(self.assembly_error)
             return
         dirname = os.path.dirname(d.filesystem_path())
         if dirname:
@@ -293,23 +297,25 @@ class JumpmanPlayfieldModel(object):
                 self.custom_code = ju.JumpmanCustomCode(filename)
                 self.manual_recompile_needed = False
             except SyntaxError as e:
-                log.error("Assembly error: %s" % e.msg)
-                self.linked_base.window.error(e.msg, "Assembly Error")
+                self.assembly_error = f"Assembly error:\n{str(e)}"
+                log.error(self.assembly_error)
                 self.manual_recompile_needed = True
             except ImportError:
-                log.error("Please install pyatasm to compile custom code.")
                 self.assembly_source = ""
+                self.assembly_error = f"Assembly error:\nPlease install pyatasm to\ncompile custom code"
+                log.error(self.assembly_error)
                 self.old_trigger_mapping = dict()
+            else:
+                self.assembly_error = ""
             if self.custom_code:
                 self.update_trigger_mapping()
-                if show_info:
-                    dlg = wx.lib.dialogs.ScrolledMessageDialog(self.linked_base.editor.control, self.custom_code.info, "Assembly Results")
-                    dlg.ShowModal()
                 self.save_assembly()
 
     @property
     def custom_code_info(self):
         try:
+            if self.assembly_error:
+                return self.assembly_error
             return self.custom_code.info
         except AttributeError:
             return "No custom code"
@@ -317,6 +323,8 @@ class JumpmanPlayfieldModel(object):
     @property
     def action_vector_info(self):
         try:
+            if self.assembly_error:
+                return ""
             return self.custom_code.vector_summary
         except AttributeError:
             return "No custom code"
@@ -324,6 +332,8 @@ class JumpmanPlayfieldModel(object):
     @property
     def coin_trigger_info(self):
         try:
+            if self.assembly_error:
+                return ""
             return self.custom_code.coin_trigger_summary
         except AttributeError:
             return "No custom code"
@@ -331,6 +341,8 @@ class JumpmanPlayfieldModel(object):
     @property
     def other_label_info(self):
         try:
+            if self.assembly_error:
+                return ""
             return self.custom_code.label_summary
         except AttributeError:
             return "No custom code"
