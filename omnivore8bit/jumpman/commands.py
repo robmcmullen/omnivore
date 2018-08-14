@@ -28,8 +28,9 @@ log = logging.getLogger(__name__)
 
 
 def trigger_dialog(event, segment_viewer, obj):
-    possible_labels = segment_viewer.get_triggers()
-    label = segment_viewer.get_trigger_label(obj.trigger_function)
+    model = segment_viewer.linked_base.jumpman_playfield_model
+    possible_labels = model.get_triggers()
+    label = model.get_trigger_label(obj.trigger_function)
     if label is None and obj.trigger_function:
         custom_value = "%04x" % obj.trigger_function
     else:
@@ -118,7 +119,7 @@ class ClearTriggerAction(ViewerAction):
             addr = self.get_addr(event, objects)
             for o in objects:
                 self.permute_object(o, addr)
-            self.viewer.control.table.save_changes(self.command)
+            self.viewer.linked_base.jumpman_playfield_model.save_changes(self.command)
             self.viewer.control.mouse_mode.resync_objects()
         except ValueError:
             pass
