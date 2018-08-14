@@ -480,6 +480,9 @@ class JumpmanInfoPanel(InfoPanel):
         ("label", "# Columns with Downropes", "num_downropes", 6),
         ("custom_code", "Custom Code"),
         ("multi_line_label", "Code Summary", "custom_code_info"),
+        ("multi_line_label", "Action Vectors", "action_vector_info"),
+        ("multi_line_label", "Coin Trigger Functions", "coin_trigger_info"),
+        ("multi_line_label", "Other Labels", "other_label_info"),
     ]
 
     def is_valid_data(self):

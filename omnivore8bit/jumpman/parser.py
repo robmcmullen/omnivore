@@ -1094,6 +1094,7 @@ class JumpmanCustomCode(object):
         0x2812: 0x4580,
         0x2814: 0x311b,
         0x2816: 0x30e0,
+        0x283b: 0x2860,
         0x2840: 0x4ffd,
         0x2844: 0x4c00,
         0x2849: 0x284b,
@@ -1124,22 +1125,34 @@ class JumpmanCustomCode(object):
         for first, last, raw in self.asm.segments:
             ranges.append("$%04x-$%04x" % (first, last))
             total += len(raw)
-        v = sorted(["%04x %s" % (addr, name) for name, addr in self.vector_labels_used.items()])
-        t = sorted(["%04x %s" % (addr, name) for name, addr in self.triggers.items()])
-        lb = sorted(["%04x %s" % (addr, name) for name, addr in self.labels_used.items()])
+        return f"""\
+Total bytes: {total}
+Ranges: {",".join(ranges)}
+Custom game loop? {"YES" if self.custom_gameloop else "NO, using standard game loop"}
+"""
 
-        text = """\
-Total bytes: %d
-Ranges: %s
-Custom game loop? %s
-Vectors used:
-  %s
-Triggers defined:
-  %s
-Labels defined:
-  %s
-""" % (total, ",".join(ranges), "YES" if self.custom_gameloop else "NO, using standard game loop", "\n  ".join(v), "\n  ".join(t), "\n  ".join(lb))
-        return text
+    @property
+    def vector_summary(self):
+        summary = []
+        for name, addr in self.vector_storage.items():
+            summary.append((addr, self.vector_labels_used.get(name, self.vector_defaults[addr]), name))
+        print(summary)
+        summary.sort()
+        return "\n".join(["$%04x    %s: $%04x" % (addr, name, subroutine) for addr, subroutine, name in summary]) + "\n"
+
+    @property
+    def coin_trigger_summary(self):
+        t = sorted(["$%04x    %s" % (addr, name) for name, addr in self.triggers.items()])
+        if not t:
+            t = ["No trigger functions defined"]
+        return "\n".join(t) + "\n"
+
+    @property
+    def label_summary(self):
+        t = sorted(["$%04x    %s" % (addr, name) for name, addr in self.labels_used.items()])
+        if not t:
+            t = ["No labels defined"]
+        return "\n".join(t) + "\n"
 
     def add_vector(self, vector, subroutine):
         self.vectors_used.add(vector)

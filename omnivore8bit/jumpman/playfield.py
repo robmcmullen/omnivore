@@ -314,6 +314,27 @@ class JumpmanPlayfieldModel(object):
         except AttributeError:
             return "No custom code"
 
+    @property
+    def action_vector_info(self):
+        try:
+            return self.custom_code.vector_summary
+        except AttributeError:
+            return "No custom code"
+
+    @property
+    def coin_trigger_info(self):
+        try:
+            return self.custom_code.coin_trigger_summary
+        except AttributeError:
+            return "No custom code"
+
+    @property
+    def other_label_info(self):
+        try:
+            return self.custom_code.label_summary
+        except AttributeError:
+            return "No custom code"
+
     def save_assembly(self):
         log.debug("save_assembly: code=%s" % self.custom_code)
         code = self.custom_code
