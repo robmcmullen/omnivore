@@ -94,34 +94,29 @@ class BitmapLineRenderer(cg.TableLineRenderer):
                 self.draw_line(grid_control, dc, last_row - 1, col, index, last_index)
             last_row -= 1
 
-        bytes_per_row = t.items_per_row
+        # If there are any more rows to display, they will be full-width rows;
+        # i.e. the data is in a rectangular grid
         nr = last_row - first_row
-        nc = last_col - first_col
-        first_index = (first_row * bytes_per_row) - t.start_offset
-        last_index = (last_row * bytes_per_row) - t.start_offset
-        t = t
-        if last_index > len(t.data):
-            last_index = len(t.data)
-            data = np.zeros((nr * bytes_per_row), dtype=np.uint8)
-            data[0:last_index - first_index] = t.data[first_index:last_index]
-            style = np.zeros((nr * bytes_per_row), dtype=np.uint8)
-            style[0:last_index - first_index] = t.style[first_index:last_index]
-        else:
-            data = t.data[first_index:last_index]
-            style = t.style[first_index:last_index]
+        if nr > 0:
+            bytes_per_row = t.items_per_row
+            nc = last_col - first_col
+            first_index = (first_row * bytes_per_row) - t.start_offset
+            last_index = (last_row * bytes_per_row) - t.start_offset
+            data = t.data[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_col:last_col].flatten()
+            style = t.style[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_col:last_col].flatten()
 
-        # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
+            # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
 
-        array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, bytes_per_row, nr, bytes_per_row * nr, data, style)
-        width = array.shape[1]
-        height = array.shape[0]
-        if width > 0 and height > 0:
-            array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
-            #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
-            image = wx.Image(array.shape[1], array.shape[0])
-            image.SetData(array.tobytes())
-            bmp = wx.Bitmap(image)
-            dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
+            array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, nc, nr, nc * nr, data, style)
+            width = array.shape[1]
+            height = array.shape[0]
+            if width > 0 and height > 0:
+                array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
+                #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
+                image = wx.Image(array.shape[1], array.shape[0])
+                image.SetData(array.tobytes())
+                bmp = wx.Bitmap(image)
+                dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
 
 
 class BitmapGridControl(SegmentGridControl):
