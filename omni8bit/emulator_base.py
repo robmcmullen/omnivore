@@ -104,17 +104,6 @@ class EmulatorBase(Debugger):
         return self.status['cycles_since_power_on'][0]
 
     @property
-    def break_condition(self):
-        if self.status['frame_status'][0] == FRAME_BREAKPOINT:
-            bpid = self.status['breakpoint_id'][0]
-            return self.get_breakpoint(bpid)
-        elif self.status['frame_status'][0] == FRAME_WATCHPOINT:
-            bpid = self.status['breakpoint_id'][0]
-            return self.get_watchpoint(bpid)
-        else:
-            return None
-
-    @property
     def stack_pointer(self):
         raise NotImplementedError("define stack_pointer property in subclass")
 
@@ -257,13 +246,13 @@ class EmulatorBase(Debugger):
         self.process_key_state()
         if not self.is_frame_finished:
             print(f"next_frame: continuing frame from cycle {self.current_cycle_in_frame} of frame {self.current_frame_number}")
-        self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd)
+        bpid = self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd)
         if self.is_frame_finished:
             self.frame_count += 1
             self.process_frame_events()
             self.save_history()
         self.forced_modifier = None
-        return self.break_condition
+        return self.get_breakpoint(bpid)
 
     def process_frame_events(self):
         still_waiting = []

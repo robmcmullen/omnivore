@@ -321,7 +321,7 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 	LIBATARI800_Input_array = input;
 	INPUT_key_code = PLATFORM_Keyboard();
 
-	libdebugger_calc_frame(&a8bridge_calc_frame, MEMORY_mem, &output->status, breakpoints);
+	bpid = libdebugger_calc_frame(&a8bridge_calc_frame, MEMORY_mem, &output->status, breakpoints);
 
 	LIBATARI800_StateSave(output->state, &output->tags);
 	if (output->status.frame_status == FRAME_FINISHED) {

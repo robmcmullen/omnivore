@@ -36,7 +36,8 @@ def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray
     ibuf = input.view(np.uint8)
     obuf = output.view(np.uint8)
     dbuf = breakpoints.view(np.uint8)
-    lib6502_next_frame(&ibuf[0], &obuf[0], &dbuf[0])
+    bpid = lib6502_next_frame(&ibuf[0], &obuf[0], &dbuf[0])
+    return bpid
 
 def get_current_state(np.ndarray output not None):
     cdef np.uint8_t[:] obuf

@@ -158,6 +158,13 @@ class Breakpoint:
         c['tokens'][self.index] = count
         self.enable()
 
+    def count_frames(self, count):
+        # shortcut to create a break after `count` instructions
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_COUNT_FRAMES
+        c['tokens'][self.index] = count
+        self.enable()
+
     def break_at_return(self):
         # shortcut to create a PC=addr breakpoint
         c = self.debugger.debug_cmd[0]
@@ -202,17 +209,21 @@ class Debugger:
         return Breakpoint(self, bpid, addr)
 
     def get_breakpoint(self, bpid):
+        if bpid < 0:
+            return None
         return Breakpoint(self, bpid)
 
     def step_into(self, number=1):
         b = Breakpoint(self, 0)
         b.step_into(number)
-        b.enable()
+
+    def count_frames(self, number=1):
+        b = Breakpoint(self, 0)
+        b.count_frames(number)
 
     def count_cycles(self, cycles=1):
         b = Breakpoint(self, 0)
         b.count_cycles(number)
-        b.enable()
 
     def iter_breakpoints(self):
         for i in range(dd.NUM_BREAKPOINT_ENTRIES):

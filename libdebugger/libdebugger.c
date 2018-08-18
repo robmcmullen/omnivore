@@ -128,6 +128,10 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_st
 					else breakpoints->tokens[index] -= 1;
 					continue;
 				}
+				else if (status == BREAKPOINT_COUNT_FRAMES) {
+					/* only checked at the end of the frame */
+					continue;
+				}
 				/* otherwise, process normally */
 			}
 			clear(&stack);
@@ -248,8 +252,31 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_s
 	output->frame_status = FRAME_INCOMPLETE;
 	bpid = calc(output, breakpoints);
 	if (bpid < 0) {
+		int status, index, count;
+
 		output->frame_status = FRAME_FINISHED;
 		// libdebugger_memory_access_finish_frame(output);
+
+		/* special check for frame count breakpoint */
+		status = breakpoints->breakpoint_status[0];
+		if (status & BREAKPOINT_ENABLED) {
+			printf("checking for count frames breakpoint\n");
+			index = 0;
+			count = (int)breakpoints->tokens[index]; /* tokens are unsigned */
+			if ((status == BREAKPOINT_COUNT_FRAMES) && (count == 0)) {
+				printf("Count frames breakpoint\n");
+				bpid = 0;
+			}
+			else {
+				printf("Count frames breakpoint: count=%d\n", count);
+				breakpoints->tokens[index]--;
+			}
+		}
+	}
+	if (bpid == 0) {
+		/* breakpoint 0 is always used to store one-time breakpoints, so they
+		 must be marked as disabled to not fire next time. */
+		breakpoints->breakpoint_status[0] = BREAKPOINT_DISABLED;
 	}
 	return bpid;
 }
