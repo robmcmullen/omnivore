@@ -170,7 +170,7 @@ class StartAction(EmulatorAction):
 
     def perform(self, event=None):
         print("START!")
-        self.active_editor.document.emulator.set_start(True)
+        self.active_editor.document.emulator.forced_modifier = "start"
 
 
 class SelectAction(EmulatorAction):
@@ -179,7 +179,7 @@ class SelectAction(EmulatorAction):
     accelerator = 'F3'
 
     def perform(self, event=None):
-        self.active_editor.document.emulator.set_select(True)
+        self.active_editor.document.emulator.forced_modifier = "select"
 
 
 class OptionAction(EmulatorAction):
@@ -188,7 +188,7 @@ class OptionAction(EmulatorAction):
     accelerator = 'F2'
 
     def perform(self, event=None):
-        self.active_editor.document.emulator.set_option(True)
+        self.active_editor.document.emulator.forced_modifier = "option"
 
 
 class ColdstartAction(EmulatorAction):
