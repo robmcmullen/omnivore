@@ -6,10 +6,10 @@ known_emulators = []
 default_emulator = None
 
 try:
-    from .atari800 import Atari800
-    known_emulators.append(Atari800)
+    from .atari800 import wxAtari800
+    known_emulators.append(wxAtari800)
     if default_emulator is None:
-        default_emulator = Atari800
+        default_emulator = wxAtari800
 except ImportError:
     log.warning(f"Atari800 emulator not available: {e}")
 

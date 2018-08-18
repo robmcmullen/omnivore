@@ -27,6 +27,8 @@ class EmulatorScreenBase(object):
         self.emulator = emulator
 
         self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+        self.Bind(wx.EVT_KEY_UP, self.on_key_up)
 
         self.on_size(None)
         if self.IsDoubleBuffered():
@@ -53,6 +55,18 @@ class EmulatorScreenBase(object):
 
     def show_frame(self, frame_number=-1):
         raise NotImplementedError
+
+    def on_key_down(self, evt):
+        keycode = evt.GetKeyCode()
+        log.debug(f"key down: {keycode}")
+        if not self.emulator.process_key_down(evt, keycode):
+            evt.Skip()
+
+    def on_key_up(self, evt):
+        keycode = evt.GetKeyCode()
+        log.debug(f"key up: {keycode}")
+        if not self.emulator.process_key_up(evt, keycode):
+            evt.Skip()
 
 
 class BitmapScreen(wx.Panel, EmulatorScreenBase):

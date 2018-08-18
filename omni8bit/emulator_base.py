@@ -53,6 +53,7 @@ class EmulatorBase(Debugger):
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
         self.last_boot_state = None
+        self.forced_modifier = None
 
     @property
     def raw_array(self):
@@ -261,6 +262,7 @@ class EmulatorBase(Debugger):
             self.frame_count += 1
             self.process_frame_events()
             self.save_history()
+        self.forced_modifier = None
         return self.break_condition
 
     def process_frame_events(self):
@@ -318,6 +320,12 @@ class EmulatorBase(Debugger):
         """Read keyboard and compute any values that should be sent to the
         emulator.
         """
+        pass
+
+    def process_key_down(self, evt, keycode):
+        pass
+
+    def process_key_up(self, evt, keycode):
         pass
 
     ##### Input routines

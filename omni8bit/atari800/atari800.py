@@ -265,9 +265,6 @@ class Atari800(EmulatorBase):
     def set_start(self, state):
         self.input['start'] = state
 
-    def process_key_state(self):
-        pass
-
 try:
     import wx
 
@@ -293,7 +290,7 @@ try:
             wx.WXK_RIGHT: akey.AKEY_RIGHT,
         }
 
-        def process_key_down_event(self, evt):
+        def process_key_down(self, evt, keycode):
             log.debug("key down! key=%s mod=%s" % (evt.GetKeyCode(), evt.GetModifiers()))
             key = evt.GetKeyCode()
             mod = evt.GetModifiers()
@@ -319,9 +316,9 @@ try:
 
             # console keys will reflect being pressed if at any time between frames
             # the key has been pressed
-            self.input['option'] = 1 if wx.GetKeyState(wx.WXK_F2) else 0
-            self.input['select'] = 1 if wx.GetKeyState(wx.WXK_F3) else 0
-            self.input['start'] = 1 if wx.GetKeyState(wx.WXK_F4) else 0
+            self.input['option'] = 1 if wx.GetKeyState(wx.WXK_F2) or self.forced_modifier=='option' else 0
+            self.input['select'] = 1 if wx.GetKeyState(wx.WXK_F3) or self.forced_modifier=='select' else 0
+            self.input['start'] = 1 if wx.GetKeyState(wx.WXK_F4) or self.forced_modifier=='start' else 0
 
 except ImportError:
     class wxAtari800(object):
