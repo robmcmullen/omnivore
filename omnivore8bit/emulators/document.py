@@ -210,6 +210,11 @@ class EmulationDocument(SegmentedDocument):
         self.emulator.step_into(1)
         self.start_timer()
 
+    def debugger_count_frames(self, number=1):
+        print(f"counting {number} frames")
+        self.emulator.count_frames(number)
+        self.start_timer()
+
     def history_previous(self):
         emu = self.emulator
         try:

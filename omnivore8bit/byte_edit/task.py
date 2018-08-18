@@ -653,6 +653,7 @@ class ByteEditTask(FrameworkTask):
             ea.StepAction(),
             ea.StepIntoAction(),
             ea.StepOverAction(),
+            ea.EndOfFrameAction(),
             Separator(),
             ea.StartAction(),
             ea.SelectAction(),

@@ -163,6 +163,17 @@ class StepOverAction(StepAction):
         print("resume!")
 
 
+class EndOfFrameAction(StepAction):
+    """Restart the emulation
+    """
+    name = "Run to End of Frame"
+    tooltip = "Break when reaching the end of the current frame"
+    accelerator = 'F12'
+
+    def perform(self, event=None):
+        self.active_editor.document.debugger_count_frames()
+
+
 class StartAction(EmulatorAction):
     name = "Start"
     tooltip = "Press the Start button"
