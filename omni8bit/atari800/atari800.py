@@ -189,7 +189,7 @@ class Atari800(EmulatorBase):
     def calc_dtype_data(self, segment_name):
         d = np.dtype(self.computed_dtypes[segment_name])
         start = self.segment_starts[segment_name]
-        raw = self.raw_array[start:start + d.itemsize]
+        raw = self.raw_state[start:start + d.itemsize]
         return raw.view(dtype=d)[0]
 
     def calc_main_memory_array(self):
