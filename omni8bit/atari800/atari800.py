@@ -404,7 +404,10 @@ try:
                 self.send_keycode(akey)
 
         def process_key_state(self):
-            up = 0b0001 if wx.GetKeyState(wx.WXK_UP) else 0
+            try:
+                up = 0b0001 if wx.GetKeyState(wx.WXK_UP) else 0
+            except wx._core.PyNoAppError:
+                return
             down = 0b0010 if wx.GetKeyState(wx.WXK_DOWN) else 0
             left = 0b0100 if wx.GetKeyState(wx.WXK_LEFT) else 0
             right = 0b1000 if wx.GetKeyState(wx.WXK_RIGHT) else 0
