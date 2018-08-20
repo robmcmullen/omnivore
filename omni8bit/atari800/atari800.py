@@ -7,6 +7,7 @@ from . import dtypes as d
 from . import akey
 from .colors import NTSC
 from ..emulator_base import EmulatorBase
+from ..errors import FrameNotFinishedError
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,6 +85,11 @@ class Atari800(EmulatorBase):
     low_level_interface = liba8
 
     mime_prefix = "application/vnd.atari8bit"
+
+    def __getstate__(self):
+        if not self.is_frame_finished:
+            raise FrameNotFinishedError("atari800 can't save its internal state in the middle of a frame.")
+        return EmulatorBase.__getstate__(self)
 
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()

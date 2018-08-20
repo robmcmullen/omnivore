@@ -19,8 +19,10 @@ def copynp(state):
 
 
 class Test6502(object):
+    emu_name = '6502'
+
     def setup(self):
-        emu_cls = omni8bit.find_emulator('6502')
+        emu_cls = omni8bit.find_emulator(self.emu_name)
         self.emu = emu_cls()
         self.emu.configure_emulator()
 
@@ -59,3 +61,6 @@ class Test6502(object):
         assert(cycles2a == emu.cycles_since_power_on)
 
         assert(np.array_equal(output2, output2a))
+
+class TestAtari800(Test6502):
+    emu_name = "atari800"

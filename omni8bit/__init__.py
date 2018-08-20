@@ -10,7 +10,7 @@ try:
     known_emulators.append(wxAtari800)
     if default_emulator is None:
         default_emulator = wxAtari800
-except ImportError:
+except ImportError as e:
     log.warning(f"Atari800 emulator not available: {e}")
 
 try:
@@ -18,7 +18,7 @@ try:
     known_emulators.append(Generic6502)
     if default_emulator is None:
         default_emulator = Generic6502
-except ImportError:
+except ImportError as e:
     log.warning(f"Generic6502 emulator not available: {e}")
 
 try:
@@ -31,14 +31,7 @@ except ImportError as e:
 
 
 from . import debugger
-
-
-class Omni8bitError(RuntimeError):
-    pass
-
-
-class UnknownEmulatorError(Omni8bitError):
-    pass
+from .errors import *
 
 
 def find_emulator(emulator_name):
