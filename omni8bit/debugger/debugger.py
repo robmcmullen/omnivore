@@ -87,6 +87,7 @@ ccontinue|cc NUMBER
 import numpy as np
 
 from . import dtypes as dd
+from ..persistence import Serializable
 
 import logging
 log = logging.getLogger(__name__)
@@ -190,11 +191,18 @@ class Breakpoint:
         c['breakpoint_status'][self.id] &= ~dd.BREAKPOINT_ENABLED
 
 
-class Debugger:
+class Debugger(Serializable):
+    name = "<name>"
+
+    serializable_attributes = ['debug_cmd_raw']
+
     def __init__(self):
         self.debug_cmd_raw = np.zeros([dd.DEBUGGER_COMMANDS_DTYPE.itemsize], dtype=np.uint8)
-        self.debug_cmd = self.debug_cmd_raw.view(dtype=dd.DEBUGGER_COMMANDS_DTYPE)
+        Serializable.__init__(self)
         self.clear_all_breakpoints()
+
+    def init_computed_attributes(self):
+        self.debug_cmd = self.debug_cmd_raw.view(dtype=dd.DEBUGGER_COMMANDS_DTYPE)
 
     def clear_all_breakpoints(self):
         c = self.debug_cmd[0]

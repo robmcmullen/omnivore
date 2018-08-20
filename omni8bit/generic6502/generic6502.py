@@ -23,6 +23,8 @@ class Generic6502(EmulatorBase):
 
     mime_prefix = ""
 
+    serializable_attributes = []
+
     input_array_dtype = d.INPUT_DTYPE
     output_array_dtype = d.OUTPUT_DTYPE
     width = d.VIDEO_WIDTH

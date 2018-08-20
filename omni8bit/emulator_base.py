@@ -21,10 +21,11 @@ FRAME_WATCHPOINT = 3
 
 class EmulatorBase(Debugger):
     cpu = "<base>"
-    name = "<name>"
     pretty_name = "<pretty name>"
 
     mime_prefix = "<mime type>"
+
+    serializable_attributes = ['input_raw', 'output_raw', 'frame_count']
 
     input_array_dtype = None
     output_array_dtype = None
@@ -34,12 +35,9 @@ class EmulatorBase(Debugger):
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
     def __init__(self):
-        Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
-        self.input = self.input_raw.view(dtype=self.input_array_dtype)
         self.output_raw = np.zeros([FRAME_STATUS_DTYPE.itemsize + self.output_array_dtype.itemsize], dtype=np.uint8)
-        self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
-        self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
+        Debugger.__init__(self)
 
         self.bootfile = None
         self.frame_count = 0
@@ -48,12 +46,18 @@ class EmulatorBase(Debugger):
         self.offsets = None
         self.names = None
         self.save_state_memory_blocks = None
-        self.active_event_loop = None
         self.main_memory = None
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
         self.last_boot_state = None
         self.forced_modifier = None
+
+    def init_computed_attributes(self):
+        self.input = self.input_raw.view(dtype=self.input_array_dtype)
+        self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
+        self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
+        self.configure_io_arrays()
+        self.low_level_interface.restore_state(self.output_raw)
 
     @property
     def raw_array(self):
@@ -139,23 +143,6 @@ class EmulatorBase(Debugger):
         rgb = np.empty((self.height, self.width, 3), np.uint8)
         rgba = np.empty((self.height, self.width, 4), np.uint8)
         return rgb, rgba
-
-    ##### Object serialization
-
-    def report_configuration(self):
-        """Return dictionary of configuration parameters"""
-        return {}
-
-    def update_configuration(self, conf):
-        """Sets some configuration parameters based on the input dictionary.
-
-        Only the parameters specified by the dictionary members are updated,
-        other parameters not mentioned are unchanged.
-        """
-        pass
-
-    def serialize_state(self, mdict):
-        return {"name": self.name}
 
     ##### Initialization
 

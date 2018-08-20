@@ -41,16 +41,15 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 	lib6502_init_debug_kernel();
 }
 
-void lib6502_clear_state_arrays(void *input, output_t *output)
-{
-}
-
-void lib6502_configure_state_arrays(void *input, output_t *output) {
+void lib6502_clear_state_arrays(void *input, output_t *output) {
 	frame_status_t *status = &output->status;
 
 	status->frame_status = 0;
 	status->cycles_since_power_on = 0;
 	status->instructions_since_power_on = 0;
+}
+
+void lib6502_configure_state_arrays(void *input, output_t *output) {
 }
 
 void lib6502_get_current_state(output_t *buf) {
