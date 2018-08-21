@@ -26,6 +26,7 @@ class EmulatorBase(Debugger):
     mime_prefix = "<mime type>"
 
     serializable_attributes = ['input_raw', 'output_raw', 'frame_count']
+    serializable_computed = {'input_raw', 'output_raw'}
 
     input_array_dtype = None
     output_array_dtype = None
@@ -35,8 +36,12 @@ class EmulatorBase(Debugger):
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
     def __init__(self):
+        Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
+        self.input = self.input_raw.view(dtype=self.input_array_dtype)
         self.output_raw = np.zeros([FRAME_STATUS_DTYPE.itemsize + self.output_array_dtype.itemsize], dtype=np.uint8)
+        self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
+        self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
         self.bootfile = None
         self.frame_count = 0
         self.frame_event = []
@@ -48,17 +53,9 @@ class EmulatorBase(Debugger):
         self.last_boot_state = None
         self.forced_modifier = None
         self.emulator_started = False
-        Debugger.__init__(self)
 
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
-
-    def init_computed_attributes(self):
-        self.input = self.input_raw.view(dtype=self.input_array_dtype)
-        self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
-        self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
-        self.configure_io_arrays()
-        self.low_level_interface.restore_state(self.output_raw)
 
     @property
     def raw_array(self):
@@ -145,13 +142,18 @@ class EmulatorBase(Debugger):
         rgba = np.empty((self.height, self.width, 4), np.uint8)
         return rgb, rgba
 
+    ##### Serialization
+
+    def restore_computed_attributes(self, state):
+        self.input_raw[:] = state['input_raw']
+        self.restore_state(state['output_raw'])
+
     ##### Initialization
 
     def configure_emulator(self, emu_args=None, *args, **kwargs):
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
-        if not self.emulator_started:
-            self.low_level_interface.start_emulator(self.args)
+        self.low_level_interface.start_emulator(self.args)
         self.emulator_started = True
         self.configure_io_arrays()
 

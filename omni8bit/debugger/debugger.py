@@ -198,11 +198,8 @@ class Debugger(Serializable):
 
     def __init__(self):
         self.debug_cmd_raw = np.zeros([dd.DEBUGGER_COMMANDS_DTYPE.itemsize], dtype=np.uint8)
-        Serializable.__init__(self)
-        self.clear_all_breakpoints()
-
-    def init_computed_attributes(self):
         self.debug_cmd = self.debug_cmd_raw.view(dtype=dd.DEBUGGER_COMMANDS_DTYPE)
+        self.clear_all_breakpoints()
 
     def clear_all_breakpoints(self):
         c = self.debug_cmd[0]

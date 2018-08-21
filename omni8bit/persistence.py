@@ -5,12 +5,14 @@ log = logging.getLogger(__name__)
 class Serializable:
     name = "<name>"
 
+    # list of attributes needed to serialize the object
     serializable_attributes = []
 
+    # set of attributes that can't be restored by simply setting the attribute
+    serializable_computed = set()
+
     def __init__(self):
-        for kls in self.__class__.__mro__:
-            if hasattr(kls, 'init_computed_attributes'):
-                kls.init_computed_attributes(self)
+        self.init_computed_attributes(self)
 
     def __getstate__(self):
         """Custom jsonpickle state save routine
@@ -28,7 +30,10 @@ class Serializable:
         for kls in self.__class__.__mro__:
             if hasattr(kls, 'serializable_attributes'):
                 for key in kls.serializable_attributes:
-                    state[key] = getattr(self, key)
+                    v = getattr(self, key)
+                    if key in kls.serializable_computed:
+                        v = v.copy()
+                    state[key] = v
         return state
 
     def __setstate__(self, state):
@@ -42,13 +47,16 @@ class Serializable:
         if state['name'] != self.name:
             raise TypeError(f"Can't restore {state['name']} to {self.name}")
         already_seen = set()
+        missing = []
         for kls in self.__class__.__mro__:
             if hasattr(kls, 'serializable_attributes'):
                 print(f"restoring {kls}: {kls.serializable_attributes}")
-                missing = []
                 for key in kls.serializable_attributes:
-                    if key in already_seen:
+                    if key in already_seen or key:
                         print(f"already restored {key}")
+                        continue
+                    elif key in kls.serializable_computed:
+                        print(f"will compute value for {key} at the end")
                         continue
                     try:
                         setattr(self, key, state[key])
@@ -57,11 +65,11 @@ class Serializable:
                     except KeyError:
                         print(f"missing key: {key}")
                         missing.append(key)
-                kls.restore_missing_attributes(self, state, missing)
-                kls.restore_renamed_attributes(self)
-                kls.init_computed_attributes(self)
+        self.restore_missing_attributes(state, missing)
+        self.restore_renamed_attributes()
+        self.restore_computed_attributes(state)
 
-    def init_computed_attributes(self):
+    def restore_computed_attributes(self, state):
         """Hook to initialize/restore attributes that depend on serialized
         attributes but aren't themselves serialized. Called during __init__ and
         after all serialized attributes have been restored to this subclass.
