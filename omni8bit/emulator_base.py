@@ -37,8 +37,6 @@ class EmulatorBase(Debugger):
     def __init__(self):
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
         self.output_raw = np.zeros([FRAME_STATUS_DTYPE.itemsize + self.output_array_dtype.itemsize], dtype=np.uint8)
-        Debugger.__init__(self)
-
         self.bootfile = None
         self.frame_count = 0
         self.frame_event = []
@@ -47,10 +45,13 @@ class EmulatorBase(Debugger):
         self.names = None
         self.save_state_memory_blocks = None
         self.main_memory = None
-        self.compute_color_map()
-        self.screen_rgb, self.screen_rgba = self.calc_screens()
         self.last_boot_state = None
         self.forced_modifier = None
+        self.emulator_started = False
+        Debugger.__init__(self)
+
+        self.compute_color_map()
+        self.screen_rgb, self.screen_rgba = self.calc_screens()
 
     def init_computed_attributes(self):
         self.input = self.input_raw.view(dtype=self.input_array_dtype)
@@ -150,9 +151,15 @@ class EmulatorBase(Debugger):
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
         self.low_level_interface.start_emulator(self.args)
+        self.emulator_started = True
         self.configure_io_arrays()
 
     def configure_io_arrays(self):
+        if not self.emulator_started:
+            print(f"configure_io_arrays can't be called before emulator started")
+            return
+        print(f"input_raw: {self.input_raw.shape}  {self.input_raw}")
+        print(f"output_raw: {self.output_raw.shape} {self.output_raw}")
         self.low_level_interface.configure_state_arrays(self.input, self.output_raw)
         self.parse_state()
         self.generate_save_state_memory_blocks()
