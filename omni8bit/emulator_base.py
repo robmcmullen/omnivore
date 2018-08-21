@@ -150,7 +150,8 @@ class EmulatorBase(Debugger):
     def configure_emulator(self, emu_args=None, *args, **kwargs):
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
-        self.low_level_interface.start_emulator(self.args)
+        if not self.emulator_started:
+            self.low_level_interface.start_emulator(self.args)
         self.emulator_started = True
         self.configure_io_arrays()
 
@@ -360,6 +361,10 @@ class EmulatorBase(Debugger):
         output = raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
         return status, output
 
+    def restore_state(self, state):
+        self.low_level_interface.restore_state(state)
+        self.output_raw[:] = state
+
     def restore_history(self, frame_number):
         print(("restoring state from frame %d" % frame_number))
         frame_number = int(frame_number)
@@ -371,8 +376,7 @@ class EmulatorBase(Debugger):
             log.error(f"{frame_number} not in history")
             pass
         else:
-            self.low_level_interface.restore_state(d)
-            self.output_raw[:] = d
+            self.restore_state(d)
             # self.history[(frame_number + 1):] = []  # remove frames newer than this
             # print(("  %d items remain in history" % len(self.history)))
             # self.frame_event = []

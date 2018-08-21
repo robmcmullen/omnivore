@@ -60,7 +60,51 @@ class Test6502(object):
         assert(cycles2a == cycles2)
         assert(cycles2a == emu.cycles_since_power_on)
 
+        diffs = np.where(output2a - output2 != 0)[0]
+        print(f"indexes of differences: {diffs}")
+
         assert(np.array_equal(output2, output2a))
+
+    def test_save_state(self):
+        emu = self.emu
+        while emu.current_frame_number < 50:
+            emu.next_frame()
+        state1 = emu.calc_current_state()
+        cycles1 = emu.cycles_since_power_on
+        print(cycles1, state1)
+        print(emu.status['cycles_since_power_on'][0])
+        while emu.current_frame_number < 100:
+            emu.next_frame()
+        state2 = emu.calc_current_state()
+        cycles2 = emu.cycles_since_power_on
+        print(cycles2, state2)
+        print(emu.status['cycles_since_power_on'][0])
+
+        emu.restore_state(state1)
+        state1a = emu.calc_current_state()
+        cycles1a = emu.cycles_since_power_on
+        print(cycles1a, state1a)
+        print(emu.status['cycles_since_power_on'][0])
+        print(emu.output_raw)
+        assert(emu.current_frame_number == 50)
+        assert(cycles1 == emu.cycles_since_power_on)
+        while emu.current_frame_number < 100:
+            emu.next_frame()
+        state2a = emu.calc_current_state()
+        cycles2a = emu.cycles_since_power_on
+        print(cycles2a, state2a)
+        assert(emu.current_frame_number == 100)
+        assert(cycles2a == cycles2)
+        assert(cycles2a == emu.cycles_since_power_on)
+
+        diffs = np.where(state2a - state2 != 0)[0]
+        print(f"indexes of differences: {diffs}")
+
+        assert(np.array_equal(state2, state2a))
 
 class TestAtari800(Test6502):
     emu_name = "atari800"
+    emu = omni8bit.find_emulator(emu_name)()
+
+    def setup(self):
+        self.emu.configure_emulator()
