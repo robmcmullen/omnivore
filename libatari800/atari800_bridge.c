@@ -43,7 +43,7 @@
 
 #include "tinycthread.h"
 
-
+static int threading_status = thrd_error;
 mtx_t calculating_frame;
 cnd_t talking_stick;
 thrd_t frame_thread;
@@ -58,7 +58,7 @@ int threaded_frame(void *arg);
 
 /***** Initialization functions *****/
 
-int a8bridge_init(int argc, char **argv) {
+int init_thread() {
 	int err;
 
 	err = mtx_init(&calculating_frame, mtx_plain);
@@ -68,13 +68,26 @@ int a8bridge_init(int argc, char **argv) {
 	if (err == thrd_success) {
 		err = thrd_create(&frame_thread, threaded_frame, (void *)NULL);
 	}
-	if (err == thrd_success) {
-		printf("a8bridge_init: successfully created threading context\n");
+	return err;
+}
+
+int a8bridge_init(int argc, char **argv) {
+	int err;
+
+	if (threading_status == thrd_error) {
+		threading_status = init_thread();
+		if (threading_status == thrd_success) {
+			printf("a8bridge_init: successfully created threading context\n");
+		}
+		else {
+			printf("a8bridge_init: failed creating threading context: %d\n", threading_status);
+		}
 	}
 	else {
-		printf("a8bridge_init: failed creating threading context: %d\n", err);
+		printf("a8bridge_init: already created threading context: %d\n", threading_status);
 	}
 
+	err = threading_status;
 	if (err == thrd_success) {
 		if (!Atari800_Initialise(&argc, argv))
 			err = 3;
