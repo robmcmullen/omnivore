@@ -36,12 +36,17 @@ class Serializable:
                 for key in kls.serializable_attributes:
                     v = getattr(self, key)
                     if key in kls.serializable_computed:
-                        v = v.copy()
+                        v = self.calc_computed_attribute(key)
+                    else:
+                        v = getattr(self, key)
                     state[key] = v
         return state
 
     def serialize_to_text(self):
         return jsonpickle.encode(self.serialize_to_dict())
+
+    def calc_computed_attribute(self, key):
+        return getattr(self, key).copy()
 
     def restore_from_dict(self, state):
         """Custom jsonpickle state restore routine
