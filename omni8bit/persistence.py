@@ -1,3 +1,7 @@
+import jsonpickle
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_numpy.register_handlers()
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -14,7 +18,7 @@ class Serializable:
     def __init__(self):
         self.init_computed_attributes(self)
 
-    def __getstate__(self):
+    def serialize_to_dict(self):
         """Custom jsonpickle state save routine
 
         This routine culls down the list of attributes that should be
@@ -36,7 +40,10 @@ class Serializable:
                     state[key] = v
         return state
 
-    def __setstate__(self, state):
+    def serialize_to_text(self):
+        return jsonpickle.encode(self.serialize_to_dict())
+
+    def restore_from_dict(self, state):
         """Custom jsonpickle state restore routine
 
         The use of jsonpickle to recreate objects doesn't go through __init__,
@@ -68,6 +75,10 @@ class Serializable:
         self.restore_missing_attributes(state, missing)
         self.restore_renamed_attributes()
         self.restore_computed_attributes(state)
+
+    def restore_from_text(self, text):
+        state = jsonpickle.decode(text)
+        self.restore_from_dict(state)
 
     def restore_computed_attributes(self, state):
         """Hook to initialize/restore attributes that depend on serialized

@@ -145,6 +145,7 @@ class EmulatorBase(Debugger):
     ##### Serialization
 
     def restore_computed_attributes(self, state):
+        Debugger.restore_computed_attributes(self, state)
         self.input_raw[:] = state['input_raw']
         self.restore_state(state['output_raw'])
 

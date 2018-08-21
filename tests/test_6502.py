@@ -1,10 +1,10 @@
 import sys
 sys.path[0:0] = [".."]
+import json
 
 import pytest
 
 import numpy as np
-import jsonpickle
 
 import omni8bit
 
@@ -70,8 +70,8 @@ class Test6502(object):
         while emu.current_frame_number < 50:
             emu.next_frame()
         output0 = emu.calc_current_state()
-        state1 = emu.__getstate__()
-        emu.__setstate__(state1)
+        state1 = emu.serialize_to_dict()
+        emu.restore_from_dict(state1)
         output0a = emu.calc_current_state()
         compare(output0, output0a, 'output0 - output0a after setstate')
 
@@ -82,15 +82,15 @@ class Test6502(object):
         print(emu.status['cycles_since_power_on'][0])
         while emu.current_frame_number < 100:
             emu.next_frame()
-        state2 = emu.__getstate__()
+        state2 = emu.serialize_to_dict()
         cycles2 = emu.cycles_since_power_on
         output2 = emu.calc_current_state()
         print(cycles2, state2)
         print(emu.status['cycles_since_power_on'][0])
         compare(state1['output_raw'], output1, 'state1 - output1 before setstate')
 
-        emu.__setstate__(state1)
-        state1a = emu.__getstate__()
+        emu.restore_from_dict(state1)
+        state1a = emu.serialize_to_dict()
         cycles1a = emu.cycles_since_power_on
         output1a = emu.calc_current_state()
         compare(state1['output_raw'], output1, 'state1 - output1 after setstate')
@@ -107,7 +107,42 @@ class Test6502(object):
 
         while emu.current_frame_number < 100:
             emu.next_frame()
-        state2a = emu.__getstate__()
+        state2a = emu.serialize_to_dict()
+        cycles2a = emu.cycles_since_power_on
+        output2a = emu.calc_current_state()
+        print(cycles2a, state2a)
+        assert(emu.current_frame_number == 100)
+        assert(cycles2a == cycles2)
+        assert(cycles2a == emu.cycles_since_power_on)
+        compare(output2, output2a)
+
+    def test_serialize_json(self):
+        emu = self.emu
+        while emu.current_frame_number < 50:
+            emu.next_frame()
+        state1_encoded = emu.serialize_to_text()
+        print(state1_encoded)
+        cycles1 = emu.cycles_since_power_on
+        output1 = emu.calc_current_state()
+
+        while emu.current_frame_number < 100:
+            emu.next_frame()
+        cycles2 = emu.cycles_since_power_on
+        output2 = emu.calc_current_state()
+
+        # state1_restored = json.loads(encoded)
+        emu.restore_from_text(state1_encoded)
+        cycles1a = emu.cycles_since_power_on
+        output1a = emu.calc_current_state()
+
+        print(output1a)
+        assert(emu.current_frame_number == 50)
+        assert(cycles1 == emu.cycles_since_power_on)
+        compare(output1, output1a, 'output1 - output1a')
+
+        while emu.current_frame_number < 100:
+            emu.next_frame()
+        state2a = emu.serialize_to_dict()
         cycles2a = emu.cycles_since_power_on
         output2a = emu.calc_current_state()
         print(cycles2a, state2a)

@@ -195,11 +195,17 @@ class Debugger(Serializable):
     name = "<name>"
 
     serializable_attributes = ['debug_cmd_raw']
+    serializable_computed = {'debug_cmd_raw'}
 
     def __init__(self):
         self.debug_cmd_raw = np.zeros([dd.DEBUGGER_COMMANDS_DTYPE.itemsize], dtype=np.uint8)
         self.debug_cmd = self.debug_cmd_raw.view(dtype=dd.DEBUGGER_COMMANDS_DTYPE)
         self.clear_all_breakpoints()
+
+    ##### Serialization
+
+    def restore_computed_attributes(self, state):
+        self.debug_cmd_raw[:] = state['debug_cmd_raw']
 
     def clear_all_breakpoints(self):
         c = self.debug_cmd[0]

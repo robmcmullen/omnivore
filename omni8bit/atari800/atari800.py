@@ -86,10 +86,10 @@ class Atari800(EmulatorBase):
 
     mime_prefix = "application/vnd.atari8bit"
 
-    def __getstate__(self):
+    def serialize_to_dict(self):
         if not self.is_frame_finished:
             raise FrameNotFinishedError("atari800 can't save its internal state in the middle of a frame.")
-        return EmulatorBase.__getstate__(self)
+        return EmulatorBase.serialize_to_dict(self)
 
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
