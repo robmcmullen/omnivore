@@ -1032,6 +1032,7 @@ void ANTIC_Reset(void)
 	ANTIC_NMIEN = 0x00;
 	ANTIC_NMIST = 0x1f;
 	ANTIC_PutByte(ANTIC_OFFSET_DMACTL, 0);
+	ANTIC_xpos = 0;
 }
 
 #if !defined(BASIC) && !defined(CURSES_BASIC)

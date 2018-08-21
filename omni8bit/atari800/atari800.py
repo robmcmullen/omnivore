@@ -110,6 +110,12 @@ class Atari800(EmulatorBase):
         assert pc == (raw_pc[0] + 256 * raw_pc[1])
         return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)
 
+    @property
+    def current_antic_status(self):
+        antic_offset = self.output[0]['tag_antic']
+        registers = self.raw_state[antic_offset:antic_offset+d.ANTIC_DTYPE.itemsize]
+        return f"antic: {str(registers)}"
+
     def process_args(self, emu_args):
         # FIXME: need to find a way to turn on/off carts outside of the init
         # routines because boot_from_file restarts the machine with the new
