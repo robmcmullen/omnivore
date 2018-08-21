@@ -7,6 +7,7 @@ from atrcopy import find_diskimage
 
 from .debugger import Debugger
 from .debugger.dtypes import FRAME_STATUS_DTYPE
+from .history import History
 
 import logging
 log = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class EmulatorBase(Debugger):
         self.bootfile = None
         self.frame_count = 0
         self.frame_event = []
-        self.history = {}
+        self.history = History()
         self.offsets = None
         self.names = None
         self.save_state_memory_blocks = None
@@ -351,10 +352,10 @@ class EmulatorBase(Debugger):
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
         frame_number = int(self.status['frame_number'][0])
-        if force or self.frame_count % 10 == 0:
+        if force or self.history.is_memorable(frame_number):
             print(f"Saving history at {frame_number}")
             d = self.calc_current_state()
-            self.history[frame_number] = d
+            self.history.save_frame(frame_number, d)
             self.print_history(frame_number)
 
     def get_history(self, frame_number):
@@ -391,21 +392,10 @@ class EmulatorBase(Debugger):
         print("history[%d] of %d: %d %s" % (status['frame_number'], len(self.history), len(d), output['state'][0][0:8]))
 
     def get_previous_history(self, frame_cursor):
-        n = frame_cursor - 1
-        while n > 0:
-            if n in self.history:
-                return n
-            n -= 1
-        raise IndexError("No previous frame")
+        return self.history.get_previous_frame(frame_cursor)
 
     def get_next_history(self, frame_cursor):
-        n = frame_cursor + 1
-        largest = max(self.history.keys())
-        while n < largest:
-            if n in self.history:
-                return n
-            n += 1
-        raise IndexError("No next frame")
+        return self.history.get_next_frame(frame_cursor)
 
     def get_color_indexed_screen(self, frame_number=-1):
         """Return color indexed screen in whatever native format this
