@@ -41,7 +41,7 @@ class TestHistory(object):
         state = h.serialize_to_dict()
         print(state)
         assert(len(state) == 1)
-        assert(len(state['history']) == 10)
+        assert(len(state['frame_history']) == 10)
 
         h2 = History()
         h2.restore_from_dict(state)
