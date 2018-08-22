@@ -182,7 +182,7 @@ class FileGuess(object):
             log.debug(f"No json metadata found for {uri}")
             unserialized = {}
         else:
-            raw = fh.read(self.head_size)
+            raw = fh.read()
             fh.close()
             fs.close()
             unserialized = jsonutil.unserialize(uri, raw)
