@@ -55,6 +55,8 @@ uint8_t *access_type;
 
 int threaded_frame(void *arg);
 
+#undef PRINT_THREAD_STATUS
+
 
 /***** Initialization functions *****/
 
@@ -77,14 +79,18 @@ int a8bridge_init(int argc, char **argv) {
 	if (threading_status == thrd_error) {
 		threading_status = init_thread();
 		if (threading_status == thrd_success) {
+#ifdef PRINT_THREAD_STATUS
 			printf("a8bridge_init: successfully created threading context\n");
+#endif
 		}
 		else {
 			printf("a8bridge_init: failed creating threading context: %d\n", threading_status);
 		}
 	}
 	else {
+#ifdef PRINT_THREAD_STATUS
 		printf("a8bridge_init: already created threading context: %d\n", threading_status);
+#endif
 	}
 
 	err = threading_status;
@@ -229,7 +235,9 @@ int threaded_frame(void *arg) {
 			printf("cnd_wait failed in threaded_frame\n");
 		}
 		else {
+#ifdef PRINT_THREAD_STATUS
 			printf("threaded_frame has the talking stick\n");
+#endif
 		}
 
 		LIBATARI800_Mouse();
@@ -259,7 +267,9 @@ int threaded_frame(void *arg) {
 			printf("cnd_broadcast failed in threaded_frame\n");
 		}
 		else {
+#ifdef PRINT_THREAD_STATUS
 			printf("threaded_frame giving up the talking stick\n");
+#endif
 		}
 	}
 	printf("threaded_frame exited with %d\n", err);
@@ -280,17 +290,23 @@ int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints) {
 		printf("cnd_broadcast failed in a8bridge_calc_frame\n");
 	}
 	else {
+#ifdef PRINT_THREAD_STATUS
 		printf("a8bridge_calc_frame giving up the talking stick\n");
+#endif
 	}
 
+#ifdef PRINT_THREAD_STATUS
 	printf("a8bridge_calc_frame waiting for frame or breakpoint\n");
+#endif
 
 	err = cnd_wait(&talking_stick, &calculating_frame);
 	if (err == thrd_error) {
 		printf("cnd_wait failed in a8bridge_calc_frame\n");
 	}
 	else {
+#ifdef PRINT_THREAD_STATUS
 		printf("a8bridge_calc_frame has the talking stick\n");
+#endif
 	}
 	return -1;
 }

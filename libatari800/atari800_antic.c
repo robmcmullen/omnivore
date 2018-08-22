@@ -2895,8 +2895,6 @@ void ANTIC_Frame(int draw_display)
 	int cpu2antic_index;
 #endif /* NEW_CYCLE_EXACT */
 
-    printf("ANTIC_Frame:\n");
-
 	ANTIC_ypos = 0;
 	do {
 		POKEY_Scanline();		/* check and generate IRQ */
