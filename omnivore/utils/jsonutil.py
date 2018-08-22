@@ -1,4 +1,6 @@
 import jsonpickle
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_numpy.register_handlers()
 
 import logging
 log = logging.getLogger(__name__)
@@ -120,14 +122,15 @@ def dict_to_list(d):
 
 def unserialize(name, raw):
     try:
-        if raw.startswith(b"#"):
-            header, raw = raw.split(b"\n", 1)
-        unserialized = jsonpickle.loads(raw)
+        text = raw.decode('utf-8')
+        if text.startswith("#"):
+            header, text = text.split("\n", 1)
+        unserialized = jsonpickle.loads(text)
     except ValueError as e:
-        log.error("JSON parsing error for extra metadata in %s: %s" % (uri, str(e)))
+        log.error(f"JSON parsing error for extra metadata: {str(e)}")
         unserialized = {}
     except AttributeError as e:
-        log.error("JSON library error: %s: %s" % (uri, str(e)))
+        log.error(f"JSON library error: {str(e)}")
         unserialized = {}
     return unserialized
 
