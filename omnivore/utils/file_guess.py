@@ -113,8 +113,12 @@ class FileGuess(object):
     # parsers that rely on size detection
     head_size = 1024*1024 - 1
 
-    def __init__(self, uri, metadata_ext=".omnivore"):
-        self.metadata_ext = metadata_ext
+    metadata_exts = [".omnivore", ".omniemu"]
+
+    def __init__(self, uri, metadata_ext=None):
+        if metadata_ext is not None:
+            # override class attribute
+            self.metadata_exts = [metadata_ext]
         self.force_mime = None
         self._likely_binary = None
         log.debug("Attempting to load %s" % uri)
@@ -161,7 +165,17 @@ class FileGuess(object):
         self.reload_json_metadata(uri)
 
     def reload_json_metadata(self, uri):
-        uri = uri + self.metadata_ext
+        self.json_metadata = {}
+        for ext in self.metadata_exts:
+            unserialized = self.load_unserialized_metadata(uri, ext)
+            self.json_metadata[ext] = unserialized
+            mime = unserialized.get("mime", None)
+            if mime is not None and self.force_mime is not None:
+                self.force_mime = mime
+        print("JSON metadata for exts:", self.json_metadata)
+
+    def load_unserialized_metadata(self, uri, ext):
+        uri = uri + ext
         try:
             fh, fs, relpath = self.get_fs(uri)
         except FSError as e:
@@ -172,9 +186,7 @@ class FileGuess(object):
             fh.close()
             fs.close()
             unserialized = jsonutil.unserialize(uri, raw)
-        self.json_metadata = unserialized
-        self.force_mime = unserialized.get("mime", None)
-        print("JSON METODOTO", unserialized)
+        return unserialized
 
     def __str__(self):
         return "guess: metadata: %s, %d bytes available for signature" % (self.metadata, len(self.raw_bytes))

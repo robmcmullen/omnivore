@@ -120,9 +120,10 @@ def dict_to_list(d):
     """
     return sorted([list(i) for i in list(d.items())])
 
-def unserialize(name, raw):
+def unserialize(name, text):
     try:
-        text = raw.decode('utf-8')
+        if hasattr(text, 'decode'):
+            text = text.decode('utf-8')
         if text.startswith("#"):
             header, text = text.split("\n", 1)
         unserialized = jsonpickle.loads(text)

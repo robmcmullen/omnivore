@@ -27,7 +27,8 @@ class AtrcopyRecognizer(HasTraits):
             return mime
 
     def load(self, guess):
-        emulator_type = guess.json_metadata.get("emulator_type", None)
+        file_metadata = guess.json_metadata.get(".omniemu", {})
+        emulator_type = file_metadata.get("emulator_type", None)
         if emulator_type:
             doc = emu.EmulationDocument(source_document=None, emulator_type=emulator_type)
         else:

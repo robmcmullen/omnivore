@@ -23,6 +23,7 @@ class EmulatorSegmentParser(SegmentParser):
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
         for start, count, offset, name in self.save_state_memory_blocks:
             if count > 0:
+                print(f"creating emulator segment {name} at {hex(start)}:{hex(start + count)}")
                 self.segments.append(DefaultSegment(r[start:start + count], offset, name))
 
 def segment_parser_factory(save_state_memory_blocks):
@@ -44,6 +45,8 @@ class EmulationDocument(SegmentedDocument):
     # Class attributes
 
     emulation_timer = None
+
+    metadata_extension = ".omniemu"
 
     # Traits
 
@@ -77,6 +80,7 @@ class EmulationDocument(SegmentedDocument):
             except UnknownEmulatorError:
                 emu_cls = emu.default_emulator
         emu = emu_cls()
+        emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
         self.emulator = emu
 
@@ -100,13 +104,29 @@ class EmulationDocument(SegmentedDocument):
 
         if 'emulator_type' in e:
             self.emulator_type = find_emulator(e['emulator_type'])
+        if 'frame_history' in e:
+            self.emulator.history.restore_from_dict(e)
+            self.emulator.configure_io_arrays()
+            self.create_segments()
+        if 'current_frame' in e:
+            self.emulator.restore_from_dict(e['current_frame'])
         self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
 
     def serialize_extra_to_dict(self, mdict):
         SegmentedDocument.serialize_extra_to_dict(self, mdict)
 
         mdict["emulator_type"] = self.emulator.name
+        mdict.update(self.emulator.history.serialize_to_dict())
+        mdict["current_frame"] = self.emulator.serialize_to_dict()
         mdict["skip_frames_on_boot"] = self.skip_frames_on_boot
+
+    def save_to_uri(self, uri, editor, saver=None, save_metadata=True):
+        # save both the source document and its .omnivore metadata and...
+        self.source_document.save_to_uri(uri, editor, saver, save_metadata)
+
+        # the emulator metadata .omniemu from this emulator document
+        if save_metadata:
+            self.save_metadata_to_uri(uri, editor)
 
     ##### Initial viewer defaults
 
@@ -130,11 +150,7 @@ class EmulationDocument(SegmentedDocument):
         emu.boot_from_segment(segment, self.source_document.segments)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
-        self.raw_bytes = emu.raw_array
-        self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
-        self.parse_segments([segment_parser_factory(emu.save_state_memory_blocks)])
-        log.debug("Segments after boot: %s" % str(self.segments))
-        self.create_timer()
+        self.create_segments()
         self.start_timer()
 
     def load(self, segment=None):
@@ -144,20 +160,23 @@ class EmulationDocument(SegmentedDocument):
         emu.begin_emulation([], segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
+        self.create_segments()
+        self.start_timer()
+
+    def create_segments(self):
+        emu = self.emulator
         self.raw_bytes = emu.raw_array
         self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
         self.parse_segments([segment_parser_factory(emu.save_state_memory_blocks)])
         log.debug("Segments after boot: %s" % str(self.segments))
         self.create_timer()
-        self.start_timer()
 
     ##### Emulator commands
 
     def create_timer(self):
         cls = self.__class__
-        if cls.emulation_timer is not None:
-            raise RuntimeError("Timer already exists, can't run multiple emulators at once!")
-        cls.emulation_timer = EmulationTimer(self)
+        if cls.emulation_timer is None:
+            cls.emulation_timer = EmulationTimer(self)
 
     def start_timer(self, repeat=False, delay=None, forceupdate=True):
         if not self.emulation_timer.IsRunning():

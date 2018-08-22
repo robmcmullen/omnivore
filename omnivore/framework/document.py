@@ -44,6 +44,8 @@ class BaseDocument(HasTraits):
 
     json_expand_keywords = {}
 
+    metadata_extension = ".omnivore"
+
     # Traits
 
     undo_stack = Any
@@ -194,7 +196,8 @@ class BaseDocument(HasTraits):
         self.extra_metadata = extra
 
     def load_extra_metadata(self, guess):
-        return guess.json_metadata
+        ext = self.metadata_extension
+        return guess.json_metadata.get(ext, dict())
 
     def calc_unserialized_template(self, template):
         try:
@@ -273,8 +276,9 @@ class BaseDocument(HasTraits):
             self.last_task_id = e['last_task_id']
 
     def load_baseline(self, uri, confirm_callback=None):
+        log.debug(f"loading baseline data from {uri}")
         if confirm_callback is None:
-            confirm_callback = lambda a: True
+            confirm_callback = lambda a,b: True
         try:
             guess = FileGuess(uri)
         except Exception as e:
@@ -303,10 +307,7 @@ class BaseDocument(HasTraits):
         # as writeable in case this is a virtual filesystem (like ZipFS),
         # otherwise the write to the actual file will fail with a read-
         # only filesystem error.
-        if saver is None:
-            raw_bytes = self.raw_bytes.tostring()
-        else:
-            raw_bytes = saver(self, editor)
+        raw_bytes = self.calc_raw_bytes_to_save(editor, saver)
 
         if uri.startswith("file://"):
             # FIXME: workaround to allow opening of file:// URLs with the
@@ -317,25 +318,40 @@ class BaseDocument(HasTraits):
         log.debug("saving to %s" % uri)
         fh.write(raw_bytes)
         fh.close()
+        fs.close()
 
         if save_metadata:
-            mdict = self.init_extra_metadata_dict(editor)
-            task_metadata = dict()
-            editor.to_metadata_dict(task_metadata, self)
-            self.store_task_specific_metadata(editor, mdict, task_metadata)
-            if mdict:
-                relpath += ".omnivore"
-                log.debug("saving extra metadata to %s" % relpath)
-                jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-                raw_bytes = jsonpickle.dumps(mdict)
-                text = jsonutil.collapse_json(raw_bytes, 8, self.json_expand_keywords)
-                header = editor.get_extra_metadata_header()
-                fh = fs.open(relpath, 'w')
-                fh.write(header)
-                fh.write(text)
-                fh.close()
+            self.save_metadata_to_uri(uri, editor)
 
-        fs.close()
+    def save_metadata_to_uri(self, uri, editor):
+        mdict = self.calc_metadata_to_save(editor)
+        ext = self.metadata_extension
+        if mdict:
+            fs, relpath = opener.parse(uri + ext, writeable=True)
+            log.debug("saving extra metadata to %s" % relpath)
+            jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
+            raw_bytes = jsonpickle.dumps(mdict)
+            text = jsonutil.collapse_json(raw_bytes, 8, self.json_expand_keywords)
+            header = editor.get_extra_metadata_header()
+            fh = fs.open(relpath, 'w')
+            fh.write(header)
+            fh.write(text)
+            fh.close()
+            fs.close()
+
+    def calc_raw_bytes_to_save(self, editor, saver):
+        if saver is None:
+            raw_bytes = self.raw_bytes.tostring()
+        else:
+            raw_bytes = saver(self, editor)
+        return raw_bytes
+
+    def calc_metadata_to_save(self, editor):
+        mdict = self.init_extra_metadata_dict(editor)
+        task_metadata = dict()
+        editor.to_metadata_dict(task_metadata, self)
+        self.store_task_specific_metadata(editor, mdict, task_metadata)
+        return mdict
 
     def save_next_to_on_filesystem(self, ext, data, mode="w"):
         path = self.filesystem_path()
