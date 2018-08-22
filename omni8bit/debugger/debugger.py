@@ -217,6 +217,7 @@ class Debugger(Serializable):
         c = self.debug_cmd[0]
         empty = np.where(c['breakpoint_status'] == dd.BREAKPOINT_EMPTY)[0]
         bpid = empty[0]
+        c['num_breakpoints'] = max(c['num_breakpoints'], bpid + 1)
         return Breakpoint(self, bpid, addr)
 
     def get_breakpoint(self, bpid):
