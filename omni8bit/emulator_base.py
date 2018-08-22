@@ -150,6 +150,12 @@ class EmulatorBase(Debugger):
         self.input_raw[:] = state['input_raw']
         self.restore_state(state['output_raw'])
 
+        # recalculate any internal offsets within output_raw, e.g. atari800
+        # needs this because the size of the state save file changes depending
+        # on the emulator configuration
+        self.low_level_interface.get_current_state(state['output_raw'])
+        self.configure_save_state_memory_blocks()
+
     ##### Initialization
 
     def configure_emulator(self, emu_args=None, *args, **kwargs):
@@ -166,6 +172,9 @@ class EmulatorBase(Debugger):
         print(f"input_raw: {self.input_raw.shape}  {self.input_raw}")
         print(f"output_raw: {self.output_raw.shape} {self.output_raw}")
         self.low_level_interface.configure_state_arrays(self.input, self.output_raw)
+        self.configure_save_state_memory_blocks()
+
+    def configure_save_state_memory_blocks(self):
         self.parse_state()
         self.generate_save_state_memory_blocks()
         self.cpu_state = self.calc_cpu_data_array()
