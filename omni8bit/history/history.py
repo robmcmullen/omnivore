@@ -10,8 +10,10 @@ log = logging.getLogger(__name__)
 
 
 class History(Serializable):
-    serializable_attributes = ['input_raw', 'output_raw', 'frame_count']
-    serializable_computed = {'input_raw', 'output_raw'}
+    name = None
+
+    serializable_attributes = ['history']
+    serializable_computed = {'history'}
 
     def __init__(self):
         self.history = self.calc_history_iterable()
@@ -21,15 +23,28 @@ class History(Serializable):
 
     ##### Serialization
 
+    def calc_computed_attribute(self, key):
+        if key == 'history':
+            return [list(a) for a in self.history.items()]
+        return getattr(self, key).copy()
+
     def restore_computed_attributes(self, state):
-        Debugger.restore_computed_attributes(self, state)
-        self.input_raw[:] = state['input_raw']
-        self.restore_state(state['output_raw'])
+        self.history = self.calc_history_iterable()
+        for frame_number, data in state['history']:
+            self.history[frame_number] = data
 
     ##### Storage indexes
 
     def __len__(self):
         return len(self.history)
+
+    def __iter__(self):
+        keys = sorted(self.history.keys())
+        for k in keys:
+            yield self.history[k]
+
+    def keys(self):
+        return sorted(self.history.keys())
 
     def is_memorable(self, frame_number):
         return frame_number % 10 == 0

@@ -30,7 +30,8 @@ class Serializable:
         json.
         """
         state = dict()
-        state['name'] = self.name
+        if self.name is not None:
+            state['name'] = self.name
         for kls in self.__class__.__mro__:
             if hasattr(kls, 'serializable_attributes'):
                 for key in kls.serializable_attributes:
@@ -56,7 +57,7 @@ class Serializable:
         json. Once a version gets out in the wild and additional attributes are
         added to a segment, a default value should be applied here.
         """
-        if state['name'] != self.name:
+        if self.name is not None and state['name'] != self.name:
             raise TypeError(f"Can't restore {state['name']} to {self.name}")
         already_seen = set()
         missing = []
