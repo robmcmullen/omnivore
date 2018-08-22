@@ -228,9 +228,9 @@ class ByteEditor(FrameworkEditor):
             linked_bases[base.uuid] = base
             log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
         uuid = e.get("center_base", None)
-        if uuid is not None:
+        try:
             self.center_base = linked_bases[uuid]
-        else:
+        except KeyError:
             self.center_base = LinkedBase(editor=self)
         self.create_viewers(layout, viewer_metadata, e, linked_bases)
         viewer = None
