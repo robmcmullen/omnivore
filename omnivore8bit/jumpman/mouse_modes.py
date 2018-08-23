@@ -420,7 +420,7 @@ class EraseGirderMode(DrawMode):
     menu_item_name = "Erase Girder"
     menu_item_tooltip = "Erase girders"
     drawing_object = jp.EraseGirder
-    editor_trait_for_enabled = 'can_erase_objects'
+    editor_trait_for_enabled = 'focused_viewer.can_erase_objects'
 
 
 class EraseLadderMode(DrawMode):
@@ -428,7 +428,7 @@ class EraseLadderMode(DrawMode):
     menu_item_name = "Erase Ladder"
     menu_item_tooltip = "Erase ladders (vertical only)"
     drawing_object = jp.EraseLadder
-    editor_trait_for_enabled = 'can_erase_objects'
+    editor_trait_for_enabled = 'focused_viewer.can_erase_objects'
 
 
 class EraseRopeMode(DrawMode):
@@ -436,7 +436,7 @@ class EraseRopeMode(DrawMode):
     menu_item_name = "Erase Rope"
     menu_item_tooltip = "Erase ropes (vertical only)"
     drawing_object = jp.EraseRope
-    editor_trait_for_enabled = 'can_erase_objects'
+    editor_trait_for_enabled = 'focused_viewer.can_erase_objects'
 
 
 class DrawPeanutMode(DrawMode):

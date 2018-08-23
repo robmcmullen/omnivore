@@ -47,7 +47,10 @@ class MouseHandlerBaseAction(EditorAction):
     def on_dynamic_menu_update(self, ui_state):
         if ui_state is Undefined:
             return
-        self.enabled = self.handler in ui_state.focused_viewer.valid_mouse_modes
+        enabled = self.handler in ui_state.focused_viewer.valid_mouse_modes
+        if enabled and self.enabled_name:
+            enabled = self._get_attr(ui_state, self.enabled_name, False)
+        self.enabled = enabled
         log.debug("on_dynamic_menu_update %s: focused_viewer=%s enabled=%s" % (self.handler, ui_state.focused_viewer, self.enabled))
 
 
