@@ -55,11 +55,15 @@ class EmulatorViewer(SegmentViewer):
         # self.control.recalc_view()
         self.control.Refresh()
 
+    def update_window_title(self):
+        pass
+
     @on_trait_change('linked_base.editor.document.emulator_update_screen_event')
     def process_emulator_update_screen(self, evt):
         log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.show_frame(force=True)
+            self.update_window_title()
 
 
 class Atari800Viewer(EmulatorViewer):
@@ -73,6 +77,16 @@ class Atari800Viewer(EmulatorViewer):
 
     def show_caret(self, control, index, bit):
         pass
+
+    @property
+    def window_title(self):
+        return f"{self.pretty_name} (frame {self.linked_base.emulator.current_frame_number})"
+
+    def update_window_title(self):
+        self.update_caption()
+        # FIXME: probably shouldn't know this much about the internals to call
+        # blah.blah.title_bar
+        self.control.GetParent().title_bar.Refresh()
 
     ##### Spring Tab interface
 
