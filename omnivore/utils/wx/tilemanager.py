@@ -862,7 +862,7 @@ class TileManager(wx.Window):
                 pos = evt.GetPosition()
                 if self.menu_hit_test.in_rect(pos) is not None:
                     print("FINISH IN MENU ITEM! change to popdown mode that doesn't need the mouse button down!")
-                    return
+                    # return  # FIXME: disabled mouse up menu mode for now
                 elif menu_item.actual_popup.GetScreenRect().Contains(self.ClientToScreen(pos)):
                     print("FINISH IN MENU! leave open!")
                     leave_open = True
