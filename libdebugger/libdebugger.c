@@ -18,14 +18,14 @@ typedef struct {
 	uint16_t stack[TOKENS_PER_BREAKPOINT];
 	int index;
 	int error;
-} stack_t;
+} postfix_stack_t;
 
-void clear(stack_t *s) {
+void clear(postfix_stack_t *s) {
 	s->index = 0;
 	s->error = 0;
 }
 
-void push(stack_t *s, uint16_t value) {
+void push(postfix_stack_t *s, uint16_t value) {
 	if (s->index >= TOKENS_PER_BREAKPOINT) {
 		s->error = STACK_OVERFLOW;
 	}
@@ -41,7 +41,7 @@ void push(stack_t *s, uint16_t value) {
 #endif
 }
 
-uint16_t pop(stack_t *s) {
+uint16_t pop(postfix_stack_t *s) {
 	uint16_t value;
 
 	if (s->index > 0) {
@@ -61,7 +61,7 @@ uint16_t pop(stack_t *s) {
 	return value;
 }
 
-void process_binary(uint16_t token, stack_t *s) {
+void process_binary(uint16_t token, postfix_stack_t *s) {
 	uint16_t first, second, value;
 
 	first = pop(s);
@@ -96,7 +96,7 @@ void process_binary(uint16_t token, stack_t *s) {
 	}
 }
 
-int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, stack_t *s) {
+int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, postfix_stack_t *s) {
 	return 0;
 }
 
@@ -104,7 +104,7 @@ int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, sta
 int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_state_callback_ptr get_emulator_value) {
 	uint16_t token, addr, value;
 	int i, num_entries, index, status, final_value, count;
-	stack_t stack;
+	postfix_stack_t stack;
 
 	num_entries = breakpoints->num_breakpoints;
 
