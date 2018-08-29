@@ -130,6 +130,9 @@ class Atari800(EmulatorBase):
 
     def generate_save_state_memory_blocks(self):
         s = self.state_start_offset
+        for name in self.output[0].dtype.names:
+            print(f"offsets: output[{name}] = {self.output[0][name]}")
+
         self.computed_dtypes = {
             'ANTIC': d.ANTIC_DTYPE,
             'GTIA': d.GTIA_DTYPE,
