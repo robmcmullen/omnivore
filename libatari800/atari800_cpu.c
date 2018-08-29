@@ -444,6 +444,36 @@ static const int cycles[256] =
 	2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7		/* Fx */
 };
 
+#undef GET_CODE_BYTE
+#undef PEEK_CODE_BYTE
+#undef PEEK_CODE_WORD
+
+#ifdef PC_PTR
+	const UBYTE *PC;
+#else
+	UWORD PC;
+#endif
+
+UBYTE GET_CODE_BYTE() {
+	memory_access[PC]=255;
+	access_type[PC]|=ACCESS_TYPE_EXECUTE;
+	return MEMORY_mem[PC++];
+}
+
+UBYTE PEEK_CODE_BYTE() {
+	memory_access[PC]=255;
+	access_type[PC]|=ACCESS_TYPE_EXECUTE;
+	return MEMORY_mem[PC];
+}
+
+UWORD PEEK_CODE_WORD() {
+	memory_access[PC]=255;
+	memory_access[PC+1]=255;
+	access_type[PC]|=ACCESS_TYPE_EXECUTE;
+	access_type[PC+1]|=ACCESS_TYPE_EXECUTE;
+	return MEMORY_dGetWord(PC);
+}
+
 /* 6502 emulation routine */
 #ifndef NO_GOTO
 __extension__ /* suppress -ansi -pedantic warnings */
@@ -546,11 +576,6 @@ void CPU_GO(int limit)
 #define OPCODE(code) OPCODE_ALIAS(code)
 #endif
 
-#ifdef PC_PTR
-	const UBYTE *PC;
-#else
-	UWORD PC;
-#endif
 	UBYTE A;
 	UBYTE X;
 	UBYTE Y;
@@ -558,31 +583,6 @@ void CPU_GO(int limit)
 
 	UWORD addr;
 	UBYTE data;
-
-#undef GET_CODE_BYTE
-#undef PEEK_CODE_BYTE
-#undef PEEK_CODE_WORD
-
-UBYTE GET_CODE_BYTE() {
-	memory_access[PC]=255;
-	access_type[PC]|=ACCESS_TYPE_EXECUTE;
-	return MEMORY_mem[PC++];
-}
-
-UBYTE PEEK_CODE_BYTE() {
-	memory_access[PC]=255;
-	access_type[PC]|=ACCESS_TYPE_EXECUTE;
-	return MEMORY_mem[PC];
-}
-
-UWORD PEEK_CODE_WORD() {
-	memory_access[PC]=255;
-	memory_access[PC+1]=255;
-	access_type[PC]|=ACCESS_TYPE_EXECUTE;
-	access_type[PC+1]|=ACCESS_TYPE_EXECUTE;
-	return MEMORY_dGetWord(PC);
-}
-
 #define insn data
 
 /*
