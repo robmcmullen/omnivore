@@ -183,6 +183,102 @@ class DisassemblerGenerator(DataGenerator):
     def start_formatter(self, lines):
         self.gen_numpy_single_print(lines, self.opcode_table)
 
+class HistoryParser(DataGenerator):
+    def __init__(self, cpu, cpu_name, formatter_class):
+        self.formatter_class = formatter_class
+        self.setup(cpu, cpu_name)
+        self.generate(True)
+
+    def setup(self, cpu, cpu_name):
+        self.set_case(False, False, False)
+        self.rw_modes = set()
+        self.cpu = cpu
+        self.cpu_name = cpu_name
+
+        cpu = cputables.processors[cpu]
+        self.address_modes = {}
+        table = cpu['addressModeTable']
+        for mode, fmt in list(table.items()):
+            self.address_modes[mode] = fmt
+            if "'" in fmt:
+                print(fmt)
+        self.opcode_table = cpu['opcodeTable']
+
+    @property
+    def function_name(self):
+        text = "parse_history_entry_c_%s" % (self.cpu_name)
+        return text
+
+    def gen_numpy_single_print(self, lines, table, leadin=0, leadin_offset=0, indent="    ", z80_2nd_byte=None):
+        """Store in numpy array of strings:
+
+        0000 00 00 00 00       lda #$30
+                         ^^^^^ space for a 5 character label, to be placed later
+        """
+        formatter = self.formatter_class(self, lines, indent, leadin, leadin_offset)
+        multibyte = dict()
+
+        for opcode, optable in list(table.items()):
+            if opcode > 65536:
+                log.debug("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
+                leadin = opcode >> 24
+                second_byte = (opcode >> 16) & 0xff
+                if leadin not in multibyte:
+                    multibyte[leadin] = dict()
+                if second_byte not in multibyte[leadin]:
+                    multibyte[leadin][second_byte] = dict()
+                fourth_byte = opcode & 0xff
+                multibyte[leadin][second_byte][fourth_byte] = optable
+                continue
+            elif opcode > 255:
+                length, mnemonic, mode, flag = optable
+                # check for placeholder z80 instructions & ignore them the
+                # real instructions for ddcb and fdcb will have 4 byte
+                # opcodes
+                if flag & z80bit and (opcode == 0xddcb or opcode == 0xfdcb):
+                    continue
+                log.debug("found multibyte %x, l=%d" % (opcode, leadin_offset))
+                leadin = opcode // 256
+                opcode = opcode & 0xff
+                if leadin not in multibyte:
+                    multibyte[leadin] = dict()
+                multibyte[leadin][opcode] = optable
+                continue
+            try:
+                formatter.set_current(optable)
+            except ValueError:
+                # process z80 4-byte commands
+                log.debug("z80 4 byte: %x %x" % (leadin, opcode))
+                formatter.z80_4byte_intro(opcode)
+                self.gen_numpy_single_print(lines, optable, leadin, 2, indent=indent+"    ", z80_2nd_byte=opcode)
+                formatter.z80_4byte_outro()
+                continue
+
+            log.debug("Processing %x, %s" % (opcode, formatter.fmt))
+            if z80_2nd_byte is not None:
+                formatter.z80_4byte(z80_2nd_byte, opcode)
+                continue
+
+            formatter.process(opcode)
+
+        for leadin, group in list(multibyte.items()):
+            formatter.start_multibyte_leadin(leadin)
+            log.debug("starting multibyte with leadin %x" % leadin)
+            log.debug(group)
+            self.gen_numpy_single_print(lines, group, leadin, 1, indent=indent+"    ")
+
+        if not z80_2nd_byte:
+            formatter.unknown_opcode()
+        formatter.end_subroutine()
+
+    def start_formatter(self, lines):
+        self.gen_numpy_single_print(lines, self.opcode_table)
+
+
+class HistoryToText(DisassemblerGenerator):
+    pass
+
+
 def get_file(cpu_name, ext, monolithic, first=False):
     if monolithic:
         file_root = "hardcoded_parse_monolithic"
@@ -211,15 +307,20 @@ def gen_cpu(pyx, cpu, all_case_combos=False, do_py=False, do_c=True, monolithic=
             first = not monolithic
             if first:
                 fh.write(c_disclaimer)
+            disasm = HistoryParser(cpu, cpu_name, HistoryEntryC)
+            fh.write("\n".join(disasm.lines))
+            fh.write("\n")
+            first = False
+            pyx.function_name_list.append(disasm.function_name)
             if all_case_combos:
                 for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
-                    disasm = DisassemblerGenerator(cpu, cpu_name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                    disasm = HistoryToText(cpu, cpu_name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
                     first = False
                     pyx.function_name_list.append(disasm.function_name)
             else:
-                disasm = DisassemblerGenerator(cpu, cpu_name, formatter, first_of_set=first)
+                disasm = HistoryToText(cpu, cpu_name, formatter, first_of_set=first)
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
                 pyx.function_name_list.append(disasm.function_name)

@@ -69,14 +69,19 @@ typedef struct {
 	uint8_t after3;
 } history_write_three_6502_t; /* 14 bytes */
 
-/* affected address flags */
-#define HISTORY_READ 0
-#define HISTORY_WRITE_ONE 1
-#define HISTORY_WRITE_TWO 2
-#define HISTORY_WRITE_THREE 3
-#define HISTORY_JUMP 4
-#define HISTORY_RTS 5
-#define HISTORY_RTI 6
+/* flags */
+#define FLAG_BRANCH 1
+#define FLAG_JUMP 2
+#define FLAG_RTS 3
+#define FLAG_RTI 4
+#define FLAG_ORIGIN 5
+#define FLAG_DATA_BYTES 6
+#define FLAG_WRITE_ONE 7
+#define FLAG_WRITE_TWO 8
+#define FLAG_WRITE_THREE 9
+#define FLAG_VALID_TARGET_ADDR 32
+#define FLAG_LABEL 64
+#define FLAG_UNDOC 128
 
 /* disassembler types */
 #define DISASM_CODE 0
