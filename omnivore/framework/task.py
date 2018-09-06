@@ -1042,22 +1042,22 @@ class FrameworkTask(Task):
         """ Convenience method to show an information message dialog. """
 
         from pyface.message_dialog import information
-
-        return information(self.window.control, message, title)
+        current = self.window.control.FindFocus()
+        return information(current, message, title)
 
     def warning(self, message, title='Warning'):
         """ Convenience method to show a warning message dialog. """
 
         from pyface.message_dialog import warning
-
-        return warning(self.window.control, message, title)
+        current = self.window.control.FindFocus()
+        return warning(current, message, title)
 
     def error(self, message, title='Error'):
         """ Convenience method to show an error message dialog. """
 
         from pyface.message_dialog import error
-
-        return error(self.window.control, message, title)
+        current = self.window.control.FindFocus()
+        return error(current, message, title)
 
     def prompt(self, message, title='Prompt', default_value=""):
         """ Convenience method to show a text entry dialog."""
