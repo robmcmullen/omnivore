@@ -1987,7 +1987,7 @@ class SidebarMenuItem(wx.Window, DockTarget):
     can_take_leaf_focus = False
     is_sidebar = True
 
-    if wx.Platform == "__WXGTK__":
+    if wx.Platform == "__WXGTK__" or wx.Platform == "__WXMSW__":
         class SidebarPopupWindow(wx.Frame):
             def __init__(self, parent, style=None):
                 wx.Frame.__init__(self, parent, style = wx.NO_BORDER|wx.FRAME_FLOAT_ON_PARENT|wx.FRAME_NO_TASKBAR|wx.FRAME_SHAPED)
