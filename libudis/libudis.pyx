@@ -17,8 +17,8 @@ cdef class ParsedDisassembly:
     cdef int start_pc
     cdef int last_pc
     cdef int current_pc
-    cdef np.ndarray labels_array
-    cdef np.uint16_t *labels
+    cdef public np.ndarray labels
+    cdef np.uint16_t *labels_data
 
     def __init__(self, max_entries, start_pc):
         self.num_entries = max_entries
@@ -29,14 +29,14 @@ cdef class ParsedDisassembly:
         self.start_pc = start_pc
         self.last_pc = start_pc + self.num_entries
         self.current_pc = start_pc
-        self.labels_array = np.empty(self.last_pc, dtype=np.uint16)
-        self.labels = <np.uint16_t *>self.labels_array.data
+        self.labels = np.zeros(self.last_pc, dtype=np.uint16)
+        self.labels_data = <np.uint16_t *>self.labels.data
 
     cdef parse_next(self, parse_func_t processor, unsigned char *src, int num_bytes):
         cdef history_entry_t *h = &self.history_entries[self.entry_index]
         while self.current_pc < self.last_pc:
             if num_bytes > 0:
-                count = processor(h, src, self.current_pc, self.last_pc, self.labels)
+                count = processor(h, src, self.current_pc, self.last_pc, self.labels_data)
                 src += count
                 num_bytes -= count
                 self.current_pc += count

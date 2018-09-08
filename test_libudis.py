@@ -25,3 +25,8 @@ if __name__ == "__main__":
     e = p.entries.view(dtype=ud.HISTORY_ENTRY_DTYPE)
     for i in range(100):
         print(e[i])
+    print(hex(len(p.labels)))
+    used_labels = np.where(p.labels != 0)[0]
+    print(used_labels)
+    for index in used_labels:
+        print(index, p.labels[index])
