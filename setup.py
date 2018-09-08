@@ -3,6 +3,13 @@ import sys
 from setuptools import setup, find_packages, Extension
 import numpy as np
 
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    def cythonize(args):
+        return args
+
+
 if sys.platform.startswith("win"):
     extra_compile_args = ["-DMSVC", "-D_CRT_SECURE_NO_WARNINGS", "/Zi"]
     extra_link_args=['/DEBUG']
@@ -97,16 +104,10 @@ extensions = [
         include_dirs = ["lib6502", "lib6502/6502-emu", "libdebugger", np.get_include()],
         undef_macros = [ "NDEBUG" ],
     ),
-    Extension("omni8bit.udis_fast.disasm_info",
+    Extension("omni8bit.udis_fast.libudis",
         sources = [
-            "libudis/disasm_info.c",
-        ],
-        extra_compile_args = extra_compile_args,
-        include_dirs = [np.get_include()],
-        ),
-    Extension("omni8bit.udis_fast.disasm_speedups_monolithic",
-        sources = [
-            "libudis/disasm_speedups_monolithic.c",
+            "libudis/libudis.pyx",
+            "libudis/disasm_speedups_monolithic.pyx",
             "libudis/hardcoded_parse_monolithic.c",
         ],
         extra_compile_args = extra_compile_args,
@@ -165,7 +166,7 @@ setup(
     description = "Unified front-end providing common interface to control several 8 bit emulators",
     long_description = open('README.rst').read(),
     cmdclass = cmdclass,
-    ext_modules = extensions,
+    ext_modules = cythonize(extensions),
     packages = ["omni8bit"],
     install_requires = [
     'numpy',

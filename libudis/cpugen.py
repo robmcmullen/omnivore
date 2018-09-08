@@ -9,7 +9,7 @@ import glob
 import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
-from omni8bit.udis_fast.flags import pcr, und, z80bit, lbl, comment, flag_label, flag_return, flag_jump, flag_branch
+from omni8bit.udis_fast.flags import pcr, und, z80bit, lbl, comment, udis_opcode_flag_label, udis_opcode_flag_return, udis_opcode_flag_jump, udis_opcode_flag_branch
 
 
 # These contain extra info not in udis. Originally they were in udis but they
@@ -104,14 +104,14 @@ def fix_opcode_table(cpu, allow_undoc=False):
             if not allow_undoc:
                 continue
         if mode in labels:
-            flag |= flag_label
+            flag |= udis_opcode_flag_label
         if mnemonic in ret:
-            flag |= flag_return
+            flag |= udis_opcode_flag_return
         elif mode not in exclude_modes:
             if mnemonic in jump:
-                flag |= flag_jump
+                flag |= udis_opcode_flag_jump
             elif mnemonic in branch or mode in branch_modes:
-                flag |= flag_branch
+                flag |= udis_opcode_flag_branch
         fixed_table[opcode] = (length, mnemonic, mode, flag)
         if mnemonic == "nop" and flag == 0:
             nop = opcode

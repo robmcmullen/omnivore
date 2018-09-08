@@ -6,9 +6,9 @@ from omni8bit.udis_fast.flags import *
 
 # output flags
 c_define_flags = ""
-for flag_name, flag_val in list(locals().items()):
-    if flag_name.startswith("flag_"):
-        c_define_flags += "#define %s %s\n" % (flag_name.upper(), flag_val)
+# for flag_name, flag_val in list(locals().items()):
+#     if flag_name.startswith("flag_"):
+#         c_define_flags += "#define %s %s\n" % (flag_name.upper(), flag_val)
 
 
 def convert_fmt(fmt, mnemonic_lower = True, hex_lower=True, escape_strings=True):
@@ -624,24 +624,24 @@ class DataC(UnrolledC):
     preamble_header = c_preamble_header
 
     preamble = """
-int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
+int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     unsigned int num_printed = 0;
     char *first_instruction_ptr, *h;
 
     first_instruction_ptr = txt;
-    wrap->pc = (unsigned short)pc;
-    wrap->target_addr = 0;
-    wrap->strpos = strpos;
-    wrap->count = 4;
-    wrap->flag = FLAG_DATA_BYTES;
-    if (pc + wrap->count > last_pc) {
-        wrap->count = last_pc - pc;
-        if (wrap->count == 0) {
-            wrap->strlen = 0;
+    entry->pc = (unsigned short)pc;
+    entry->target_addr = 0;
+    entry->strpos = strpos;
+    entry->num_bytes = 4;
+    entry->flag = FLAG_DATA_BYTES;
+    if (pc + entry->num_bytes > last_pc) {
+        entry->num_bytes = last_pc - pc;
+        if (entry->num_bytes == 0) {
+            entry->strlen = 0;
             return 0;
         }
     }
-    switch(wrap->count) {
+    switch(entry->num_bytes) {
 """
     def print_bytes(self, count, data_op):
         outstr = data_op * count
@@ -662,13 +662,13 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
 
     def end_subroutine(self):
         self.out("}")
-        self.out("wrap->strlen = (int)(txt - first_instruction_ptr)")
-        self.out("return wrap->count")
+        self.out("entry->strlen = (int)(txt - first_instruction_ptr)")
+        self.out("return entry->num_bytes")
         self.lines.append("}") # no indent for closing brace
 
 class AnticC(DataC):
     preamble = """
-int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
+int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     unsigned char opcode;
     unsigned int num_printed = 0;
     int i;
@@ -676,26 +676,26 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
     char *first_instruction_ptr, *h;
 
     first_instruction_ptr = txt;
-    wrap->pc = (unsigned short)pc;
-    wrap->target_addr = 0;
-    wrap->strpos = strpos;
-    wrap->flag = FLAG_DATA_BYTES;
-    wrap->count = 1;
+    entry->pc = (unsigned short)pc;
+    entry->target_addr = 0;
+    entry->strpos = strpos;
+    entry->flag = FLAG_DATA_BYTES;
+    entry->num_bytes = 1;
     opcode = src[0];
 
     if (((opcode & 0x0f) == 1) || ((opcode & 0xf0) == 0x40)) {
-        wrap->count = 3;
-        if (pc + wrap->count > last_pc) {
-            wrap->count = last_pc - pc;
+        entry->num_bytes = 3;
+        if (pc + entry->num_bytes > last_pc) {
+            entry->num_bytes = last_pc - pc;
         }
     }
     else {
-        while ((pc + wrap->count < last_pc) && (wrap->count < 200)) {
-            if (src[wrap->count] == opcode) wrap->count += 1;
+        while ((pc + entry->num_bytes < last_pc) && (entry->num_bytes < 200)) {
+            if (src[entry->num_bytes] == opcode) entry->num_bytes += 1;
             else break;
         }
     }
-    for (i=0; i<wrap->count; i++) {
+    for (i=0; i<entry->num_bytes; i++) {
         h = &hexdigits[(src[i] & 0xff)*2];
         *txt++ = *h++;
         *txt++ = *h++;
@@ -716,7 +716,7 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
         self.out("        else {")
         self.opcode_line_out("JMP ", force_case=True)
         self.out("        }")
-        self.out("        if (wrap->count < 3) {")
+        self.out("        if (entry->num_bytes < 3) {")
         self.opcode_line_out("<bad addr>", force_case=True)
         self.out("        }")
         self.out("        else {")
@@ -726,8 +726,8 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
         self.out("    }")
         self.out("    else {")
         self.out("        if ((opcode & 0xf) == 0) {")
-        self.out("            if (wrap->count > 1) {")
-        self.opcode_line_out("%d\\x", ["wrap->count"])
+        self.out("            if (entry->num_bytes > 1) {")
+        self.opcode_line_out("%d\\x", ["entry->num_bytes"])
         self.out("            }")
         self.out("            if (opcode & 0x80) {")
         self.opcode_line_out("DLI ", force_case=True)
@@ -736,15 +736,15 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
         self.out("        }")
         self.out("        else {")
         self.out("            if ((opcode & 0xf0) == 0x40) {")
-        self.out("                if (wrap->count < 3) {")
+        self.out("                if (entry->num_bytes < 3) {")
         self.opcode_line_out("LMS <bad addr> ", force_case=True)
         self.out("                }")
         self.out("                else {")
         self.opcode_line_out("LMS $%02x%02x ", ["src[2]", "src[1]"], force_case=True)
         self.out("                }")
         self.out("            }")
-        self.out("            else if (wrap->count > 1) {")
-        self.opcode_line_out("%d\\x", ["wrap->count"])
+        self.out("            else if (entry->num_bytes > 1) {")
+        self.opcode_line_out("%d\\x", ["entry->num_bytes"])
         self.out("            }")
         self.out("            if (opcode & 0x80) {")
         self.opcode_line_out("DLI ", force_case=True)
@@ -759,8 +759,8 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
         self.out("        }")
         self.out("    }")
 
-        self.out("    wrap->strlen = (int)(txt - first_instruction_ptr)")
-        self.out("    return wrap->count")
+        self.out("    entry->strlen = (int)(txt - first_instruction_ptr)")
+        self.out("    return entry->num_bytes")
         self.out("}")
 
     def gen_cases(self):
@@ -771,43 +771,43 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int 
 
 class JumpmanHarvestC(UnrolledC):
     preamble = """
-int %s(history_entry_t *wrap, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
+int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels, char *txt, int strpos, int lc, char *hexdigits) {
     unsigned char opcode;
     char *mnemonic;
     char *first_instruction_ptr, *h;
 
     first_instruction_ptr = txt;
-    wrap->pc = (unsigned short)pc;
-    wrap->target_addr = 0;
-    wrap->strpos = strpos;
-    wrap->flag = FLAG_DATA_BYTES;
+    entry->pc = (unsigned short)pc;
+    entry->target_addr = 0;
+    entry->strpos = strpos;
+    entry->flag = FLAG_DATA_BYTES;
     opcode = src[0];
 """
 
     footer = """
     }
-    wrap->strlen = (int)(txt - first_instruction_ptr);
-    return wrap->count;
+    entry->strlen = (int)(txt - first_instruction_ptr);
+    return entry->num_bytes;
 }
 """
 
     def process(self, count):
         sections = [("""
     if (opcode == 0xff) {
-        wrap->count = 1;
-        if (pc + wrap->count > last_pc) {
-            wrap->count = last_pc - pc;
+        entry->num_bytes = 1;
+        if (pc + entry->num_bytes > last_pc) {
+            entry->num_bytes = last_pc - pc;
         }
         """, "%02x ; end", ["src[0]"]),
     ("""
     }
     else if (pc + 7 <= last_pc) {
-        wrap->count = 7;
+        entry->num_bytes = 7;
         """, "%02x"*7 + " ; enc=$%02x x=$%02x y=$%02x take=$%02x%02x paint=$%02x%02x", ["src[0]", "src[1]", "src[2]", "src[3]", "src[4]", "src[5]", "src[6]", "src[0]", "src[1]", "src[2]", "src[4]", "src[3]", "src[6]", "src[5]"]),
     ("""
     }
     else {
-        wrap->count = 1;
+        entry->num_bytes = 1;
         """, "%02x ; [incomplete]", ["src[0]"]),
     ]
         for code, outstr, argorder in sections:
@@ -826,17 +826,16 @@ class HistoryEntryC(RawC):
     preamble_header = c_preamble_header
 
     preamble = """
-int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
+int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
     int dist;
     unsigned int rel;
     unsigned short addr;
     unsigned char opcode, leadin, op1, op2, op3;
 
     opcode = *src++;
-    *dest++ = opcode;
-    wrap->pc = (unsigned short)pc;
-    wrap->target_addr = 0;
-    wrap->flag = 0;
+    entry->instruction[0] = opcode;
+    entry->pc = (unsigned short)pc;
+    entry->target_addr = 0;
 """
 
     def out(self, s):
@@ -848,8 +847,8 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
         self.out("case 0x%x:" % (opcode))
         self.out("    op1 = *src++")
         self.out("    op2 = *src++")
-        self.out("    wrap->num_bytes = 4")
-        self.out("    if (pc + wrap->num_bytes > last_pc) return 0")
+        self.out("    entry->num_bytes = 4")
+        self.out("    if (pc + entry->num_bytes > last_pc) return 0")
         self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
         self.out("    rel = (pc + 2 + dist) & 0xffff")
         self.out("    switch(op2) {")
@@ -865,15 +864,15 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
 
     def op1(self):
         self.out("    op1 = *src++")
-        self.out("    *dest++ = op1")
+        self.out("    entry->instruction[1] = op1")
 
     def op2(self):
         self.out("    op2 = *src++")
-        self.out("    *dest++ = op2")
+        self.out("    entry->instruction[2] = op2")
 
     def op3(self):
         self.out("    op3 = *src++")
-        self.out("    *dest++ = op3")
+        self.out("    entry->instruction[3] = op3")
 
     def start_if_clause(self, opcode):
         if self.first:
@@ -885,7 +884,7 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
         self.out("    break")
 
     def check_pc(self):
-        self.out("    wrap->num_bytes = %d" % self.length)
+        self.out("    entry->num_bytes = %d" % self.length)
         if self.length > 1:
             self.out("    if (pc + %d > last_pc) goto truncated" % self.length)
 
@@ -907,10 +906,18 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
         return "\"%s\"" % outstr
 
     def opcode1(self, opcode):
-        if self.flag & 0xff > 0:
-            self.out("    wrap->flag |= %d" % (self.flag & 0xff))
-        if self.undocumented:
-            self.out("    wrap->flag |= FLAG_UNDOC")
+        try:
+            f = udis_opcode_flag_map[self.flag & 0xff]
+        except KeyError:
+            f = None
+        if self.flag & und:
+            if f:
+                f += " | FLAG_UNDOC"
+            else:
+                f = "FLAG_UNDOC"
+        if f:
+            self.out(f"    entry->flag = {f}")
+        self.out(f"    entry->disassembler_type = DISASM_CODE")
 
     def opcode2(self, opcode):
         self.op1()
@@ -919,10 +926,10 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
                 self.out("    if (op1 > 127) dist = op1 - 256; else dist = op1")
                 self.out("    rel = (pc + 2 + dist) & 0xffff")
                 self.out("    labels[rel] = 1")
-                self.out("    wrap->target_addr = rel")
+                self.out("    entry->target_addr = rel")
             elif self.flag & lbl:
                 self.out("    labels[op1] = 1")
-                self.out("    wrap->target_addr = op1")
+                self.out("    entry->target_addr = op1")
         self.opcode1(opcode)
 
     def opcode3(self, opcode):
@@ -935,15 +942,11 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
                 # limit relative address to 64k address space
                 self.out("    rel = (pc + 2 + addr) & 0xffff")
                 self.out("    labels[rel] = 1")
-                self.out("    wrap->target_addr = rel")
-                if self.flag & 0xff > 0:
-                    self.out("    wrap->flag |= %d" % (self.flag & 0xff))
+                self.out("    entry->target_addr = rel")
             elif self.flag & lbl:
                 self.out("    addr = op1 + 256 * op2")
                 self.out("    labels[addr] = 1")
-                self.out("    wrap->target_addr = addr")
-                if self.flag & 0xff > 0:
-                    self.out("    wrap->flag |= %d" % (self.flag & 0xff))
+                self.out("    entry->target_addr = addr")
         self.opcode1(opcode)
 
     def opcode4(self, opcode):
@@ -954,18 +957,18 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
 
     def unknown_opcode(self):
         self.out("default:")
-        self.out("    wrap->flag = FLAG_DATA_BYTES")
+        self.out("    entry->flag = 0")
+        self.out("    entry->disassembler_type = DISASM_CODE")
         if self.leadin_offset == 0:
-            self.out("    wrap->num_bytes = 1")
+            self.out("    entry->num_bytes = 1")
             self.mnemonic = ""
             self.fmt = self.generator.data_op
             self.argorder = ["opcode"]
         elif self.leadin_offset == 1:
-            self.out("    wrap->num_bytes = 2")
+            self.out("    entry->num_bytes = 2")
             self.mnemonic = ""
             self.fmt = self.generator.data_op * 2
             self.argorder = ["leadin", "opcode"]
-        self.opcode1(0)
         self.out("    break")
 
     def start_multibyte_leadin(self, leadin):
@@ -977,11 +980,105 @@ int %s(history_entry_t *wrap, unsigned char *src, unsigned char *dest, unsigned 
     def end_subroutine(self):
         self.out("}")
         if self.leadin_offset == 0:
-            self.out("return wrap->num_bytes")
+            self.out("return entry->num_bytes")
             self.lines.append("truncated:")
-            self.out("wrap->flag = FLAG_DATA_BYTES")
-            self.out("wrap->num_bytes = 1")
-            self.out("return wrap->num_bytes")
+            self.out("entry->flag = FLAG_DATA_BYTES")
+            self.out("entry->num_bytes = 1")
+            self.out("return entry->num_bytes")
             self.lines.append("}") # no indent for closing brace
         else:
             self.out("break")
+
+class HistoryEntryDataC(RawC):
+    preamble_header = c_preamble_header
+
+    preamble = """
+int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
+    unsigned char *first_instruction_ptr;
+
+    first_instruction_ptr = entry->instruction;
+    entry->pc = (unsigned short)pc;
+    entry->target_addr = 0;
+    entry->flag = FLAG_DATA_BYTES;"""
+
+    disassembler_type = "DISASM_DATA"
+
+    entry_size = """
+    entry->num_bytes = %d;
+    if (pc + entry->num_bytes > last_pc) {
+        entry->num_bytes = last_pc - pc;
+        if (entry->num_bytes == 0) {
+            return 0;
+        }
+    }"""
+
+    def gen_entry_size(self):
+        self.out(self.entry_size % self.generator.bytes_per_line)
+
+    def process(self, count):
+        if count > 1:
+            self.out("case %d:" % count)
+        else:
+            self.out("default:")
+        self.out("    *first_instruction_ptr++ = *src++")
+
+    @property
+    def num_cases(self):
+        return self.generator.bytes_per_line
+
+    def gen_cases(self):
+        self.out("entry->disassembler_type = %s" % self.disassembler_type)
+        self.gen_entry_size()
+        self.out("switch(entry->num_bytes) {")
+        for count in range(self.num_cases, 0, -1): # down to 1
+            self.process(count)
+        self.out("    break")
+
+    def end_subroutine(self):
+        self.out("}")
+        self.out("return entry->num_bytes")
+        self.lines.append("}") # no indent for closing brace
+
+class HistoryEntryAnticC(HistoryEntryDataC):
+    disassembler_type = "DISASM_ANTIC"
+
+    entry_size = """
+    entry->num_bytes = 1;
+    unsigned char opcode = src[0];
+
+    if (((opcode & 0x0f) == 1) || ((opcode & 0xf0) == 0x40)) {
+        entry->num_bytes = 3;
+        if (pc + entry->num_bytes > last_pc) {
+            entry->num_bytes = last_pc - pc;
+        }
+    }
+    else {
+        while ((pc + entry->num_bytes < last_pc) && (entry->num_bytes < %d)) {
+            if (src[entry->num_bytes] == opcode) entry->num_bytes += 1;
+            else break;
+        }
+    }"""
+
+
+class HistoryEntryJumpmanHarvestC(HistoryEntryDataC):
+    disassembler_type = "DISASM_JUMPMAN_HARVEST"
+
+    entry_size = """
+    unsigned char opcode = src[0];
+
+    if (opcode == 0xff) {
+        entry->num_bytes = 1;
+    }
+    else if (pc + 7 <= last_pc) {
+        entry->num_bytes = 7;
+    }
+    else {
+        entry->num_bytes = 1;
+    }"""
+
+    @property
+    def num_cases(self):
+        return 7
+
+    def gen_entry_size(self):
+        self.out(self.entry_size)

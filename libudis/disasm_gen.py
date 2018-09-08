@@ -37,12 +37,12 @@ c_disclaimer = "/***************************************************************
 py_disclaimer = "\n".join("# %s" % line for line in disclaimer.splitlines()) + "\n\n"
 
 class DataGenerator(object):
-    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, first_of_set=True, cases_in_filename=False, **kwargs):
+    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, cases_in_filename=False, **kwargs):
         self.cpu_name = cpu_name
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower, cases_in_filename)
         self.setup(**kwargs)
-        self.generate(first_of_set)
+        self.generate()
 
     def set_case(self, hex_lower, mnemonic_lower, cases):
         self.hex_lower = hex_lower
@@ -51,7 +51,6 @@ class DataGenerator(object):
         self.data_op = "%02x" if hex_lower else "%02X"
         self.fmt_op = "$%02x" if hex_lower else "$%02X"
         self.fmt_2op = "$%02x%02x" if hex_lower else "$%02X%02X"
-
 
     def setup(self, bytes_per_line=4, **kwargs):
         self.bytes_per_line = bytes_per_line
@@ -72,10 +71,10 @@ class DataGenerator(object):
             suffix += "L" if self.hex_lower else "U"
         else:
             suffix = ""
-        text = "parse_instruction_c_%s%s" % (self.cpu_name, suffix)
+        text = "parse_history_entry_c_%s%s" % (self.cpu_name, suffix)
         return text
 
-    def generate(self, first_of_set):
+    def generate(self):
         # lines = ["def parse_instruction(pc, src, last_pc):"]
         # lines.append("    opcode = src[0]")
         # lines.append("    print '%04x' % pc,")
@@ -83,13 +82,15 @@ class DataGenerator(object):
         text = self.formatter_class.preamble
         if "%s" in text:
             text = text.replace("%s", self.function_name)
-        if first_of_set:
-            text = self.formatter_class.preamble_header + text
         lines = text.splitlines()
 
         self.start_formatter(lines)
 
         self.lines = lines
+
+class AnticDataGenerator(DataGenerator):
+    def setup(self, bytes_per_line=16, **kwargs):
+        self.bytes_per_line = bytes_per_line
 
 class DisassemblerGenerator(DataGenerator):
     def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True, cases_in_filename=False):
@@ -187,7 +188,7 @@ class HistoryParser(DataGenerator):
     def __init__(self, cpu, cpu_name, formatter_class):
         self.formatter_class = formatter_class
         self.setup(cpu, cpu_name)
-        self.generate(True)
+        self.generate()
 
     def setup(self, cpu, cpu_name):
         self.set_case(False, False, False)
@@ -279,100 +280,120 @@ class HistoryToText(DisassemblerGenerator):
     pass
 
 
-def get_file(cpu_name, ext, monolithic, first=False):
-    if monolithic:
-        file_root = "hardcoded_parse_monolithic"
-        if first:
-            mode = "w"
-        else:
-            mode = "a"
-    else:
-        file_root = "hardcoded_parse_%s" % cpu_name
-        mode = "w"
-    if cpu_name is not None:
-        print("Generating %s in %s" % (cpu_name, file_root))
-    pathname = os.path.join(os.path.dirname(__file__), "%s.%s" % (file_root, ext))
-    return open(pathname, mode)
-
-def gen_cpu(pyx, cpu, all_case_combos=False, do_py=False, do_c=True, monolithic=False, dev=False):
-    if dev:
-        cpu_name = "dev"
-    else:
-        cpu_name = cpu
-    for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", UnrolledC, do_c)]:
-        if not do_it:
-            continue
-        pyx.cpus.add(cpu)
-        with get_file(cpu_name, ext, monolithic) as fh:
-            first = not monolithic
-            if first:
-                fh.write(c_disclaimer)
-            disasm = HistoryParser(cpu, cpu_name, HistoryEntryC)
-            fh.write("\n".join(disasm.lines))
-            fh.write("\n")
-            first = False
-            pyx.function_name_list.append(disasm.function_name)
-            if all_case_combos:
-                for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
-                    disasm = HistoryToText(cpu, cpu_name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
-                    fh.write("\n".join(disasm.lines))
-                    fh.write("\n")
-                    first = False
-                    pyx.function_name_list.append(disasm.function_name)
-            else:
-                disasm = HistoryToText(cpu, cpu_name, formatter, first_of_set=first)
-                fh.write("\n".join(disasm.lines))
-                fh.write("\n")
-                pyx.function_name_list.append(disasm.function_name)
-
-
-def gen_others(pyx, all_case_combos=False, monolithic=False):
-    for name, ext, formatter, generator in [("data", "c", DataC, DataGenerator), ("antic_dl", "c", AnticC, DataGenerator), ("jumpman_harvest", "c", JumpmanHarvestC, DataGenerator)]:
-        pyx.cpus.add(name)
-        with get_file(name, ext, monolithic) as fh:
-            first = not monolithic
-            if all_case_combos:
-                for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
-                    disasm = generator(name, name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
-                    fh.write("\n".join(disasm.lines))
-                    fh.write("\n")
-                    first = False
-                    pyx.function_name_list.append(disasm.function_name)
-            else:
-                disasm = generator(name, name, formatter, first_of_set=first)
-                fh.write("\n".join(disasm.lines))
-                fh.write("\n")
-                pyx.function_name_list.append(disasm.function_name)
-
-def gen_all(pyx, all_case_combos=False, monolithic=False):
-    for cpu in list(cputables.processors.keys()):
-        gen_cpu(pyx, cpu, all_case_combos, monolithic=monolithic)
 
 
 class PyxGenerator(object):
-    def __init__(self):
+    def __init__(self, monolithic, dev, all_cases):
+        self.monolithic = monolithic
+        self.dev = dev
+        self.all_case_combos = all_cases
         self.cpus = set()
+        self.parse_name_list = []
         self.function_name_list = []
+        self.previously_opened_files = set()
+        self.previously_used_generators = set()
+
+    def get_file(self, cpu_name, ext):
+        if self.monolithic:
+            file_root = "hardcoded_parse_monolithic"
+        else:
+            file_root = "hardcoded_parse_%s" % cpu_name
+        if file_root not in self.previously_opened_files:
+            mode = "w"
+        else:
+            mode = "a"
+        if cpu_name is not None:
+            print("Generating %s in %s" % (cpu_name, file_root))
+        self.previously_opened_files.add(file_root)
+        pathname = os.path.join(os.path.dirname(__file__), "%s.%s" % (file_root, ext))
+        fh = open(pathname, mode)
+        if mode == "w":
+            fh.write(c_disclaimer)
+        return fh
+
+    def gen_cpu(pyx, cpu, do_py=False, do_c=True):
+        if pyx.dev:
+            cpu_name = "dev"
+        else:
+            cpu_name = cpu
+        for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", UnrolledC, do_c)]:
+            if not do_it:
+                continue
+            pyx.cpus.add(cpu)
+            with pyx.get_file(cpu_name, ext) as fh:
+                disasm = HistoryParser(cpu, cpu_name, HistoryEntryC)
+                header = disasm.formatter_class.preamble_header
+                if header not in pyx.previously_used_generators:
+                    fh.write(header)
+                pyx.previously_used_generators.add(header)
+                fh.write("\n".join(disasm.lines))
+                fh.write("\n")
+                pyx.parse_name_list.append(disasm.function_name)
+                pyx.function_name_list.append(disasm.function_name)
+                # if pyx.all_case_combos:
+                #     for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
+                #         disasm = HistoryToText(cpu, cpu_name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                #         fh.write("\n".join(disasm.lines))
+                #         fh.write("\n")
+                #         first = False
+                #         pyx.function_name_list.append(disasm.function_name)
+                # else:
+                #     disasm = HistoryToText(cpu, cpu_name, formatter, first_of_set=first)
+                #     fh.write("\n".join(disasm.lines))
+                #     fh.write("\n")
+                #     pyx.function_name_list.append(disasm.function_name)
+
+
+    def gen_others(pyx):
+        for name, ext, formatter, generator in [("data", "c", HistoryEntryDataC, DataGenerator), ("antic_dl", "c", HistoryEntryAnticC, AnticDataGenerator), ("jumpman_harvest", "c", HistoryEntryJumpmanHarvestC, DataGenerator)]:
+            pyx.cpus.add(name)
+            with pyx.get_file(name, ext) as fh:
+                if pyx.all_case_combos:
+                    first = True
+                    for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
+                        disasm = generator(name, name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
+                        fh.write("\n".join(disasm.lines))
+                        fh.write("\n")
+                        first = False
+                        pyx.function_name_list.append(disasm.function_name)
+                else:
+                    disasm = generator(name, name, formatter)
+                    fh.write("\n".join(disasm.lines))
+                    fh.write("\n")
+                    pyx.function_name_list.append(disasm.function_name)
+
+    def gen_all(self):
+        for cpu in list(cputables.processors.keys()):
+            self.gen_cpu(cpu)
 
     def gen_pyx(self):
         filename = "disasm_speedups_monolithic.pyx"
-        prototype_arglist = "(char *wrap, char *src, int pc, int last_pc, np.uint16_t *labels, char *instructions, int strpos, int mnemonic_lower, char *hexdigits)"
+        prototype_arglist = "(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, np.uint16_t *labels)"
         externlist = []
         for n in self.function_name_list:
             externlist.append("    int %s%s" % (n, prototype_arglist))
         deftemplate = """
     elif cpu == "$CPU":
-        parse_func = parse_instruction_c_$CPU"""
+        parse_func = parse_history_entry_c_$CPU"""
         deflist = []
         for cpu in self.cpus:
             deflist.append(deftemplate.replace("$CPU", cpu))
+        parsetemplate = """
+    $IF strcmp(cpu, "$CPU") == 0:
+        parse_func = parse_history_entry_c_$CPU"""
+        parselist = []
+        iftext = "if"
+        for cpu in self.cpus:
+            parselist.append(parsetemplate.replace("$CPU", cpu).replace("$IF", iftext))
+            iftext = "elif"
 
-        text = """
+        header = """
+from libc.string cimport strcmp
 import cython
 import numpy as np
 cimport numpy as np
 
-ctypedef int (*parse_func_t)(char *, char *, int, int, np.uint16_t *, char *, int, int, char *)
+from libudis.libudis cimport parse_func_t, history_entry_t
 
 cdef char *hexdigits_lower = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
 cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6C6D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"
@@ -380,6 +401,16 @@ cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718
 cdef extern:
 $EXTERNLIST
 
+cdef parse_func_t find_parse_function(char *cpu):
+    cdef parse_func_t parse_func
+
+$PARSELIST
+    else:
+        parse_func = NULL
+    return parse_func
+""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist)).replace("$PARSELIST", "\n".join(parselist))
+
+        code = """
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def get_disassembled_chunk_fast(cpu, storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, mnemonic_lower, hex_lower):
@@ -470,11 +501,10 @@ $DEFLIST
     storage_wrapper.row = row
     storage_wrapper.last_strpos = strpos
     return pc, index_of_pc
-""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist))
+""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist)).replace("$PARSELIST", "\n".join(parselist))
         with open(os.path.join(os.path.dirname(__file__), filename), "w") as fh:
             fh.write(py_disclaimer)
-            fh.write(text)
-        return text
+            fh.write(header)
 
 
 if __name__ == "__main__":
@@ -490,25 +520,19 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", help="Show verbose progress", action="store_true", default=False)
     args = parser.parse_args()
 
-    if args.monolithic:
-        with get_file(None, "c", True, True) as fh:
-            fh.write(c_disclaimer)
-            fh.write(c_preamble_header)
-
     if args.dev:
         args.all_cases = False
         args.monolithic = False
 
-    pyx = PyxGenerator()
+    pyx = PyxGenerator(args.monolithic, args.dev, args.all_cases)
     if args.cpu is None or args.cpu.lower() == "none":
         pass
     elif args.cpu:
-        gen_cpu(pyx, args.cpu, args.all_cases, args.py, monolithic=args.monolithic, dev=args.dev)
+        pyx.gen_cpu(args.cpu, args.py)
     else:
-        gen_all(pyx, args.all_cases, args.monolithic)
-    gen_others(pyx, args.all_cases, args.monolithic)
+        pyx.gen_all()
+    pyx.gen_others()
 
     if args.verbose:
         print("generated:\n", "\n".join(pyx.function_name_list))
-    if args.monolithic:
-        text = pyx.gen_pyx()
+    pyx.gen_pyx()
