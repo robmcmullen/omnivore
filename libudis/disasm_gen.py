@@ -28,6 +28,26 @@ log = logging.getLogger(__name__)
 from omni8bit.udis_fast.flags import *
 from omni8bit.udis_fast import cputables
 
+# This is declared here so that CPUs will have consistent types for backward
+# compatibility. Do not reuse ID numbers if CPUs are removed from this list.
+disassembler_type = {
+    "data": 0,
+    "6502": 10,
+    "6502undoc": 11,
+    "65816": 12,
+    "65c02": 13,
+    "6800": 14,
+    "6809": 15,
+    "6811": 16,
+    "8051": 17,
+    "8080": 18,
+    "z80": 19,
+    "antic_dl": 30,
+    "jumpman_harvest": 31,
+    "jumpman_level": 32,
+}
+disassembler_type_max = max(disassembler_type.values())
+
 
 disclaimer = """Warning! This is generated code.
 
@@ -37,10 +57,14 @@ c_disclaimer = "/***************************************************************
 py_disclaimer = "\n".join("# %s" % line for line in disclaimer.splitlines()) + "\n\n"
 
 class DataGenerator(object):
-    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, cases_in_filename=False, **kwargs):
+    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, cases_in_filename=False, function_name_root="", **kwargs):
+        self.disassembler_type = disassembler_type[cpu]
         self.cpu_name = cpu_name
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower, cases_in_filename)
+        if not function_name_root:
+            function_name_root = "parse_history_entry_c_"
+        self.function_name_root = function_name_root
         self.setup(**kwargs)
         self.generate()
 
@@ -71,7 +95,7 @@ class DataGenerator(object):
             suffix += "L" if self.hex_lower else "U"
         else:
             suffix = ""
-        text = "parse_history_entry_c_%s%s" % (self.cpu_name, suffix)
+        text = "%s%s%s" % (self.function_name_root, self.cpu_name, suffix)
         return text
 
     def generate(self):
@@ -93,11 +117,11 @@ class AnticDataGenerator(DataGenerator):
         self.bytes_per_line = bytes_per_line
 
 class DisassemblerGenerator(DataGenerator):
-    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, first_of_set=True, cases_in_filename=False):
+    def __init__(self, cpu, cpu_name, formatter_class, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None, cases_in_filename=False):
         self.formatter_class = formatter_class
         self.set_case(hex_lower, mnemonic_lower, cases_in_filename)
         self.setup(cpu, cpu_name, r_mnemonics, w_mnemonics, rw_modes)
-        self.generate(first_of_set)
+        self.generate()
 
     def setup(self, cpu, cpu_name, r_mnemonics, w_mnemonics, rw_modes):
         self.r_mnemonics = r_mnemonics
@@ -105,7 +129,10 @@ class DisassemblerGenerator(DataGenerator):
         self.rw_modes = rw_modes
         self.cpu = cpu
         self.cpu_name = cpu_name
+        self.setup_cpu(cpu)
 
+    def setup_cpu(self, cpu):
+        self.disassembler_type = disassembler_type[cpu]
         cpu = cputables.processors[cpu]
         self.address_modes = {}
         table = cpu['addressModeTable']
@@ -195,6 +222,7 @@ class HistoryParser(DataGenerator):
         self.rw_modes = set()
         self.cpu = cpu
         self.cpu_name = cpu_name
+        self.disassembler_type = disassembler_type[cpu]
 
         cpu = cputables.processors[cpu]
         self.address_modes = {}
@@ -277,8 +305,21 @@ class HistoryParser(DataGenerator):
 
 
 class HistoryToText(DisassemblerGenerator):
-    pass
+    @property
+    def function_name(self):
+        if self.cases_in_filename:
+            suffix = "_"
+            suffix += "L" if self.mnemonic_lower else "U"
+            suffix += "L" if self.hex_lower else "U"
+        else:
+            suffix = ""
+        text = "to_string_c_%s%s" % (self.cpu_name, suffix)
+        return text
 
+
+class HistoryOtherToText(HistoryToText):
+    def setup_cpu(self, cpu):
+        pass
 
 
 
@@ -289,7 +330,7 @@ class PyxGenerator(object):
         self.all_case_combos = all_cases
         self.cpus = set()
         self.parse_name_list = []
-        self.function_name_list = []
+        self.string_name_list = []
         self.previously_opened_files = set()
         self.previously_used_generators = set()
 
@@ -329,7 +370,6 @@ class PyxGenerator(object):
                 fh.write("\n".join(disasm.lines))
                 fh.write("\n")
                 pyx.parse_name_list.append(disasm.function_name)
-                pyx.function_name_list.append(disasm.function_name)
                 # if pyx.all_case_combos:
                 #     for mnemonic_lower, hex_lower in [(True, True), (True, False), (False, True), (False, False)]:
                 #         disasm = HistoryToText(cpu, cpu_name, formatter, mnemonic_lower=mnemonic_lower, hex_lower=hex_lower, first_of_set=first)
@@ -338,14 +378,18 @@ class PyxGenerator(object):
                 #         first = False
                 #         pyx.function_name_list.append(disasm.function_name)
                 # else:
-                #     disasm = HistoryToText(cpu, cpu_name, formatter, first_of_set=first)
-                #     fh.write("\n".join(disasm.lines))
-                #     fh.write("\n")
-                #     pyx.function_name_list.append(disasm.function_name)
+                if True:
+                    disasm = HistoryToText(cpu, cpu_name, formatter)
+                    header = disasm.formatter_class.preamble_header
+                    if header not in pyx.previously_used_generators:
+                        fh.write(header)
+                    fh.write("\n".join(disasm.lines))
+                    fh.write("\n")
+                    pyx.string_name_list.append(disasm.function_name)
 
 
     def gen_others(pyx):
-        for name, ext, formatter, generator in [("data", "c", HistoryEntryDataC, DataGenerator), ("antic_dl", "c", HistoryEntryAnticC, AnticDataGenerator), ("jumpman_harvest", "c", HistoryEntryJumpmanHarvestC, DataGenerator)]:
+        for name, ext, formatter, generator, stringifier in [("data", "c", HistoryEntryDataC, DataGenerator, DataC), ("antic_dl", "c", HistoryEntryAnticC, AnticDataGenerator, AnticC), ("jumpman_harvest", "c", HistoryEntryJumpmanHarvestC, DataGenerator, JumpmanHarvestC)]:
             pyx.cpus.add(name)
             with pyx.get_file(name, ext) as fh:
                 if pyx.all_case_combos:
@@ -355,12 +399,17 @@ class PyxGenerator(object):
                         fh.write("\n".join(disasm.lines))
                         fh.write("\n")
                         first = False
-                        pyx.function_name_list.append(disasm.function_name)
+                        pyx.parse_name_list.append(disasm.function_name)
                 else:
                     disasm = generator(name, name, formatter)
                     fh.write("\n".join(disasm.lines))
                     fh.write("\n")
-                    pyx.function_name_list.append(disasm.function_name)
+                    pyx.parse_name_list.append(disasm.function_name)
+                disasm = generator(name, name, stringifier, function_name_root="to_string_c_")
+                fh.write("\n".join(disasm.lines))
+                fh.write("\n")
+                pyx.string_name_list.append(disasm.function_name)
+
 
     def gen_all(self):
         for cpu in list(cputables.processors.keys()):
@@ -368,23 +417,31 @@ class PyxGenerator(object):
 
     def gen_pyx(self):
         filename = "disasm_speedups_monolithic.pyx"
-        prototype_arglist = "(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, np.uint16_t *labels)"
+        parse_prototype_arglist = "(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, np.uint16_t *labels)"
         externlist = []
-        for n in self.function_name_list:
-            externlist.append("    int %s%s" % (n, prototype_arglist))
-        deftemplate = """
-    elif cpu == "$CPU":
+        for n in self.parse_name_list:
+            externlist.append("    int %s%s" % (n, parse_prototype_arglist))
+
+        string_prototype_arglist = "(history_entry_t *entry, char *txt, char *hexdigits, int lc)"
+        for n in self.string_name_list:
+            externlist.append("    int %s%s" % (n, string_prototype_arglist))
+        deftemplate = """    elif cpu == "$CPU":
         parse_func = parse_history_entry_c_$CPU"""
         deflist = []
         for cpu in self.cpus:
             deflist.append(deftemplate.replace("$CPU", cpu))
-        parsetemplate = """
-    $IF strcmp(cpu, "$CPU") == 0:
+        parsetemplate = """    $IF strcmp(cpu, "$CPU") == 0:
         parse_func = parse_history_entry_c_$CPU"""
         parselist = []
+        stringfunc_prefix = "to_string_c_"
+        stringtemplate = """    $IF strcmp(cpu, "$CPU") == 0:
+        string_func = %s$CPU""" % stringfunc_prefix
+        stringlist = []
         iftext = "if"
+        typelist = []
         for cpu in self.cpus:
             parselist.append(parsetemplate.replace("$CPU", cpu).replace("$IF", iftext))
+            stringlist.append(stringtemplate.replace("$CPU", cpu).replace("$IF", iftext))
             iftext = "elif"
 
         header = """
@@ -393,10 +450,7 @@ import cython
 import numpy as np
 cimport numpy as np
 
-from libudis.libudis cimport parse_func_t, history_entry_t
-
-cdef char *hexdigits_lower = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
-cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6C6D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"
+from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t
 
 cdef extern:
 $EXTERNLIST
@@ -408,103 +462,39 @@ $PARSELIST
     else:
         parse_func = NULL
     return parse_func
-""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist)).replace("$PARSELIST", "\n".join(parselist))
 
-        code = """
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def get_disassembled_chunk_fast(cpu, storage_wrapper, np.ndarray[char, ndim=1, mode="c"] binary_array, pc, last, index_of_pc, mnemonic_lower, hex_lower):
+cdef string_func_t find_string_function(char *cpu):
+    cdef string_func_t string_func
 
-    cdef np.ndarray metadata_array = storage_wrapper.metadata
-    cdef itemsize = metadata_array.itemsize
-    cdef row = storage_wrapper.row
-    cdef char *metadata = metadata_array.data
-    cdef unsigned short *strlen_ptr
-    cdef int c_index = index_of_pc
-    cdef char *binary = binary_array.data + c_index
-    cdef int c_pc, c_last, count, max_rows, i
-    cdef np.ndarray[np.uint16_t, ndim=1] labels_array = storage_wrapper.labels
-    cdef np.uint16_t *labels = <np.uint16_t *>labels_array.data
-    cdef np.ndarray[np.uint32_t, ndim=1] index_array = storage_wrapper.index_to_row
-    cdef np.uint32_t *index_to_row = <np.uint32_t *>index_array.data + c_index
-    cdef np.ndarray instructions_array = storage_wrapper.instructions
-    cdef char *instructions = instructions_array.data
-    cdef int strpos = storage_wrapper.last_strpos
-    cdef int max_strpos = storage_wrapper.max_strpos
-    cdef int retval
-    cdef parse_func_t parse_func
-
-    if cpu is None:
-        raise TypeError("Must specify CPU type")
-$DEFLIST
+$STRINGLIST
     else:
-        raise TypeError("Unknown CPU type %s" % cpu)
+        string_func = NULL
+    return string_func
 
-    metadata += (row * itemsize)
-    instructions += strpos
-    c_pc = pc
-    c_last = last
-    if c_last > 0xffff:
-        c_last = 0x10000
-    max_rows = storage_wrapper.num_rows
-    if hex_lower:
-        hexdigits_for_case = hexdigits_lower
-    else:
-        hexdigits_for_case = hexdigits_upper
+cdef string_func_t stringifier_map[$TYPEMAX]
+$TYPELIST
+""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist)).replace("$PARSELIST", "\n".join(parselist)).replace("$STRINGLIST", "\n".join(stringlist)).replace("$TYPELIST", "\n".join(typelist)).replace("$TYPEMAX", str(disassembler_type_max))
 
-    # fast loop in C
-    while c_pc < c_last and row < max_rows and strpos < max_strpos:
-        count = parse_func(metadata, binary, c_pc, c_last, labels, instructions, strpos, mnemonic_lower, hexdigits_for_case)
-        if count == 0:
-            break
-        elif count == 1:
-            index_to_row[0] = row
-            index_to_row += 1
-        elif count == 2:
-            index_to_row[0] = row
-            index_to_row += 1
-            index_to_row[0] = row
-            index_to_row += 1
-        elif count == 3:
-            index_to_row[0] = row
-            index_to_row += 1
-            index_to_row[0] = row
-            index_to_row += 1
-            index_to_row[0] = row
-            index_to_row += 1
-        elif count == 4:
-            index_to_row[0] = row
-            index_to_row += 1
-            index_to_row[0] = row
-            index_to_row += 1
-            index_to_row[0] = row
-            index_to_row += 1
-            index_to_row[0] = row
-            index_to_row += 1
-        else:
-            for i in range(count):
-                index_to_row[0] = row
-                index_to_row += 1
-        strlen_ptr = <unsigned short *>&metadata[6]
-        strlen = strlen_ptr[0]
-        c_pc += count
-        c_index += count
-        metadata += itemsize
-        binary += count
-        strpos += strlen
-        instructions += strlen
-        row += 1
-
-    # get data back out in python vars
-    pc = c_pc
-    index_of_pc = c_index
-    storage_wrapper.row = row
-    storage_wrapper.last_strpos = strpos
-    return pc, index_of_pc
-""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$DEFLIST", "\n".join(deflist)).replace("$PARSELIST", "\n".join(parselist))
         with open(os.path.join(os.path.dirname(__file__), filename), "w") as fh:
             fh.write(py_disclaimer)
             fh.write(header)
+
+        filename = "hardcoded_parse_stringifiers.c"
+        cpu_order = sorted([(disassembler_type[cpu], cpu) for cpu in self.cpus])
+        with open(os.path.join(os.path.dirname(__file__), filename), "w") as fh:
+            fh.write(c_disclaimer)
+            fh.write("#include <stdio.h>\n\n")
+            for i, cpu in cpu_order:
+                fh.write("extern int %s%s();\n" % (stringfunc_prefix, cpu))
+            fh.write("void *stringifier_map[] = {\n")
+            expected = 0
+            for i, cpu in cpu_order:
+                while i > expected:
+                    fh.write("NULL, /* %d */\n" % expected)
+                    expected += 1
+                fh.write("%s%s, /* %d */\n" % (stringfunc_prefix, cpu, i))
+                expected += 1
+            fh.write("};\n")
 
 
 if __name__ == "__main__":
@@ -534,5 +524,5 @@ if __name__ == "__main__":
     pyx.gen_others()
 
     if args.verbose:
-        print("generated:\n", "\n".join(pyx.function_name_list))
+        print("generated:\n", "\n".join(pyx.parse_name_list))
     pyx.gen_pyx()

@@ -10,4 +10,6 @@ cdef struct history_entry_t:
     np.uint8_t instruction[16];
 
 
-ctypedef int (*parse_func_t)(history_entry_t *line, unsigned char *, unsigned int, unsigned int, unsigned short *)
+ctypedef int (*parse_func_t)(history_entry_t *, unsigned char *, unsigned int, unsigned int, unsigned short *)
+
+ctypedef int (*string_func_t)(history_entry_t *, char *, char *, int)

@@ -109,6 +109,7 @@ extensions = [
             "libudis/libudis.pyx",
             "libudis/disasm_speedups_monolithic.pyx",
             "libudis/hardcoded_parse_monolithic.c",
+            "libudis/hardcoded_parse_stringifiers.c",
         ],
         extra_compile_args = extra_compile_args,
         include_dirs = [np.get_include()],
