@@ -55,11 +55,19 @@ typedef struct {
 #define FLAG_UNDOC 128
 
 /* disassembler types */
-#define DISASM_CODE 0
-#define DISASM_DATA 1
-#define DISASM_ANTIC 2
-#define DISASM_JUMPMAN_LEVEL 3
-#define DISASM_JUMPMAN_HARVEST 4
-#define DISASM_UNINITIALIZED_DATA 5
+#define DISASM_DATA 0
+#define DISASM_6502 10
+#define DISASM_6502UNDOC 11
+#define DISASM_65816 12
+#define DISASM_65C02 13
+#define DISASM_6800 14
+#define DISASM_6809 15
+#define DISASM_6811 16
+#define DISASM_8051 17
+#define DISASM_8080 18
+#define DISASM_Z80 19
+#define DISASM_ANTIC_DL 30
+#define DISASM_JUMPMAN_HARVEST 31
+#define DISASM_JUMPMAN_LEVEL 32
 
 #endif /* LIBUDIS_H */
