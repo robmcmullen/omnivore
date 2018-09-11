@@ -96,20 +96,18 @@ def convert_fmt(fmt):
     return fmt, argorder
 
 
-ParserCategory = namedtuple('ParserCategory', ['length', 'mode', 'leadin_offset', 'undoc', 'pcr', 'target_addr', 'operation_type'])
+ParserCategory = namedtuple('ParserCategory', ['length', 'mode', 'leadin', 'undoc', 'pcr', 'target_addr', 'operation_type'])
 
 
 class Opcode:
     def __init__(self, opcode, optable_entry):
         self.leadin = None
         self.opcode = opcode
-        self.second_byte = None
         self.fourth_byte = None
         self.leadin_offset = 0
         self.length, self.mnemonic, self.mode, self.flag = optable_entry
         if opcode > 65536:
-            self.leadin = opcode >> 24
-            self.second_byte = (opcode >> 16) & 0xff
+            self.leadin = opcode >> 16
             self.fourth_byte = opcode & 0xff
             self.leadin_offset = 2
             log.debug("found z80 multibyte %x, l=%d" % (opcode, self.leadin_offset))
@@ -150,7 +148,7 @@ class Opcode:
 
     @property
     def parser_category(self):
-        return ParserCategory(self.length, self.mode, self.leadin_offset, self.undoc, self.pcr, self.target_addr, self.operation_type)
+        return ParserCategory(self.length, self.mode, self.leadin, self.undoc, self.pcr, self.target_addr, self.operation_type)
 
 
 class CPU:
@@ -171,13 +169,12 @@ class CPU:
                 print(f"WARNING in {self.cpu}! ' char in {fmt}")
         self.opcode_table = c['opcodeTable']
         self.opcodes = []
+        self.leadin_opcodes = defaultdict(list)
         self.gen_opcodes()
-        self.parser_combos = defaultdict(list)
-        self.gen_parser_combos()
         self.gen_stringifier()
 
     def __str__(self):
-        return f"{self.cpu}: {len(self.opcodes)} opcodes\n"
+        return f"{self.cpu}: {len(self.opcodes)} opcodes, {len(self.leadin_opcodes)} leadin opcodes {tuple([hex(a) for a in self.leadin_opcodes.keys()])}"
 
     def gen_opcodes(self):
         for value, optable in list(self.opcode_table.items()):
@@ -186,14 +183,19 @@ class CPU:
             except UnimplementedZ80Opcode:
                 continue
             print(opcode, self.address_modes[opcode.mode], self.argorder[opcode.mode])
-            self.opcodes.append(opcode)
+            if opcode.leadin is not None:
+                self.leadin_opcodes[opcode.leadin].append(opcode)
+            else:
+                self.opcodes.append(opcode)
 
-    def gen_parser_combos(self):
-        for opcode in self.opcodes:
+    def gen_parser_combos(self, opcodes):
+        combos = defaultdict(list)
+        for opcode in opcodes:
             cat = opcode.parser_category
-            self.parser_combos[cat].append(opcode)
-        for cat, opcodes in self.parser_combos.items():
+            combos[cat].append(opcode)
+        for cat, opcodes in combos.items():
             print(f"category {cat}: opcodes:{opcodes}")
+        return combos
 
     def gen_stringifier(self):
         pass
@@ -203,55 +205,93 @@ class HistoryParserC:
     escape_strings = False
 
     template = """
-int %s(history_entry_t *entry, char *txt, char *hexdigits, int lc) {
-    int dist;
-    unsigned char opcode, leadin, op1, op2, op3;
-    char *first_txt, *h;
-    unsigned int rel;
-
-    first_txt = txt;
-    opcode = entry->instruction[0];
-    switch(opcode) {
+int history_parse_entry_c_%s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
+	int dist;
+	unsigned int rel;
+	unsigned short addr;
+	unsigned char opcode, leadin, op1, op2, op3;
+	
+	opcode = *src++;
+	entry->instruction[0] = opcode;
+	entry->pc = (unsigned short)pc;
+	entry->target_addr = 0;
+	switch(opcode) {
 $CASES
-    default:
-        goto truncated;
-    }
-    return entry->num_bytes;
+	default:
+		goto truncated;
+	}
+	return entry->num_bytes;
 truncated:
-    entry->flag = 0;
-    entry->num_bytes = 1;
-    entry->disassembler_type = DISASM_DATA;
-    return entry->num_bytes;
+	entry->num_bytes = 1;
+truncated2:
+	entry->flag = 0;
+	entry->disassembler_type = DISASM_DATA;
+	return entry->num_bytes;
 }
+"""
+
+    leadin_template = """
+	case 0x%x:
+		opcode = *src++;
+		entry->instruction[1] = opcode;
+		switch(opcode) {
+%s
+		default:
+			entry->num_bytes = 2;
+			goto truncated2;
+		}
+		break;
 """
 
     def __init__(self, cpu):
         self.cpu = cpu
-        self.create_cases()
+        self.cases = self.create_cases()
+
+    @property
+    def text(self):
+        text = (self.template % self.cpu.cpu).replace("$CASES", "\n".join(self.cases))
+        return text
 
     def create_cases(self):
         cases = []
-        for cat, opcodes in self.cpu.parser_combos.items():
-            print(f"category {cat}: opcodes:{opcodes}")
-            case = []
-            case.append(f"/* {cat.mode} {'(undocumented) ' if cat.undoc else ''}*/")
-            for op in opcodes:
-                case.append(f"case {hex(op.opcode)}: /* {op.mnemonic} {self.cpu.address_modes[cat.mode]} */")
-            case.append(f"\tentry->num_bytes = {cat.length};")
-            case.extend(self.create_category(cat))
-            flags = []
-            if cat.operation_type:
-                flags.append(cat.operation_type)
-            if cat.undoc:
-                flags.append("FLAG_UNDOC")
-            if cat.target_addr:
-                flags.append("FLAG_TARGET_ADDR")
-            if flags:
-                case.append(f"\tentry->flag = {' | '.join(flags)};")
-            case.append(f"\tentry->disassembler_type = {self.cpu.disassembler_type_name};")
-            case.append("\tbreak;")
-            cases.append("\n".join(case) + "\n")
-        print("\n".join(cases))
+        for cat, opcodes in self.cpu.gen_parser_combos(cpu.opcodes).items():
+            print(f"{self.cpu}: {cat}, opcodes:{opcodes}")
+            case = self.gen_case(cat, opcodes, "\t")
+            cases.append(case)
+
+        for leadin, leadin_opcodes in self.cpu.leadin_opcodes.items():
+            subcases = []
+            for cat, opcodes in self.cpu.gen_parser_combos(leadin_opcodes).items():
+                subcase = self.gen_case(cat, opcodes, "\t\t")
+                subcases.append(subcase)
+            case = self.leadin_template % (leadin, "\n".join(subcases))
+            cases.append(case)
+
+        #print("\n".join(cases))
+        return cases
+
+    def gen_case(self, cat, opcodes, extra_indent=""):
+        case = []
+        case.append(f"/* {cat.mode} {'(undocumented) ' if cat.undoc else ''}*/")
+        for op in opcodes:
+            case.append(f"case {hex(op.opcode)}: /* {op.mnemonic} {self.cpu.address_modes[cat.mode]} */")
+        case.append(f"\tentry->num_bytes = {cat.length};")
+        case.extend(self.create_category(cat))
+        flags = []
+        if cat.operation_type:
+            flags.append(cat.operation_type)
+        if cat.undoc:
+            flags.append("FLAG_UNDOC")
+        if cat.target_addr:
+            flags.append("FLAG_TARGET_ADDR")
+        if flags:
+            case.append(f"\tentry->flag = {' | '.join(flags)};")
+        case.append(f"\tentry->disassembler_type = {self.cpu.disassembler_type_name};")
+        case.append("\tbreak;")
+        text = "\n".join([extra_indent + line for line in case]) + "\n"
+        print(text)
+        return text
+
 
     def create_category(self, cat):
         body = []
@@ -260,30 +300,75 @@ truncated:
         else:
             body.append(f"\tif (pc + {cat.length} > last_pc) goto truncated;")
             if cat.length == 2:
-                if cat.pcr:
-                    body.append(f"\top1 = *src;")
-                    body.append(f"\tentry->instruction[1] = op1;")
-                    body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
-                    body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                    body.append(f"\tlabels[rel] = 1;")
-                    body.append(f"\tentry->target_addr = rel;")
-                elif cat.target_addr:
-                    body.append(f"\top1 = *src;")
-                    body.append(f"\tentry->instruction[1] = op1;")
-                    body.append(f"\tlabels[op1] = 1;")
-                    body.append(f"\tentry->target_addr = op1;")
+                if cat.leadin is None:
+                    if cat.pcr:
+                        body.append(f"\top1 = *src;")
+                        body.append(f"\tentry->instruction[1] = op1;")
+                        body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
+                        body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
+                        body.append(f"\tlabels[rel] = 1;")
+                        body.append(f"\tentry->target_addr = rel;")
+                    elif cat.target_addr:
+                        body.append(f"\top1 = *src;")
+                        body.append(f"\tentry->instruction[1] = op1;")
+                        body.append(f"\tlabels[op1] = 1;")
+                        body.append(f"\tentry->target_addr = op1;")
+                    else:
+                        body.append(f"\tentry->instruction[1] = *src;")
                 else:
-                    body.append(f"\tentry->instruction[1] = *src;")
+                    pass
             elif cat.length == 3:
-                order = self.cpu.argorder[cat.mode]
-                body.append(f"\top1 = *src++;")
-                body.append(f"\tentry->instruction[1] = op1;")
-                body.append(f"\top2 = *src;")
-                body.append(f"\tentry->instruction[2] = op2;")
-                if cat.target_addr:
-                    body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                    body.append(f"\tlabels[addr] = 1;")
-                    body.append(f"\tentry->target_addr = addr;")
+                if cat.leadin is None:
+                    order = self.cpu.argorder[cat.mode]
+                    print(f"\t/* {order} */")
+                    body.append(f"\top1 = *src++;")
+                    body.append(f"\tentry->instruction[1] = op1;")
+                    body.append(f"\top2 = *src;")
+                    body.append(f"\tentry->instruction[2] = op2;")
+                    if cat.target_addr:
+                        body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
+                        body.append(f"\tlabels[addr] = 1;")
+                        body.append(f"\tentry->target_addr = addr;")
+                elif cat.leadin < 256:
+                    if cat.pcr:
+                        body.append(f"\top1 = *src;")
+                        body.append(f"\tentry->instruction[2] = op1;")
+                        body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
+                        body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
+                        body.append(f"\tlabels[rel] = 1;")
+                        body.append(f"\tentry->target_addr = rel;")
+                    elif cat.target_addr:
+                        body.append(f"\top1 = *src;")
+                        body.append(f"\tentry->instruction[2] = op1;")
+                        body.append(f"\tlabels[op1] = 1;")
+                        body.append(f"\tentry->target_addr = op1;")
+                    else:
+                        body.append(f"\tentry->instruction[2] = *src;")
+            elif cat.length == 4:
+                if cat.leadin is None:
+                    order = self.cpu.argorder[cat.mode]
+                    print(f"\t/* {order} */")
+                    body.append(f"\top1 = *src++;")
+                    body.append(f"\tentry->instruction[1] = op1;")
+                    body.append(f"\top2 = *src;")
+                    body.append(f"\tentry->instruction[2] = op2;")
+                    body.append(f"\top3 = *src;")
+                    body.append(f"\tentry->instruction[3] = op3;")
+                    if cat.target_addr:
+                        body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
+                        body.append(f"\tlabels[addr] = 1;")
+                        body.append(f"\tentry->target_addr = addr;")
+                elif cat.leadin < 256:
+                    order = self.cpu.argorder[cat.mode]
+                    print(f"\t/* {order} */", cat)
+                    body.append(f"\top1 = *src++;")
+                    body.append(f"\tentry->instruction[2] = op1;")
+                    body.append(f"\top2 = *src;")
+                    body.append(f"\tentry->instruction[3] = op2;")
+                    if cat.target_addr:
+                        body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
+                        body.append(f"\tlabels[addr] = 1;")
+                        body.append(f"\tentry->target_addr = addr;")
 
         return body
 
@@ -307,13 +392,11 @@ if __name__ == "__main__":
 
     known = []
     for name in list(cputables.processors.keys()):
-        # if name != "6502undoc":
-        #     continue
         cpu = CPU(name)
         known.append(cpu)
-        break
 
     for cpu in known:
         print(cpu)
         h = HistoryParserC(cpu)
+        print(h.text)
 
