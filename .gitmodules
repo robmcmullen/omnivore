@@ -6,4 +6,4 @@
 	url = git@github.com:robmcmullen/atari800.git
 [submodule "libudis/udis"]
 	path = libudis/udis
-	url = https://github.com/jefftranter/udis.git
+	url = https://github.com/robmcmullen/udis.git
