@@ -53,7 +53,7 @@ disassembler_type_max = max(disassembler_type.values())
 
 disclaimer = """Warning! This is generated code.
 
-Any edits will be overwritten with the next call to disasm_gen.py
+Any edits will be overwritten with the next call to parse_gen.py
 """
 c_disclaimer = "/***************************************************************\n%s***************************************************************/\n\n\n" % disclaimer
 py_disclaimer = "\n".join("# %s" % line for line in disclaimer.splitlines()) + "\n\n"
@@ -201,6 +201,20 @@ class CPU:
         pass
 
 
+def merge_cases_to_text(cases):
+    same_body = defaultdict(list)
+    for case in cases:
+        case_text, body_text = case
+        same_body[body_text].append(case_text)
+
+    text = ""
+    for body, case in same_body.items():
+        group_cases = "\n".join(case)
+        text += group_cases + body
+        print(f"GROUPED CASES, {group_cases}\nBODY, {body}")
+    return text
+
+
 class HistoryParserC:
     escape_strings = False
 
@@ -249,34 +263,39 @@ truncated2:
 
     @property
     def text(self):
-        text = (self.template % self.cpu.cpu).replace("$CASES", "\n".join(self.cases))
+        text = (self.template % self.cpu.cpu).replace("$CASES", self.cases)
         return text
 
     def create_cases(self):
-        cases = []
+        single_byte_opcode_cases = []
         for cat, opcodes in self.cpu.gen_parser_combos(cpu.opcodes).items():
             print(f"{self.cpu}: {cat}, opcodes:{opcodes}")
             case = self.gen_case(cat, opcodes, "\t")
-            cases.append(case)
+            single_byte_opcode_cases.append(case)
+        text = merge_cases_to_text(single_byte_opcode_cases)
 
+        leadin_byte_opcode_cases = []
         for leadin, leadin_opcodes in self.cpu.leadin_opcodes.items():
             subcases = []
             for cat, opcodes in self.cpu.gen_parser_combos(leadin_opcodes).items():
                 subcase = self.gen_case(cat, opcodes, "\t\t")
                 subcases.append(subcase)
-            case = self.leadin_template % (leadin, "\n".join(subcases))
-            cases.append(case)
+            subcase_text = merge_cases_to_text(subcases)
+            case = self.leadin_template % (leadin, subcase_text)
+            text += case
 
         #print("\n".join(cases))
-        return cases
+        return text
 
     def gen_case(self, cat, opcodes, extra_indent=""):
         case = []
         case.append(f"/* {cat.mode} {'(undocumented) ' if cat.undoc else ''}*/")
         for op in opcodes:
             case.append(f"case {hex(op.opcode)}: /* {op.mnemonic} {self.cpu.address_modes[cat.mode]} */")
-        case.append(f"\tentry->num_bytes = {cat.length};")
-        case.extend(self.create_category(cat))
+
+        body = []
+        body.append(f"\tentry->num_bytes = {cat.length};")
+        body.extend(self.create_category(cat))
         flags = []
         if cat.operation_type:
             flags.append(cat.operation_type)
@@ -285,12 +304,13 @@ truncated2:
         if cat.target_addr:
             flags.append("FLAG_TARGET_ADDR")
         if flags:
-            case.append(f"\tentry->flag = {' | '.join(flags)};")
-        case.append(f"\tentry->disassembler_type = {self.cpu.disassembler_type_name};")
-        case.append("\tbreak;")
-        text = "\n".join([extra_indent + line for line in case]) + "\n"
-        print(text)
-        return text
+            body.append(f"\tentry->flag = {' | '.join(flags)};")
+        body.append(f"\tentry->disassembler_type = {self.cpu.disassembler_type_name};")
+        body.append("\tbreak;\n\n")
+        case_text = "\n".join([extra_indent + line for line in case]) + "\n"
+        body_text = "\n".join([extra_indent + line for line in body]) + "\n"
+        print(f"CASE{case_text}\nBODY{body_text}")
+        return case_text, body_text
 
 
     def create_category(self, cat):
@@ -350,7 +370,7 @@ truncated2:
                     print(f"\t/* {order} */")
                     body.append(f"\top1 = *src++;")
                     body.append(f"\tentry->instruction[1] = op1;")
-                    body.append(f"\top2 = *src;")
+                    body.append(f"\top2 = *src++;")
                     body.append(f"\tentry->instruction[2] = op2;")
                     body.append(f"\top3 = *src;")
                     body.append(f"\tentry->instruction[3] = op3;")
@@ -395,8 +415,10 @@ if __name__ == "__main__":
         cpu = CPU(name)
         known.append(cpu)
 
-    for cpu in known:
-        print(cpu)
-        h = HistoryParserC(cpu)
-        print(h.text)
+    with open("parse_history.c", "w") as fh:
+        fh.write(c_disclaimer)
+        for cpu in known:
+            print(cpu)
+            h = HistoryParserC(cpu)
+            fh.write(h.text)
 
