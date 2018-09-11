@@ -14,6 +14,7 @@ Licensed under the Apache License 2.0
 
 import os
 import glob
+from collections import defaultdict
 
 import numpy as np
 
@@ -155,6 +156,8 @@ class DisassemblerGenerator(DataGenerator):
         formatter = self.formatter_class(self, lines, indent, leadin, leadin_offset)
         multibyte = dict()
 
+        formatter.start_subroutine()
+
         for opcode, optable in list(table.items()):
             if opcode > 65536:
                 log.debug("found z80 multibyte %x, l=%d" % (opcode, leadin_offset))
@@ -246,6 +249,8 @@ class HistoryParser(DataGenerator):
         """
         formatter = self.formatter_class(self, lines, indent, leadin, leadin_offset)
         multibyte = dict()
+        groups = defaultdict(list)
+        group_code = dict()
 
         for opcode, optable in list(table.items()):
             if opcode > 65536:
@@ -288,7 +293,18 @@ class HistoryParser(DataGenerator):
                 formatter.z80_4byte(z80_2nd_byte, opcode)
                 continue
 
+            save = formatter.lines
+            formatter.lines = []
             formatter.process(opcode)
+            case = formatter.lines.pop(0)  # get the case statement
+            print("CASE", case)
+            mode = formatter.mode
+            if formatter.undocumented:
+                mode += "-undoc"
+            groups[mode].append(case)
+            group_code[mode] = formatter.lines
+            print("OSUHRECHUS", formatter.fmt, opcode, mode, formatter.lines)
+            formatter.lines = save
 
         for leadin, group in list(multibyte.items()):
             formatter.start_multibyte_leadin(leadin)
@@ -296,8 +312,16 @@ class HistoryParser(DataGenerator):
             log.debug(group)
             self.gen_numpy_single_print(lines, group, leadin, 1, indent=indent+"    ")
 
+        formatter.start_subroutine()
+
+        for m, lines in group_code.items():
+            groups[m][0] += f" /* {m} */"
+            formatter.lines.extend(groups[m])
+            formatter.lines.extend(lines)
+
         if not z80_2nd_byte:
             formatter.unknown_opcode()
+
         formatter.end_subroutine()
 
     def start_formatter(self, lines):
@@ -357,7 +381,7 @@ class PyxGenerator(object):
             cpu_name = "dev"
         else:
             cpu_name = cpu
-        for ext, formatter, do_it in [("py", PrintNumpy, do_py), ("c", UnrolledC, do_c)]:
+        for ext, formatter, do_it in [("c", UnrolledC, do_c)]:
             if not do_it:
                 continue
             pyx.cpus.add(cpu)

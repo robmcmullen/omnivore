@@ -70,27 +70,6 @@ class PrintBase(object):
     def set_case(self, mnemonic_lower, hex_lower):
         pass
 
-    def bytes1(self, opcode):
-        if self.leadin_offset == 0:
-            return "%02x __ __ __" % opcode, []
-        else:
-            return "%02x %02x __ __" % (self.leadin, opcode), []
-
-    def bytes2(self, opcode):
-        if self.leadin_offset == 0:
-            return "%02x %%02x __ __" % (opcode), ["op1"]
-        else:
-            return "%02x %02x %%02x __" % (self.leadin, opcode), ["op1"]
-
-    def bytes3(self, opcode):
-        if self.leadin_offset == 0:
-            return "%02x %%02x %%02x __" % (opcode), ["op1", "op2"]
-        else:
-            return "%02x %02x %%02x %%02x" % (self.leadin, opcode), ["op1", "op2"]
-
-    def bytes4(self, opcode):
-        return "%02x %%02x %%02x %%02x" % (opcode), ["op1", "op2", "op3"]
-
     def set_current(self, optable):
         self.length, self.mnemonic, self.mode, self.flag = optable
         # only low 8 bits of flags is saved in output, so convert any that are
@@ -132,147 +111,6 @@ class PrintBase(object):
         self.first = False
 
 
-class PrintNumpy(PrintBase):
-    preamble_header = """
-def put_bytes(str, loc, dest):
-    for a in str:
-        dest[loc] = ord(a)
-        loc += 1
-"""
-
-    preamble = """
-def parse_instruction_numpy(wrap, pc, src, last_pc):
-    opcode = src[0]
-    put_bytes('%04x' % pc, 0, wrap)
-"""
-
-    def out(self, text):
-        self.lines.append(self.indent + text)
-
-    @property
-    def iftext(self):
-        if self.first:
-            return "if"
-        return "elif"
-
-    def z80_4byte_intro(self, opcode):
-        self.out("%s opcode == 0x%x:" % (self.iftext, opcode))
-        self.out("    op1 = src[2]")
-        self.out("    op2 = src[3]")
-        self.out("    count = 4")
-        self.out("    if pc + count > last_pc: return 0")
-        self.out("    dist = op1 - 256 if op1 > 127 else op1")
-        self.out("    rel = (pc + 2 + dist) & 0xffff  # limit to 64k address space")
-
-    def z80_4byte(self, z80_2nd_byte, opcode):
-        self.out("%s op2 == 0x%x:" % (self.iftext, opcode))
-        bstr, bvars = "%02x %02x %%02x %02x" % (self.leadin, z80_2nd_byte, opcode), ["op1"]
-        bvars.append("rel")
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
-        self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
-        self.first = False
-
-    def z80_4byte_outro(self):
-        pass
-
-    def op1(self):
-        self.out("    op1 = src[%d]" % (1 + self.leadin_offset))
-
-    def op2(self):
-        self.out("    op2 = src[%d]" % (2 + self.leadin_offset))
-
-    def op3(self):
-        self.out("    op3 = src[%d]" % (3 + self.leadin_offset))
-
-    def start_if_clause(self, opcode):
-        self.out("%s opcode == 0x%x:" % (self.iftext, opcode))
-
-    def end_if_clause(self):
-        pass
-
-    def check_pc(self):
-        self.out("    count = %d" % self.length)
-        if self.length > 1:
-            self.out("    if pc + count > last_pc: return 0")
-
-    def opcode1(self, opcode):
-        bstr, bvars = self.bytes1(opcode)
-        if bvars:
-            bvars.extend(self.argorder) # should be null operation; 1 byte length opcodes shouldn't have any arguments
-            outstr = "'%s       %s %s' %% %s" % (bstr, self.mnemonic, self.fmt, bvars)
-        else:
-            outstr = "'%s       %s %s'" % (bstr, self.mnemonic, self.fmt)
-        self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
-
-    def opcode2(self, opcode):
-        self.op1()
-        bstr, bvars = self.bytes2(opcode)
-        if self.fmt:
-            if self.flag & pcr:
-                self.out("    dist = op1 - 256 if op1 > 127 else op1")
-                self.out("    rel = (pc + 2 + dist) & 0xffff  # limit to 64k address space")
-                self.out("    wrap.labels[rel] = 1")
-            elif self.flag & lbl:
-                self.out("    wrap.labels[op1] = 1")
-        if bvars:
-            bvars.extend(self.argorder)
-            outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
-        else:
-            outstr = "'%s       %s %s'" % (bstr, self.mnemonic, self.fmt)
-        self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
-
-    def opcode3(self, opcode):
-        self.op1()
-        self.op2()
-        bstr, bvars = self.bytes3(opcode)
-        if self.fmt:
-            if self.flag & pcr:
-                self.out("    addr = op1 + 256 * op2")
-                self.out("    if addr > 32768: addr -= 0x10000")
-                # limit relative address to 64k address space
-                self.out("    rel = (pc + 2 + addr) & 0xffff")
-                self.out("    wrap.labels[rel] = 1")
-            elif self.flag & lbl:
-                self.out("    addr = op1 + 256 * op2")
-                self.out("    wrap.labels[addr] = 1")
-        if bvars:
-            bvars.extend(self.argorder)
-            outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
-        else:
-            outstr = "'%s       %s %s'" % (bstr, self.mnemonic, self.fmt)
-        self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
-
-    def opcode4(self, opcode):
-        self.op1()
-        self.op2()
-        self.op3()
-        bstr, bvars = self.bytes4(opcode)
-        if bvars:
-            bvars.extend(self.argorder)
-            outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
-        else:
-            outstr = "'%s       %s %s' %% (%s)" % (bstr, self.mnemonic, self.fmt, ", ".join(bvars))
-        self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
-
-    def unknown_opcode(self):
-        self.out("else:")
-        self.out("    count = 1")
-        bstr = "%02x __ __ __"
-        bvars = ["opcode", "opcode"]
-        fmt = "%02x"
-        outstr = "'%s       %s %s' %% (%s)" % (bstr, self.generator.data_op, fmt, ", ".join(bvars))
-        self.out("    put_bytes(%s, %d, wrap)" % (outstr, byte_loc))
-
-    def start_multibyte_leadin(self, leadin):
-        self.out("elif opcode == 0x%x:" % (leadin))
-        self.out("    leadin = opcode")
-        self.out("    opcode = src[1]")
-        log.debug("starting multibyte with leadin %x" % leadin)
-
-    def end_subroutine(self):
-        self.out("return count")
-
-
 c_preamble_header = """#include <stdio.h>
 #include <string.h>
 
@@ -282,7 +120,7 @@ c_preamble_header = """#include <stdio.h>
 """ % c_define_flags
 
 
-class RawC(PrintNumpy):
+class RawC(PrintBase):
     preamble_header = c_preamble_header
 
     preamble = """
@@ -327,9 +165,9 @@ int %s(history_entry_t *entry, char *txt) {
         self.out("    op3 = entry->instruction[3]")
 
     def start_if_clause(self, opcode):
-        if self.first:
-            self.out("switch(opcode) {")
-            self.first = False
+        # if self.first:
+        #     self.out("switch(opcode) {")
+        #     self.first = False
         self.out("case 0x%x: /* %s %s */" % (opcode, self.mnemonic, self.fmt))
 
     def end_if_clause(self):
@@ -410,6 +248,9 @@ int %s(history_entry_t *entry, char *txt) {
         self.out("    opcode = entry->instruction[1]")
         log.debug("starting multibyte with leadin %x" % leadin)
 
+    def start_subroutine(self):
+        self.out("switch(opcode) {")
+
     def end_subroutine(self):
         self.out("}")
         if self.leadin_offset == 0:
@@ -470,17 +311,30 @@ int %s(history_entry_t *entry, char *txt, char *hexdigits, int lc) {
                 for c in diffs:
                     self.out("        *txt++ = '%s'" % c)
             else:
-                self.out("    if (lc) {")
-                for c in diffs:
-                    self.out("        *txt++ = '%s'" % c.lower())
-                self.out("    }")
-                self.out("    else {")
-                for c in diffs:
-                    self.out("        *txt++ = '%s'" % c.upper())
-                self.out("    }")
+                # self.out("    if (lc) {")
+                # for c in diffs:
+                #     self.out("        *txt++ = '%s'" % c.lower())
+                # self.out("    }")
+                # self.out("    else {")
+                # for c in diffs:
+                #     self.out("        *txt++ = '%s'" % c.upper())
+                # self.out("    }")
+                line = "if (lc) "
+                ops = ["*txt++ = '%s'" % c.lower() for c in diffs]
+                line += ",".join(ops)
+                # for c in diffs:
+                #     self.out("        *txt++ = '%s'" % c.lower())
+                self.out("    %s" % line)
+                line = "else "
+                ops = ["*txt++ = '%s'" % c.upper() for c in diffs]
+                line += ",".join(ops)
+                # for c in diffs:
+                #     self.out("        *txt++ = '%s'" % c.lower())
+                self.out("    %s" % line)
             return []
 
         def flush_text(text):
+            same = []
             diffs = []
             for l, u in zip(text.lower(), text.upper()):
                 if l == u:
@@ -488,12 +342,17 @@ int %s(history_entry_t *entry, char *txt, char *hexdigits, int lc) {
                     if len(diffs) > 0:
                         diffs = flush_mixed(diffs)
                     if u == "'" or u == "\\":
-                        self.out("    *txt++ = '\\%s'" %  u)
+                        same.append("\\%s" %  u)
                     else:
-                        self.out("    *txt++ = '%s'" %  u)
+                        same.append(u)
                 else:
+                    if len(same) > 0:
+                        self.out("    " + ",".join(["*txt++ = '%s'" % s for s in same]))
+                        same = []
                     diffs.append(u)
                     #print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+            if len(same) > 0:
+                self.out("    " + ",".join(["*txt++ = '%s'" % s for s in same]))
             if len(diffs) > 0:
                 flush_mixed(diffs)
             return ""
@@ -764,7 +623,7 @@ int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int
 """
 
     def out(self, s):
-        if not s.endswith(":") and not s.endswith("{") and not s.endswith("}"):
+        if not s.endswith(":") and not s.endswith("{") and not s.endswith("}") and not s.endswith("*/"):
             s += ";"
         self.lines.append(self.indent + s)
 
@@ -800,9 +659,9 @@ int %s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int
         self.out("    entry->instruction[3] = op3")
 
     def start_if_clause(self, opcode):
-        if self.first:
-            self.out("switch(opcode) {")
-            self.first = False
+        # if self.first:
+        #     self.out("switch(opcode) {")
+        #     self.first = False
         self.out("case 0x%x: /* %s %s */" % (opcode, self.mnemonic, self.fmt))
 
     def end_if_clause(self):
