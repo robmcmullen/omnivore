@@ -17,6 +17,7 @@ import glob
 from collections import defaultdict, namedtuple
 
 import numpy as np
+from slugify import slugify
 
 import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
@@ -161,7 +162,6 @@ class CPU:
         self.argorder = {}
         table = c['addressModeTable']
         for mode, fmt in list(table.items()):
-            fmt = fmt.replace(":02X", ":02x").replace(":04X", ":04x")
             fmt, argorder = convert_fmt(fmt)
             self.address_modes[mode] = fmt
             self.argorder[mode] = argorder
@@ -215,15 +215,15 @@ def merge_cases_to_text(cases):
     return text
 
 
-class HistoryParserC:
+class HistoryParser:
     escape_strings = False
 
     template = """
-int history_parse_entry_c_%s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
+int parse_entry_%s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
 	int dist;
 	unsigned int rel;
 	unsigned short addr;
-	unsigned char opcode, leadin, op1, op2, op3;
+	unsigned char opcode, op1, op2, op3;
 	
 	opcode = *src++;
 	entry->instruction[0] = opcode;
@@ -259,7 +259,13 @@ truncated2:
 
     def __init__(self, cpu):
         self.cpu = cpu
+        self.includes = ['#include <stdio.h>','#include <string.h>', '#include "libudis.h"']
         self.cases = self.create_cases()
+
+    def add_to_includes(self, include_lookup):
+        for i in self.includes:
+            if i not in include_lookup:
+                include_lookup.add(i)
 
     @property
     def text(self):
@@ -268,7 +274,7 @@ truncated2:
 
     def create_cases(self):
         single_byte_opcode_cases = []
-        for cat, opcodes in self.cpu.gen_parser_combos(cpu.opcodes).items():
+        for cat, opcodes in self.cpu.gen_parser_combos(self.cpu.opcodes).items():
             print(f"{self.cpu}: {cat}, opcodes:{opcodes}")
             case = self.gen_case(cat, opcodes, "\t")
             single_byte_opcode_cases.append(case)
@@ -385,13 +391,277 @@ truncated2:
                     body.append(f"\tentry->instruction[2] = op1;")
                     body.append(f"\top2 = *src;")
                     body.append(f"\tentry->instruction[3] = op2;")
-                    if cat.target_addr:
+                    if cat.pcr:
+                        body.append("\taddr = op1 + 256 * op2")
+                        body.append("\tif (addr > 32768) addr -= 0x10000")
+                        # limit relative address to 64k address space
+                        body.append("\trel = (pc + 2 + addr) & 0xffff")
+                        body.append("\tlabels[rel] = 1")
+                        body.append("\tentry->target_addr = rel")
+                    elif cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
                         body.append(f"\tlabels[addr] = 1;")
                         body.append(f"\tentry->target_addr = addr;")
 
         return body
 
+
+def label_target(cat):
+    name = cat.mode.replace("@", "_at_") + "_" + str(cat.length)
+    return "L" + slugify(name, separator="_")
+
+
+class HistoryStringifier(HistoryParser):
+    template = """
+int stringify_entry_%s(history_entry_t *entry, char *txt, char *hexdigits, int lc) {
+    int dist;
+    unsigned char opcode, leadin, op1, op2, op3;
+    char *first_txt, *h, *opstr;
+    unsigned int rel;
+
+    first_txt = txt;
+    opcode = entry->instruction[0];
+    switch(opcode) {
+$CASES
+    default:
+        h = &hexdigits[(opcode & 0xff)*2];
+        *txt++ = *h++;
+        *txt++ = *h++;
+        goto last;
+    }
+$TARGETS
+last:
+    return (int)(txt - first_txt);
+}
+"""
+
+    leadin_template = """
+    case 0x%x:
+        leadin = opcode;
+        opcode = entry->instruction[1];
+        switch(opcode) {
+%s
+        default:
+            h = &hexdigits[(leadin & 0xff)*2];
+            *txt++ = *h++;
+            *txt++ = *h++;
+            h = &hexdigits[(opcode & 0xff)*2];
+            *txt++ = *h++;
+            *txt++ = *h++;
+            break;
+        }
+        break;
+"""
+
+    @property
+    def text(self):
+        text = (self.template % self.cpu.cpu).replace("$CASES", self.cases).replace("$TARGETS", self.targets)
+        return text
+
+    def create_cases(self):
+        self.goto_targets = {}
+        text = super().create_cases()
+        self.targets = ""
+        for target in self.goto_targets.values():
+            self.targets += target
+        return text
+
+    def gen_case(self, cat, opcodes, extra_indent=""):
+        case = []
+        case.append(f"/* {cat.mode} {self.cpu.address_modes[cat.mode]} {'(undocumented) ' if cat.undoc else ''}*/")
+        slug = label_target(cat)
+        for op in opcodes:
+            case.append(f"case {hex(op.opcode)}: lc ? opstr=\"{op.mnemonic.lower()} \" : \"{op.mnemonic.upper()} \"; goto {slug};")
+
+        case_text = "\n".join([extra_indent + line for line in case]) + "\n"
+        body_text = ""
+        if slug not in self.goto_targets:
+            print(f"processing opcodes {opcodes}")
+            target = self.create_goto_target(cat)
+            self.goto_targets[slug] = "\n".join(target) + "\n"
+        return case_text, body_text
+
+    def create_goto_target(self, cat):
+        body = []
+        label = label_target(cat)
+        body.append(f"{label}: /* {self.cpu.address_modes[cat.mode]} {self.cpu.argorder[cat.mode]} */")
+        print("processing", cat, f"{label}: /* {self.cpu.address_modes[cat.mode]} {self.cpu.argorder[cat.mode]} */")
+        print(self.cpu)
+        print(self.cpu.argorder)
+        print(self.cpu.argorder[cat.mode])
+        if cat.length == 2:
+            if cat.pcr:
+                body.append(f"\trel = entry->target_addr;")
+            elif cat.leadin is None:
+                body.append(f"\top1 = entry->instruction[1];")
+            else:
+                pass  # no arguments possible if 2 bytes with leadin
+        elif cat.length == 3:
+            if cat.pcr:
+                body.append(f"\trel = entry->target_addr;")
+            elif cat.leadin is None:
+                body.append(f"\top1 = entry->instruction[1];")
+                body.append(f"\top2 = entry->instruction[2];")
+            elif cat.leadin < 256:
+                body.append(f"\top1 = entry->instruction[2];")
+            else:
+                raise RuntimeError("length=3, not pcr or leadin")
+        elif cat.length == 4:
+            if cat.pcr:
+                body.append(f"\trel = entry->target_addr;")
+            elif cat.leadin is None:
+                body.append(f"\top1 = entry->instruction[1];")
+                body.append(f"\top2 = entry->instruction[2];")
+                body.append(f"\top3 = entry->instruction[3];")
+            elif cat.leadin < 256:
+                body.append(f"\top1 = entry->instruction[2];")
+                body.append(f"\top2 = entry->instruction[3];")
+            else:
+                raise RuntimeError("length=4, not pcr or leadin")
+        outstr = self.cpu.address_modes[cat.mode]
+        print("OESHURCOEHUCROHEU", cat)
+        lines = self.opcode_line_out(outstr.rstrip(), self.cpu.argorder[cat.mode])
+        body.extend(lines)
+        body.append("\tgoto last;")
+        return body
+
+    def opcode_line_out(self, outstr, argorder=[], force_case=False):
+        argorder = list(argorder)  # operate on copy!
+        print("opcode_line_out: %s %s" % (outstr, argorder))
+        lines = []
+
+        def flush_mixed(diffs):
+            if force_case:
+                for c in diffs:
+                    lines.append("        *txt++ = '%s';" % c)
+            else:
+                # lines.append("    if (lc) {")
+                # for c in diffs:
+                #     lines.append("        *txt++ = '%s'" % c.lower())
+                # lines.append("    }")
+                # lines.append("    else {")
+                # for c in diffs:
+                #     lines.append("        *txt++ = '%s'" % c.upper())
+                # lines.append("    }")
+                line = "if (lc) "
+                ops = ["*txt++ = '%s'" % c.lower() for c in diffs]
+                line += ",".join(ops)
+                # for c in diffs:
+                #     lines.append("        *txt++ = '%s'" % c.lower())
+                lines.append("    %s;" % line)
+                line = "else "
+                ops = ["*txt++ = '%s'" % c.upper() for c in diffs]
+                line += ",".join(ops)
+                # for c in diffs:
+                #     lines.append("        *txt++ = '%s'" % c.lower())
+                lines.append("    %s;" % line)
+            return []
+
+        def flush_text(text):
+            same = []
+            diffs = []
+            for l, u in zip(text.lower(), text.upper()):
+                if l == u:
+                    #print "l==u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+                    if len(diffs) > 0:
+                        diffs = flush_mixed(diffs)
+                    if u == "'" or u == "\\":
+                        same.append("\\%s" %  u)
+                    else:
+                        same.append(u)
+                else:
+                    if len(same) > 0:
+                        lines.append("\t" + ",".join(["*txt++ = '%s'" % s for s in same]) + ";")
+                        same = []
+                    diffs.append(u)
+                    #print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
+            if len(same) > 0:
+                lines.append("\t" + ",".join(["*txt++ = '%s'" % s for s in same]) + ";")
+            if len(diffs) > 0:
+                flush_mixed(diffs)
+            return ""
+
+        def flush_nibble(operand):
+            lines.append("\th = &hexdigits[(%s & 0xff)*2] + 1;" % operand)
+            lines.append("\t*txt++ = *h++;")
+
+        def flush_hex(operand):
+            lines.append("\th = &hexdigits[(%s & 0xff)*2];" % operand)
+            lines.append("\t*txt++ = *h++;")
+            lines.append("\t*txt++ = *h++;")
+
+        def flush_hex16(operand):
+            flush_hex("(%s>>8)" % operand)
+            flush_hex("%s" % operand)
+            # lines.append("    h = &hexdigits[((%s>>8)&0xff)*2]" % operand)
+            # lines.append("    *txt++ = *h++")
+            # lines.append("    *txt++ = *h++")
+            # lines.append("    h = &hexdigits[(%s&0xff)*2]" % operand)
+            # lines.append("    *txt++ = *h++")
+            # lines.append("    *txt++ = *h++")
+
+        def flush_dec(operand):
+            lines.append("\ttxt += sprintf(txt, \"%%d\", %s);" % operand)
+
+        def flush_raw(operand):
+            lines.append("\t*txt++ = %s;" % operand)
+
+        i = 0
+        text = ""
+        fmt = ""
+        while i < len(outstr):
+            tail = outstr[i:].lower()
+            if tail.startswith("#$%02x%02x"):
+                text = text + "#$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                flush_hex(argorder.pop(0))
+                i += 10
+            elif tail.startswith("#$%02x"):
+                text = text + "#$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                i += 6
+            elif tail.startswith("$%02x%02x"):
+                text = text + "$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                flush_hex(argorder.pop(0))
+                i += 9
+            elif tail.startswith("$%02x"):
+                text = text + "$"
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                i += 5
+            elif tail.startswith("$%04x"):
+                text = text + "$"
+                text = flush_text(text)
+                flush_hex16(argorder.pop(0))
+                i += 5
+            elif tail.startswith("%02x"):
+                text = flush_text(text)
+                flush_hex(argorder.pop(0))
+                i += 4
+            elif tail.startswith("%1x"):
+                text = flush_text(text)
+                flush_nibble(argorder.pop(0))
+                i += 3
+            elif tail.startswith("%d"):
+                text = flush_text(text)
+                flush_dec(argorder.pop(0))
+                i += 2
+            elif tail.startswith("\\"):
+                text = flush_text(text)
+                i += 1
+                flush_raw(ord(outstr[i]))
+                i += 1
+            elif tail.startswith("$%"):
+                raise RuntimeError("Unsupported operand format: %s" % tail)
+            else:
+                text += outstr[i]
+                i += 1
+        flush_text(text)
+        return lines
 
 
 if __name__ == "__main__":
@@ -412,13 +682,36 @@ if __name__ == "__main__":
 
     known = []
     for name in list(cputables.processors.keys()):
+        if name == "z80":
+            continue
         cpu = CPU(name)
         known.append(cpu)
 
     with open("parse_history.c", "w") as fh:
         fh.write(c_disclaimer)
+        generated_functions = []
+        c_includes = set()
         for cpu in known:
-            print(cpu)
-            h = HistoryParserC(cpu)
+            print(f"computing {cpu}")
+            h = HistoryParser(cpu)
+            h.add_to_includes(c_includes)
+            generated_functions.append(h)
+
+        fh.write("\n".join(list(c_includes)) + "\n\n")
+        for h in generated_functions:
             fh.write(h.text)
+
+    with open("stringify_history.c", "w") as fh:
+        fh.write(c_disclaimer)
+        generated_functions = []
+        c_includes = set()
+        for cpu in known:
+            print(f"computing {cpu}")
+            s = HistoryStringifier(cpu)
+            s.add_to_includes(c_includes)
+            generated_functions.append(s)
+
+        fh.write("\n".join(list(c_includes)) + "\n\n")
+        for s in generated_functions:
+            fh.write(s.text)
 
