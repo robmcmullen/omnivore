@@ -218,8 +218,12 @@ def merge_cases_to_text(cases):
 class HistoryParser:
     escape_strings = False
 
+    function_return_type = "int"
+    function_name_template = "parse_entry_%s"
+    function_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels"
+
     template = """
-int parse_entry_%s(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
+$RETURN_TYPE $NAME($SIGNATURE) {
 	int dist;
 	unsigned int rel;
 	unsigned short addr;
@@ -261,6 +265,7 @@ truncated2:
         self.cpu = cpu
         self.includes = ['#include <stdio.h>','#include <string.h>', '#include "libudis.h"']
         self.cases = self.create_cases()
+        self.function_name = self.function_name_template % self.cpu.cpu
 
     def add_to_includes(self, include_lookup):
         for i in self.includes:
@@ -269,7 +274,7 @@ truncated2:
 
     @property
     def text(self):
-        text = (self.template % self.cpu.cpu).replace("$CASES", self.cases)
+        text = self.template.replace("$NAME", self.function_name).replace("$CASES", self.cases).replace("$RETURN_TYPE", self.function_return_type).replace("$SIGNATURE", self.function_signature)
         return text
 
     def create_cases(self):
@@ -392,12 +397,12 @@ truncated2:
                     body.append(f"\top2 = *src;")
                     body.append(f"\tentry->instruction[3] = op2;")
                     if cat.pcr:
-                        body.append("\taddr = op1 + 256 * op2")
-                        body.append("\tif (addr > 32768) addr -= 0x10000")
+                        body.append("\taddr = op1 + 256 * op2;")
+                        body.append("\tif (addr > 32768) addr -= 0x10000;")
                         # limit relative address to 64k address space
-                        body.append("\trel = (pc + 2 + addr) & 0xffff")
-                        body.append("\tlabels[rel] = 1")
-                        body.append("\tentry->target_addr = rel")
+                        body.append("\trel = (pc + 2 + addr) & 0xffff;")
+                        body.append("\tlabels[rel] = 1;")
+                        body.append("\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
                         body.append(f"\tlabels[addr] = 1;")
@@ -412,8 +417,12 @@ def label_target(cat):
 
 
 class HistoryStringifier(HistoryParser):
+    function_return_type = "int"
+    function_name_template = "stringify_entry_%s"
+    function_signature = "history_entry_t *entry, char *txt, char *hexdigits, int lc"
+
     template = """
-int stringify_entry_%s(history_entry_t *entry, char *txt, char *hexdigits, int lc) {
+$RETURN_TYPE $NAME($SIGNATURE) {
     int dist;
     unsigned char opcode, leadin, op1, op2, op3;
     char *first_txt, *h, *opstr;
@@ -455,7 +464,7 @@ last:
 
     @property
     def text(self):
-        text = (self.template % self.cpu.cpu).replace("$CASES", self.cases).replace("$TARGETS", self.targets)
+        text = self.template.replace("$NAME", self.function_name).replace("$CASES", self.cases).replace("$TARGETS", self.targets).replace("$RETURN_TYPE", self.function_return_type).replace("$SIGNATURE", self.function_signature)
         return text
 
     def create_cases(self):
@@ -664,6 +673,80 @@ last:
         return lines
 
 
+def gen_pyx(filename, parsers, stringifiers):
+    externlist = []
+    for p in parsers + stringifiers:
+        externlist.append(f"    {p.function_return_type} {p.function_name}({p.function_signature})")
+
+    parsetemplate = """    $IF strcmp(cpu, "$CPU") == 0:
+        parse_func = $FUNC"""
+    stringtemplate = """    $IF strcmp(cpu, "$CPU") == 0:
+        string_func = $FUNC"""
+    parselist = []
+    stringlist = []
+    iftext = "if"
+    typelist = []
+    for p in parsers:
+        parselist.append(parsetemplate.replace("$CPU", p.cpu.cpu).replace("$IF", iftext).replace("$FUNC", p.function_name))
+        iftext = "elif"
+    iftext = "if"
+    for p in stringifiers:
+        stringlist.append(stringtemplate.replace("$CPU", p.cpu.cpu).replace("$IF", iftext).replace("$FUNC", p.function_name))
+        iftext = "elif"
+
+    header = """
+from libc.string cimport strcmp
+import cython
+import numpy as np
+cimport numpy as np
+
+from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t
+
+cdef extern:
+$EXTERNLIST
+
+cdef parse_func_t find_parse_function(char *cpu):
+    cdef parse_func_t parse_func
+
+$PARSELIST
+    else:
+        parse_func = NULL
+    return parse_func
+
+cdef string_func_t find_string_function(char *cpu):
+    cdef string_func_t string_func
+
+$STRINGLIST
+    else:
+        string_func = NULL
+    return string_func
+
+cdef string_func_t stringifier_map[$TYPEMAX]
+$TYPELIST
+""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$PARSELIST", "\n".join(parselist)).replace("$STRINGLIST", "\n".join(stringlist)).replace("$TYPELIST", "\n".join(typelist)).replace("$TYPEMAX", str(disassembler_type_max))
+
+    with open(filename, "w") as fh:
+        fh.write(py_disclaimer)
+        fh.write(header)
+
+def gen_map(fh, stringifiers):
+    cpu_order = sorted(stringifiers, key=lambda p: disassembler_type[p.cpu.cpu])
+    if fh is not None:
+        # fh.write(c_disclaimer)
+        # fh.write("#include <stdio.h>\n#include \"libudis.h\"\n\n")
+        # for p in cpu_order:
+        #     fh.write(f"extern {p.function_return_type} {p.function_name}({p.function_signature});\n")
+        fh.write("void *stringifier_map[] = {\n")
+        expected = 0
+        for p in cpu_order:
+            i = disassembler_type[p.cpu.cpu]
+            while i > expected:
+                fh.write("NULL, /* %d */\n" % expected)
+                expected += 1
+            fh.write("%s, /* %d */\n" % (p.function_name, i))
+            expected += 1
+        fh.write("};\n")
+
 if __name__ == "__main__":
     import sys
     import argparse
@@ -687,31 +770,35 @@ if __name__ == "__main__":
         cpu = CPU(name)
         known.append(cpu)
 
+    generated_parsers = []
     with open("parse_history.c", "w") as fh:
         fh.write(c_disclaimer)
-        generated_functions = []
         c_includes = set()
         for cpu in known:
             print(f"computing {cpu}")
             h = HistoryParser(cpu)
             h.add_to_includes(c_includes)
-            generated_functions.append(h)
+            generated_parsers.append(h)
 
         fh.write("\n".join(list(c_includes)) + "\n\n")
-        for h in generated_functions:
+        for h in generated_parsers:
             fh.write(h.text)
 
+    generated_stringifiers = []
     with open("stringify_history.c", "w") as fh:
         fh.write(c_disclaimer)
-        generated_functions = []
         c_includes = set()
         for cpu in known:
             print(f"computing {cpu}")
             s = HistoryStringifier(cpu)
             s.add_to_includes(c_includes)
-            generated_functions.append(s)
+            generated_stringifiers.append(s)
 
         fh.write("\n".join(list(c_includes)) + "\n\n")
-        for s in generated_functions:
+        for s in generated_stringifiers:
             fh.write(s.text)
 
+        fh.write("\n\n")
+        gen_map(fh, generated_stringifiers)
+
+    gen_pyx("declarations.pyx", generated_parsers, generated_stringifiers)

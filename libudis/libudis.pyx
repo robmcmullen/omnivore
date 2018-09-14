@@ -5,7 +5,7 @@ cimport numpy as np
 
 from libudis.libudis cimport history_entry_t, parse_func_t, string_func_t
 
-from libudis.disasm_speedups_monolithic cimport find_parse_function, find_string_function
+from libudis.declarations cimport find_parse_function, find_string_function
 
 cdef extern:
     string_func_t stringifier_map[]
@@ -81,6 +81,7 @@ cdef class ParsedDisassembly:
         cpu_type_bytes = cpu_type.encode('utf-8')
         c_cpu_type = cpu_type_bytes
         processor = find_parse_function(c_cpu_type)
+        printf("processor = %lx\n", processor)
         self.parse_next(processor, <unsigned char *>src.data, len(src))
 
     def stringify(self, int index, int num_lines_requested):

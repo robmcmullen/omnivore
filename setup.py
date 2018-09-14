@@ -107,10 +107,9 @@ extensions = [
     Extension("omni8bit.udis_fast.libudis",
         sources = [
             "libudis/libudis.pyx",
-            "libudis/disasm_speedups_monolithic.pyx",
             "libudis/parse_history.c",
-            # "libudis/hardcoded_parse_monolithic.c",
-            # "libudis/hardcoded_parse_stringifiers.c",
+            "libudis/stringify_history.c",
+            "libudis/declarations.pyx",
         ],
         extra_compile_args = extra_compile_args,
         include_dirs = [np.get_include()],
