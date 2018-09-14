@@ -39,7 +39,7 @@ cdef class ParsedDisassembly:
 
     def __init__(self, max_entries, start_pc):
         self.num_entries = max_entries
-        self.entry_size = 12
+        self.entry_size = 24
         self.entries = np.zeros(max_entries * self.entry_size, dtype=np.uint8)
         self.history_entries = <history_entry_t *>self.entries.data
         self.entry_index = 0
