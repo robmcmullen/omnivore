@@ -621,6 +621,9 @@ class ZoomRulerBase(object):
             self.playback_timer.Stop()
             self.calc_playback_limits()
             self.ruler.ensure_caret_visible()
+            # reset caret value so the first timer callback will occur on the
+            # 1st (earliest) time, not the 2nd time.
+            self.caret_value -= self.step_value
             self.playback_timer.Start(self.step_rate * 1000)
             self.playback_state = "playing"
             self.playback_start_callback()
@@ -637,9 +640,13 @@ class ZoomRulerBase(object):
         self.ruler.ensure_caret_visible()
         self.playback_callback(self.ruler.caret_value)
         self.Refresh()
-        if self.ruler.caret_value >= self.playback_stop_value:
+        if self.ruler.caret_value > self.playback_stop_value:
             self.pause_playback()
             self.ruler.caret_value = None
+
+    @property
+    def is_beyond_playback_stop_value(self):
+        return self.ruler.caret_value is None or self.ruler.caret_value > self.playback_stop_value
 
     def playback_callback(self, current_value):
         pass
