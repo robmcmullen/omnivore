@@ -480,7 +480,7 @@ last:
         case.append(f"/* {cat.mode} {self.cpu.address_modes[cat.mode]} {'(undocumented) ' if cat.undoc else ''}*/")
         slug = label_target(cat)
         for op in opcodes:
-            case.append(f"case {hex(op.opcode)}: lc ? opstr=\"{op.mnemonic.lower()} \" : \"{op.mnemonic.upper()} \"; goto {slug};")
+            case.append(f"case {hex(op.opcode)}: lc ? opstr=\"{op.mnemonic.lower()}\" : \"{op.mnemonic.upper()}\"; goto {slug};")
 
         case_text = "\n".join([extra_indent + line for line in case]) + "\n"
         body_text = ""
@@ -493,11 +493,11 @@ last:
     def create_goto_target(self, cat):
         body = []
         label = label_target(cat)
-        body.append(f"{label}: /* {self.cpu.address_modes[cat.mode]} {self.cpu.argorder[cat.mode]} */")
-        print("processing", cat, f"{label}: /* {self.cpu.address_modes[cat.mode]} {self.cpu.argorder[cat.mode]} */")
-        print(self.cpu)
-        print(self.cpu.argorder)
-        print(self.cpu.argorder[cat.mode])
+        outstr = self.cpu.address_modes[cat.mode]
+        argorder = self.cpu.argorder[cat.mode]
+        body.append(f"{label}: /* {outstr} {argorder} */")
+        print("processing", cat, f"{label}: /* {outstr} {argorder} */")
+        body.append("\tdo {*txt++ = *opstr++;} while (*opstr);")
         if cat.length == 2:
             if cat.pcr:
                 body.append(f"\trel = entry->target_addr;")
@@ -527,15 +527,15 @@ last:
                 body.append(f"\top2 = entry->instruction[3];")
             else:
                 raise RuntimeError("length=4, not pcr or leadin")
-        outstr = self.cpu.address_modes[cat.mode]
-        print("OESHURCOEHUCROHEU", cat)
-        lines = self.opcode_line_out(outstr.rstrip(), self.cpu.argorder[cat.mode])
-        body.extend(lines)
+        if outstr:
+            lines = self.opcode_line_out(outstr, argorder)
+            body.extend(lines)
         body.append("\tgoto last;")
         return body
 
     def opcode_line_out(self, outstr, argorder=[], force_case=False):
         argorder = list(argorder)  # operate on copy!
+        outstr = " " + outstr.strip()
         print("opcode_line_out: %s %s" % (outstr, argorder))
         lines = []
 
@@ -591,13 +591,10 @@ last:
             return ""
 
         def flush_nibble(operand):
-            lines.append("\th = &hexdigits[(%s & 0xff)*2] + 1;" % operand)
-            lines.append("\t*txt++ = *h++;")
+            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2] + 1; *txt++ = *h++;")
 
         def flush_hex(operand):
-            lines.append("\th = &hexdigits[(%s & 0xff)*2];" % operand)
-            lines.append("\t*txt++ = *h++;")
-            lines.append("\t*txt++ = *h++;")
+            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;")
 
         def flush_hex16(operand):
             flush_hex("(%s>>8)" % operand)

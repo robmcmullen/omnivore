@@ -23,14 +23,17 @@ if __name__ == "__main__":
     p.parse_test("6502", data)
     print(p.entries)
     e = p.entries.view(dtype=ud.HISTORY_ENTRY_DTYPE)
-    # for i in range(100):
+    # for i in range(len(e)):
     #     print(e[i])
-    print(hex(len(p.labels)))
-    used_labels = np.where(p.labels != 0)[0]
-    print(used_labels)
-    for index in used_labels:
-        print(index, p.labels[index])
+    # print(f"number of entries: {len(e)}")
+    # print(hex(len(p.labels)))
+    # used_labels = np.where(p.labels != 0)[0]
+    # print(used_labels)
+    # for index in used_labels:
+    #     print(index, p.labels[index])
 
+    for i in range(10):
+        print(e[i])
     p.stringify(0, 10)
     for i in range(10):
         start = p.text_starts[i]
