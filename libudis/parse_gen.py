@@ -51,6 +51,22 @@ disassembler_type = {
 }
 disassembler_type_max = max(disassembler_type.values())
 
+CustomEntry = namedtuple('CustomStringifier', ['cpu_name', 'function_name', 'function_return_type', 'function_signature'])
+
+parser_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels"
+custom_parsers = [
+    CustomEntry('data', 'parse_entry_data', 'int', parser_signature),
+    CustomEntry('antic_dl', 'parse_entry_antic_dl', 'int', parser_signature),
+    CustomEntry('jumpman_harvest', 'parse_entry_jumpman_harvest', 'int', parser_signature),
+]
+
+stringifier_signature = "history_entry_t *entry, char *txt, char *hexdigits, int lc"
+custom_stringifiers = [
+    CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
+    CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
+    CustomEntry('jumpman_harvest', 'stringify_entry_jumpman_harvest', 'int', stringifier_signature),
+]
+
 
 disclaimer = """Warning! This is generated code.
 
@@ -153,11 +169,11 @@ class Opcode:
 
 
 class CPU:
-    def __init__(self, cpu):
-        self.cpu = cpu
-        self.disassembler_type = disassembler_type[cpu]
-        self.disassembler_type_name = f"DISASM_{cpu}".upper()
-        c = cputables.processors[cpu]
+    def __init__(self, name):
+        self.name = name
+        self.disassembler_type = disassembler_type[name]
+        self.disassembler_type_name = f"DISASM_{name}".upper()
+        c = cputables.processors[name]
         self.address_modes = {}
         self.argorder = {}
         table = c['addressModeTable']
@@ -166,7 +182,7 @@ class CPU:
             self.address_modes[mode] = fmt
             self.argorder[mode] = argorder
             if "'" in fmt:
-                print(f"WARNING in {self.cpu}! ' char in {fmt}")
+                print(f"WARNING in {self.name}! ' char in {fmt}")
         self.opcode_table = c['opcodeTable']
         self.opcodes = []
         self.leadin_opcodes = defaultdict(list)
@@ -174,7 +190,7 @@ class CPU:
         self.gen_stringifier()
 
     def __str__(self):
-        return f"{self.cpu}: {len(self.opcodes)} opcodes, {len(self.leadin_opcodes)} leadin opcodes {tuple([hex(a) for a in self.leadin_opcodes.keys()])}"
+        return f"{self.name}: {len(self.opcodes)} opcodes, {len(self.leadin_opcodes)} leadin opcodes {tuple([hex(a) for a in self.leadin_opcodes.keys()])}"
 
     def gen_opcodes(self):
         for value, optable in list(self.opcode_table.items()):
@@ -220,7 +236,7 @@ class HistoryParser:
 
     function_return_type = "int"
     function_name_template = "parse_entry_%s"
-    function_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels"
+    function_signature = parser_signature
 
     template = """
 $RETURN_TYPE $NAME($SIGNATURE) {
@@ -265,12 +281,16 @@ truncated2:
         self.cpu = cpu
         self.includes = ['#include <stdio.h>','#include <string.h>', '#include "libudis.h"']
         self.cases = self.create_cases()
-        self.function_name = self.function_name_template % self.cpu.cpu
+        self.function_name = self.function_name_template % self.cpu_name
 
     def add_to_includes(self, include_lookup):
         for i in self.includes:
             if i not in include_lookup:
                 include_lookup.add(i)
+
+    @property
+    def cpu_name(self):
+        return self.cpu.name
 
     @property
     def text(self):
@@ -419,7 +439,7 @@ def label_target(cat):
 class HistoryStringifier(HistoryParser):
     function_return_type = "int"
     function_name_template = "stringify_entry_%s"
-    function_signature = "history_entry_t *entry, char *txt, char *hexdigits, int lc"
+    function_signature = stringifier_signature
 
     template = """
 $RETURN_TYPE $NAME($SIGNATURE) {
@@ -672,7 +692,7 @@ last:
 
 def gen_pyx(filename, parsers, stringifiers):
     externlist = []
-    for p in parsers + stringifiers:
+    for p in parsers + custom_parsers + stringifiers + custom_stringifiers:
         externlist.append(f"    {p.function_return_type} {p.function_name}({p.function_signature})")
 
     parsetemplate = """    $IF strcmp(cpu, "$CPU") == 0:
@@ -683,12 +703,12 @@ def gen_pyx(filename, parsers, stringifiers):
     stringlist = []
     iftext = "if"
     typelist = []
-    for p in parsers:
-        parselist.append(parsetemplate.replace("$CPU", p.cpu.cpu).replace("$IF", iftext).replace("$FUNC", p.function_name))
+    for p in parsers + custom_parsers:
+        parselist.append(parsetemplate.replace("$CPU", p.cpu_name).replace("$IF", iftext).replace("$FUNC", p.function_name))
         iftext = "elif"
     iftext = "if"
-    for p in stringifiers:
-        stringlist.append(stringtemplate.replace("$CPU", p.cpu.cpu).replace("$IF", iftext).replace("$FUNC", p.function_name))
+    for p in stringifiers + custom_stringifiers:
+        stringlist.append(stringtemplate.replace("$CPU", p.cpu_name).replace("$IF", iftext).replace("$FUNC", p.function_name))
         iftext = "elif"
 
     header = """
@@ -727,16 +747,15 @@ $TYPELIST
         fh.write(header)
 
 def gen_map(fh, stringifiers):
-    cpu_order = sorted(stringifiers, key=lambda p: disassembler_type[p.cpu.cpu])
+    all_stringifiers = stringifiers + custom_stringifiers
+    cpu_order = sorted(all_stringifiers, key=lambda p: disassembler_type[p.cpu_name])
     if fh is not None:
-        # fh.write(c_disclaimer)
-        # fh.write("#include <stdio.h>\n#include \"libudis.h\"\n\n")
-        # for p in cpu_order:
-        #     fh.write(f"extern {p.function_return_type} {p.function_name}({p.function_signature});\n")
-        fh.write("void *stringifier_map[] = {\n")
+        for p in custom_stringifiers:
+            fh.write(f"extern {p.function_return_type} {p.function_name}({p.function_signature});\n")
+        fh.write("\nvoid *stringifier_map[] = {\n")
         expected = 0
         for p in cpu_order:
-            i = disassembler_type[p.cpu.cpu]
+            i = disassembler_type[p.cpu_name]
             while i > expected:
                 fh.write("NULL, /* %d */\n" % expected)
                 expected += 1

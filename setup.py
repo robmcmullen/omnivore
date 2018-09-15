@@ -108,7 +108,9 @@ extensions = [
         sources = [
             "libudis/libudis.pyx",
             "libudis/parse_udis_cpu.c",
+            "libudis/parse_custom.c",
             "libudis/stringify_udis_cpu.c",
+            "libudis/stringify_custom.c",
             "libudis/declarations.pyx",
         ],
         extra_compile_args = extra_compile_args,
