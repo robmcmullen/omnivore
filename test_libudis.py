@@ -32,10 +32,11 @@ if __name__ == "__main__":
     # for index in used_labels:
     #     print(index, p.labels[index])
 
-    for i in range(10):
+    num_lines = 100
+    for i in range(num_lines):
         print(e[i])
-    p.stringify(0, 10)
-    for i in range(10):
+    p.stringify(0, num_lines, False, True)
+    for i in range(num_lines):
         start = p.text_starts[i]
         count = p.line_lengths[i]
         text = p.text_buffer[start:start + count].tostring()

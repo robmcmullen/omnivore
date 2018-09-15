@@ -84,7 +84,7 @@ cdef class ParsedDisassembly:
         printf("processor = %lx\n", processor)
         self.parse_next(processor, <unsigned char *>src.data, len(src))
 
-    def stringify(self, int index, int num_lines_requested):
+    def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
         cdef history_entry_t *h = &self.history_entries[index]
         cdef int num_text_lines = 0
         cdef char *txt = self.text_buffer_data
@@ -94,6 +94,8 @@ cdef class ParsedDisassembly:
         cdef np.uint16_t *lengths = self.line_lengths_data
         cdef np.uint16_t text_index = 0
         cdef int disassembler_type
+        cdef int text_case = 1 if mnemonic_lower else 0
+        cdef char *hex_case = hexdigits_lower if hex_lower else hexdigits_upper
         while num_lines_requested > 0 and index < self.entry_index:
             disassembler_type = h.disassembler_type
             printf("disassembler: %d\n", disassembler_type)
@@ -101,7 +103,7 @@ cdef class ParsedDisassembly:
             printf("stringifier: %lx\n", stringifier)
             for disassembler_type in range(40):
                 printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
-            count = stringifier(h, txt, hexdigits_lower, 1)
+            count = stringifier(h, txt, hex_case, text_case)
             starts[index] = text_index
             lengths[index] = count
             text_index += count
