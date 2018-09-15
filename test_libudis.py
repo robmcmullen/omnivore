@@ -23,7 +23,7 @@ if __name__ == "__main__":
         data = nops
     print(type(data), data)
     d2 = SegmentData(data)
-    segment = DefaultSegment(d2)
+    segment = DefaultSegment(d2, 0x6000)
 
     if False:
         p = libudis.ParsedDisassembly(1000, 0x6000)
@@ -65,5 +65,14 @@ if __name__ == "__main__":
     print(len(p))
     for i in range(len(p)):
         print(e[i])
+
+    t = p.stringify(100,100)
+    print(t)
+    for i in range(len(t)):
+        start = t.text_starts[i]
+        count = t.line_lengths[i]
+        text = t.text_buffer[start:start + count].tostring()
+        print(f"text[{start}:{start + count}] = {text}, {e[i+100]}")
+
     del p
     print("deleted")

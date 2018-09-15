@@ -16,6 +16,73 @@ cdef char *hexdigits_lower = "000102030405060708090a0b0c0d0e0f101112131415161718
 cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6C6D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"
 
 
+cdef class StringifiedDisassembly:
+    cdef public int start_pc
+    cdef public int last_pc
+
+    # text representation
+    cdef int max_lines
+    cdef public np.ndarray text_starts
+    cdef np.uint16_t *text_starts_data
+    cdef public np.ndarray line_lengths
+    cdef np.uint16_t *line_lengths_data
+    cdef public np.ndarray text_buffer
+    cdef char *text_buffer_data
+    cdef public int num_lines
+    cdef text_buffer_size
+
+    # internals
+    cdef int mnemonic_case
+    cdef char *hex_case
+
+    def __init__(self, max_lines, mnemonic_lower=True, hex_lower=True):
+        self.text_starts = np.zeros(max_lines, dtype=np.uint16)
+        self.text_starts_data = <np.uint16_t *>self.text_starts.data
+        self.line_lengths = np.zeros(max_lines, dtype=np.uint16)
+        self.line_lengths_data = <np.uint16_t *>self.line_lengths.data
+        self.text_buffer_size = max_lines * 256
+        self.text_buffer = np.zeros(self.text_buffer_size + 1000, dtype=np.uint8)
+        self.text_buffer_data = <char *>self.text_buffer.data
+        self.max_lines = max_lines
+        self.mnemonic_case = 1 if mnemonic_lower else 0
+        self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
+        self.clear()
+        for disassembler_type in range(40):
+            printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
+
+    def __len__(self):
+        return self.num_lines
+
+    def clear(self):
+        self.num_lines = 0
+        self.start_pc = 0
+        self.last_pc = 0
+
+    cdef parse_history_entries(self, history_entry_t *h, int num_entries):
+        if num_entries > self.max_lines:
+            num_entries = self.max_lines
+        cdef int index = 0
+        cdef char *txt = self.text_buffer_data
+        cdef int count
+        cdef string_func_t stringifier
+        cdef np.uint16_t *starts = self.text_starts_data
+        cdef np.uint16_t *lengths = self.line_lengths_data
+        cdef np.uint16_t text_index = 0
+
+        while num_entries > 0:
+            stringifier = stringifier_map[h.disassembler_type]
+            printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
+            count = stringifier(h, txt, self.hex_case, self.mnemonic_case)
+            starts[index] = text_index
+            lengths[index] = count
+            text_index += count
+            txt += count
+            num_entries -= 1
+            index += 1
+            h += 1
+        self.num_lines = index
+
+
 cdef class ParsedDisassembly:
     cdef history_entry_t *history_entries
     cdef public int max_entries
@@ -91,36 +158,9 @@ cdef class ParsedDisassembly:
 
     def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
         cdef history_entry_t *h = &self.history_entries[index]
-        cdef int num_text_lines = 0
-        cdef char *txt = self.text_buffer_data
-        cdef int count
-        cdef string_func_t stringifier
-        cdef np.uint16_t *starts = self.text_starts_data
-        cdef np.uint16_t *lengths = self.line_lengths_data
-        cdef np.uint16_t text_index = 0
-        cdef int disassembler_type
-        cdef int text_case = 1 if mnemonic_lower else 0
-        cdef char *hex_case = hexdigits_lower if hex_lower else hexdigits_upper
-        if num_lines_requested > self.max_text_lines:
-            num_lines_requested = self.max_text_lines
-        while num_lines_requested > 0 and index < self.num_entries:
-            disassembler_type = h.disassembler_type
-            printf("disassembler: %d\n", disassembler_type)
-            stringifier = stringifier_map[disassembler_type]
-            printf("stringifier: %lx\n", stringifier)
-            for disassembler_type in range(40):
-                printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
-            count = stringifier(h, txt, hex_case, text_case)
-            starts[index] = text_index
-            lengths[index] = count
-            text_index += count
-            num_text_lines += 1
-            txt += count
-            num_lines_requested -= 1
-            index += 1
-            h += 1
-        self.num_text_lines = num_text_lines
-
+        output = StringifiedDisassembly(num_lines_requested, mnemonic_lower, hex_lower)
+        output.parse_history_entries(h, num_lines_requested)
+        return output
 
 
 cdef int data_style = 1
