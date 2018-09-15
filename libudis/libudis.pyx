@@ -18,17 +18,18 @@ cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718
 
 cdef class ParsedDisassembly:
     cdef history_entry_t *history_entries
-    cdef int num_entries
+    cdef public int max_entries
     cdef int entry_size
     cdef public np.ndarray entries
-    cdef int entry_index
-    cdef int start_pc
+    cdef int num_entries
+    cdef public int start_pc
     cdef int last_pc
     cdef int current_pc
     cdef public np.ndarray labels
     cdef np.uint16_t *labels_data
 
     # text representation
+    cdef int max_text_lines
     cdef public np.ndarray text_starts
     cdef np.uint16_t *text_starts_data
     cdef public np.ndarray line_lengths
@@ -38,19 +39,22 @@ cdef class ParsedDisassembly:
     cdef public int num_text_lines
 
     def __init__(self, max_entries, start_pc):
-        self.num_entries = max_entries
+        self.max_entries = max_entries
         self.entry_size = 24
         self.entries = np.zeros(max_entries * self.entry_size, dtype=np.uint8)
         self.history_entries = <history_entry_t *>self.entries.data
-        self.entry_index = 0
+        self.num_entries = 0
         self.start_pc = start_pc
-        self.last_pc = start_pc + self.num_entries
+        self.last_pc = start_pc
         self.current_pc = start_pc
-        self.labels = np.zeros(self.last_pc, dtype=np.uint16)
+        self.labels = np.zeros(256*256, dtype=np.uint16)
         self.labels_data = <np.uint16_t *>self.labels.data
 
-        cdef int initial_lines = 100
-        self.init_text_lines(initial_lines)
+        self.max_text_lines = 256
+        self.init_text_lines(self.max_text_lines)
+
+    def __len__(self):
+        return self.num_entries
 
     cdef init_text_lines(self, num_lines):
         self.text_starts = np.zeros(num_lines, dtype=np.uint16)
@@ -62,14 +66,15 @@ cdef class ParsedDisassembly:
 
 
     cdef parse_next(self, parse_func_t processor, unsigned char *src, int num_bytes):
-        cdef history_entry_t *h = &self.history_entries[self.entry_index]
-        while self.current_pc < self.last_pc:
+        cdef history_entry_t *h = &self.history_entries[self.num_entries]
+        cdef int last_pc = self.current_pc + num_bytes
+        while self.current_pc < last_pc and self.num_entries < self.max_entries:
             if num_bytes > 0:
-                count = processor(h, src, self.current_pc, self.last_pc, self.labels_data)
+                count = processor(h, src, self.current_pc, last_pc, self.labels_data)
                 src += count
                 num_bytes -= count
                 self.current_pc += count
-                self.entry_index += 1
+                self.num_entries += 1
                 h += 1
             else:
                 break
@@ -96,7 +101,9 @@ cdef class ParsedDisassembly:
         cdef int disassembler_type
         cdef int text_case = 1 if mnemonic_lower else 0
         cdef char *hex_case = hexdigits_lower if hex_lower else hexdigits_upper
-        while num_lines_requested > 0 and index < self.entry_index:
+        if num_lines_requested > self.max_text_lines:
+            num_lines_requested = self.max_text_lines
+        while num_lines_requested > 0 and index < self.num_entries:
             disassembler_type = h.disassembler_type
             printf("disassembler: %d\n", disassembler_type)
             stringifier = stringifier_map[disassembler_type]
@@ -128,11 +135,16 @@ cdef class DisassemblyConfig:
             self.segment_parsers[i] = NULL
 
     def register_parser(self, cpu, id):
-        cdef char *search_name = cpu
+        tmp_cpu = cpu.encode('utf-8')
+        cdef char *search_name = tmp_cpu
         cdef parse_func_t f
         f = find_parse_function(search_name)
         if f != NULL:
             self.segment_parsers[id] = f
+        else:
+            raise RuntimeError(f"No disassembler available for {cpu}")
+        for i in range(8):
+            printf("segment_parsers[%d] = %lx\n", i, self.segment_parsers[i])
 
     # cdef fix_offset_labels(self):
     #     # fast loop in C to check for references to addresses that are in the
@@ -154,67 +166,66 @@ cdef class DisassemblyConfig:
     #             #    print "  disasm_info: added label at %04x" % (pc + i)
     #             labels[pc + i] = 1
 
-    # @cython.boundscheck(False)
-    # @cython.wraparound(False)
-    # def fast_disassemble_segment(self, segment):
-    #     cdef int i
-    #     cdef np.uint8_t s, s2
-    #     cdef int user_bit_mask = 0x7
-    #     cdef int comment_bit_mask = 0x40
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def parse(self, segment, num_entries):
+        cdef int i
+        cdef np.uint8_t s, s2
+        cdef int user_bit_mask = 0x7
+        cdef int comment_bit_mask = 0x40
 
-    #     src_copy = segment.data.tobytes()
-    #     cdef np.uint8_t *src = <np.uint8_t *>src_copy
-    #     cdef np.ndarray style_copy = segment.get_comment_locations(user=user_bit_mask)
-    #     cdef np.uint8_t *c_style = <np.uint8_t *>style_copy.data
-    #     cdef num_bytes = len(style_copy)
+        src_copy = segment.data.tobytes()
+        cdef np.uint8_t *src = <np.uint8_t *>src_copy
+        cdef np.ndarray style_copy = segment.get_comment_locations(user=user_bit_mask)
+        cdef np.uint8_t *c_style = <np.uint8_t *>style_copy.data
+        cdef num_bytes = len(style_copy)
 
-    #     cdef int origin = segment.origin
-    #     cdef int end_addr = origin + len(segment)
-    #     cdef int pc = origin
+        cdef int origin = segment.origin
+        cdef int end_addr = origin + len(segment)
+        cdef int pc = origin
 
-    #     if num_bytes < 1:
-    #         return ParsedDisassembly(0, origin)
-    #     cdef ParsedDisassembly parsed = ParsedDisassembly(num_bytes, origin)
+        if num_bytes < 1:
+            return ParsedDisassembly(0, origin)
+        cdef ParsedDisassembly parsed = ParsedDisassembly(num_entries, origin)
 
-    #     cdef int first_index = 0
-    #     cdef int base_style = c_style[0] & user_bit_mask
-    #     cdef int start_index, end_index, chunk_type
-        # cdef history_entry_t *h = parsed.history_entries[0]
-        # cdef int count
-        # cdef char *temp[256]
-        # # print "CYTHON FAST_GET_ENTIRE", style_copy
-        # ranges = []
-        # for i in range(1, num_bytes):
-        #     s = style_copy[i]
-        #     s2 = s & user_bit_mask
-        #     # print "%04x" % i, s, s2,
-        #     if s & comment_bit_mask:
-        #         if s2 == base_style and not c_split_comments[s2]:
-        #             # print "same w/skippable comment"
-        #             continue
-        #     elif s2 == base_style:
-        #         # print "same"
-        #         continue
+        cdef int first_index = 0
+        cdef int base_style = c_style[0] & user_bit_mask
+        cdef int start_index, end_index, chunk_type
+        cdef history_entry_t *h = parsed.history_entries
+        cdef int count
+        cdef char *temp[256]
+        # print "CYTHON FAST_GET_ENTIRE", style_copy
+        ranges = []
+        for i in range(1, num_bytes):
+            s = style_copy[i]
+            s2 = s & user_bit_mask
+            # print "%04x" % i, s, s2,
+            if s & comment_bit_mask:
+                if s2 == base_style and not self.c_split_comments[s2]:
+                    # print "same w/skippable comment"
+                    continue
+            elif s2 == base_style:
+                # print "same"
+                continue
 
-        #     # process chuck here:
-        #     start_index = first_index
-        #     end_index = i
-        #     chunk_type = base_style
-        #     print("last\nbreak here -> %x:%x = %s" % (start_index, end_index, chunk_type))
-        #     processor = segment_parsers(chunk_type)
-        #     h = parsed.history_entries[0]
-        #     while start_index < end_index:
-        #         count = processor(h, src, temp, )
-        #     processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_data, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
+            # process chuck here:
+            start_index = first_index
+            end_index = i
+            count = end_index - start_index + 1
+            chunk_type = base_style
+            print("break here -> %x:%x = %s" % (start_index, end_index, chunk_type))
+            processor = self.segment_parsers[chunk_type]
+            parsed.parse_next(processor, src, count)
+            src += count
+            first_index = i
+            base_style = s2
 
-        #     first_index = i
-        #     base_style = s2
+        # process last chunk
+        start_index = first_index
+        end_index = i
+        count = end_index - start_index + 1
+        print("final break here -> %x:%x = %s" % (start_index, end_index, base_style))
+        processor = self.segment_parsers[base_style]
+        parsed.parse_next(processor, src, count)
 
-        # # process last chunk
-        # start_index = first_index
-        # end_index = i + 1
-        # chunk_type = base_style
-        # processor = disassembly_wrapper.chunk_type_processor.get(chunk_type, disassembly_wrapper.chunk_processor)
-        # processor(disassembly_wrapper.metadata_wrapper, segment.rawdata.unindexed_data, pc + start_index, pc + end_index, start_index, disassembly_wrapper.mnemonic_lower , disassembly_wrapper.hex_lower)
-
-        # return DisassemblyInfo(disassembly_wrapper, pc, num_bytes)
+        return parsed
