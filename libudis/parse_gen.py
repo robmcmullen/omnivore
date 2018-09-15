@@ -768,7 +768,7 @@ if __name__ == "__main__":
         known.append(cpu)
 
     generated_parsers = []
-    with open("parse_history.c", "w") as fh:
+    with open("parse_udis_cpu.c", "w") as fh:
         fh.write(c_disclaimer)
         c_includes = set()
         for cpu in known:
@@ -782,7 +782,7 @@ if __name__ == "__main__":
             fh.write(h.text)
 
     generated_stringifiers = []
-    with open("stringify_history.c", "w") as fh:
+    with open("stringify_udis_cpu.c", "w") as fh:
         fh.write(c_disclaimer)
         c_includes = set()
         for cpu in known:

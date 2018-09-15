@@ -107,8 +107,8 @@ extensions = [
     Extension("omni8bit.udis_fast.libudis",
         sources = [
             "libudis/libudis.pyx",
-            "libudis/parse_history.c",
-            "libudis/stringify_history.c",
+            "libudis/parse_udis_cpu.c",
+            "libudis/stringify_udis_cpu.c",
             "libudis/declarations.pyx",
         ],
         extra_compile_args = extra_compile_args,
