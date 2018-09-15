@@ -500,7 +500,7 @@ last:
         case.append(f"/* {cat.mode} {self.cpu.address_modes[cat.mode]} {'(undocumented) ' if cat.undoc else ''}*/")
         slug = label_target(cat)
         for op in opcodes:
-            case.append(f"case {hex(op.opcode)}: lc ? opstr=\"{op.mnemonic.lower()}\" : \"{op.mnemonic.upper()}\"; goto {slug};")
+            case.append(f"case {hex(op.opcode)}: opstr = lc ? \"{op.mnemonic.lower()}\" : \"{op.mnemonic.upper()}\"; goto {slug};")
 
         case_text = "\n".join([extra_indent + line for line in case]) + "\n"
         body_text = ""
