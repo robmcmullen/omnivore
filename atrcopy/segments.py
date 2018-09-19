@@ -414,7 +414,8 @@ class DefaultSegment:
 
     def set_raw(self, rawdata):
         if type(rawdata) != SegmentData:
-            log.warning(f"data not in SegmentData format {rawdata}, {type(rawdata)}")
+            log.warning(f"data not in SegmentData format: {type(rawdata)}")
+            rawdata = SegmentData(rawdata)
         self.rawdata = rawdata
         self.update_raw_pointers()
 
