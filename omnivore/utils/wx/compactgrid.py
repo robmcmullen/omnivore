@@ -884,10 +884,16 @@ class HexTable(object):
         self.start_addr = start_addr
         self.items_per_row = items_per_row
         self.start_offset = start_addr & start_offset_mask if start_offset_mask else 0
-        self.num_rows = ((self.start_offset + len(self.data) - 1) // items_per_row) + 1
-        self.last_valid_index = len(self.data)
+        self.num_rows = self.calc_num_rows()
+        self.last_valid_index = self.calc_last_valid_index()
         # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.calc_labels()
+
+    def calc_num_rows(self):
+        return ((self.start_offset + len(self.data) - 1) // self.items_per_row) + 1
+
+    def calc_last_valid_index(self):
+        return len(self.data)
 
     def calc_labels(self):
         self.label_start_addr = int(self.start_addr // self.items_per_row) * self.items_per_row
@@ -964,6 +970,17 @@ class VariableWidthHexTable(HexTable):
         index = row * self.items_per_row
         index += self.cell_to_col[cell]
         return index, index + 1
+
+
+class VirtualTable(HexTable):
+    def __init__(self, *args, **kwargs):
+        HexTable.__init__(self, None, None, *args, **kwargs)
+
+    def calc_num_rows(self):
+        raise NotImplementedError
+
+    def calc_last_valid_index(self):
+        raise NotImplementedError
 
 
 class AuxWindow(wx.ScrolledCanvas):
