@@ -189,11 +189,6 @@ class UdisFastTable(cg.HexTable):
                 text += " ; " + comment
         return text
 
-    def get_style_override(self, row, col, style):
-        if self.lines[row].flag & self.disassembly.highlight_flags:
-            return style|diff_bit_mask
-        return style
-
     def get_label_at_index(self, index):
         row = self.index_to_row[index]
         return self.get_label_at_row(row)
