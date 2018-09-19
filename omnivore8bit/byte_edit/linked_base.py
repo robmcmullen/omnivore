@@ -494,3 +494,24 @@ class LinkedBase(CaretHandler):
             from_control = None
         self.update_caret = (from_control, index, bit)
         self.calc_action_enabled_flags()
+
+
+class VirtualLinkedBase(LinkedBase):
+    """A LinkedBase for virtual data; that is, data that is computed on the
+    fly or data that is generated and doesn't physically reside in the 
+    segment data.
+    """
+    def find_segment_parser(self, parsers, segment_name=None):
+        log.debug("segment change operations ignored on VirtualLinkedBase")
+
+    def find_first_valid_segment_index(self):
+        log.debug("segment change operations ignored on VirtualLinkedBase")
+
+    def find_segment(self, segment, refresh=False, data_model_changed=True):
+        log.debug("segment change operations ignored on VirtualLinkedBase")
+
+    def set_segment_parser(self, parser):
+        log.debug("segment change operations ignored on VirtualLinkedBase")
+
+    def view_segment_number(self, number):
+        log.debug("segment change operations ignored on VirtualLinkedBase")

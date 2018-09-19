@@ -176,7 +176,17 @@ class SegmentViewer(HasTraits):
         return linked_base
 
     @classmethod
+    def replace_linked_base(cls, linked_base):
+        """If the subclass uses a cursor and the cursor isn't indexed the same
+        as the default linked_base, this is the opportunity to replace it with
+        a different linked base that will disassociate the cursors. This means
+        this subclass will not share selection or cursor movement.
+        """
+        return linked_base
+
+    @classmethod
     def viewer_factory(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
+        linked_base = cls.replace_linked_base(linked_base)
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         v = cls(linked_base=linked_base, control=control)
         if machine is not None:
@@ -725,7 +735,8 @@ class ByteViewersPlugin(FrameworkPlugin):
         from ..viewers.emulator import Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
         from ..viewers.apple2 import HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer
         from ..viewers.memory import MemoryAccessViewer
+        from ..viewers.skeleton import VirtualTestViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer, VirtualTestViewer]
 
 plugins = [ByteViewersPlugin()]
