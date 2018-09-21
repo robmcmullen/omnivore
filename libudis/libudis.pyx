@@ -47,8 +47,8 @@ cdef class StringifiedDisassembly:
         self.mnemonic_case = 1 if mnemonic_lower else 0
         self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
         self.clear()
-        for disassembler_type in range(40):
-            printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
+        # for disassembler_type in range(40):
+        #     printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
 
     def __len__(self):
         return self.num_lines
@@ -71,7 +71,7 @@ cdef class StringifiedDisassembly:
 
         while num_entries > 0:
             stringifier = stringifier_map[h.disassembler_type]
-            printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
+            # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
             count = stringifier(h, txt, self.hex_case, self.mnemonic_case)
             starts[index] = text_index
             lengths[index] = count
@@ -153,7 +153,7 @@ cdef class ParsedDisassembly:
         cpu_type_bytes = cpu_type.encode('utf-8')
         c_cpu_type = cpu_type_bytes
         processor = find_parse_function(c_cpu_type)
-        printf("processor = %lx\n", processor)
+        # printf("processor = %lx\n", processor)
         self.parse_next(processor, <unsigned char *>src.data, len(src))
 
     def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
@@ -183,8 +183,8 @@ cdef class DisassemblyConfig:
             self.segment_parsers[id] = f
         else:
             raise RuntimeError(f"No disassembler available for {cpu}")
-        for i in range(8):
-            printf("segment_parsers[%d] = %lx\n", i, self.segment_parsers[i])
+        # for i in range(8):
+        #     printf("segment_parsers[%d] = %lx\n", i, self.segment_parsers[i])
 
     # cdef fix_offset_labels(self):
     #     # fast loop in C to check for references to addresses that are in the
@@ -256,7 +256,7 @@ cdef class DisassemblyConfig:
             end_index = i
             count = end_index - start_index + 1
             chunk_type = base_style
-            print("break here -> %x:%x = %s" % (start_index, end_index, chunk_type))
+            # print("break here -> %x:%x = %s" % (start_index, end_index, chunk_type))
             processor = self.segment_parsers[chunk_type]
             parsed.parse_next(processor, src, count)
             src += count
@@ -267,7 +267,7 @@ cdef class DisassemblyConfig:
         start_index = first_index
         end_index = i
         count = end_index - start_index + 1
-        print("final break here -> %x:%x = %s" % (start_index, end_index, base_style))
+        # print("final break here -> %x:%x = %s" % (start_index, end_index, base_style))
         processor = self.segment_parsers[base_style]
         parsed.parse_next(processor, src, count)
 
