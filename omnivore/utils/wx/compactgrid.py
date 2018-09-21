@@ -884,10 +884,13 @@ class HexTable(object):
         self.start_addr = start_addr
         self.items_per_row = items_per_row
         self.start_offset = start_addr & start_offset_mask if start_offset_mask else 0
-        self.num_rows = self.calc_num_rows()
-        self.last_valid_index = self.calc_last_valid_index()
+        self.init_boundaries()
         # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.calc_labels()
+
+    def init_boundaries(self):
+        self.num_rows = self.calc_num_rows()
+        self.last_valid_index = self.calc_last_valid_index()
 
     def calc_num_rows(self):
         return ((self.start_offset + len(self.data) - 1) // self.items_per_row) + 1

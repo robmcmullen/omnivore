@@ -32,7 +32,8 @@ class SampleVirtualTable(cg.VirtualTable):
         cg.VirtualTable.__init__(self, len(self.column_labels), s.origin)
 
     def calc_num_rows(self):
-        return (self.virtual_linked_base.document_length + 4) // 5
+        num_cols = self.items_per_row
+        return (self.virtual_linked_base.document_length + num_cols - 1) // num_cols
 
     def calc_last_valid_index(self):
         return self.virtual_linked_base.document_length
@@ -48,7 +49,15 @@ class SampleVirtualTable(cg.VirtualTable):
         return text, style
 
     def rebuild(self):
-        pass
+        v = self.virtual_linked_base
+        old_size = v.document_length
+        size = old_size + 1
+        old_segment = v.segment
+        segment = DefaultSegment(np.arange(size, dtype=np.uint8))
+        segment.style[0:old_size] = old_segment.style[0:old_size]
+        v.segment = segment
+        self.init_boundaries()
+        print(f"new size: {len(v.segment)}")
 
 
 class SampleGridControl(SegmentGridControl):
@@ -61,7 +70,15 @@ class SampleGridControl(SegmentGridControl):
         return cg.VirtualTableLineRenderer(self, 2, widths=self.default_table_cls.column_sizes, col_labels=self.default_table_cls.column_labels)
 
     def recalc_view(self):
+        self.table.rebuild()
         cg.CompactGrid.recalc_view(self)
+
+    def refresh_view(self):
+        if self.IsShown():
+            log.debug("refreshing %s" % self)
+            self.recalc_view()
+        else:
+            log.debug("skipping refresh of hidden %s" % self)
 
 
 class VirtualTestViewer(SegmentViewer):
@@ -95,7 +112,7 @@ class VirtualTestViewer(SegmentViewer):
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
-            self.restart_disassembly(index_range)
+            self.table.rebuild()
 
     @on_trait_change('linked_base.editor.document.byte_style_changed')
     def byte_style_changed(self, index_range):
@@ -105,3 +122,7 @@ class VirtualTestViewer(SegmentViewer):
 
     def recalc_data_model(self):
         self.table.rebuild()
+
+    def do_priority_level_refresh(self):
+        self.control.recalc_view()
+        self.refresh_view(True)

@@ -398,10 +398,10 @@ class SegmentViewer(HasTraits):
             p = self.priority_refresh_frame_count
             if self.frame_count > p or p < evt:
                 self.do_priority_level_refresh()
+                self.frame_count = 0
 
     def do_priority_level_refresh(self):
         self.refresh_view(True)
-        self.frame_count = 0
 
     @on_trait_change('linked_base.editor.document.emulator_breakpoint_event')
     def process_emulator_breakpoint(self, evt):
