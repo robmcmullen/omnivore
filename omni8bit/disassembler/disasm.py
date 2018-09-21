@@ -1,24 +1,24 @@
-#!/usr/bin/env python
-""" Python 2 version of udis, the Universal Disassembler for 8-bit microprocessors
-
-Python 2 version: Copyright (c) 2016 by Rob McMullen <feedback@playermissile.com>
-Python 3 version: Copyright (c) 2015-2016 Jeff Tranter
-Licensed under the Apache License 2.0
-"""
-
-
 import os
 import glob
 
 import numpy as np
 
 from . import cputables
-# flags
-pcr = 1
-und = 2
-z80bit = 4
-r = 64
-w = 128
+from .flags import *
+from . import dtypes as ud
+from . import libudis
+
+
+class ParsedDisassembly(libudis.ParsedDisassembly):
+    @property
+    def entries(self):
+        return self.raw_entries.view(dtype=ud.HISTORY_ENTRY_DTYPE)
+
+
+class DisassemblyConfig(libudis.DisassemblyConfig):
+    def get_parser(self, num_entries, origin):
+        return ParsedDisassembly(num_entries, origin)
+
 
 class Disassembler(object):
     def __init__(self, cpu_name, asm_syntax=None, memory_map=None, allow_undocumented=False, hex_lower=True, mnemonic_lower=False, r_mnemonics=None, w_mnemonics=None, rw_modes=None):

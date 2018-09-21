@@ -19,7 +19,7 @@ try:
 except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
-from .disasm import Disassembler
+from .disasm import DisassemblyConfig
 from .flags import flag_undoc, pcr, z80bit
 
 import logging

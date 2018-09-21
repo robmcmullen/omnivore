@@ -17,7 +17,7 @@ cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718
 
 
 cdef class StringifiedDisassembly:
-    cdef public int start_pc
+    cdef public int origin
     cdef public int last_pc
 
     # text representation
@@ -55,7 +55,7 @@ cdef class StringifiedDisassembly:
 
     def clear(self):
         self.num_lines = 0
-        self.start_pc = 0
+        self.origin = 0
         self.last_pc = 0
 
     cdef parse_history_entries(self, history_entry_t *h, int num_entries):
@@ -87,9 +87,9 @@ cdef class ParsedDisassembly:
     cdef history_entry_t *history_entries
     cdef public int max_entries
     cdef int entry_size
-    cdef public np.ndarray entries
+    cdef public np.ndarray raw_entries
     cdef int num_entries
-    cdef public int start_pc
+    cdef public int origin
     cdef int last_pc
     cdef int current_pc
     cdef public np.ndarray labels
@@ -105,15 +105,15 @@ cdef class ParsedDisassembly:
     cdef char *text_buffer_data
     cdef public int num_text_lines
 
-    def __init__(self, max_entries, start_pc):
+    def __init__(self, max_entries, origin):
         self.max_entries = max_entries
-        self.entry_size = 24
-        self.entries = np.zeros(max_entries * self.entry_size, dtype=np.uint8)
-        self.history_entries = <history_entry_t *>self.entries.data
+        self.entry_size = sizeof(history_entry_t)
+        self.raw_entries = np.zeros(max_entries * self.entry_size, dtype=np.uint8)
+        self.history_entries = <history_entry_t *>self.raw_entries.data
         self.num_entries = 0
-        self.start_pc = start_pc
-        self.last_pc = start_pc
-        self.current_pc = start_pc
+        self.origin = origin
+        self.last_pc = origin
+        self.current_pc = origin
         self.labels = np.zeros(256*256, dtype=np.uint16)
         self.labels_data = <np.uint16_t *>self.labels.data
 
@@ -206,6 +206,9 @@ cdef class DisassemblyConfig:
     #             #    print "  disasm_info: added label at %04x" % (pc + i)
     #             labels[pc + i] = 1
 
+    def get_parser(self, num_entries, origin):
+        return ParsedDisassembly(num_entries, origin)
+
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def parse(self, segment, num_entries):
@@ -225,8 +228,8 @@ cdef class DisassemblyConfig:
         cdef int pc = origin
 
         if num_bytes < 1:
-            return ParsedDisassembly(0, origin)
-        cdef ParsedDisassembly parsed = ParsedDisassembly(num_entries, origin)
+            return self.get_parser(0, origin)
+        cdef ParsedDisassembly parsed = self.get_parser(num_entries, origin)
 
         cdef int first_index = 0
         cdef int base_style = c_style[0] & user_bit_mask

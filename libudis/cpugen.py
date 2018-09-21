@@ -9,7 +9,7 @@ import glob
 import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
-from omni8bit.udis_fast.flags import pcr, und, z80bit, lbl, comment, udis_opcode_flag_label, udis_opcode_flag_return, udis_opcode_flag_jump, udis_opcode_flag_branch
+from omni8bit.disassembler.flags import pcr, und, z80bit, lbl, comment, udis_opcode_flag_label, udis_opcode_flag_return, udis_opcode_flag_jump, udis_opcode_flag_branch
 
 
 # These contain extra info not in udis. Originally they were in udis but they
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     import argparse
     
     curpath = os.path.dirname(__file__)
-    destfile = os.path.join(os.path.dirname(__file__), "../omni8bit/udis_fast/cputables.py")
+    destfile = os.path.join(os.path.dirname(__file__), "../omni8bit/disassembler/cputables.py")
 
     supported_cpus = read_udis(os.path.join(curpath, "udis"))
     supported_cpus = read_udis(os.path.join(curpath, "custom_cpus"), supported_cpus)

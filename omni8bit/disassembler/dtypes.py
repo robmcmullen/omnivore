@@ -1,7 +1,6 @@
 # Debugger breakpoint definition
 import numpy as np
 
-MAIN_MEMORY_SIZE = 1<<16
 
 HISTORY_ENTRY_DTYPE = np.dtype([
     ("pc", np.uint16),

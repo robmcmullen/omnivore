@@ -104,7 +104,7 @@ extensions = [
         include_dirs = ["lib6502", "lib6502/6502-emu", "libdebugger", np.get_include()],
         undef_macros = [ "NDEBUG" ],
     ),
-    Extension("omni8bit.udis_fast.libudis",
+    Extension("omni8bit.disassembler.libudis",
         sources = [
             "libudis/libudis.pyx",
             "libudis/parse_udis_cpu.c",
@@ -124,9 +124,9 @@ cmdclass = dict()
 # to install Cython unless they are modifying the .pyx files themselves.
 if "sdist" in sys.argv:
     import subprocess
-    if not os.path.exists("omni8bit/udis_fast/cputables.py"):
+    if not os.path.exists("omni8bit/disassembler/cputables.py"):
         subprocess.run(['python', 'libudis/cpugen.py'])
-    if not os.path.exists("libudis/disasm_speedups_monolithic.pyx"):
+    if not os.path.exists("libudis/parse_udis_cpu.c"):
         subprocess.run(['python', 'libudis/disasm_gen.py'])
     try:
         from Cython.Build import cythonize

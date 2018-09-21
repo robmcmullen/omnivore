@@ -7,8 +7,8 @@ import numpy as np
 
 from atrcopy import find_diskimage, DefaultSegment, SegmentData
 
-import omni8bit.udis_fast.dtypes as ud
-from omni8bit.udis_fast import libudis
+import omni8bit.disassembler.dtypes as ud
+from omni8bit.disassembler import ParsedDisassembly, DisassemblyConfig
 
 
 nops = np.zeros(256, dtype=np.uint8) + 0xea
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     segment = DefaultSegment(d2, 0x6000)
 
     if False:
-        p = libudis.ParsedDisassembly(1000, 0x6000)
+        p = ParsedDisassembly(1000, 0x6000)
         print(p)
         p.parse_test("6502", data)
         print(p.entries)
@@ -50,7 +50,7 @@ if __name__ == "__main__":
             text = p.text_buffer[start:start + count].tostring()
             print(f"text[{start}:{start + count}] = {text}, {e[i]}")
 
-    driver = libudis.DisassemblyConfig()
+    driver = DisassemblyConfig()
     driver.register_parser("6502", 0)
     driver.register_parser("data", 1)
     driver.register_parser("antic_dl", 2)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     segment.style[40:80] = 3
     segment.style[80:100] = 4
     p = driver.parse(segment, 8000)
-    e = p.entries.view(dtype=ud.HISTORY_ENTRY_DTYPE)
+    e = p.entries
     print(p)
     print(len(p))
     for i in range(len(p)):
