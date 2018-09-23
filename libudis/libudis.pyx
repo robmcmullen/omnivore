@@ -19,6 +19,7 @@ cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718
 cdef class StringifiedDisassembly:
     cdef public int origin
     cdef public int last_pc
+    cdef public int start_index
 
     # text representation
     cdef int max_lines
@@ -35,7 +36,8 @@ cdef class StringifiedDisassembly:
     cdef int mnemonic_case
     cdef char *hex_case
 
-    def __init__(self, max_lines, mnemonic_lower=True, hex_lower=True):
+    def __init__(self, start_index, max_lines, mnemonic_lower=True, hex_lower=True):
+        self.start_index = start_index
         self.text_starts = np.zeros(max_lines, dtype=np.uint16)
         self.text_starts_data = <np.uint16_t *>self.text_starts.data
         self.line_lengths = np.zeros(max_lines, dtype=np.uint16)
@@ -158,7 +160,7 @@ cdef class ParsedDisassembly:
 
     def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
         cdef history_entry_t *h = &self.history_entries[index]
-        output = StringifiedDisassembly(num_lines_requested, mnemonic_lower, hex_lower)
+        output = StringifiedDisassembly(index, num_lines_requested, mnemonic_lower, hex_lower)
         output.parse_history_entries(h, num_lines_requested)
         return output
 
