@@ -214,7 +214,6 @@ cdef class DisassemblyConfig:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def parse(self, segment, num_entries):
-        cdef int i
         cdef np.uint8_t s, s2
         cdef int user_bit_mask = 0x7
         cdef int comment_bit_mask = 0x40
@@ -241,8 +240,8 @@ cdef class DisassemblyConfig:
         cdef char *temp[256]
         # print "CYTHON FAST_GET_ENTIRE", style_copy
         ranges = []
-        for i in range(1, num_bytes):
-            s = style_copy[i]
+        for end_index in range(1, num_bytes):
+            s = style_copy[end_index]
             s2 = s & user_bit_mask
             # print "%04x" % i, s, s2,
             if s & comment_bit_mask:
@@ -255,21 +254,20 @@ cdef class DisassemblyConfig:
 
             # process chuck here:
             start_index = first_index
-            end_index = i
-            count = end_index - start_index + 1
+            count = end_index - start_index
             chunk_type = base_style
             # print("break here -> %x:%x = %s" % (start_index, end_index, chunk_type))
             processor = self.segment_parsers[chunk_type]
             parsed.parse_next(processor, src, count)
             src += count
-            first_index = i
+            first_index = end_index
             base_style = s2
 
         # process last chunk
         start_index = first_index
-        end_index = i
-        count = end_index - start_index + 1
-        # print("final break here -> %x:%x = %s" % (start_index, end_index, base_style))
+        end_index += 1  # i is last byte tested, need +1 to include it in the range
+        count = end_index - start_index
+        # print("final break here -> %x:%x = %s, count=%x" % (start_index, end_index, base_style, num_bytes))
         processor = self.segment_parsers[base_style]
         parsed.parse_next(processor, src, count)
 
