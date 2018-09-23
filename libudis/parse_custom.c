@@ -50,7 +50,7 @@ int parse_entry_antic_dl(history_entry_t *entry, unsigned char *src, unsigned in
     first_instruction_ptr = entry->instruction;
     entry->pc = (unsigned short)pc;
     entry->target_addr = 0;
-    entry->flag = FLAG_DATA_BYTES;
+    entry->flag = 0;
     entry->disassembler_type = DISASM_ANTIC_DL;
     
     entry->num_bytes = 1;
@@ -63,28 +63,22 @@ int parse_entry_antic_dl(history_entry_t *entry, unsigned char *src, unsigned in
         }
     }
     else {
-        while ((pc + entry->num_bytes < last_pc) && (entry->num_bytes < 8)) {
+        while (pc + entry->num_bytes < last_pc) {
             if (src[entry->num_bytes] == opcode) entry->num_bytes += 1;
             else break;
         }
     }
     switch(entry->num_bytes) {
-    case 8:
-        *first_instruction_ptr++ = *src++;
-    case 7:
-        *first_instruction_ptr++ = *src++;
-    case 6:
-        *first_instruction_ptr++ = *src++;
-    case 5:
-        *first_instruction_ptr++ = *src++;
-    case 4:
-        *first_instruction_ptr++ = *src++;
     case 3:
         *first_instruction_ptr++ = *src++;
     case 2:
         *first_instruction_ptr++ = *src++;
+    case 1:
+        *first_instruction_ptr = *src;
+        break;
     default:
-        *first_instruction_ptr++ = *src++;
+        *first_instruction_ptr = *src;
+        entry->flag = FLAG_REPEATED_BYTES;
         break;
     }
     return entry->num_bytes;

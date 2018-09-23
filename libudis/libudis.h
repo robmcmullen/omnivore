@@ -50,6 +50,7 @@ typedef struct {
 #define FLAG_WRITE_ONE 7
 #define FLAG_WRITE_TWO 8
 #define FLAG_WRITE_THREE 9
+#define FLAG_REPEATED_BYTES 10
 #define FLAG_TARGET_ADDR 32
 #define FLAG_LABEL 64
 #define FLAG_UNDOC 128
