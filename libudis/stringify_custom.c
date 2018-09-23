@@ -43,52 +43,39 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
     first_txt = txt;
     data = entry->instruction;
     opcode = *data;
+    *txt++ = '.', *txt++ = 'a', *txt++ = 'n', *txt++ = 't', *txt++ = 'i', *txt++ = 'c', *txt++ = ' ';
     if ((opcode & 0xf) == 1) {
         if (opcode & 0x80) {
-            *txt++ = 'D';
-            *txt++ = 'L';
-            *txt++ = 'I';
+            if (lc) *txt++ = 'd', *txt++ = 'l', *txt++ = 'i';
+            else *txt++ = 'D', *txt++ = 'L', *txt++ = 'I';
             *txt++ = ' ';
         }
         if (opcode & 0x40) {
-            *txt++ = 'J';
-            *txt++ = 'V';
-            *txt++ = 'B';
+            if (lc) *txt++ = 'j', *txt++ = 'v', *txt++ = 'b';
+            else *txt++ = 'J', *txt++ = 'V', *txt++ = 'B';
             *txt++ = ' ';
         }
         else if ((opcode & 0xf0) > 0) {
             *txt++ = '<';
-            *txt++ = 'I';
-            *txt++ = 'N';
-            *txt++ = 'V';
-            *txt++ = 'A';
-            *txt++ = 'L';
-            *txt++ = 'I';
-            *txt++ = 'D';
+            if (lc) *txt++ = 'i', *txt++ = 'n', *txt++ = 'v', *txt++ = 'a', *txt++ = 'l', *txt++ = 'i', *txt++ = 'd';
+            else *txt++ = 'I', *txt++ = 'N', *txt++ = 'V', *txt++ = 'A', *txt++ = 'L', *txt++ = 'I', *txt++ = 'D';
             *txt++ = '>';
         }
         else {
-            *txt++ = 'J';
-            *txt++ = 'M';
-            *txt++ = 'P';
+            if (lc) *txt++ = 'j', *txt++ = 'm', *txt++ = 'p';
+            else *txt++ = 'j', *txt++ = 'm', *txt++ = 'p';
             *txt++ = ' ';
         }
         if (entry->num_bytes < 3) {
             *txt++ = '<';
-            *txt++ = 'B';
-            *txt++ = 'A';
-            *txt++ = 'D';
-            *txt++ = ' ';
-            *txt++ = 'A';
-            *txt++ = 'D';
-            *txt++ = 'D';
-            *txt++ = 'R';
+            if (lc) *txt++ = 'b', *txt++ = 'a', *txt++ = 'd', *txt++ = ' ', *txt++ = 'a', *txt++ = 'd', *txt++ = 'd', *txt++ = 'r';
+            else *txt++ = 'B', *txt++ = 'A', *txt++ = 'D', *txt++ = ' ', *txt++ = 'A', *txt++ = 'D', *txt++ = 'D', *txt++ = 'R';
             *txt++ = '>';
         }
         else {
             *txt++ = '$';
-            h = &hexdigits[(data[2] & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
-            h = &hexdigits[(data[1] & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
+            h = &hexdigits[(data[2] & 0xff)*2], *txt++ = *h++, *txt++ = *h++;
+            h = &hexdigits[(data[1] & 0xff)*2], *txt++ = *h++, *txt++ = *h++;
         }
     }
     else {
@@ -98,43 +85,30 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
                 *txt++ = 120;
             }
             if (opcode & 0x80) {
-                *txt++ = 'D';
-                *txt++ = 'L';
-                *txt++ = 'I';
+                if (lc) *txt++ = 'd', *txt++ = 'l', *txt++ = 'i';
+                else *txt++ = 'D', *txt++ = 'L', *txt++ = 'I';
                 *txt++ = ' ';
             }
-            *txt++ = 'B';
-            *txt++ = 'L';
-            *txt++ = 'A';
-            *txt++ = 'N';
-            *txt++ = 'K';
+            if (lc) *txt++ = 'b', *txt++ = 'l', *txt++ = 'a', *txt++ = 'n', *txt++ = 'k';
+            else *txt++ = 'B', *txt++ = 'L', *txt++ = 'A', *txt++ = 'N', *txt++ = 'K';
             *txt++ = ' ';
             txt += sprintf(txt, "%d", (((opcode >> 4) & 0x07) + 1));
         }
         else {
             if ((opcode & 0xf0) == 0x40) {
+                if (lc) *txt++ = 'l', *txt++ = 'm', *txt++ = 's';
+                else *txt++ = 'L', *txt++ = 'M', *txt++ = 'S';
+                *txt++ = ' ';
                 if (entry->num_bytes < 3) {
-                    *txt++ = 'L';
-                    *txt++ = 'M';
-                    *txt++ = 'S';
-                    *txt++ = ' ',*txt++ = '<';
-                    *txt++ = 'B';
-                    *txt++ = 'A';
-                    *txt++ = 'D';
-                    *txt++ = ' ';
-                    *txt++ = 'A';
-                    *txt++ = 'D';
-                    *txt++ = 'D';
-                    *txt++ = 'R';
+                    *txt++ = '<';
+                    if (lc) *txt++ = 'b', *txt++ = 'a', *txt++ = 'd', *txt++ = ' ', *txt++ = 'a', *txt++ = 'd', *txt++ = 'd', *txt++ = 'r';
+                    else *txt++ = 'B', *txt++ = 'A', *txt++ = 'D', *txt++ = ' ', *txt++ = 'A', *txt++ = 'D', *txt++ = 'D', *txt++ = 'R';
                     *txt++ = '>',*txt++ = ' ';
                 }
                 else {
-                    *txt++ = 'L';
-                    *txt++ = 'M';
-                    *txt++ = 'S';
-                    *txt++ = ' ',*txt++ = '$';
-                    h = &hexdigits[(data[2] & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
-                    h = &hexdigits[(data[1] & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
+                    *txt++ = '$';
+                    h = &hexdigits[(data[2] & 0xff)*2], *txt++ = *h++, *txt++ = *h++;
+                    h = &hexdigits[(data[1] & 0xff)*2], *txt++ = *h++, *txt++ = *h++;
                     *txt++ = ' ';
                 }
             }
@@ -143,35 +117,22 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
                 *txt++ = 120;
             }
             if (opcode & 0x80) {
-                *txt++ = 'D';
-                *txt++ = 'L';
-                *txt++ = 'I';
+                if (lc) *txt++ = 'd', *txt++ = 'l', *txt++ = 'i';
+                else *txt++ = 'D', *txt++ = 'L', *txt++ = 'I';
                 *txt++ = ' ';
             }
             if (opcode & 0x20) {
-                *txt++ = 'V';
-                *txt++ = 'S';
-                *txt++ = 'C';
-                *txt++ = 'R';
-                *txt++ = 'O';
-                *txt++ = 'L';
-                *txt++ = 'L';
+                if (lc) *txt++ = 'v', *txt++ = 's', *txt++ = 'c', *txt++ = 'r', *txt++ = 'o', *txt++ = 'l', *txt++ = 'l';
+                else *txt++ = 'V', *txt++ = 'S', *txt++ = 'C', *txt++ = 'R', *txt++ = 'O', *txt++ = 'L', *txt++ = 'L';
                 *txt++ = ' ';
             }
             if (opcode & 0x10) {
-                *txt++ = 'H';
-                *txt++ = 'S';
-                *txt++ = 'C';
-                *txt++ = 'R';
-                *txt++ = 'O';
-                *txt++ = 'L';
-                *txt++ = 'L';
+                if (lc) *txt++ = 'h', *txt++ = 's', *txt++ = 'c', *txt++ = 'r', *txt++ = 'o', *txt++ = 'l', *txt++ = 'l';
+                else *txt++ = 'H', *txt++ = 'S', *txt++ = 'C', *txt++ = 'R', *txt++ = 'O', *txt++ = 'L', *txt++ = 'L';
                 *txt++ = ' ';
             }
-            *txt++ = 'M';
-            *txt++ = 'O';
-            *txt++ = 'D';
-            *txt++ = 'E';
+            if (lc) *txt++ = 'm', *txt++ = 'o', *txt++ = 'd', *txt++ = 'e';
+            else *txt++ = 'M', *txt++ = 'O', *txt++ = 'D', *txt++ = 'E';
             *txt++ = ' ';
             h = &hexdigits[((opcode & 0x0f) & 0xff)*2] + 1;
             *txt++ = *h++;
