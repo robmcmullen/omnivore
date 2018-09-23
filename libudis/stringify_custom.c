@@ -43,7 +43,8 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
     first_txt = txt;
     data = entry->instruction;
     opcode = *data;
-    *txt++ = '.', *txt++ = 'a', *txt++ = 'n', *txt++ = 't', *txt++ = 'i', *txt++ = 'c', *txt++ = ' ';
+    if (lc) *txt++ = '.', *txt++ = 'a', *txt++ = 'n', *txt++ = 't', *txt++ = 'i', *txt++ = 'c', *txt++ = ' ';
+    else *txt++ = '.', *txt++ = 'A', *txt++ = 'N', *txt++ = 'T', *txt++ = 'I', *txt++ = 'C', *txt++ = ' ';
     if ((opcode & 0xf) == 1) {
         if (opcode & 0x80) {
             if (lc) *txt++ = 'd', *txt++ = 'l', *txt++ = 'i';
@@ -82,7 +83,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
         if ((opcode & 0xf) == 0) {
             if (entry->num_bytes > 1) {
                 txt += sprintf(txt, "%d", entry->num_bytes);
-                *txt++ = 120;
+                *txt++ = '*';
             }
             if (opcode & 0x80) {
                 if (lc) *txt++ = 'd', *txt++ = 'l', *txt++ = 'i';
@@ -114,7 +115,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
             }
             else if (entry->num_bytes > 1) {
                 txt += sprintf(txt, "%d", entry->num_bytes);
-                *txt++ = 120;
+                *txt++ = '*';
             }
             if (opcode & 0x80) {
                 if (lc) *txt++ = 'd', *txt++ = 'l', *txt++ = 'i';
