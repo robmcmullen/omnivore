@@ -63,28 +63,12 @@ int parse_entry_antic_dl(history_entry_t *entry, unsigned char *src, unsigned in
         }
     }
     else {
-        while ((pc + entry->num_bytes < last_pc) && (entry->num_bytes < 16)) {
+        while ((pc + entry->num_bytes < last_pc) && (entry->num_bytes < 8)) {
             if (src[entry->num_bytes] == opcode) entry->num_bytes += 1;
             else break;
         }
     }
     switch(entry->num_bytes) {
-    case 16:
-        *first_instruction_ptr++ = *src++;
-    case 15:
-        *first_instruction_ptr++ = *src++;
-    case 14:
-        *first_instruction_ptr++ = *src++;
-    case 13:
-        *first_instruction_ptr++ = *src++;
-    case 12:
-        *first_instruction_ptr++ = *src++;
-    case 11:
-        *first_instruction_ptr++ = *src++;
-    case 10:
-        *first_instruction_ptr++ = *src++;
-    case 9:
-        *first_instruction_ptr++ = *src++;
     case 8:
         *first_instruction_ptr++ = *src++;
     case 7:
