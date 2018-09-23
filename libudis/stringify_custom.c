@@ -43,10 +43,6 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
     first_txt = txt;
     data = entry->instruction;
     opcode = *data;
-    for (i=0; i<entry->num_bytes; i++) {
-        h = &hexdigits[(data[i] & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
-    }
-    *txt++ = ';',*txt++ = ' ';
     if ((opcode & 0xf) == 1) {
         if (opcode & 0x80) {
             *txt++ = 'D';
@@ -107,13 +103,13 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *txt, char *hexdigits,
                 *txt++ = 'I';
                 *txt++ = ' ';
             }
-            txt += sprintf(txt, "%d", (((opcode >> 4) & 0x07) + 1));
-            *txt++ = ' ';
             *txt++ = 'B';
             *txt++ = 'L';
             *txt++ = 'A';
             *txt++ = 'N';
             *txt++ = 'K';
+            *txt++ = ' ';
+            txt += sprintf(txt, "%d", (((opcode >> 4) & 0x07) + 1));
         }
         else {
             if ((opcode & 0xf0) == 0x40) {
