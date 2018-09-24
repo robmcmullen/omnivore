@@ -357,12 +357,12 @@ truncated2:
                         body.append(f"\tentry->instruction[1] = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                        body.append(f"\tlabels[rel] = 1;")
+                        body.append(f"\tlabels[rel] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\top1 = *src;")
                         body.append(f"\tentry->instruction[1] = op1;")
-                        body.append(f"\tlabels[op1] = 1;")
+                        body.append(f"\tlabels[op1] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = op1;")
                     else:
                         body.append(f"\tentry->instruction[1] = *src;")
@@ -378,7 +378,7 @@ truncated2:
                     body.append(f"\tentry->instruction[2] = op2;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = 1;")
+                        body.append(f"\tlabels[addr] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
                 elif cat.leadin < 256:
                     if cat.pcr:
@@ -386,12 +386,12 @@ truncated2:
                         body.append(f"\tentry->instruction[2] = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                        body.append(f"\tlabels[rel] = 1;")
+                        body.append(f"\tlabels[rel] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\top1 = *src;")
                         body.append(f"\tentry->instruction[2] = op1;")
-                        body.append(f"\tlabels[op1] = 1;")
+                        body.append(f"\tlabels[op1] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = op1;")
                     else:
                         body.append(f"\tentry->instruction[2] = *src;")
@@ -407,7 +407,7 @@ truncated2:
                     body.append(f"\tentry->instruction[3] = op3;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = 1;")
+                        body.append(f"\tlabels[addr] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
                 elif cat.leadin < 256:
                     order = self.cpu.argorder[cat.mode]
@@ -421,11 +421,11 @@ truncated2:
                         body.append("\tif (addr > 32768) addr -= 0x10000;")
                         # limit relative address to 64k address space
                         body.append("\trel = (pc + 2 + addr) & 0xffff;")
-                        body.append("\tlabels[rel] = 1;")
+                        body.append(f"\tlabels[rel] = {self.cpu.disassembler_type_name};")
                         body.append("\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = 1;")
+                        body.append(f"\tlabels[addr] = {self.cpu.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
 
         return body

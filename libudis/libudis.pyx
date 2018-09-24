@@ -142,7 +142,6 @@ cdef class ParsedDisassembly:
         self.text_buffer = np.zeros(num_lines * 256, dtype=np.uint8)
         self.text_buffer_data = <char *>self.text_buffer.data
 
-
     cdef parse_next(self, parse_func_t processor, unsigned char *src, int num_bytes):
         cdef history_entry_t *h = &self.history_entries[self.num_entries]
         cdef int last_pc = self.current_pc + num_bytes
@@ -161,6 +160,26 @@ cdef class ParsedDisassembly:
                 h += 1
             else:
                 break
+
+    cdef fix_offset_labels(self):
+        # fast loop in C to check for references to addresses that are in the
+        # middle of an instruction. If found, a label is generated at the first
+        # byte of the instruction
+        cdef int pc = self.origin
+        cdef int i = self.num_bytes
+        cdef np.uint16_t *labels = self.labels_data
+        cdef np.uint32_t *index_to_row = self.index_to_row_data
+
+        #print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
+        while i > 0:
+            i -= 1
+            if labels[pc + i]:
+                #print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
+                while index_to_row[i - 1] == index_to_row[i] and i > 1:
+                    i -= 1
+                #if labels[pc + i] == 0:
+                #    print "  disasm_info: added label at %04x" % (pc + i)
+                labels[pc + i] = 1
 
     def parse_test(self, cpu_type, np.ndarray[np.uint8_t, ndim=1] src):
         cdef parse_func_t processor
@@ -201,26 +220,6 @@ cdef class DisassemblyConfig:
             raise RuntimeError(f"No disassembler available for {cpu}")
         # for i in range(8):
         #     printf("segment_parsers[%d] = %lx\n", i, self.segment_parsers[i])
-
-    # cdef fix_offset_labels(self):
-    #     # fast loop in C to check for references to addresses that are in the
-    #     # middle of an instruction. If found, a label is generated at the first
-    #     # byte of the instruction
-    #     cdef int pc = self.first_pc
-    #     cdef int i = self.num_bytes
-    #     cdef np.uint16_t *labels = <np.uint16_t *>self.labels.data
-    #     cdef np.uint32_t *index_to_row = <np.uint32_t *>self.index_to_row.data
-
-    #     #print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
-    #     while i > 0:
-    #         i -= 1
-    #         if labels[pc + i]:
-    #             #print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
-    #             while index_to_row[i - 1] == index_to_row[i] and i > 1:
-    #                 i -= 1
-    #             #if labels[pc + i] == 0:
-    #             #    print "  disasm_info: added label at %04x" % (pc + i)
-    #             labels[pc + i] = 1
 
     def get_parser(self, num_entries, origin, num_bytes):
         return ParsedDisassembly(num_entries, origin, num_bytes)
@@ -284,5 +283,7 @@ cdef class DisassemblyConfig:
         # print("final break here -> %x:%x = %s, count=%x" % (start_index, end_index, base_style, num_bytes))
         processor = self.segment_parsers[base_style]
         parsed.parse_next(processor, src, count)
+
+        parsed.fix_offset_labels()
 
         return parsed

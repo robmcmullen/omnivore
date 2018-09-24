@@ -73,6 +73,7 @@ int parse_entry_data(history_entry_t *entry, unsigned char *src, unsigned int pc
 
 int parse_entry_antic_dl(history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels) {
     unsigned char *first_instruction_ptr;
+    unsigned short addr;
 
     first_instruction_ptr = entry->instruction;
     entry->pc = (unsigned short)pc;
@@ -87,6 +88,12 @@ int parse_entry_antic_dl(history_entry_t *entry, unsigned char *src, unsigned in
         entry->num_bytes = 3;
         if (pc + entry->num_bytes > last_pc) {
             entry->num_bytes = last_pc - pc;
+        }
+        else {
+            addr = (256 * src[2]) + src[1];
+            labels[addr] = DISASM_ANTIC_DL;
+            entry->target_addr = addr;
+            entry->flag = FLAG_TARGET_ADDR;
         }
     }
     else {
