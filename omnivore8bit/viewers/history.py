@@ -8,7 +8,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import DefaultSegment
-from omni8bit.disassembler import DisassemblyConfig
+from omni8bit.disassembler import DisassemblyConfig, flags
 
 from omnivore.utils.wx import compactgrid as cg
 from omnivore8bit.byte_edit.linked_base import VirtualLinkedBase
@@ -91,8 +91,9 @@ class DisassemblyTable(cg.HexTable):
             p = self.current
             e = p.entries
             addr = e[row]['pc']
-            if p.labels[addr]:
-                text = "L%04x" % addr
+            disassembler_type = p.labels[addr]
+            if disassembler_type:
+                text = "L_%04x" % addr
             else:
                 text = ""
         elif col == 2:
