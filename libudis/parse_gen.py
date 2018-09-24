@@ -23,13 +23,13 @@ import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
 # mnemonic flags
-from omni8bit.udis_fast.flags import und, z80bit, lbl, pcr
+from omni8bit.disassembler.flags import und, z80bit, lbl, pcr
 
 import logging
 log = logging.getLogger(__name__)
 
-from omni8bit.udis_fast.flags import *
-from omni8bit.udis_fast import cputables
+# from omni8bit.disassembler.flags import *
+from omni8bit.disassembler import cputables
 
 # This is declared here so that CPUs will have consistent types for backward
 # compatibility. Do not reuse ID numbers if CPUs are removed from this list.
@@ -60,7 +60,7 @@ custom_parsers = [
     CustomEntry('jumpman_harvest', 'parse_entry_jumpman_harvest', 'int', parser_signature),
 ]
 
-stringifier_signature = "history_entry_t *entry, char *txt, char *hexdigits, int lc"
+stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc"
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
     CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
@@ -445,22 +445,20 @@ class HistoryStringifier(HistoryParser):
 $RETURN_TYPE $NAME($SIGNATURE) {
     int dist;
     unsigned char opcode, leadin, op1, op2, op3;
-    char *first_txt, *h, *opstr;
+    char *first_t, *h, *opstr;
     unsigned int rel;
 
-    first_txt = txt;
+    first_t = t;
     opcode = entry->instruction[0];
     switch(opcode) {
 $CASES
     default:
-        h = &hexdigits[(opcode & 0xff)*2];
-        *txt++ = *h++;
-        *txt++ = *h++;
+        h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
         goto last;
     }
 $TARGETS
 last:
-    return (int)(txt - first_txt);
+    return (int)(t - first_t);
 }
 """
 
@@ -471,12 +469,8 @@ last:
         switch(opcode) {
 %s
         default:
-            h = &hexdigits[(leadin & 0xff)*2];
-            *txt++ = *h++;
-            *txt++ = *h++;
-            h = &hexdigits[(opcode & 0xff)*2];
-            *txt++ = *h++;
-            *txt++ = *h++;
+            h = &hexdigits[(leadin & 0xff)*2]; *t++=*h++; *t++=*h++;
+            h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
             break;
         }
         break;
@@ -517,7 +511,7 @@ last:
         argorder = self.cpu.argorder[cat.mode]
         body.append(f"{label}: /* {outstr} {argorder} */")
         print("processing", cat, f"{label}: /* {outstr} {argorder} */")
-        body.append("\tdo {*txt++ = *opstr++;} while (*opstr);")
+        body.append("\tdo {*t++ = *opstr++;} while (*opstr);")
         if cat.length == 2:
             if cat.pcr:
                 body.append(f"\trel = entry->target_addr;")
@@ -562,27 +556,27 @@ last:
         def flush_mixed(diffs):
             if force_case:
                 for c in diffs:
-                    lines.append("        *txt++ = '%s';" % c)
+                    lines.append("        *t++ = '%s';" % c)
             else:
                 # lines.append("    if (lc) {")
                 # for c in diffs:
-                #     lines.append("        *txt++ = '%s'" % c.lower())
+                #     lines.append("        *t++ = '%s'" % c.lower())
                 # lines.append("    }")
                 # lines.append("    else {")
                 # for c in diffs:
-                #     lines.append("        *txt++ = '%s'" % c.upper())
+                #     lines.append("        *t++ = '%s'" % c.upper())
                 # lines.append("    }")
                 line = "if (lc) "
-                ops = ["*txt++ = '%s'" % c.lower() for c in diffs]
+                ops = ["*t++='%s'" % c.lower() for c in diffs]
                 line += ",".join(ops)
                 # for c in diffs:
-                #     lines.append("        *txt++ = '%s'" % c.lower())
+                #     lines.append("        *t++ = '%s'" % c.lower())
                 lines.append("    %s;" % line)
                 line = "else "
-                ops = ["*txt++ = '%s'" % c.upper() for c in diffs]
+                ops = ["*t++='%s'" % c.upper() for c in diffs]
                 line += ",".join(ops)
                 # for c in diffs:
-                #     lines.append("        *txt++ = '%s'" % c.lower())
+                #     lines.append("        *t++ = '%s'" % c.lower())
                 lines.append("    %s;" % line)
             return []
 
@@ -600,37 +594,37 @@ last:
                         same.append(u)
                 else:
                     if len(same) > 0:
-                        lines.append("\t" + ",".join(["*txt++ = '%s'" % s for s in same]) + ";")
+                        lines.append("\t" + ",".join(["*t++='%s'" % s for s in same]) + ";")
                         same = []
                     diffs.append(u)
                     #print "l!=u: -->%s<-- -->%s<--: diffs=%s" % (l, u, diffs)
             if len(same) > 0:
-                lines.append("\t" + ",".join(["*txt++ = '%s'" % s for s in same]) + ";")
+                lines.append("\t" + ",".join(["*t++='%s'" % s for s in same]) + ";")
             if len(diffs) > 0:
                 flush_mixed(diffs)
             return ""
 
         def flush_nibble(operand):
-            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2] + 1; *txt++ = *h++;")
+            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2] + 1; *t++=*h++;")
 
         def flush_hex(operand):
-            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;")
+            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2]; *t++=*h++; *t++=*h++;")
 
         def flush_hex16(operand):
             flush_hex("(%s>>8)" % operand)
             flush_hex("%s" % operand)
             # lines.append("    h = &hexdigits[((%s>>8)&0xff)*2]" % operand)
-            # lines.append("    *txt++ = *h++")
-            # lines.append("    *txt++ = *h++")
+            # lines.append("    *t++=*h++")
+            # lines.append("    *t++=*h++")
             # lines.append("    h = &hexdigits[(%s&0xff)*2]" % operand)
-            # lines.append("    *txt++ = *h++")
-            # lines.append("    *txt++ = *h++")
+            # lines.append("    *t++=*h++")
+            # lines.append("    *t++=*h++")
 
         def flush_dec(operand):
-            lines.append("\ttxt += sprintf(txt, \"%%d\", %s);" % operand)
+            lines.append("\tt+=sprintf(t, \"%%d\", %s);" % operand)
 
         def flush_raw(operand):
-            lines.append("\t*txt++ = %s;" % operand)
+            lines.append("\t*t++=%s;" % operand)
 
         i = 0
         text = ""
