@@ -96,6 +96,10 @@ cdef class ParsedDisassembly:
     cdef int current_pc
     cdef public np.ndarray labels
     cdef np.uint16_t *labels_data
+    cdef public int num_bytes
+    cdef np.uint32_t *index_to_row_data
+    cdef public np.ndarray index_to_row
+    cdef int index_index
 
     # text representation
     cdef int max_text_lines
@@ -107,7 +111,7 @@ cdef class ParsedDisassembly:
     cdef char *text_buffer_data
     cdef public int num_text_lines
 
-    def __init__(self, max_entries, origin):
+    def __init__(self, max_entries, origin, num_bytes):
         self.max_entries = max_entries
         self.entry_size = sizeof(history_entry_t)
         self.raw_entries = np.zeros(max_entries * self.entry_size, dtype=np.uint8)
@@ -118,6 +122,11 @@ cdef class ParsedDisassembly:
         self.current_pc = origin
         self.labels = np.zeros(256*256, dtype=np.uint16)
         self.labels_data = <np.uint16_t *>self.labels.data
+
+        self.num_bytes = num_bytes
+        self.index_to_row = np.zeros(num_bytes + 1, dtype=np.uint32)
+        self.index_to_row_data = <np.uint32_t *>self.index_to_row.data
+        self.index_index = 0
 
         self.max_text_lines = 256
         self.init_text_lines(self.max_text_lines)
@@ -137,12 +146,17 @@ cdef class ParsedDisassembly:
     cdef parse_next(self, parse_func_t processor, unsigned char *src, int num_bytes):
         cdef history_entry_t *h = &self.history_entries[self.num_entries]
         cdef int last_pc = self.current_pc + num_bytes
+        cdef np.uint32_t *index_list = self.index_to_row_data
+        cdef int i
         while self.current_pc < last_pc and self.num_entries < self.max_entries:
             if num_bytes > 0:
                 count = processor(h, src, self.current_pc, last_pc, self.labels_data)
                 src += count
                 num_bytes -= count
                 self.current_pc += count
+                for i in range(count):
+                    index_list[self.index_index] = self.num_entries
+                    self.index_index += 1
                 self.num_entries += 1
                 h += 1
             else:
@@ -208,8 +222,8 @@ cdef class DisassemblyConfig:
     #             #    print "  disasm_info: added label at %04x" % (pc + i)
     #             labels[pc + i] = 1
 
-    def get_parser(self, num_entries, origin):
-        return ParsedDisassembly(num_entries, origin)
+    def get_parser(self, num_entries, origin, num_bytes):
+        return ParsedDisassembly(num_entries, origin, num_bytes)
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -229,8 +243,8 @@ cdef class DisassemblyConfig:
         cdef int pc = origin
 
         if num_bytes < 1:
-            return self.get_parser(0, origin)
-        cdef ParsedDisassembly parsed = self.get_parser(num_entries, origin)
+            return self.get_parser(0, origin, 0)
+        cdef ParsedDisassembly parsed = self.get_parser(num_entries, origin, num_bytes)
 
         cdef int first_index = 0
         cdef int base_style = c_style[0] & user_bit_mask

@@ -58,21 +58,22 @@ if __name__ == "__main__":
     driver.register_parser("antic_dl", 2)
     driver.register_parser("jumpman_level", 3)
     driver.register_parser("jumpman_harvest", 4)
-    segment.style[:] = 1
+    segment.style[:] = 0
     p = driver.parse(segment, 8000)
     e = p.entries
     print(p)
     print(len(p))
     for i in range(len(p)):
         print(e[i])
+    print(p.index_to_row)
 
-    t = p.stringify(0,100)
-    print(t)
-    for i in range(len(t)):
-        start = t.text_starts[i]
-        count = t.line_lengths[i]
-        text = t.text_buffer[start:start + count].tostring()
-        print(f"text[{start}:{start + count}] = {text}, {e[i+100]}")
+    # t = p.stringify(0,100)
+    # print(t)
+    # for i in range(len(t)):
+    #     start = t.text_starts[i]
+    #     count = t.line_lengths[i]
+    #     text = t.text_buffer[start:start + count].tostring()
+    #     print(f"text[{start}:{start + count}] = {text}, {e[i+100]}")
 
-    del p
-    print("deleted")
+    # del p
+    # print("deleted")

@@ -16,8 +16,8 @@ class ParsedDisassembly(libudis.ParsedDisassembly):
 
 
 class DisassemblyConfig(libudis.DisassemblyConfig):
-    def get_parser(self, num_entries, origin):
-        return ParsedDisassembly(num_entries, origin)
+    def get_parser(self, num_entries, origin, num_bytes):
+        return ParsedDisassembly(num_entries, origin, num_bytes)
 
 
 class Disassembler(object):
