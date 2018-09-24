@@ -88,6 +88,14 @@ class DisassemblyTable(cg.HexTable):
             count = t.line_lengths[i]
             text = t.text_buffer[start:start + count].tostring()
         elif col == 0:
+            p = self.current
+            e = p.entries
+            addr = e[row]['pc']
+            if p.labels[addr]:
+                text = "L%04x" % addr
+            else:
+                text = ""
+        elif col == 2:
             e = self.current.entries
             text = str(e[row]['disassembler_type'])
         else:
