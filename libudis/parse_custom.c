@@ -22,7 +22,6 @@ int parse_entry_data(history_entry_t *entry, unsigned char *src, unsigned int pc
         else break;
     }
     if (entry->num_bytes <= 8) {
-        printf("num_bytes=%d\n", entry->num_bytes);
         unsigned leftmost = entry->num_bytes;
         entry->num_bytes = 8;
         if (pc + entry->num_bytes > last_pc) {
@@ -34,15 +33,11 @@ int parse_entry_data(history_entry_t *entry, unsigned char *src, unsigned int pc
             unsigned int left = entry->num_bytes;
             unsigned int right = left;
             unsigned next_opcode = src[left];  /* next entry */
-            printf("before: left=%d, leftmost=%d\n", left, leftmost);
             while ((left > leftmost) && (src[left-1] == next_opcode)) left--;  /* find first that matches next_opcode */
-            printf("after: left=%d, leftmost=%d\n", left, leftmost);
             if (left < 8) {
                 /* last X bytes matched next byte. Check if next set will result in a run */
                 right++;
-                printf("before: right=%d\n", right);
                 while ((src[right] == next_opcode) && (pc + right < last_pc)) right++;
-                printf("after: right=%d\n", right);
                 if (right > left + 8) {
                     /* force early end so next call will pick up the run */
                     entry->num_bytes = left;
