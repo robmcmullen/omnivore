@@ -22,11 +22,8 @@ Supported Python versions:
 
 * Python 3.6 (and later)
 
-If you need Python 2 support, ``atrcopy`` 6.5 and earlier supports:
-
-* Python 2.7
-* Python 3.5
-* Python 3.6
+If you need Python 2 support, ``atrcopy`` 6.5 and earlier supports Python 2.7,
+which you can install with ``pip install "atrcopy<7.0"``
 
 Dependencies
 ------------

@@ -33,6 +33,7 @@ setup(name="atrcopy",
             "Topic :: Software Development :: Libraries",
             "Topic :: Utilities",
         ],
+        python_requires = '>=3.6',
         install_requires = [
             'numpy',
         ],
