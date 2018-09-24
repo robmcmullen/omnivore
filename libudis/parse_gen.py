@@ -443,37 +443,37 @@ class HistoryStringifier(HistoryParser):
 
     template = """
 $RETURN_TYPE $NAME($SIGNATURE) {
-    int dist;
-    unsigned char opcode, leadin, op1, op2, op3;
-    char *first_t, *h, *opstr;
-    unsigned int rel;
+	int dist;
+	unsigned char opcode, leadin, op1, op2, op3;
+	char *first_t, *h, *opstr;
+	unsigned int rel;
 
-    first_t = t;
-    opcode = entry->instruction[0];
-    switch(opcode) {
+	first_t = t;
+	opcode = entry->instruction[0];
+	switch(opcode) {
 $CASES
-    default:
-        h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
-        goto last;
-    }
+	default:
+		h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
+		goto last;
+	}
 $TARGETS
 last:
-    return (int)(t - first_t);
+	return (int)(t - first_t);
 }
 """
 
     leadin_template = """
-    case 0x%x:
-        leadin = opcode;
-        opcode = entry->instruction[1];
-        switch(opcode) {
+case 0x%x:
+	leadin = opcode;
+	opcode = entry->instruction[1];
+	switch(opcode) {
 %s
-        default:
-            h = &hexdigits[(leadin & 0xff)*2]; *t++=*h++; *t++=*h++;
-            h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
-            break;
-        }
-        break;
+	default:
+		h = &hexdigits[(leadin & 0xff)*2]; *t++=*h++; *t++=*h++;
+		h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
+		break;
+	}
+	break;
 """
 
     @property
@@ -556,7 +556,7 @@ last:
         def flush_mixed(diffs):
             if force_case:
                 for c in diffs:
-                    lines.append("        *t++ = '%s';" % c)
+                    lines.append("\t\t*t++ = '%s';" % c)
             else:
                 # lines.append("    if (lc) {")
                 # for c in diffs:
@@ -571,13 +571,13 @@ last:
                 line += ",".join(ops)
                 # for c in diffs:
                 #     lines.append("        *t++ = '%s'" % c.lower())
-                lines.append("    %s;" % line)
+                lines.append("\t%s;" % line)
                 line = "else "
                 ops = ["*t++='%s'" % c.upper() for c in diffs]
                 line += ",".join(ops)
                 # for c in diffs:
                 #     lines.append("        *t++ = '%s'" % c.lower())
-                lines.append("    %s;" % line)
+                lines.append("\t%s;" % line)
             return []
 
         def flush_text(text):
