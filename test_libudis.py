@@ -13,6 +13,8 @@ from omni8bit.disassembler import ParsedDisassembly, DisassemblyConfig
 
 nops = np.zeros(256, dtype=np.uint8) + 0xea
 
+repeat_test = np.asarray([1,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0, 0,1,1,1,1,1,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0], dtype=np.uint8)
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -20,7 +22,7 @@ if __name__ == "__main__":
             data = np.frombuffer(fh.read(), dtype=np.uint8)
             data = data.astype(dtype=np.uint8)  # prevents data.base from being a 'bytes' object
     else:
-        data = nops
+        data = repeat_test
     print(type(data), data)
     d2 = SegmentData(data)
     segment = DefaultSegment(d2, 0x6000)
@@ -56,9 +58,7 @@ if __name__ == "__main__":
     driver.register_parser("antic_dl", 2)
     driver.register_parser("jumpman_level", 3)
     driver.register_parser("jumpman_harvest", 4)
-    segment.style[20:40] = 2
-    segment.style[40:80] = 3
-    segment.style[80:100] = 4
+    segment.style[:] = 1
     p = driver.parse(segment, 8000)
     e = p.entries
     print(p)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     for i in range(len(p)):
         print(e[i])
 
-    t = p.stringify(100,100)
+    t = p.stringify(0,100)
     print(t)
     for i in range(len(t)):
         start = t.text_starts[i]

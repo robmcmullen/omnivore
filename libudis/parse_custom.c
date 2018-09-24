@@ -15,11 +15,39 @@ int parse_entry_data(history_entry_t *entry, unsigned char *src, unsigned int pc
     entry->flag = FLAG_DATA_BYTES;
     entry->disassembler_type = DISASM_DATA;
     
-    entry->num_bytes = 8;
-    if (pc + entry->num_bytes > last_pc) {
-        entry->num_bytes = last_pc - pc;
-        if (entry->num_bytes == 0) {
-            return 0;
+    unsigned char opcode = src[0];
+    entry->num_bytes = 1;
+    while ((pc + entry->num_bytes < last_pc) && (entry->num_bytes < 255)) {
+        if (src[entry->num_bytes] == opcode) entry->num_bytes += 1;
+        else break;
+    }
+    if (entry->num_bytes <= 8) {
+        printf("num_bytes=%d\n", entry->num_bytes);
+        unsigned leftmost = entry->num_bytes;
+        entry->num_bytes = 8;
+        if (pc + entry->num_bytes > last_pc) {
+            /* end of data; no need to check for a run at the end */
+            entry->num_bytes = last_pc - pc;
+        }
+        else if (pc + entry->num_bytes < last_pc) {
+            /* check end of entry to see if it starts a new run */
+            unsigned int left = entry->num_bytes;
+            unsigned int right = left;
+            unsigned next_opcode = src[left];  /* next entry */
+            printf("before: left=%d, leftmost=%d\n", left, leftmost);
+            while ((left > leftmost) && (src[left-1] == next_opcode)) left--;  /* find first that matches next_opcode */
+            printf("after: left=%d, leftmost=%d\n", left, leftmost);
+            if (left < 8) {
+                /* last X bytes matched next byte. Check if next set will result in a run */
+                right++;
+                printf("before: right=%d\n", right);
+                while ((src[right] == next_opcode) && (pc + right < last_pc)) right++;
+                printf("after: right=%d\n", right);
+                if (right > left + 8) {
+                    /* force early end so next call will pick up the run */
+                    entry->num_bytes = left;
+                }
+            }
         }
     }
     switch(entry->num_bytes) {
@@ -37,8 +65,12 @@ int parse_entry_data(history_entry_t *entry, unsigned char *src, unsigned int pc
         *first_instruction_ptr++ = *src++;
     case 2:
         *first_instruction_ptr++ = *src++;
-    default:
+    case 1:
         *first_instruction_ptr++ = *src++;
+        break;
+    default:
+        *first_instruction_ptr = *src;
+        entry->flag = FLAG_REPEATED_BYTES;
         break;
     }
     return entry->num_bytes;

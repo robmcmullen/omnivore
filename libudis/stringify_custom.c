@@ -12,7 +12,14 @@ int stringify_entry_data(history_entry_t *entry, char *txt, char *hexdigits, int
 
     first_txt = txt;
     data = entry->instruction;
-    switch(entry->num_bytes) {
+    if (lc) *txt++ = '.', *txt++ = 'b', *txt++ = 'y', *txt++ = 't', *txt++ = 'e', *txt++ = ' ';
+    else *txt++ = '.', *txt++ = 'B', *txt++ = 'Y', *txt++ = 'T', *txt++ = 'E', *txt++ = ' ';
+    if (entry->flag == FLAG_REPEATED_BYTES) {
+        txt += sprintf(txt, "%d", entry->num_bytes);
+        *txt++ = '*';
+        h = &hexdigits[(*data++ & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
+    }
+    else switch(entry->num_bytes) {
     case 8:
         h = &hexdigits[(*data++ & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
     case 7:
@@ -29,7 +36,6 @@ int stringify_entry_data(history_entry_t *entry, char *txt, char *hexdigits, int
         h = &hexdigits[(*data++ & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
     default:
         h = &hexdigits[(*data++ & 0xff)*2]; *txt++ = *h++; *txt++ = *h++;
-        break;
     }
     return (int)(txt - first_txt);
 }
