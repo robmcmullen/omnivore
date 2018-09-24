@@ -63,7 +63,6 @@ class DisassemblyTable(cg.HexTable):
 
     def get_start_end_index_of_row(self, row):
         index1, index2 = self.get_index_range(row, 0)
-        index2 -= 1
         return index1, index2
 
     def index_to_row_col(self, index):

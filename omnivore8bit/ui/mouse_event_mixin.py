@@ -127,7 +127,7 @@ class MouseEventMixin(SelectionHandler):
             self.on_motion_in_edit_cell(evt)
         else:
             mode = self.get_effective_tool_mode(evt)
-            log.debug("on_motion: effective mode=%s" % mode)
+            # log.debug("on_motion: effective mode=%s" % mode)
             if evt.LeftIsDown() and self.has_capture():
                 mode.process_mouse_motion_down(evt)
             else:
@@ -290,7 +290,7 @@ class MouseEventMixin(SelectionHandler):
                 log.debug("handle_select_start placing cursor: flags: %s, index=%s" % (flags, index1))
         flags.caret_column = c
         self.commit_change(flags)
-        log.debug(("start after:", ch.carets))
+        log.debug(f"start after: {ch.carets}")
 
     def handle_select_motion(self, evt, row, col, flags=None):
         if not self.mouse_drag_started:
@@ -367,7 +367,7 @@ class MouseEventMixin(SelectionHandler):
         if update:
             self.commit_change(flags)
         log.debug("handle_select_motion: update: %s, flags: %s, anchors: initial=%s current=%s" % (update, flags, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index)), str((caret.anchor_start_index, caret.anchor_end_index))))
-        log.debug(("motion after:", ch.carets))
+        # log.debug(f"motion after: {ch.carets}")
 
     def handle_select_end(self, evt, row, col, flags=None):
         if flags is None:

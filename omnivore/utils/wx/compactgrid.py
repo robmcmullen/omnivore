@@ -812,7 +812,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
         # now make sure we have a valid index to handle partial lines at the
         # first or last row
-        index, _ = self.table.get_index_range(row, col)
+        index, index2 = self.table.get_index_range(row, col)
         if index < 0:
             row = 0
             if col < self.table.start_offset:
@@ -822,7 +822,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             _, c2 = self.table.index_to_row_col(self.table.last_valid_index)
             if col > c2:
                 col = c2 - 1
-        return row, col, index
+        return row, col, index, index2
 
     ##### scrolling
 

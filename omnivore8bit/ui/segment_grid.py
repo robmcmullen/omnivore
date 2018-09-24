@@ -254,9 +254,9 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
         return self.get_location_from_col(row, col)
 
     def get_location_from_col(self, row, col):
-        r2, c2, index = self.main.enforce_valid_caret(row, col)
+        r2, c2, index, index2 = self.main.enforce_valid_caret(row, col)
         inside = col == c2 and row == r2
-        return r2, c2, index, index + 1, inside
+        return r2, c2, index, index2, inside
 
     def get_start_end_index_of_row(self, row):
         return self.table.get_start_end_index_of_row(row)
@@ -278,7 +278,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     def get_status_message_at_cell(self, row, col):
         try:
-            r, c, index = self.main.enforce_valid_caret(row, col)
+            r, c, index, index2 = self.main.enforce_valid_caret(row, col)
             return self.get_status_at_index(index)
         except IndexError:
             pass
