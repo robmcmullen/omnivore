@@ -1,6 +1,6 @@
 import numpy as np
 
-import omni8bit.udis_fast as udis_fast
+import omni8bit.disassembler as udis_fast
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 
@@ -204,7 +204,7 @@ class BaseDisassembler(object):
             text = self.get_pc_label(line.pc)
             if text:
                 pc_labels[line.pc] = text
-            if line.flag & udis_fast.flag_label:
+            if line.flag & udis_fast.flags.flag_label:
                 text = self.get_dest_pc_label(line.dest_pc)
                 if text:
                     dest_pc_labels[line.pc] = text
@@ -215,7 +215,7 @@ class BaseDisassembler(object):
     def create_computed_directive_cache(self):
         pc_to_directive = {}
         for line in self.info:
-            if line.flag & udis_fast.flag_data_bytes:
+            if line.flag & udis_fast.flags.flag_data_bytes:
                 operand = self.get_operand_from_instruction(line.instruction)
                 text = self.format_data_directive_bytes(operand)
                 pc_to_directive[line.pc] = text
@@ -302,7 +302,7 @@ class BaseDisassembler(object):
 
     def get_addr_dest(self, row):
         line = self.info[row]
-        return line.dest_pc if line.flag & udis_fast.flag_label else -1
+        return line.dest_pc if line.flag & udis_fast.flags.flag_label else -1
 
     def format_row_label(self, line):
         return self.fmt_hex4 % line.pc
@@ -332,11 +332,11 @@ class BaseDisassembler(object):
         return operand.decode("latin-1")
 
     def format_operand(self, line, operand):
-        if line.flag == udis_fast.flag_origin:
+        if line.flag == udis_fast.flags.flag_origin:
             operand = self.get_origin(line.dest_pc)
-        elif line.flag & udis_fast.flag_data_bytes:
+        elif line.flag & udis_fast.flags.flag_data_bytes:
             operand = self.format_data_directive_bytes(operand)
-        elif self.use_labels and line.flag & udis_fast.flag_label:
+        elif self.use_labels and line.flag & udis_fast.flags.flag_label:
             operand = self.get_operand_label(line, operand)
         return operand
 
@@ -386,7 +386,7 @@ class BaseDisassembler(object):
             label = self.format_label(line)
             comment = self.format_comment(index, line)
             operand = self.get_operand_from_instruction(line.instruction)
-            if line.flag & udis_fast.flag_data_bytes and line.num_bytes > max_bytes_per_line:
+            if line.flag & udis_fast.flags.flag_data_bytes and line.num_bytes > max_bytes_per_line:
                 first = True
                 for i in range(0, line.num_bytes, max_bytes_per_line):
                     count = min(line.num_bytes, i + max_bytes_per_line) - i
@@ -399,7 +399,7 @@ class BaseDisassembler(object):
                         comment = ""
                         first = False
             else:
-                if line.flag == udis_fast.flag_origin:
+                if line.flag == udis_fast.flags.flag_origin:
                     hex_bytes = ""
                 else:
                     hex_bytes = self.format_data_list_bytes(index, line.num_bytes)
@@ -435,7 +435,7 @@ class BaseDisassembler(object):
         line_num = 2
         pc = self.segment.origin
         for line, hex_bytes, code, comment, num_bytes in self.iter_row_text():
-            if line.flag == udis_fast.flag_origin:
+            if line.flag == udis_fast.flags.flag_origin:
                 line_num += 1
                 continue
             pc = line.pc
@@ -510,7 +510,7 @@ class Undocumented6502Disassembler(Basic6502Disassembler):
 
 class Flagged6502Disassembler(Undocumented6502Disassembler):
     name = "6502 (highlighted undocumented opcodes)"
-    highlight_flags = udis_fast.flag_undoc
+    highlight_flags = udis_fast.flags.flag_undoc
 
 
 class Basic65C02Disassembler(Basic6502Disassembler):

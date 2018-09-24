@@ -8,7 +8,6 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import DefaultSegment
-from omni8bit.udis_fast import libudis
 
 from omnivore.utils.wx import compactgrid as cg
 from omnivore8bit.byte_edit.linked_base import VirtualLinkedBase
@@ -87,10 +86,6 @@ class VirtualTestViewer(SegmentViewer):
     pretty_name = "Virtual Test Viewer"
 
     control_cls = SampleGridControl
-
-    has_cpu = True
-
-    has_hex = True
 
     # trait defaults
 

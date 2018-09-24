@@ -726,7 +726,7 @@ class ByteViewersPlugin(FrameworkPlugin):
         # from ..viewers.bitmap import MemoryMapViewer
         from ..viewers.bitmap2 import BitmapViewer
         from ..viewers.char2 import CharViewer
-        from ..viewers.cpu2 import DisassemblyViewer
+        # from ..viewers.cpu2 import DisassemblyViewer as OldDisassemblyViewer
         from ..viewers.hex2 import HexEditViewer
         from ..viewers.info import CommentsViewer, UndoViewer, SegmentListViewer
         from ..viewers.map2 import MapViewer
@@ -736,6 +736,7 @@ class ByteViewersPlugin(FrameworkPlugin):
         from ..viewers.apple2 import HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer
         from ..viewers.memory import MemoryAccessViewer
         from ..viewers.skeleton import VirtualTestViewer
+        from ..viewers.history import DisassemblyViewer
 
         return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer, VirtualTestViewer]
 
