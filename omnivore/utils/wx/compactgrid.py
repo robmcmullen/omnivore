@@ -574,6 +574,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         # print("on_paint: %dx%d at %d,%d. origin=%d,%d" % (self.visible_cells, self.visible_rows, self.first_visible_cell, self.first_visible_row, px, py))
 
         line_num = self.first_visible_row
+        self.table.prepare_for_drawing(self.first_visible_row, self.visible_rows, self.first_visible_cell, self.visible_cells)
         self.line_renderer.draw_grid(self.parent, dc, self.first_visible_row, self.visible_rows, self.first_visible_cell, self.visible_cells)
         self.parent.draw_carets(dc, self.first_visible_row, self.visible_rows)
         if debug_refresh:
@@ -963,6 +964,12 @@ class HexTable(object):
         c = self.items_per_row - 1
         index = min(self.last_valid_index, self.get_index_range(r, c)[0])
         return index
+
+    def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
+        """Called immediately before the line renderer, this is used to
+        update any internal structures before drawing takes place.
+        """
+        pass
 
 
 class VariableWidthHexTable(HexTable):
