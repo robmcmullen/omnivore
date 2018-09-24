@@ -9,19 +9,36 @@ udis_opcode_flag_data_bytes = 16
 udis_opcode_flag_store = 32  # is this a store operation? default is load
 udis_opcode_flag_undoc = 128
 
-# history flags
-flag_branch = 1
-flag_jump = 2
-flag_rts = 3
-flag_rti = 4
-flag_origin = 5
-flag_data_bytes = 6
-flag_write_one = 7
-flag_write_two = 8
-flag_write_three = 9
-flag_valid_target_addr = 32
-flag_label = 64
-flag_undoc = 128
+# flags
+FLAG_BRANCH = 1
+FLAG_JUMP = 2
+FLAG_RTS = 3
+FLAG_RTI = 4
+FLAG_ORIGIN = 5
+FLAG_DATA_BYTES = 6
+FLAG_WRITE_ONE = 7
+FLAG_WRITE_TWO = 8
+FLAG_WRITE_THREE = 9
+FLAG_REPEATED_BYTES = 10
+FLAG_TARGET_ADDR = 32
+FLAG_LABEL = 64
+FLAG_UNDOC = 128
+
+# disassembler types
+DISASM_DATA = 0
+DISASM_6502 = 10
+DISASM_6502UNDOC = 11
+DISASM_65816 = 12
+DISASM_65C02 = 13
+DISASM_6800 = 14
+DISASM_6809 = 15
+DISASM_6811 = 16
+DISASM_8051 = 17
+DISASM_8080 = 18
+DISASM_Z80 = 19
+DISASM_ANTIC_DL = 30
+DISASM_JUMPMAN_HARVEST = 31
+DISASM_JUMPMAN_LEVEL = 32
 
 udis_opcode_flag_map = {
     udis_opcode_flag_branch: "FLAG_BRANCH",

@@ -20,7 +20,7 @@ except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
 from .disasm import DisassemblyConfig
-from .flags import flag_undoc, pcr, z80bit
+from .flags import FLAG_UNDOC, pcr, z80bit
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -196,7 +196,7 @@ class MiniAssembler(object):
                 num_bytes, mnemonic, mode_name = optable
                 flag = 0
             log.debug("%x: %s %s %d bytes, %x" % (opcode, mnemonic, mode_name, num_bytes, flag))
-            if allow_undocumented or not flag & flag_undoc:
+            if allow_undocumented or not flag & FLAG_UNDOC:
                 d[mnemonic].append(FormatSpec(formats[mode_name], opcode, num_bytes, mode_name, flag))
             else:
                 log.debug("Skipping %s %s" % (opcode, mnemonic))
