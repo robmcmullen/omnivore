@@ -6,7 +6,7 @@
 #include "libudis.h"
 
 
-int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int lc) {
+int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     char *first_t, *h;
     unsigned char *data;
 
@@ -40,11 +40,12 @@ int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int l
     return (int)(t - first_t);
 }
 
-int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, int lc) {
+int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     unsigned char opcode;
     int i;
     char *first_t, *h;
     unsigned char *data;
+    unsigned short addr;
 
     first_t = t;
     data = entry->instruction;
@@ -80,9 +81,17 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
             *t++='>';
         }
         else {
-            *t++='$';
-            h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
-            h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
+            addr = entry->target_addr;
+            if (labels[addr]) {
+                *t++='L';
+                h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
+                h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+            }
+            else {
+                *t++='$';
+                h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
+                h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
+            }
         }
     }
     else {
@@ -113,9 +122,17 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
                     *t++='>',*t++=' ';
                 }
                 else {
-                    *t++='$';
-                    h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
-                    h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
+                    addr = entry->target_addr;
+                    if (labels[addr]) {
+                        *t++='L';
+                        h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
+                        h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+                    }
+                    else {
+                        *t++='$';
+                        h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
+                        h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
+                    }
                     *t++=' ';
                 }
             }
@@ -148,7 +165,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
     return (int)(t - first_t);
 }
 
-int stringify_entry_jumpman_harvest(history_entry_t *entry, char *t, char *hexdigits, int lc) {
+int stringify_entry_jumpman_harvest(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     unsigned char opcode;
     char *first_t, *h;
     unsigned char *data;

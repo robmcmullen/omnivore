@@ -60,7 +60,7 @@ custom_parsers = [
     CustomEntry('jumpman_harvest', 'parse_entry_jumpman_harvest', 'int', parser_signature),
 ]
 
-stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc"
+stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels"
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
     CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
@@ -446,7 +446,7 @@ $RETURN_TYPE $NAME($SIGNATURE) {
 	int dist;
 	unsigned char opcode, leadin, op1, op2, op3;
 	char *first_t, *h, *opstr;
-	unsigned int rel;
+	unsigned short rel, addr;
 
 	first_t = t;
 	opcode = entry->instruction[0];
@@ -605,10 +605,49 @@ case 0x%x:
             return ""
 
         def flush_nibble(operand):
-            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2] + 1; *t++=*h++;")
+            lines.append(f"\th = &hexdigits[({operand})*2] + 1; *t++=*h++;")
 
-        def flush_hex(operand):
-            lines.append(f"\th = &hexdigits[({operand} & 0xff)*2]; *t++=*h++; *t++=*h++;")
+        def flush_hex(operand, indent="\t"):
+            lines.append(f"{indent}h = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
+
+        def flush_addr(op1, op2):
+            lines.append(f"\th = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
+
+        def flush_label1x8(op1):
+            lines.append(f"\taddr = entry->target_addr;")
+            lines.append(f"\tif (labels[addr]) {{")
+            lines.append(f"\t\t*t++='L';")
+            flush_hex(f"addr & 0xff", "\t\t")
+            lines.append(f"\t}}")
+            lines.append(f"\telse {{")
+            lines.append(f"\t\t*t++='$';")
+            flush_hex(f"addr & 0xff", "\t\t")
+            lines.append(f"\t}}")
+
+        def flush_label2x8(op1, op2):
+            lines.append(f"\taddr = entry->target_addr;")
+            lines.append(f"\tif (labels[addr]) {{")
+            lines.append(f"\t\t*t++='L';")
+            flush_hex(f"addr >> 8", "\t\t")
+            flush_hex(f"addr & 0xff", "\t\t")
+            lines.append(f"\t}}")
+            lines.append(f"\telse {{")
+            lines.append(f"\t\t*t++='$';")
+            flush_hex(f"addr >> 8", "\t\t")
+            flush_hex(f"addr & 0xff", "\t\t")
+            lines.append(f"\t}}")
+
+        def flush_label16(operand):
+            lines.append(f"\tif (labels[{operand}]) {{")
+            lines.append(f"\t\t*t++='L';")
+            flush_hex(f"{operand} >> 8", "\t\t")
+            flush_hex(f"{operand} & 0xff", "\t\t")
+            lines.append(f"\t}}")
+            lines.append(f"\telse {{")
+            lines.append(f"\t\t*t++='$';")
+            flush_hex(f"{operand} >> 8")
+            flush_hex(f"{operand} & 0xff")
+            lines.append(f"\t}}")
 
         def flush_hex16(operand):
             flush_hex("(%s>>8)" % operand)
@@ -643,20 +682,16 @@ case 0x%x:
                 flush_hex(argorder.pop(0))
                 i += 6
             elif tail.startswith("$%02x%02x"):
-                text = text + "$"
                 text = flush_text(text)
-                flush_hex(argorder.pop(0))
-                flush_hex(argorder.pop(0))
+                flush_label2x8(argorder.pop(0), argorder.pop(0))
                 i += 9
             elif tail.startswith("$%02x"):
-                text = text + "$"
                 text = flush_text(text)
-                flush_hex(argorder.pop(0))
+                flush_label1x8(argorder.pop(0))
                 i += 5
             elif tail.startswith("$%04x"):
-                text = text + "$"
                 text = flush_text(text)
-                flush_hex16(argorder.pop(0))
+                flush_label16(argorder.pop(0))
                 i += 5
             elif tail.startswith("%02x"):
                 text = flush_text(text)

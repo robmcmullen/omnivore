@@ -20,6 +20,8 @@ cdef class StringifiedDisassembly:
     cdef public int origin
     cdef public int last_pc
     cdef public int start_index
+    cdef public np.ndarray labels
+    cdef np.uint16_t *labels_data
 
     # text representation
     cdef int max_lines
@@ -36,7 +38,7 @@ cdef class StringifiedDisassembly:
     cdef int mnemonic_case
     cdef char *hex_case
 
-    def __init__(self, start_index, max_lines, mnemonic_lower=True, hex_lower=True):
+    def __init__(self, start_index, max_lines, labels, mnemonic_lower=True, hex_lower=True):
         self.start_index = start_index
         self.text_starts = np.zeros(max_lines, dtype=np.uint16)
         self.text_starts_data = <np.uint16_t *>self.text_starts.data
@@ -48,6 +50,8 @@ cdef class StringifiedDisassembly:
         self.max_lines = max_lines
         self.mnemonic_case = 1 if mnemonic_lower else 0
         self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
+        self.labels = labels
+        self.labels_data = <np.uint16_t *>self.labels.data
         self.clear()
         # for disassembler_type in range(40):
         #     printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
@@ -74,7 +78,7 @@ cdef class StringifiedDisassembly:
         while num_entries > 0:
             stringifier = stringifier_map[h.disassembler_type]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-            count = stringifier(h, txt, self.hex_case, self.mnemonic_case)
+            count = stringifier(h, txt, self.hex_case, self.mnemonic_case, self.labels_data)
             starts[index] = text_index
             lengths[index] = count
             text_index += count
@@ -169,17 +173,19 @@ cdef class ParsedDisassembly:
         cdef int i = self.num_bytes
         cdef np.uint16_t *labels = self.labels_data
         cdef np.uint32_t *index_to_row = self.index_to_row_data
+        cdef int old_label
 
         #print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
         while i > 0:
             i -= 1
-            if labels[pc + i]:
+            old_label = labels[pc + i]
+            if old_label:
                 #print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
                 while index_to_row[i - 1] == index_to_row[i] and i > 1:
                     i -= 1
                 #if labels[pc + i] == 0:
                 #    print "  disasm_info: added label at %04x" % (pc + i)
-                labels[pc + i] = 1
+                labels[pc + i] = old_label
 
     def parse_test(self, cpu_type, np.ndarray[np.uint8_t, ndim=1] src):
         cdef parse_func_t processor
@@ -193,7 +199,7 @@ cdef class ParsedDisassembly:
 
     def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
         cdef history_entry_t *h = &self.history_entries[index]
-        output = StringifiedDisassembly(index, num_lines_requested, mnemonic_lower, hex_lower)
+        output = StringifiedDisassembly(index, num_lines_requested, self.labels, mnemonic_lower, hex_lower)
         output.parse_history_entries(h, num_lines_requested)
         return output
 

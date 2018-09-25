@@ -12,4 +12,4 @@ cdef struct history_entry_t:
 
 ctypedef int (*parse_func_t)(history_entry_t *, unsigned char *, unsigned int, unsigned int, unsigned short *)
 
-ctypedef int (*string_func_t)(history_entry_t *, char *, char *, int)
+ctypedef int (*string_func_t)(history_entry_t *, char *, char *, int, unsigned short *)
