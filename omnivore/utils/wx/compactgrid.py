@@ -920,7 +920,7 @@ class HexTable(object):
         return 20
 
     def is_index_valid(self, index):
-        return index > 0 and index <= self.last_valid_index
+        return index >= 0 and index <= self.last_valid_index
 
     def clamp_index(self, index):
         if index < 0:
