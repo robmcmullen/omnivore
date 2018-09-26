@@ -105,7 +105,6 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	if (entry) {
 		entry->pc = PC;
 		entry->num_bytes = count;
-		entry->disassembler_type = DISASM_6502_HISTORY;
 		entry->instruction[0] = memory[PC];
 		if (count > 1) entry->instruction[1] = memory[PC + 1];
 		if (count > 2) entry->instruction[1] = memory[PC + 2];
@@ -122,6 +121,9 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	// 7 cycle instructions (e.g. ROL $nnnn,X) don't have a penalty cycle for
 	// crossing a page boundary.
 	if (inst.cycles == 7) extra_cycles = 0;
+	if (entry) {
+		entry->cycles = inst.cycles + extra_cycles;
+	}
 
 	if (read_addr != NULL) {
 		index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
@@ -220,10 +222,17 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 {
 	int cycles, bpid, count;
 	history_6502_t *entry;
+	history_frame_t *frame_entry;
+
+	frame_entry = (history_frame_t *)libudis_get_next_entry(history, DISASM_FRAME_START);
+	if (frame_entry) {
+		/* working on this frame; won't be complete until status->frame_number itself is increased */
+		frame_entry->frame_number = status->frame_number + 1;
+	}
 
 	do {
 		last_pc = PC;
-		entry = (history_6502_t *)libudis_get_next_entry(history);
+		entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
 		cycles = lib6502_step_cpu(status, entry);
 		status->current_instruction_in_frame += 1;
 		status->instructions_since_power_on += 1;
@@ -249,6 +258,12 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 		}
 	} while (status->current_cycle_in_frame < status->final_cycle_in_frame);
 	status->frame_number += 1;
+
+	frame_entry = (history_frame_t *)libudis_get_next_entry(history, DISASM_FRAME_END);
+	if (frame_entry) {
+		frame_entry->frame_number = status->frame_number;
+	}
+
 	return -1;
 }
 

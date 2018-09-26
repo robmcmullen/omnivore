@@ -31,7 +31,6 @@ if __name__ == "__main__":
         first_entry_of_frame = 0
         while emu.current_frame_number < 200:
             brk = emu.next_frame()
-            emu.cpu_history_summary()
             emu.cpu_history_show_range(first_entry_of_frame)
             first_entry_of_frame = emu.cpu_history[0]['latest_entry_index'] + 1
             if brk:

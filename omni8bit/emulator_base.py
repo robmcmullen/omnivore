@@ -439,10 +439,12 @@ class EmulatorBase(Debugger):
     def cpu_history_summary(self):
         h = self.cpu_history
         i = h[0]['first_entry_index']
-        print(f"number of entries: {h[0]['num_entries']}")
+        mod = h[0]['num_entries']
+        print(f"number of entries: {mod}")
         print(f"{i}")
         print(f"{h[0]['latest_entry_index']}")
         print(f"{h[0]['entries'][i]}")
+        print(f"{h[0]['entries'][(i+1) % mod]}")
 
     def cpu_history_show_range(self, from_index, details=False):
         """Show the history entries from given index to latest index
@@ -459,3 +461,8 @@ class EmulatorBase(Debugger):
                 print(f"{index}: {h[0]['entries'][index]}")
         else:
             print(f"{count} entries; {from_index} -> {last % mod}")
+            print(f"{h[0]['entries'][from_index]}")
+            print(f"{h[0]['entries'][(from_index+1) % mod]}")
+            print("  ...")
+            print(f"{h[0]['entries'][(last-1) % mod]}")
+            print(f"{h[0]['entries'][last % mod]}")

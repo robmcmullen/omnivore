@@ -12,7 +12,8 @@ void libudis_clear_history(emulator_history_t *history) {
 	history->num_entries = 0;
 }
 
-history_entry_t *libudis_get_next_entry(emulator_history_t *history) {
+history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type) {
+	history_entry_t *entry;
 	if (history == NULL) {
 		return NULL;
 	}
@@ -24,5 +25,9 @@ history_entry_t *libudis_get_next_entry(emulator_history_t *history) {
 	if (history->num_entries < history->num_allocated_entries) {
 		history->num_entries++;
 	}
-	return &history->entries[history->latest_entry_index];
+	entry = &history->entries[history->latest_entry_index];
+	entry->disassembler_type = type;
+	entry->num_bytes = 0;
+	entry->flag = 0;
+	return entry;
 }

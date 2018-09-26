@@ -13,7 +13,7 @@ typedef struct {
 	uint8_t num_bytes;
 	uint8_t flag;
 	uint8_t disassembler_type;
-	uint8_t unused;
+	uint8_t cycles;
 	uint8_t instruction[16];
 } history_entry_t; /* 24 bytes */
 
@@ -23,7 +23,7 @@ typedef struct {
 	uint8_t num_bytes;
 	uint8_t flag;
 	uint8_t disassembler_type;
-	uint8_t unused;
+	uint8_t cycles;
 	uint8_t instruction[4];
 	uint8_t a;
 	uint8_t x;
@@ -38,6 +38,15 @@ typedef struct {
 	uint8_t after3;
 	uint8_t extra;
 } history_6502_t; /* 24 bytes */
+
+typedef struct {
+	uint32_t frame_number;
+	uint8_t num_bytes;
+	uint8_t flag;
+	uint8_t disassembler_type;
+	uint8_t cycles;
+	uint8_t instruction[16];
+} history_frame_t; /* 24 bytes */
 
 typedef struct {
 	int32_t num_allocated_entries;
@@ -67,6 +76,8 @@ typedef struct {
 
 /* disassembler types */
 #define DISASM_DATA 0
+#define DISASM_FRAME_START 1
+#define DISASM_FRAME_END 2
 #define DISASM_6502 10
 #define DISASM_6502UNDOC 11
 #define DISASM_65816 12
@@ -84,7 +95,7 @@ typedef struct {
 
 void libudis_clear_history(emulator_history_t *history);
 
-history_entry_t *libudis_get_next_entry(emulator_history_t *history);
+history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
 
 
 #endif /* LIBUDIS_H */
