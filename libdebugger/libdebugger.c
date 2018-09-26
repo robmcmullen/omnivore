@@ -234,7 +234,7 @@ void libdebugger_memory_access_finish_frame(frame_status_t *output) {
 	}
 }
 
-int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints) {
+int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *history) {
 	int bpid;
 
 	switch (output->frame_status) {
@@ -250,7 +250,7 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_s
 		libdebugger_memory_access_start_frame(memory, output);
 	}
 	output->frame_status = FRAME_INCOMPLETE;
-	bpid = calc(output, breakpoints);
+	bpid = calc(output, breakpoints, history);
 	if (bpid < 0) {
 		int status, index, count;
 

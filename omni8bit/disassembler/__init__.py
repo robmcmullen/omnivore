@@ -3,7 +3,7 @@ import functools
 
 import numpy as np
 
-from . import dtypes as ud
+from .dtypes import *
 from . import flags
 
 import logging
@@ -19,3 +19,21 @@ except RuntimeError:
 except ModuleNotFoundError:
     log.warning("udis_fast C extensions not created; disassembler and mini assembler will not be availabe")
 
+
+
+def create_history_dtype(num_entries, history_dtype):
+    size = (num_entries + 1) * HISTORY_ENTRY_DTYPE.itemsize
+    dtype_entries = list(EMULATOR_HISTORY_HEADER_DTYPE.descr)
+    dtype_entries.append(("entries", history_dtype, num_entries))
+    # print(f"new dtype: {dtype_entries}")
+    return np.dtype(dtype_entries)
+
+def create_history(num_entries, history_dtype):
+    dtype = create_history_dtype(num_entries, history_dtype)
+    # print(f"new dtype: {dtype.itemsize} bytes")
+    history = np.zeros(1, dtype=dtype)
+    history['num_allocated_entries'] = num_entries
+    history['num_entries'] = 0
+    history['first_entry_index'] = 0
+    history['latest_entry_index'] = -1
+    return history

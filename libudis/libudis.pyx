@@ -9,6 +9,7 @@ from libudis.declarations cimport find_parse_function, find_string_function
 
 cdef extern:
     string_func_t stringifier_map[]
+    void libudis_clear_history(np.uint8_t *buf)
 
 
 
@@ -293,3 +294,9 @@ cdef class DisassemblyConfig:
         parsed.fix_offset_labels()
 
         return parsed
+
+
+def clear_history(np.ndarray history):
+    cdef np.uint8_t[:] hbuf
+    hbuf = history.view(np.uint8)
+    libudis_clear_history(&hbuf[0])

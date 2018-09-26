@@ -15,7 +15,7 @@ typedef struct {
 	uint8_t disassembler_type;
 	uint8_t unused;
 	uint8_t instruction[16];
-} history_entry_t; /* 12 bytes */
+} history_entry_t; /* 24 bytes */
 
 typedef struct {
 	uint16_t pc;
@@ -37,7 +37,17 @@ typedef struct {
 	uint8_t before3;
 	uint8_t after3;
 	uint8_t extra[2];
-} history_6502_entry_t; /* 24 bytes */
+} history_6502_t; /* 24 bytes */
+
+typedef struct {
+	int32_t num_allocated_entries;
+	int32_t num_entries;
+	int32_t first_entry_index;
+	int32_t latest_entry_index;
+	int32_t unused1;  /* pad structure so initial data is multiple of sizeof(history_entry_t) */
+	int32_t unused2;
+	history_entry_t entries[1]; /* placeholder for actual size array */
+} emulator_history_t;
 
 
 /* flags */
@@ -67,8 +77,14 @@ typedef struct {
 #define DISASM_8051 17
 #define DISASM_8080 18
 #define DISASM_Z80 19
+#define DISASM_6502_HISTORY 20
 #define DISASM_ANTIC_DL 30
 #define DISASM_JUMPMAN_HARVEST 31
 #define DISASM_JUMPMAN_LEVEL 32
+
+void libudis_clear_history(emulator_history_t *history);
+
+history_entry_t *libudis_get_next_entry(emulator_history_t *history);
+
 
 #endif /* LIBUDIS_H */

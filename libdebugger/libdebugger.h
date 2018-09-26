@@ -2,6 +2,7 @@
 #define LIBDEBUGGER_H
 #include <stdint.h>
 
+#include "libudis.h"
 /* The debugger structure must match the definition in omni8bit/debugger/dtypes.py */
 
 #define MAIN_MEMORY_SIZE (256*256)
@@ -132,10 +133,10 @@ void libdebugger_init_array(breakpoints_t *breakpoints);
 
 typedef int (*cpu_state_callback_ptr)(uint16_t token, uint16_t addr);
 
-typedef int (*emu_frame_callback_ptr)(frame_status_t *output, breakpoints_t *breakpoints);
+typedef int (*emu_frame_callback_ptr)(frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *entry);
 
 int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_state_callback_ptr get_emulator_value);
 
-int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints);
+int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *history);
 
 #endif /* LIBDEBUGGER_H */

@@ -8,6 +8,7 @@ from atrcopy import find_diskimage
 from .debugger import Debugger
 from .debugger.dtypes import FRAME_STATUS_DTYPE
 from .history import History
+from . import disassembler as disasm
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,6 +37,8 @@ class EmulatorBase(Debugger):
 
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
+    history_entry_dtype = disasm.HISTORY_ENTRY_DTYPE
+
     def __init__(self):
         Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
@@ -54,6 +57,7 @@ class EmulatorBase(Debugger):
         self.last_boot_state = None
         self.forced_modifier = None
         self.emulator_started = False
+        self.cpu_history = None
 
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
@@ -254,7 +258,7 @@ class EmulatorBase(Debugger):
         self.process_key_state()
         if not self.is_frame_finished:
             print(f"next_frame: continuing frame from cycle {self.current_cycle_in_frame} of frame {self.current_frame_number}")
-        bpid = self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd)
+        bpid = self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd, self.cpu_history)
         if self.is_frame_finished:
             self.frame_count += 1
             self.process_frame_events()
@@ -406,6 +410,8 @@ class EmulatorBase(Debugger):
     def get_next_history(self, frame_cursor):
         return self.history.get_next_frame(frame_cursor)
 
+    # graphics
+
     def get_color_indexed_screen(self, frame_number=-1):
         """Return color indexed screen in whatever native format this
         emulator supports
@@ -424,3 +430,15 @@ class EmulatorBase(Debugger):
         """Return RGBA image of the current screen, suitable for use with
         OpenGL (flipped vertically)
         """
+
+    # CPU history
+
+    def init_cpu_history(self, num_entries):
+        self.cpu_history = disasm.create_history(num_entries, self.history_entry_dtype)
+
+    def cpu_history_summary(self):
+        h = self.cpu_history
+        print(f"number of entries: {h[0]['num_entries']}")
+        print(f"{h[0]['first_entry_index']}")
+        print(f"{h[0]['latest_entry_index']}")
+        print(f"{h[0]['entries'][0]}")

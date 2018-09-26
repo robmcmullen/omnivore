@@ -50,6 +50,7 @@ thrd_t frame_thread;
 
 breakpoints_t *LIBATARI800_Breakpoints = NULL;
 frame_status_t *LIBATARI800_Status = NULL;
+emulator_history_t *LIBATARI800_History = NULL;
 uint8_t *memory_access;
 uint8_t *access_type;
 
@@ -277,11 +278,12 @@ int threaded_frame(void *arg) {
 }
 
 
-int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints) {
+int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emulator_history_t *history) {
 	int err;
 
 	LIBATARI800_Breakpoints = breakpoints;
 	LIBATARI800_Status = status;
+	LIBATARI800_History = history;
 	memory_access = status->memory_access;
 	access_type = status->access_type;
 
@@ -343,14 +345,14 @@ static void copy_screen(unsigned char *dest)
 
 /* User-visible functions */
 
-int a8bridge_next_frame(input_template_t *input, output_template_t *output, breakpoints_t *breakpoints)
+int a8bridge_next_frame(input_template_t *input, output_template_t *output, breakpoints_t *breakpoints, emulator_history_t *history)
 {
 	int bpid;
 
 	LIBATARI800_Input_array = input;
 	INPUT_key_code = PLATFORM_Keyboard();
 
-	bpid = libdebugger_calc_frame(&a8bridge_calc_frame, MEMORY_mem, &output->status, breakpoints);
+	bpid = libdebugger_calc_frame(&a8bridge_calc_frame, MEMORY_mem, &output->status, breakpoints, history);
 
 	LIBATARI800_StateSave(output->state, &output->tags);
 	if (output->status.frame_status == FRAME_FINISHED) {

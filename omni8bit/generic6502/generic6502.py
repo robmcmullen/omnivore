@@ -7,6 +7,7 @@ np.set_printoptions(formatter={'int':hex})
 from . import lib6502
 from . import dtypes as d
 from ..emulator_base import EmulatorBase
+from .. import disassembler as disasm
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -31,6 +32,8 @@ class Generic6502(EmulatorBase):
     height = d.VIDEO_HEIGHT
 
     low_level_interface = lib6502
+
+    history_entry_dtype = disasm.HISTORY_6502_DTYPE
 
     @property
     def current_cpu_status(self):

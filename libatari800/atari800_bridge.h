@@ -1,6 +1,10 @@
+#ifndef _ATARI800_BRIDGE_H_
+#define _ATARI800_BRIDGE_H_
+
 #include <stdint.h>
 
 #include "libdebugger.h"
+#include "libudis.h"
 
 #include "config.h"
 #include "atari.h"
@@ -27,6 +31,8 @@ typedef struct {
 
 extern long cycles_per_frame;
 
+extern emulator_history_t *LIBATARI800_History;
+
 
 void ANTIC_Frame2(frame_status_t *status);
 
@@ -34,3 +40,4 @@ void ANTIC_Frame2(frame_status_t *status);
 vim:ts=4:sw=4:
 */
 
+#endif /* _ATARI800_BRIDGE_H_ */

@@ -4,6 +4,7 @@
 
 #include "6502-emu_wrapper.h"
 #include "libdebugger.h"
+#include "libudis.h"
 
 long cycles_per_frame;
 
@@ -74,7 +75,7 @@ void lib6502_restore_state(output_t *buf) {
 
 uint16_t last_pc;
 
-int lib6502_step_cpu(frame_status_t *status)
+int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 {
 	int count;
 	uint8_t last_sp;
@@ -100,6 +101,19 @@ int lib6502_step_cpu(frame_status_t *status)
 	if (count > 2) {
 		status->memory_access[PC + 2] = 255;
 		status->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
+	}
+	if (entry) {
+		entry->pc = PC;
+		entry->num_bytes = count;
+		entry->disassembler_type = DISASM_6502_HISTORY;
+		entry->instruction[0] = memory[PC];
+		if (count > 1) entry->instruction[1] = memory[PC + 1];
+		if (count > 2) entry->instruction[1] = memory[PC + 2];
+		entry->a = A;
+		entry->x = X;
+		entry->y = Y;
+		entry->sp = SP;
+		entry->sr = SR.byte;
 	}
 
 	inst.function();
@@ -202,13 +216,15 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 	return value;
 }
 
-int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints)
+int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emulator_history_t *history)
 {
 	int cycles, bpid, count;
+	history_6502_t *entry;
 
 	do {
 		last_pc = PC;
-		cycles = lib6502_step_cpu(status);
+		entry = (history_6502_t *)libudis_get_next_entry(history);
+		cycles = lib6502_step_cpu(status, entry);
 		status->current_instruction_in_frame += 1;
 		status->instructions_since_power_on += 1;
 		status->current_cycle_in_frame += cycles;
@@ -236,14 +252,14 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints)
 	return -1;
 }
 
-int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoints)
+int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoints, emulator_history_t *history)
 {
 	int bpid;
 	frame_status_t *status = &output->status;
 
 	memory[0xc000] = input->keychar;
 	status->final_cycle_in_frame = cycles_per_frame - 1;
-	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints);
+	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints, history);
 	lib6502_get_current_state(output);
 	return bpid;
 }
