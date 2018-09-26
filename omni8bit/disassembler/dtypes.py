@@ -31,7 +31,7 @@ HISTORY_6502_DTYPE = np.dtype([
     ("after2", np.uint8),
     ("before3", np.uint8),
     ("after3", np.uint8),
-    ("extra", np.uint8, 2),
+    ("extra", np.uint8),
 ])
 
 EMULATOR_HISTORY_HEADER_DTYPE = np.dtype([

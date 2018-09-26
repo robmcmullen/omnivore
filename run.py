@@ -28,8 +28,12 @@ if __name__ == "__main__":
         # with open("state.a8", "wb") as fh:
         #     fh.write(emu.state_array)
         num_breaks = 5
+        first_entry_of_frame = 0
         while emu.current_frame_number < 200:
             brk = emu.next_frame()
+            emu.cpu_history_summary()
+            emu.cpu_history_show_range(first_entry_of_frame)
+            first_entry_of_frame = emu.cpu_history[0]['latest_entry_index'] + 1
             if brk:
                 if brk.id == 0:
                     # Stepping
@@ -56,15 +60,12 @@ if __name__ == "__main__":
                     # emu.debug_state()
                 if emu.current_frame_number > 100:
                     emu.keypress('A')
-                if emu.current_frame_number == 180:
-                    b = emu.create_breakpoint(0xf018)
-                if emu.current_frame_number == 190:
-                    b = emu.step_into(100)
+                # if emu.current_frame_number == 180:
+                #     b = emu.create_breakpoint(0xf018)
+                # if emu.current_frame_number == 190:
+                #     b = emu.step_into(100)
 
         print(f"access frame {np.where(emu.memory_access_array > 0)[0]}")
         print(f"read access {np.where(emu.access_type_array & d.ACCESS_TYPE_READ)[0]}")
         print(f"write access{np.where(emu.access_type_array & d.ACCESS_TYPE_WRITE)[0]}")
         print(f"exec access {np.where(emu.access_type_array & d.ACCESS_TYPE_EXECUTE)[0]}")
-
-        emu.cpu_history_summary()
-
