@@ -89,14 +89,19 @@ def main(argv):
         trace_after_funcname = funcname
         sys.settrace(trace_calls)
 
-    from omnivore8bit.plugin import OmnivoreEditorPlugin
-    plugins = [OmnivoreEditorPlugin()]
+    try:
+        from omnivore8bit.plugin import OmnivoreEditorPlugin
+        plugins = [OmnivoreEditorPlugin()]
 
-    import omnivore8bit.file_type
-    plugins.extend(omnivore8bit.file_type.plugins)
-    
-    import omnivore8bit.viewers
-    plugins.extend(omnivore8bit.viewers.plugins)
+        import omnivore8bit.file_type
+        plugins.extend(omnivore8bit.file_type.plugins)
+        
+        import omnivore8bit.viewers
+        plugins.extend(omnivore8bit.viewers.plugins)
+    except ImportError as e:
+        plugins = []
+    except ModuleNotFoundError as e:
+        plugins = []
 
     # Crypto is separated to make it easy to make it optional for those
     # framework users who don't want the extra dependencies
