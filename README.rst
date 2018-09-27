@@ -1,7 +1,7 @@
 
-========
-Omnivore
-========
+============
+Omnivore 2.0
+============
 
 
 
@@ -9,6 +9,29 @@ Abstract
 ========
 
 Omnivore - the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
+
+Omnivore is a cross-platform app for modern hardware (running linux, MacOS and
+Windows) to work with executables or disk images of Atari 8-bit and Apple ][+
+machines.
+
+Omnivore is a:
+
+* binary editor
+* disassembler
+* miniassembler
+* graphics editor
+* map editor
+* Jumpman level editor (Atari 8-bit platform only)
+
+and soon will contain **a full emulator** for the Atari 8-bit and Apple ][+ machines with these features:
+
+* rewind capability to return to previous point of emulation
+* debugger able to step forward **and** backward
+* change any portion of memory or processor state
+* CPU history browser
+
+A Tribute
+---------
 
 While producing the Player/Missile podcast, I have had many ideas about hacking
 code on the 8-bits like I used to as a kid.  One of the tools I had was the
@@ -19,24 +42,14 @@ Omnimon but felt that would be too confusing as there are people in the 8-bit
 community who still use the original Omnimon hardware.  Using the prefix
 "Omni-" is my tribute to all the fun I had with the Omnimon hardware.
 
-Omnivore is a cross-platform app for modern hardware (running linux, OS X and
-Windows) to work with executables or disk images of Atari 8-bit machines.  (I
-have long- term goals to support editing MAME ROMS and disk images of other
-8-bit machines like the C64 and Apple ][.)
-
-Omnivore is more than an Atari binary editor.  It can also create and edit maps
-using character-based graphic tiles.  For instance: many games use the 5-color
-ANTIC modes 4 or 5 to provide a complex scrolling background while using much
-less memory than the multi-color bit-mapped modes.
-
-In addition to supporting more platforms, I also intend to add support for
-editing character sets and player-missile graphic shapes.
-
 
 How To Run Omnivore
 ===================
 
-Note that this is still beta-level software, so caveat emptor.
+Omnivore 2.0 is still under heavy development. When it gets to a more stable
+state, I will create binaries for Windows and MacOS. These instructions will be
+for that time.
+
 
 Windows & MacOS
 ---------------
@@ -52,9 +65,9 @@ Linux (or Using a Virtual Environment)
 Binaries for linux are not currently available, although I would like to
 provide packages for Ubuntu, Linux Mint and Gentoo at some point.
 
-To run on linux, you'll have to have a Python 2.7 environment set up. How to do
-this will depend on your distribution, but there's a good chance that a basic
-Python 2.7 already exists.
+To run on linux, you'll have to have a Python 3.6 environment set up. How to do
+this will depend on your distribution, but there's a good chance that if it is
+not installed already, your package manager will be able to install it for you.
 
 I'd recommend using a virtual environment so you don't clutter up the system
 python, but if you're willing to risk it, the virtualenv step is optional::
@@ -84,8 +97,10 @@ improvements, you can install and run the source distribution.
 Prerequisites
 -------------
 
-* python 2.7 (but not 3.x yet) capable of building C extensions
+* Python 3.6 and above, capable of building C extensions
 * git
+
+Note: Python 2 is not supported.
 
 Your version of python must be able to build C extensions, which should be
 automatic in most linux and on OS X. You may have to install the python
@@ -101,7 +116,7 @@ Virtualenv Setup
 
 I'd recommend using a different virtualenv than the one used above because it's possible that python packages that the git source depends on may be at different versions than the current published version::
 
-    virtualenv /some/path/to/your/development/virtualenv
+    python -m venv /some/path/to/your/development/virtualenv
     source /some/path/to/your/development/virtualenv/bin/activate
 
 Get the source from cloning it from github::
@@ -133,10 +148,10 @@ repainting all the character graphics), but it is only required if you were
 going to debug or recompile those specific .pyx files.  Cython is not needed
 for hacking on the python code.
 
-Should you change a cython file (currently only
-omnivore/utils/wx/bitviewscroller_speedups.pyx), use the command ``python
-setup-cython.py`` to turn that into a C extension, then use ``python setup.py
-build_ext --inplace`` to regenerate the dynamic libraries.
+Should you change a cython file (e.g. omnivore8bit/arch/antic_speedups.pyx),
+use the command ``python setup-cython.py`` to turn that into a C extension,
+then use ``python setup.py build_ext --inplace`` to regenerate the dynamic
+libraries.
 
 Plugins
 -------
