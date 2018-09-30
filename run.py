@@ -32,7 +32,9 @@ if __name__ == "__main__":
         while emu.current_frame_number < 200:
             brk = emu.next_frame()
             emu.cpu_history_show_range(first_entry_of_frame)
-            first_entry_of_frame = emu.cpu_history[0]['latest_entry_index'] + 1
+            lookup = emu.calc_history_window_lookup(first_entry_of_frame, 100)
+            print(first_entry_of_frame, lookup)
+            first_entry_of_frame = emu.calc_next_history_index()
             if brk:
                 if brk.id == 0:
                     # Stepping

@@ -90,6 +90,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	read_addr = NULL;
 	jumping = 0;
 	extra_cycles = 0;
+	before_value_index = 0;
 
 	status->memory_access[PC] = 255;
 	status->access_type[PC] = ACCESS_TYPE_EXECUTE;
@@ -105,6 +106,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	if (entry) {
 		entry->pc = PC;
 		entry->num_bytes = count;
+		entry->flag = 0;
 		entry->instruction[0] = memory[PC];
 		if (count > 1) entry->instruction[1] = memory[PC + 1];
 		if (count > 2) entry->instruction[1] = memory[PC + 2];
@@ -113,6 +115,12 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		entry->y = Y;
 		entry->sp = SP;
 		entry->sr = SR.byte;
+		entry->before1 = 0;
+		entry->after1 = 0;
+		entry->before2 = 0;
+		entry->after2 = 0;
+		entry->before2 = 0;
+		entry->after2 = 0;
 	}
 
 	inst.function();
@@ -123,6 +131,21 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	if (inst.cycles == 7) extra_cycles = 0;
 	if (entry) {
 		entry->cycles = inst.cycles + extra_cycles;
+		if (entry->sp != SP) {
+			;
+		}
+		else if (before_value_index > 0) {
+			entry->target_addr = (uint8_t *)write_addr - memory;
+			entry->before1 = before_value[0];
+			entry->after1 = *(uint8_t *)write_addr;
+			entry->flag = FLAG_WRITE_ONE;
+		}
+		else if (write_addr) {
+			entry->target_addr = (uint8_t *)write_addr - memory;
+		}
+		else if (read_addr) {
+			entry->target_addr = (uint8_t *)read_addr - memory;
+		}
 	}
 
 	if (read_addr != NULL) {

@@ -162,7 +162,8 @@ class EmulatorBase(Debugger):
 
     ##### Initialization
 
-    def configure_emulator(self, emu_args=None, *args, **kwargs):
+    def configure_emulator(self, emu_args=None, instruction_history_count=100000, *args, **kwargs):
+        self.init_cpu_history(instruction_history_count)
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
         self.low_level_interface.start_emulator(self.args)
@@ -437,9 +438,9 @@ class EmulatorBase(Debugger):
         self.cpu_history = disasm.create_history(num_entries, self.history_entry_dtype)
 
     def cpu_history_summary(self):
-        h = self.cpu_history
-        i = h[0]['first_entry_index']
-        mod = h[0]['num_entries']
+        h = self.cpu_history.view(np.recarray)
+        i = h.first_entry_index
+        mod = h.num_allocated_entries
         print(f"number of entries: {mod}")
         print(f"{i}")
         print(f"{h[0]['latest_entry_index']}")
@@ -450,8 +451,9 @@ class EmulatorBase(Debugger):
         """Show the history entries from given index to latest index
         """
         h = self.cpu_history
-        last = h[0]['latest_entry_index']
-        mod = h[0]['num_entries']
+        r = h[0].view(np.recarray)
+        last = r.latest_entry_index
+        mod = r.num_allocated_entries
         if from_index > last:
             last += mod
         count = last - from_index
@@ -461,8 +463,55 @@ class EmulatorBase(Debugger):
                 print(f"{index}: {h[0]['entries'][index]}")
         else:
             print(f"{count} entries; {from_index} -> {last % mod}")
-            print(f"{h[0]['entries'][from_index]}")
+            print(f"{h[0]['entries'][from_index % mod]}")
             print(f"{h[0]['entries'][(from_index+1) % mod]}")
             print("  ...")
             print(f"{h[0]['entries'][(last-1) % mod]}")
             print(f"{h[0]['entries'][last % mod]}")
+
+    def calc_history_window_lookup(self, start_index, count):
+        """Returns an list of indexes into the entries array for the
+        range of history requested.
+
+        Because it's a circular buffer, the wraparound case is unable to be
+        handled by numpy, so instead is used to map the row number in the
+        display window (which ranges from 0 -> count) to the history entry
+        starting at first_entry_index + start_index for count entries.
+        """
+        h = self.cpu_history
+        if h is None:
+            return [], []
+        r = h[0].view(np.recarray)
+        i = r.first_entry_index
+        mod = r.num_allocated_entries
+        first = (i + start_index) % mod
+        latest = (first + count) % mod
+        if latest > first:
+            indexes = np.arange(first, latest, dtype=np.uint32)
+        else:
+            indexes = np.empty(count, dtype=np.uint32)
+            wrap_count = mod - first
+            indexes[0:wrap_count] = np.arange(first, mod, dtype=np.uint32)
+            indexes[wrap_count:wrap_count + latest] = np.arange(0, latest, dtype=np.uint32)
+        return h[0]['entries'], indexes
+
+    def view_history_entry(self, index):
+        h = self.cpu_history
+        if h is None:
+            return None
+        r = h[0].view(np.recarray)
+        return h[0]['entries'][(r.first_entry_index + index) % r.num_allocated_entries]
+
+    def calc_next_history_index(self):
+        h = self.cpu_history[0].view(np.recarray)
+        print(f"first {h.first_entry_index} last={h.latest_entry_index}, num={h.num_allocated_entries}")
+        last = h.latest_entry_index
+        mod = h.num_allocated_entries
+        return (last + 1) % mod
+
+    @property
+    def num_cpu_history_entries(self):
+        h = self.cpu_history
+        if h is None:
+            return 0
+        return h[0]['num_entries']
