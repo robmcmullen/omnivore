@@ -8,7 +8,6 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import DefaultSegment
-from omni8bit.disassembler import DisassemblyConfig, flags
 
 from omnivore.utils.wx import compactgrid as cg
 from omnivore8bit.byte_edit.linked_base import VirtualLinkedBase
@@ -22,105 +21,75 @@ log = logging.getLogger(__name__)
 
 
 
-class DisassemblyTable(cg.HexTable):
-    column_labels = ["Label", "Disassembly", "Comment"]
-    column_sizes = [8, 16, 30]
+class InstructionHistoryTable(cg.VirtualTable):
+    column_labels = ["History"]
+    column_sizes = [40]
 
     def __init__(self, linked_base):
-        self.linked_base = linked_base
-
-        driver = DisassemblyConfig()
-        driver.register_parser("6502", 0)
-        driver.register_parser("data", 1)
-        driver.register_parser("antic_dl", 2)
-        driver.register_parser("jumpman_level", 3)
-        driver.register_parser("jumpman_harvest", 4)
-        self.driver = driver
-
+        self.virtual_linked_base = linked_base
         s = linked_base.segment
-        cg.HexTable.__init__(self, s.data, s.style, len(self.column_labels), s.origin)
-
-        self.max_num_entries = 8000
-        self.rebuild()
+        self.current_num_rows = 0
+        self.history_entries = None
+        self.visible_history_start_row = 0
+        self.visible_history_lookup_table = None
+        cg.VirtualTable.__init__(self, len(self.column_labels), s.origin)
 
     def calc_num_rows(self):
-        try:
-            return len(self.current)
-        except AttributeError:
-            return 0
+        return self.current_num_rows
 
-    def get_index_range(self, row, cell):
-        """Get the byte offset from start of file given row, col
-        position.
-        """
-        e = self.current.entries
-        index = e[row]['pc'] - self.current.origin
-        return index, index + e[row]['num_bytes']
-
-    def get_index_of_row(self, row):
-        index, _ = self.get_index_range(row, 0)
-        return index
-
-    def get_start_end_index_of_row(self, row):
-        index1, index2 = self.get_index_range(row, 0)
-        return index1, index2
-
-    def index_to_row_col(self, index):
-        return self.current.index_to_row[index], 0
+    def calc_last_valid_index(self):
+        return self.current_num_rows * self.items_per_row
 
     def get_label_at_index(self, index):
-        row, _ = self.index_to_row_col(index)
-        return str(self.current.entries[row]['pc'])
+        row = (index // self.items_per_row) - self.visible_history_start_row
+        if row < 0:
+            return "----"
+        try:
+            entry = self.history_entries[self.visible_history_lookup_table[row]]
+            return str(hex(entry[0]))
+        except IndexError:
+            return "----"
 
     def get_row_label_text(self, start_line, num_lines, step=1):
         last_line = min(start_line + num_lines, self.num_rows)
-        entries = self.current.entries
+        emu = self.virtual_linked_base.emulator
         for line in range(start_line, last_line, step):
-            yield "%04x" % (entries[line]['pc'])
+            yield "%04x" % (emu.view_history_entry(line)[0])
 
     def get_value_style(self, row, col):
-        if col == 1:
-            t = self.parsed
-            if t is None:
-                return "", 0
-            i = row - t.start_index
-            start = t.text_starts[i]
-            count = t.line_lengths[i]
-            text = t.text_buffer[start:start + count].tostring()
-        elif col == 0:
-            p = self.current
-            e = p.entries
-            addr = e[row]['pc']
-            disassembler_type = p.labels[addr]
-            if disassembler_type:
-                text = "L%04x" % addr
-            else:
-                text = ""
-        elif col == 2:
-            e = self.current.entries
-            text = str(e[row]['disassembler_type'])
+        emu = self.virtual_linked_base.emulator
+        try:
+            entry = self.history_entries[self.visible_history_lookup_table[row - self.visible_history_start_row]]
+        except IndexError:
+            print(f"tried row {row} out of {self.visible_history_lookup_table}")
+            text = f"row {row} out of bounds"
         else:
-            text = f"r{row}c{col}"
-        s = self.linked_base.segment
-        index, _ = self.get_index_range(row, col)
-        if self.is_index_valid(index):
-            style = s.style[index]
-            return text, style
-        return "", 0
+            text = str(entry)
+        # style = s.style[index]
+        style = 0
+        return text, style
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
-        self.parsed = self.current.stringify(start_row, visible_rows)
+        emu = self.virtual_linked_base.emulator
+        self.visible_history_start_row = start_row
+        self.history_entries, self.visible_history_lookup_table = emu.calc_history_window_lookup(start_row, visible_rows)
+
+    @property
+    def needs_rebuild(self):
+        v = self.virtual_linked_base
+        emu = v.emulator
+        return not self.current_num_rows == emu.num_cpu_history_entries
 
     def rebuild(self):
-        segment = self.linked_base.segment
-        self.current = self.driver.parse(segment, self.max_num_entries)
-        self.parsed = None
+        v = self.virtual_linked_base
+        emu = v.emulator
+        self.current_num_rows = emu.num_cpu_history_entries
+        print("CPU HISTORY ENTRIES", self.current_num_rows)
         self.init_boundaries()
-        print(f"new num_rows: {self.num_rows}")
 
 
-class DisassemblyControl(SegmentGridControl):
-    default_table_cls = DisassemblyTable
+class InstructionHistoryGridControl(SegmentGridControl):
+    default_table_cls = InstructionHistoryTable
 
     def calc_default_table(self):
         return self.default_table_cls(self.caret_handler)
@@ -132,17 +101,33 @@ class DisassemblyControl(SegmentGridControl):
         self.table.rebuild()
         cg.CompactGrid.recalc_view(self)
 
+    def refresh_view(self):
+        if self.IsShown():
+            log.debug("refreshing %s" % self)
+            if self.table.needs_rebuild:
+                self.recalc_view()
+            else:
+                SegmentGridControl.refresh_view(self)
+        else:
+            log.debug("skipping refresh of hidden %s" % self)
 
-class DisassemblyViewer(SegmentViewer):
-    name = "disasm"
 
-    pretty_name = "Static Disassembly"
+class InstructionHistoryViewer(SegmentViewer):
+    name = "cpuhistory"
 
-    control_cls = DisassemblyControl
+    pretty_name = "Instruction History"
+
+    control_cls = InstructionHistoryGridControl
 
     # trait defaults
 
     # initialization
+
+    @classmethod
+    def replace_linked_base(cls, linked_base):
+        # the new linked base decouples the cursor here from the other segments
+        segment = DefaultSegment(np.arange(400, dtype=np.uint8))
+        return VirtualLinkedBase(editor=linked_base.editor, segment=segment)
 
     # properties
 
@@ -164,3 +149,7 @@ class DisassemblyViewer(SegmentViewer):
 
     def recalc_data_model(self):
         self.table.rebuild()
+
+    def do_priority_level_refresh(self):
+        self.control.recalc_view()
+        self.refresh_view(True)
