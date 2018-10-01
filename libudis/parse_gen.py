@@ -522,7 +522,9 @@ case 0x%x:
         body.append("\tdo {*t++ = *opstr++;} while (*opstr);")
         if cat.length == 2:
             if cat.pcr:
-                body.append(f"\trel = entry->target_addr;")
+                body.append(f"\tdist = entry->instruction[1];")
+                body.append(f"\tif (dist > 127) dist -= 256;")
+                body.append(f"\trel = (entry->pc + 2 + dist) & 0xffff;")
             elif cat.leadin is None:
                 body.append(f"\top1 = entry->instruction[1];")
             else:
@@ -622,7 +624,7 @@ case 0x%x:
             lines.append(f"\th = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
 
         def flush_label1x8(op1):
-            lines.append(f"\taddr = entry->target_addr;")
+            lines.append(f"\taddr = {op1};")
             lines.append(f"\tif (labels[addr]) {{")
             lines.append(f"\t\t*t++='L';")
             flush_hex(f"addr & 0xff", "\t\t")
@@ -633,7 +635,7 @@ case 0x%x:
             lines.append(f"\t}}")
 
         def flush_label2x8(op1, op2):
-            lines.append(f"\taddr = entry->target_addr;")
+            lines.append(f"\taddr = {op2} + 256 * {op1};")
             lines.append(f"\tif (labels[addr]) {{")
             lines.append(f"\t\t*t++='L';")
             flush_hex(f"addr >> 8", "\t\t")
