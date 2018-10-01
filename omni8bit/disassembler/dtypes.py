@@ -8,7 +8,7 @@ HISTORY_ENTRY_DTYPE = np.dtype([
     ("num_bytes", np.uint8),
     ("flag", np.uint8),
     ("disassembler_type", np.uint8),
-    ("unused", np.uint8),
+    ("cycles", np.uint8),
     ("instruction", np.uint8, 16),
 ])
 
@@ -18,7 +18,7 @@ HISTORY_6502_DTYPE = np.dtype([
     ("num_bytes", np.uint8),
     ("flag", np.uint8),
     ("disassembler_type", np.uint8),
-    ("unused", np.uint8),
+    ("cycles", np.uint8),
     ("instruction", np.uint8, 4),
     ("a", np.uint8),
     ("x", np.uint8),
@@ -34,11 +34,19 @@ HISTORY_6502_DTYPE = np.dtype([
     ("extra", np.uint8),
 ])
 
+HISTORY_FRAME_DTYPE = np.dtype([
+    ("frame_number", np.uint32),
+    ("num_bytes", np.uint8),
+    ("flag", np.uint8),
+    ("disassembler_type", np.uint8),
+    ("cycles", np.uint8),
+    ("instruction", np.uint8, 16),
+])
+
 EMULATOR_HISTORY_HEADER_DTYPE = np.dtype([
     ("num_allocated_entries", np.int32),
     ("num_entries", np.int32),
     ("first_entry_index", np.int32),
     ("latest_entry_index", np.int32),
-    ("unused1", np.int32),
-    ("unused2", np.int32),
+    ("cumulative_count", np.uint32),
 ])

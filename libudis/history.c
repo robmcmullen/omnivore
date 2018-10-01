@@ -6,12 +6,6 @@
 #include "libudis.h"
 
 
-void libudis_clear_history(emulator_history_t *history) {
-	history->first_entry_index = 0;
-	history->latest_entry_index = -1;
-	history->num_entries = 0;
-}
-
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type) {
 	history_entry_t *entry;
 	if (history == NULL) {
@@ -25,6 +19,7 @@ history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type) {
 	if (history->num_entries < history->num_allocated_entries) {
 		history->num_entries++;
 	}
+	history->cumulative_count++;
 	entry = &history->entries[history->latest_entry_index];
 	entry->disassembler_type = type;
 	entry->num_bytes = 0;

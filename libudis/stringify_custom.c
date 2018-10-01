@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "libudis.h"
+#include "stringify_udis_cpu.h"
 
 
 int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
@@ -223,5 +224,39 @@ int stringify_entry_jumpman_harvest(history_entry_t *entry, char *t, char *hexdi
         else *t++='I',*t++='N',*t++='C',*t++='O',*t++='M',*t++='P',*t++='L',*t++='E',*t++='T',*t++='E';
         *t++=']';
     }
+    return (int)(t - first_t);
+}
+
+int stringify_entry_frame_start(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+    history_frame_t *frame = (history_frame_t *)entry;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='S', *t++='t', *t++='a', *t++='r', *t++='t', *t++=' ', *t++='f', *t++='r', *t++='a', *t++='m', *t++='e', *t++=' ';
+    t += sprintf(t, "%d", frame->frame_number);
+    return (int)(t - first_t);
+}
+
+int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+    history_frame_t *frame = (history_frame_t *)entry;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='E', *t++='n', *t++='d', *t++=' ', *t++='f', *t++='r', *t++='a', *t++='m', *t++='e', *t++=' ';
+    t += sprintf(t, "%d", frame->frame_number);
+    return (int)(t - first_t);
+}
+
+int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    int count = stringify_entry_6502(entry, t, hexdigits, lc, labels);
+    return count;
+}
+
+int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='U', *t++='n', *t++='k', *t++='n', *t++='o', *t++='w', *t++='n', *t++=' ', *t++='h', *t++='i', *t++='s', *t++='t', *t++='o', *t++='r', *t++='y',  *t++=' ', *t++='t', *t++='y', *t++='p', *t++='e', *t++=' ';
+    t += sprintf(t, "%d", entry->disassembler_type);
     return (int)(t - first_t);
 }

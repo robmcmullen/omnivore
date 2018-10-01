@@ -247,12 +247,6 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 	history_6502_t *entry;
 	history_frame_t *frame_entry;
 
-	frame_entry = (history_frame_t *)libudis_get_next_entry(history, DISASM_FRAME_START);
-	if (frame_entry) {
-		/* working on this frame; won't be complete until status->frame_number itself is increased */
-		frame_entry->frame_number = status->frame_number + 1;
-	}
-
 	do {
 		last_pc = PC;
 		entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
@@ -281,11 +275,6 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 		}
 	} while (status->current_cycle_in_frame < status->final_cycle_in_frame);
 	status->frame_number += 1;
-
-	frame_entry = (history_frame_t *)libudis_get_next_entry(history, DISASM_FRAME_END);
-	if (frame_entry) {
-		frame_entry->frame_number = status->frame_number;
-	}
 
 	return -1;
 }

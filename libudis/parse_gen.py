@@ -35,7 +35,10 @@ from omni8bit.disassembler import cputables
 # compatibility. Do not reuse ID numbers if CPUs are removed from this list.
 disassembler_type = {
     "data": 0,
+    "frame_start": 1,
+    "frame_end": 2,
     "6502": 10,
+    "6502_history": 110,
     "6502undoc": 11,
     "65816": 12,
     "65c02": 13,
@@ -48,6 +51,7 @@ disassembler_type = {
     "antic_dl": 30,
     "jumpman_harvest": 31,
     "jumpman_level": 32,
+    "unknown_disassembler": 255,
 }
 disassembler_type_max = max(disassembler_type.values())
 
@@ -63,8 +67,12 @@ custom_parsers = [
 stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels"
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
+    CustomEntry('frame_start', 'stringify_entry_frame_start', 'int', stringifier_signature),
+    CustomEntry('frame_end', 'stringify_entry_frame_end', 'int', stringifier_signature),
     CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
     CustomEntry('jumpman_harvest', 'stringify_entry_jumpman_harvest', 'int', stringifier_signature),
+    CustomEntry('6502_history', 'stringify_entry_6502_history', 'int', stringifier_signature),
+    CustomEntry('unknown_disassembler', 'stringify_entry_unknown_disassembler', 'int', stringifier_signature),
 ]
 
 
@@ -786,11 +794,27 @@ def gen_map(fh, stringifiers):
         for p in cpu_order:
             i = disassembler_type[p.cpu_name]
             while i > expected:
-                fh.write("NULL, /* %d */\n" % expected)
+                fh.write("stringify_entry_unknown_disassembler, /* %d */\n" % expected)
                 expected += 1
             fh.write("%s, /* %d */\n" % (p.function_name, i))
             expected += 1
         fh.write("};\n")
+
+def gen_header(fh, stringifiers):
+    cpu_order = sorted(stringifiers, key=lambda p: disassembler_type[p.cpu_name])
+    if fh is not None:
+        for p in stringifiers:
+            fh.write(f"extern {p.function_return_type} {p.function_name}({p.function_signature});\n")
+
+def gen_start_guard(fh, filename):
+    guard = "_" + filename.replace(".", "_").upper()
+    fh.write(f"#ifndef {guard}\n")
+    fh.write(f"#define {guard}\n")
+
+def gen_end_guard(fh, filename):
+    guard = "_" + filename.replace(".", "_").upper()
+    fh.write(f"#endif /* {guard} */\n")
+
 
 if __name__ == "__main__":
     import sys
@@ -830,9 +854,9 @@ if __name__ == "__main__":
             fh.write(h.text)
 
     generated_stringifiers = []
+    c_includes = set()
     with open("stringify_udis_cpu.c", "w") as fh:
         fh.write(c_disclaimer)
-        c_includes = set()
         for cpu in known:
             print(f"computing {cpu}")
             s = HistoryStringifier(cpu)
@@ -845,5 +869,13 @@ if __name__ == "__main__":
 
         fh.write("\n\n")
         gen_map(fh, generated_stringifiers)
+
+    filename = "stringify_udis_cpu.h"
+    with open(filename, "w") as fh:
+        fh.write(c_disclaimer)
+        gen_start_guard(fh, filename)
+        fh.write("\n".join(list(c_includes)) + "\n\n")
+        gen_header(fh, generated_stringifiers)
+        gen_end_guard(fh, filename)
 
     gen_pyx("declarations.pyx", generated_parsers, generated_stringifiers)

@@ -20,9 +20,8 @@ if __name__ == "__main__":
     else:
         print(("Emulating: %s" % emu_cls.pretty_name))
         emu = emu_cls()
-        emu.init_cpu_history(100000)
-        print(f"history: {emu.cpu_history.dtype}")
         emu.configure_emulator()
+        hist = emu.cpu_history
         names = emu.names
         print(names)
         # with open("state.a8", "wb") as fh:
@@ -31,10 +30,14 @@ if __name__ == "__main__":
         first_entry_of_frame = 0
         while emu.current_frame_number < 200:
             brk = emu.next_frame()
-            emu.cpu_history_show_range(first_entry_of_frame)
-            lookup = emu.calc_history_window_lookup(first_entry_of_frame, 100)
-            print(first_entry_of_frame, lookup)
-            first_entry_of_frame = emu.calc_next_history_index()
+            hist.summary()
+            hist.debug_range(first_entry_of_frame)
+            current = hist.stringify(first_entry_of_frame, 100)
+            print(first_entry_of_frame, current)
+            print(f"{len(current)}, ")
+            for b in current:
+                print(b)
+            first_entry_of_frame = hist.next_entry_index
             if brk:
                 if brk.id == 0:
                     # Stepping

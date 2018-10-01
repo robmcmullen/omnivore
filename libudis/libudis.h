@@ -53,9 +53,8 @@ typedef struct {
 	int32_t num_entries;
 	int32_t first_entry_index;
 	int32_t latest_entry_index;
-	int32_t unused1;  /* pad structure so initial data is multiple of sizeof(history_entry_t) */
-	int32_t unused2;
-	history_entry_t entries[1]; /* placeholder for actual size array */
+	uint32_t cumulative_count;
+	history_entry_t *entries;
 } emulator_history_t;
 
 
@@ -79,6 +78,7 @@ typedef struct {
 #define DISASM_FRAME_START 1
 #define DISASM_FRAME_END 2
 #define DISASM_6502 10
+#define DISASM_6502_HISTORY 110
 #define DISASM_6502UNDOC 11
 #define DISASM_65816 12
 #define DISASM_65C02 13
@@ -88,10 +88,10 @@ typedef struct {
 #define DISASM_8051 17
 #define DISASM_8080 18
 #define DISASM_Z80 19
-#define DISASM_6502_HISTORY 20
 #define DISASM_ANTIC_DL 30
 #define DISASM_JUMPMAN_HARVEST 31
 #define DISASM_JUMPMAN_LEVEL 32
+#define DISASM_UNKNOWN 255
 
 void libudis_clear_history(emulator_history_t *history);
 

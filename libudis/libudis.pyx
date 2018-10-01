@@ -3,14 +3,14 @@ import cython
 import numpy as np
 cimport numpy as np
 
-from libudis.libudis cimport history_entry_t, parse_func_t, string_func_t
+from libudis.libudis cimport history_entry_t, emulator_history_t, parse_func_t, string_func_t
 
 from libudis.declarations cimport find_parse_function, find_string_function
 
+from omni8bit.disassembler.dtypes import HISTORY_ENTRY_DTYPE
+
 cdef extern:
     string_func_t stringifier_map[]
-    void libudis_clear_history(np.uint8_t *buf)
-
 
 
 cdef char *hexdigits_lower = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
@@ -296,7 +296,182 @@ cdef class DisassemblyConfig:
         return parsed
 
 
-def clear_history(np.ndarray history):
-    cdef np.uint8_t[:] hbuf
-    hbuf = history.view(np.uint8)
-    libudis_clear_history(&hbuf[0])
+cdef class StringifiedHistory:
+    cdef public int origin
+    cdef public int last_pc
+    cdef public int start_index
+    cdef public np.ndarray labels
+    cdef np.uint16_t *labels_data
+
+    # text representation
+    cdef int max_lines
+    cdef public np.ndarray text_starts
+    cdef np.uint16_t *text_starts_data
+    cdef public np.ndarray line_lengths
+    cdef np.uint16_t *line_lengths_data
+    cdef public np.ndarray text_buffer
+    cdef char *text_buffer_data
+    cdef public int num_lines
+    cdef text_buffer_size
+
+    # internals
+    cdef int mnemonic_case
+    cdef char *hex_case
+
+    def __init__(self, max_lines, mnemonic_lower=True, hex_lower=True):
+        self.text_starts = np.zeros(max_lines, dtype=np.uint16)
+        self.text_starts_data = <np.uint16_t *>self.text_starts.data
+        self.line_lengths = np.zeros(max_lines, dtype=np.uint16)
+        self.line_lengths_data = <np.uint16_t *>self.line_lengths.data
+        self.text_buffer_size = max_lines * 256
+        self.text_buffer = np.zeros(self.text_buffer_size + 1000, dtype=np.uint8)
+        self.text_buffer_data = <char *>self.text_buffer.data
+        self.max_lines = max_lines
+        self.mnemonic_case = 1 if mnemonic_lower else 0
+        self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
+        self.clear()
+        self.labels = np.zeros(256*256, dtype=np.uint16)
+        self.labels_data = <np.uint16_t *>self.labels.data
+
+    def __len__(self):
+        return self.num_lines
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            lines = []
+            for i in range(*index.indices(len(self))):
+                start = self.text_starts[i]
+                lines.append(self.text_buffer[start:start + self.line_lengths[i]].tostring())
+            return lines
+        elif isinstance(index, int):
+            start = self.text_starts[index]
+            return self.text_buffer[start:start + self.line_lengths[index]].tostring()
+        else:
+            raise TypeError("index must be int or slice")
+
+    def __iter__(self):
+        for i in range(self.num_lines):
+            start = self.text_starts[i]
+            yield self.text_buffer[start:start + self.line_lengths[i]].tostring()
+
+    def clear(self):
+        self.num_lines = 0
+
+    cdef parse_history_entries(self, emulator_history_t *history, int index, int num_entries):
+        if num_entries > self.max_lines:
+            num_entries = self.max_lines
+        cdef char *txt = self.text_buffer_data
+        cdef int count
+        cdef string_func_t stringifier
+        cdef np.uint16_t *starts = self.text_starts_data
+        cdef np.uint16_t *lengths = self.line_lengths_data
+        cdef np.uint16_t text_index = 0
+        cdef history_entry_t *h
+        self.num_lines = 0
+
+        while num_entries > 0:
+            h = &history.entries[index]
+            stringifier = stringifier_map[h.disassembler_type]
+            # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
+            count = stringifier(h, txt, self.hex_case, self.mnemonic_case, self.labels_data)
+            # print(f"created: {text_index}->{text_index+count}, {self.text_buffer_data[text_index:text_index+count]}")
+            starts[self.num_lines] = text_index
+            lengths[self.num_lines] = count
+            text_index += count
+            txt += count
+            num_entries -= 1
+            index += 1
+            if index >= history.num_allocated_entries:
+                index = 0
+            self.num_lines += 1
+
+cdef class HistoryStorage:
+    cdef public np.ndarray history_array
+    cdef emulator_history_t *history
+    cdef public np.ndarray entries
+
+    def __init__(self, num_entries):
+        self.history_array = np.zeros(sizeof(emulator_history_t), dtype=np.uint8)
+        self.history = <emulator_history_t *>self.history_array.data
+        printf("libudis: __init__: history_storage: %lx\n", <int>self.history)
+        self.history.num_allocated_entries = num_entries
+        self.entries = np.zeros(num_entries, dtype=HISTORY_ENTRY_DTYPE)
+        self.history.entries = <history_entry_t *>self.entries.data
+        self.clear()
+
+    def __len__(self):
+        return self.history.num_entries
+
+    def __getitem__(self, index):
+        cdef int wrapped
+
+        if isinstance(index, slice):
+            lines = []
+            for i in range(*index.indices(len(self))):
+                wrapped = (i + self.history.first_entry_index) % self.history.num_allocated_entries
+                lines.append(self.entries[wrapped])
+            return lines
+        elif isinstance(index, int):
+            wrapped = (index + self.history.first_entry_index) % self.history.num_allocated_entries
+            return self.entries[wrapped]
+        else:
+            raise TypeError("index must be int or slice")
+
+    def __iter__(self):
+        for i in range(self.num_lines):
+            yield self.entries[i]
+
+    @property
+    def first_entry_index(self):
+        return self.history.first_entry_index
+
+    @property
+    def latest_entry_index(self):
+        return self.history.latest_entry_index
+
+    @property
+    def next_entry_index(self):
+        cdef np.int32_t last = self.history.latest_entry_index
+        cdef np.int32_t mod = self.history.num_allocated_entries
+        return ((last + 1) % mod)
+
+    @property
+    def cumulative_count(self):
+        return self.history.cumulative_count
+
+    def clear(self):
+        self.history.first_entry_index = 0
+        self.history.latest_entry_index = -1
+        self.history.num_entries = 0
+        self.history.cumulative_count = 0
+
+    def summary(self):
+        start = self.history.first_entry_index
+        last = self.history.latest_entry_index
+        mod = self.history.num_allocated_entries
+        num = self.history.num_entries
+        print(f"number of entries: {mod}, used: {num}, cumulative {self.history.cumulative_count}")
+        print(f"start of ring: {start}, latest: {last}")
+        print("summary:", self)
+        printf("libudis: history_storage: %lx\n", <int>self.history)
+
+    def debug_range(self, from_index):
+        last = self.history.latest_entry_index
+        mod = self.history.num_allocated_entries
+        num = self.history.num_entries
+        print(f"{mod} entries; {from_index} -> {last % mod}")
+        cdef i = from_index % mod
+        print(f"{i}: {self.entries[i]}")
+        i = (from_index+1) % mod
+        print(f"{i}: {self.entries[i]}")
+        print("  ...")
+        i = (last - 1) % mod
+        print(f"{i}: {self.entries[i]}")
+        i = last % mod
+        print(f"{i}: {self.entries[i]}")
+
+    def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
+        output = StringifiedHistory(num_lines_requested, mnemonic_lower, hex_lower)
+        index = (self.history.first_entry_index + index) % self.history.num_allocated_entries
+        output.parse_history_entries(self.history, index, num_lines_requested)
+        return output

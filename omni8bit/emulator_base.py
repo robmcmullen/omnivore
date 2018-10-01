@@ -435,41 +435,12 @@ class EmulatorBase(Debugger):
     # CPU history
 
     def init_cpu_history(self, num_entries):
-        self.cpu_history = disasm.create_history(num_entries, self.history_entry_dtype)
-
-    def cpu_history_summary(self):
-        h = self.cpu_history.view(np.recarray)
-        i = h.first_entry_index
-        mod = h.num_allocated_entries
-        print(f"number of entries: {mod}")
-        print(f"{i}")
-        print(f"{h[0]['latest_entry_index']}")
-        print(f"{h[0]['entries'][i]}")
-        print(f"{h[0]['entries'][(i+1) % mod]}")
+        self.cpu_history = disasm.HistoryStorage(num_entries)
 
     def cpu_history_show_range(self, from_index, details=False):
-        """Show the history entries from given index to latest index
-        """
-        h = self.cpu_history
-        r = h[0].view(np.recarray)
-        last = r.latest_entry_index
-        mod = r.num_allocated_entries
-        if from_index > last:
-            last += mod
-        count = last - from_index
-        if details:
-            for i in range(from_index, last):
-                index = i % mod
-                print(f"{index}: {h[0]['entries'][index]}")
-        else:
-            print(f"{count} entries; {from_index} -> {last % mod}")
-            print(f"{h[0]['entries'][from_index % mod]}")
-            print(f"{h[0]['entries'][(from_index+1) % mod]}")
-            print("  ...")
-            print(f"{h[0]['entries'][(last-1) % mod]}")
-            print(f"{h[0]['entries'][last % mod]}")
+        self.cpu_history.debug_range(from_index)
 
-    def calc_history_window_lookup(self, start_index, count):
+    def calc_stringified_history(self, start_index, count):
         """Returns an list of indexes into the entries array for the
         range of history requested.
 
@@ -478,40 +449,8 @@ class EmulatorBase(Debugger):
         display window (which ranges from 0 -> count) to the history entry
         starting at first_entry_index + start_index for count entries.
         """
-        h = self.cpu_history
-        if h is None:
-            return [], []
-        r = h[0].view(np.recarray)
-        i = r.first_entry_index
-        mod = r.num_allocated_entries
-        first = (i + start_index) % mod
-        latest = (first + count) % mod
-        if latest > first:
-            indexes = np.arange(first, latest, dtype=np.uint32)
-        else:
-            indexes = np.empty(count, dtype=np.uint32)
-            wrap_count = mod - first
-            indexes[0:wrap_count] = np.arange(first, mod, dtype=np.uint32)
-            indexes[wrap_count:wrap_count + latest] = np.arange(0, latest, dtype=np.uint32)
-        return h[0]['entries'], indexes
-
-    def view_history_entry(self, index):
-        h = self.cpu_history
-        if h is None:
-            return None
-        r = h[0].view(np.recarray)
-        return h[0]['entries'][(r.first_entry_index + index) % r.num_allocated_entries]
-
-    def calc_next_history_index(self):
-        h = self.cpu_history[0].view(np.recarray)
-        print(f"first {h.first_entry_index} last={h.latest_entry_index}, num={h.num_allocated_entries}")
-        last = h.latest_entry_index
-        mod = h.num_allocated_entries
-        return (last + 1) % mod
+        return self.cpu_history.stringify(start_index, count)
 
     @property
     def num_cpu_history_entries(self):
-        h = self.cpu_history
-        if h is None:
-            return 0
-        return h[0]['num_entries']
+        return len(self.cpu_history)
