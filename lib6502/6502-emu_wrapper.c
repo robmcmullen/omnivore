@@ -109,7 +109,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		entry->flag = 0;
 		entry->instruction[0] = memory[PC];
 		if (count > 1) entry->instruction[1] = memory[PC + 1];
-		if (count > 2) entry->instruction[1] = memory[PC + 2];
+		if (count > 2) entry->instruction[2] = memory[PC + 2];
 		entry->a = A;
 		entry->x = X;
 		entry->y = Y;
