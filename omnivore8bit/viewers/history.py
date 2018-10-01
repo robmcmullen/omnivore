@@ -45,8 +45,8 @@ class InstructionHistoryTable(cg.VirtualTable):
         if row < 0:
             return "----"
         try:
-            entry = self.history_entries[self.visible_history_lookup_table[row]]
-            return str(hex(entry[0]))
+            emu = self.virtual_linked_base.emulator
+            return "%04x" % (emu.cpu_history[row][0])
         except IndexError:
             return "----"
 
@@ -54,17 +54,17 @@ class InstructionHistoryTable(cg.VirtualTable):
         last_line = min(start_line + num_lines, self.num_rows)
         emu = self.virtual_linked_base.emulator
         for line in range(start_line, last_line, step):
-            yield "%04x" % (emu.view_history_entry(line)[0])
+            yield "%04x" % (emu.cpu_history[line][0])
 
     def get_value_style(self, row, col):
-        emu = self.virtual_linked_base.emulator
+        t = self.parsed
+        if t is None:
+            return "", 0
         try:
-            entry = self.history_entries[self.visible_history_lookup_table[row - self.visible_history_start_row]]
+            text = t[row - self.visible_history_start_row]
         except IndexError:
             print(f"tried row {row} out of {self.visible_history_lookup_table}")
             text = f"row {row} out of bounds"
-        else:
-            text = str(entry)
         # style = s.style[index]
         style = 0
         return text, style
@@ -72,7 +72,7 @@ class InstructionHistoryTable(cg.VirtualTable):
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         emu = self.virtual_linked_base.emulator
         self.visible_history_start_row = start_row
-        self.history_entries, self.visible_history_lookup_table = emu.calc_history_window_lookup(start_row, visible_rows)
+        self.parsed = emu.calc_stringified_history(start_row, visible_rows)
 
     @property
     def needs_rebuild(self):
