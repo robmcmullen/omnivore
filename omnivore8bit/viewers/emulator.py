@@ -98,15 +98,15 @@ class CPU6502Table(SegmentVirtualTable):
     want_col_header = True
     want_row_header = False
 
-    col_labels = ["A", "X", "Y", "SP", "N", "V", "-", "B", "D", "I", "Z", "C", "PC"]
-    col_sizes = [2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 4]
-    p_bit = [0, 0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]
+    col_labels = ["A", "X", "Y", "N", "V", "-", "B", "D", "I", "Z", "C", "SP", "PC"]
+    col_sizes = [2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 4]
+    p_bit = [0, 0, 0, 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01, 0]
 
     # cpu state is not necessarily in "A,X,Y,SP..." order, so use the dtype
     # names of the cpu state array to look up which positions they should be
     # mapped to. The array below is the default from atari800 which is
     # a, p, sp, x, y, _, pc. It's overridden below in compute_col_lookup
-    col_from_cpu_state = [0, 3, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 6]
+    col_from_cpu_state = [0, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 2, 6]
 
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.cpu_state
@@ -126,9 +126,9 @@ class CPU6502Table(SegmentVirtualTable):
 
     def get_value_style(self, row, col):
         val = self.data[self.col_from_cpu_state[col]]
-        if col < 4:
+        if col < 3 or col == 11:
             text = "%02x" % val
-        elif col < 12:
+        elif col < 11:
             text = self.col_labels[col] if val & self.p_bit[col] else "-"
         else:
             text = "%04x" % val
