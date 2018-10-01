@@ -247,9 +247,50 @@ int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, 
     return (int)(t - first_t);
 }
 
-int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
-    int count = stringify_entry_6502(entry, t, hexdigits, lc, labels);
-    return count;
+int stringify_entry_6502_history(history_entry_t *h_entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    int extra;
+    int val;
+    char *first_t, *h;
+    history_6502_t *entry = (history_frame_t *)h_entry;
+
+    first_t = t;
+    h = &hexdigits[(entry->a & 0xff)*2]; *t++=*h++; *t++=*h++;
+    *t++=' ';
+    h = &hexdigits[(entry->x & 0xff)*2]; *t++=*h++; *t++=*h++;
+    *t++=' ';
+    h = &hexdigits[(entry->y & 0xff)*2]; *t++=*h++; *t++=*h++;
+    *t++=' ';
+    val = entry->sr;
+    if (val & 0x80) *t++='N'; else *t++='-';
+    if (val & 0x40) *t++='V'; else *t++='-';
+    *t++='-';
+    if (val & 0x10) *t++='B'; else *t++='-';
+    if (val & 0x8) *t++='D'; else *t++='-';
+    if (val & 0x4) *t++='I'; else *t++='-';
+    if (val & 0x2) *t++='Z'; else *t++='-';
+    if (val & 0x1) *t++='C'; else *t++='-';
+    *t++=' ';
+    h = &hexdigits[(entry->sp & 0xff)*2]; *t++=*h++; *t++=*h++;
+    *t++=' ';
+    h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
+    *t++=' ';
+    *t++=' ';
+    h = &hexdigits[entry->instruction[0]*2]; *t++=*h++; *t++=*h++;
+    *t++=' ';
+    if (entry->num_bytes > 1) {
+        h = &hexdigits[entry->instruction[1]*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
+    }
+    else *t++=' ', *t++=' ', *t++=' ';
+    if (entry->num_bytes > 2) {
+        h = &hexdigits[entry->instruction[2]*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
+    }
+    else *t++=' ', *t++=' ', *t++=' ';
+    *t++=' ';
+    extra = stringify_entry_6502(entry, t, hexdigits, lc, labels);
+    return (int)(t - first_t) + extra;
 }
 
 int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
