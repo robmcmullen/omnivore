@@ -76,10 +76,7 @@ typedef struct {
 
 /* disassembler types */
 #define DISASM_DATA 0
-#define DISASM_FRAME_START 1
-#define DISASM_FRAME_END 2
 #define DISASM_6502 10
-#define DISASM_6502_HISTORY 110
 #define DISASM_6502UNDOC 11
 #define DISASM_65816 12
 #define DISASM_65C02 13
@@ -92,9 +89,13 @@ typedef struct {
 #define DISASM_ANTIC_DL 30
 #define DISASM_JUMPMAN_HARVEST 31
 #define DISASM_JUMPMAN_LEVEL 32
+#define DISASM_FRAME_START 128
+#define DISASM_FRAME_START_RESULT 129
+#define DISASM_FRAME_END 130
+#define DISASM_FRAME_END_RESULT 131
+#define DISASM_6502_HISTORY 132
+#define DISASM_6502_HISTORY_RESULT 133
 #define DISASM_UNKNOWN 255
-
-void libudis_clear_history(emulator_history_t *history);
 
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
 

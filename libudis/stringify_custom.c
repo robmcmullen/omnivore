@@ -289,11 +289,20 @@ int stringify_entry_6502_history(history_entry_t *h_entry, char *t, char *hexdig
     else *t++=' ', *t++=' ', *t++=' ';
     *t++=' ';
     t += stringify_entry_6502(entry, t, hexdigits, lc, labels);
+    return (int)(t - first_t);
+}
+
+int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    int val;
+    char *first_t, *h;
+    history_6502_t *entry = (history_frame_t *)h_entry;
+
+    first_t = t;
     if (entry->flag == FLAG_BRANCH_TAKEN) {
-        *t++=' ', *t++=' ', *t++='(', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
+        *t++='(', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
     }
     else if (entry->flag == FLAG_BRANCH_NOT_TAKEN) {
-        *t++=' ', *t++=' ', *t++='(', *t++='n', *t++='o', *t++='t', *t++=' ', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
+        *t++='(', *t++='n', *t++='o', *t++='t', *t++=' ', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
     }
     return (int)(t - first_t);
 }
@@ -305,4 +314,8 @@ int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *
     *t++='-', *t++='-', *t++='U', *t++='n', *t++='k', *t++='n', *t++='o', *t++='w', *t++='n', *t++=' ', *t++='h', *t++='i', *t++='s', *t++='t', *t++='o', *t++='r', *t++='y',  *t++=' ', *t++='t', *t++='y', *t++='p', *t++='e', *t++=' ';
     t += sprintf(t, "%d", entry->disassembler_type);
     return (int)(t - first_t);
+}
+
+int stringify_entry_blank(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    return 0;
 }

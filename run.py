@@ -35,8 +35,8 @@ if __name__ == "__main__":
             current = hist.stringify(first_entry_of_frame, 100)
             print(first_entry_of_frame, current)
             print(f"{len(current)}, ")
-            for b in current:
-                print(b)
+            for instruction, result in current:
+                print(instruction, result)
             first_entry_of_frame = hist.next_entry_index
             if brk:
                 if brk.id == 0:

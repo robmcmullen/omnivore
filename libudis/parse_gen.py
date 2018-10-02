@@ -35,10 +35,7 @@ from omni8bit.disassembler import cputables
 # compatibility. Do not reuse ID numbers if CPUs are removed from this list.
 disassembler_type = {
     "data": 0,
-    "frame_start": 1,
-    "frame_end": 2,
     "6502": 10,
-    "6502_history": 110,
     "6502undoc": 11,
     "65816": 12,
     "65c02": 13,
@@ -51,6 +48,12 @@ disassembler_type = {
     "antic_dl": 30,
     "jumpman_harvest": 31,
     "jumpman_level": 32,
+    "frame_start": 128,
+    "frame_start_result": 129,
+    "frame_end": 130,
+    "frame_end_result": 131,
+    "6502_history": 132,
+    "6502_history_result": 133,
     "unknown_disassembler": 255,
 }
 disassembler_type_max = max(disassembler_type.values())
@@ -68,10 +71,13 @@ stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int l
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
     CustomEntry('frame_start', 'stringify_entry_frame_start', 'int', stringifier_signature),
+    CustomEntry('frame_start_result', 'stringify_entry_blank', 'int', stringifier_signature),
     CustomEntry('frame_end', 'stringify_entry_frame_end', 'int', stringifier_signature),
+    CustomEntry('frame_end_result', 'stringify_entry_blank', 'int', stringifier_signature),
     CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
     CustomEntry('jumpman_harvest', 'stringify_entry_jumpman_harvest', 'int', stringifier_signature),
     CustomEntry('6502_history', 'stringify_entry_6502_history', 'int', stringifier_signature),
+    CustomEntry('6502_history_result', 'stringify_entry_6502_history_result', 'int', stringifier_signature),
     CustomEntry('unknown_disassembler', 'stringify_entry_unknown_disassembler', 'int', stringifier_signature),
 ]
 

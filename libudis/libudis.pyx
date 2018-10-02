@@ -17,30 +17,20 @@ cdef char *hexdigits_lower = "000102030405060708090a0b0c0d0e0f101112131415161718
 cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6C6D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7C8C9CACBCCCDCECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFF0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF"
 
 
-cdef class StringifiedDisassembly:
-    cdef public int origin
-    cdef public int last_pc
-    cdef public int start_index
-    cdef public np.ndarray labels
-    cdef np.uint16_t *labels_data
-
-    # text representation
+cdef class TextStorage:
     cdef int max_lines
+    cdef public int num_lines
     cdef public np.ndarray text_starts
     cdef np.uint16_t *text_starts_data
     cdef public np.ndarray line_lengths
     cdef np.uint16_t *line_lengths_data
     cdef public np.ndarray text_buffer
     cdef char *text_buffer_data
-    cdef public int num_lines
     cdef text_buffer_size
+    cdef char *text_ptr
+    cdef int text_index
 
-    # internals
-    cdef int mnemonic_case
-    cdef char *hex_case
-
-    def __init__(self, start_index, max_lines, labels, mnemonic_lower=True, hex_lower=True):
-        self.start_index = start_index
+    def __init__(self, max_lines):
         self.text_starts = np.zeros(max_lines, dtype=np.uint16)
         self.text_starts_data = <np.uint16_t *>self.text_starts.data
         self.line_lengths = np.zeros(max_lines, dtype=np.uint16)
@@ -49,6 +39,58 @@ cdef class StringifiedDisassembly:
         self.text_buffer = np.zeros(self.text_buffer_size + 1000, dtype=np.uint8)
         self.text_buffer_data = <char *>self.text_buffer.data
         self.max_lines = max_lines
+        self.clear()
+
+    def __len__(self):
+        return self.num_lines
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            lines = []
+            for i in range(*index.indices(len(self))):
+                start = self.text_starts[i]
+                lines.append(self.text_buffer[start:start + self.line_lengths[i]].tostring())
+            return lines
+        elif isinstance(index, int):
+            start = self.text_starts[index]
+            return self.text_buffer[start:start + self.line_lengths[index]].tostring()
+        else:
+            raise TypeError("index must be int or slice")
+
+    def __iter__(self):
+        for i in range(self.num_lines):
+            start = self.text_starts[i]
+            yield self.text_buffer[start:start + self.line_lengths[i]].tostring()
+
+    def clear(self):
+        self.num_lines = 0
+        self.text_index = 0
+        self.text_ptr = self.text_buffer_data
+
+    def store(self, count):
+        self.text_starts_data[self.num_lines] = self.text_index
+        self.line_lengths_data[self.num_lines] = count
+        self.text_index += count
+        self.text_ptr += count
+        self.num_lines += 1
+
+
+cdef class StringifiedDisassembly:
+    cdef public int origin
+    cdef public int last_pc
+    cdef public int start_index
+    cdef public np.ndarray labels
+    cdef np.uint16_t *labels_data
+
+    cdef public TextStorage disasm_text
+
+    # internals
+    cdef int mnemonic_case
+    cdef char *hex_case
+
+    def __init__(self, start_index, max_lines, labels, mnemonic_lower=True, hex_lower=True):
+        self.start_index = start_index
+        self.disasm_text = TextStorage(max_lines)
         self.mnemonic_case = 1 if mnemonic_lower else 0
         self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
         self.labels = labels
@@ -58,36 +100,43 @@ cdef class StringifiedDisassembly:
         #     printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
 
     def __len__(self):
-        return self.num_lines
+        return self.disasm_text.num_lines
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            lines = []
+            for i in range(*index.indices(len(self))):
+                lines.append(self.disasm_text[i])
+            return lines
+        elif isinstance(index, int):
+            return self.disasm_text[index]
+
+        else:
+            raise TypeError("index must be int or slice")
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self.disasm_text[i]
 
     def clear(self):
-        self.num_lines = 0
         self.origin = 0
         self.last_pc = 0
+        self.disasm_text.clear()
 
     cdef parse_history_entries(self, history_entry_t *h, int num_entries):
-        if num_entries > self.max_lines:
-            num_entries = self.max_lines
-        cdef int index = 0
-        cdef char *txt = self.text_buffer_data
+        if num_entries > self.disasm_text.max_lines:
+            num_entries = self.disasm_text.max_lines
         cdef int count
         cdef string_func_t stringifier
-        cdef np.uint16_t *starts = self.text_starts_data
-        cdef np.uint16_t *lengths = self.line_lengths_data
-        cdef np.uint16_t text_index = 0
 
+        self.disasm_text.clear()
         while num_entries > 0:
             stringifier = stringifier_map[h.disassembler_type]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-            count = stringifier(h, txt, self.hex_case, self.mnemonic_case, self.labels_data)
-            starts[index] = text_index
-            lengths[index] = count
-            text_index += count
-            txt += count
+            count = stringifier(h, self.disasm_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+            self.disasm_text.store(count)
             num_entries -= 1
-            index += 1
             h += 1
-        self.num_lines = index
 
 
 cdef class ParsedDisassembly:
@@ -105,16 +154,7 @@ cdef class ParsedDisassembly:
     cdef np.uint32_t *index_to_row_data
     cdef public np.ndarray index_to_row
     cdef int index_index
-
-    # text representation
     cdef int max_text_lines
-    cdef public np.ndarray text_starts
-    cdef np.uint16_t *text_starts_data
-    cdef public np.ndarray line_lengths
-    cdef np.uint16_t *line_lengths_data
-    cdef public np.ndarray text_buffer
-    cdef char *text_buffer_data
-    cdef public int num_text_lines
 
     def __init__(self, max_entries, origin, num_bytes):
         self.max_entries = max_entries
@@ -134,18 +174,9 @@ cdef class ParsedDisassembly:
         self.index_index = 0
 
         self.max_text_lines = 256
-        self.init_text_lines(self.max_text_lines)
 
     def __len__(self):
         return self.num_entries
-
-    cdef init_text_lines(self, num_lines):
-        self.text_starts = np.zeros(num_lines, dtype=np.uint16)
-        self.text_starts_data = <np.uint16_t *>self.text_starts.data
-        self.line_lengths = np.zeros(num_lines, dtype=np.uint16)
-        self.line_lengths_data = <np.uint16_t *>self.line_lengths.data
-        self.text_buffer = np.zeros(num_lines * 256, dtype=np.uint8)
-        self.text_buffer_data = <char *>self.text_buffer.data
 
     cdef parse_next(self, parse_func_t processor, unsigned char *src, int num_bytes):
         cdef history_entry_t *h = &self.history_entries[self.num_entries]
@@ -303,30 +334,16 @@ cdef class StringifiedHistory:
     cdef public np.ndarray labels
     cdef np.uint16_t *labels_data
 
-    # text representation
-    cdef int max_lines
-    cdef public np.ndarray text_starts
-    cdef np.uint16_t *text_starts_data
-    cdef public np.ndarray line_lengths
-    cdef np.uint16_t *line_lengths_data
-    cdef public np.ndarray text_buffer
-    cdef char *text_buffer_data
-    cdef public int num_lines
-    cdef text_buffer_size
+    cdef public TextStorage history_text
+    cdef public TextStorage result_text
 
     # internals
     cdef int mnemonic_case
     cdef char *hex_case
 
     def __init__(self, max_lines, mnemonic_lower=True, hex_lower=True):
-        self.text_starts = np.zeros(max_lines, dtype=np.uint16)
-        self.text_starts_data = <np.uint16_t *>self.text_starts.data
-        self.line_lengths = np.zeros(max_lines, dtype=np.uint16)
-        self.line_lengths_data = <np.uint16_t *>self.line_lengths.data
-        self.text_buffer_size = max_lines * 256
-        self.text_buffer = np.zeros(self.text_buffer_size + 1000, dtype=np.uint8)
-        self.text_buffer_data = <char *>self.text_buffer.data
-        self.max_lines = max_lines
+        self.history_text = TextStorage(max_lines)
+        self.result_text = TextStorage(max_lines)
         self.mnemonic_case = 1 if mnemonic_lower else 0
         self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
         self.clear()
@@ -334,56 +351,53 @@ cdef class StringifiedHistory:
         self.labels_data = <np.uint16_t *>self.labels.data
 
     def __len__(self):
-        return self.num_lines
+        return self.history_text.num_lines
 
     def __getitem__(self, index):
         if isinstance(index, slice):
             lines = []
             for i in range(*index.indices(len(self))):
-                start = self.text_starts[i]
-                lines.append(self.text_buffer[start:start + self.line_lengths[i]].tostring())
+                lines.append((self.history_text[i], self.result_text[i]
+))
             return lines
         elif isinstance(index, int):
-            start = self.text_starts[index]
-            return self.text_buffer[start:start + self.line_lengths[index]].tostring()
+            return self.history_text[index], self.result_text[index]
+
         else:
             raise TypeError("index must be int or slice")
 
     def __iter__(self):
-        for i in range(self.num_lines):
-            start = self.text_starts[i]
-            yield self.text_buffer[start:start + self.line_lengths[i]].tostring()
+        for i in range(len(self)):
+            yield self.history_text[i], self.result_text[i]
 
     def clear(self):
-        self.num_lines = 0
+        self.history_text.clear()
+        self.result_text.clear()
 
     cdef parse_history_entries(self, emulator_history_t *history, int index, int num_entries):
-        if num_entries > self.max_lines:
-            num_entries = self.max_lines
-        cdef char *txt = self.text_buffer_data
+        if num_entries > self.history_text.max_lines:
+            num_entries = self.history_text.max_lines
         cdef int count
         cdef string_func_t stringifier
-        cdef np.uint16_t *starts = self.text_starts_data
-        cdef np.uint16_t *lengths = self.line_lengths_data
-        cdef np.uint16_t text_index = 0
         cdef history_entry_t *h
-        self.num_lines = 0
 
+        self.clear()
         while num_entries > 0:
             h = &history.entries[index]
             stringifier = stringifier_map[h.disassembler_type]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-            count = stringifier(h, txt, self.hex_case, self.mnemonic_case, self.labels_data)
-            # print(f"created: {text_index}->{text_index+count}, {self.text_buffer_data[text_index:text_index+count]}")
-            starts[self.num_lines] = text_index
-            lengths[self.num_lines] = count
-            text_index += count
-            txt += count
+            count = stringifier(h, self.history_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+            self.history_text.store(count)
+
+            stringifier = stringifier_map[h.disassembler_type + 1]
+            # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
+            count = stringifier(h, self.result_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+            self.result_text.store(count)
+
             num_entries -= 1
             index += 1
             if index >= history.num_allocated_entries:
                 index = 0
-            self.num_lines += 1
 
 cdef class HistoryStorage:
     cdef public np.ndarray history_array
