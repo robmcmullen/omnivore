@@ -55,7 +55,7 @@ cdef class TextStorage:
             start = self.text_starts[index]
             return self.text_buffer[start:start + self.line_lengths[index]].tostring()
         else:
-            raise TypeError("index must be int or slice")
+            raise TypeError(f"index must be int or slice, not {type(index)}")
 
     def __iter__(self):
         for i in range(self.num_lines):
@@ -112,7 +112,7 @@ cdef class StringifiedDisassembly:
             return self.disasm_text[index]
 
         else:
-            raise TypeError("index must be int or slice")
+            raise TypeError(f"index must be int or slice, not {type(index)}")
 
     def __iter__(self):
         for i in range(len(self)):
@@ -364,7 +364,7 @@ cdef class StringifiedHistory:
             return self.history_text[index], self.result_text[index]
 
         else:
-            raise TypeError("index must be int or slice")
+            raise TypeError(f"index must be int or slice, not {type(index)}")
 
     def __iter__(self):
         for i in range(len(self)):
@@ -429,7 +429,7 @@ cdef class HistoryStorage:
             wrapped = (index + self.history.first_entry_index) % self.history.num_allocated_entries
             return self.entries[wrapped]
         else:
-            raise TypeError("index must be int or slice")
+            raise TypeError(f"index must be int or slice, not {type(index)}")
 
     def __iter__(self):
         for i in range(self.num_lines):
