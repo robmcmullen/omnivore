@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 class DisassemblyTable(cg.HexTable):
     column_labels = ["Label", "Disassembly", "Comment"]
-    column_sizes = [8, 16, 30]
+    column_sizes = [5, 12, 30]
 
     def __init__(self, linked_base):
         self.linked_base = linked_base
@@ -40,7 +40,7 @@ class DisassemblyTable(cg.HexTable):
         s = linked_base.segment
         cg.HexTable.__init__(self, s.data, s.style, len(self.column_labels), s.origin)
 
-        self.max_num_entries = 8000
+        self.max_num_entries = 80000
         self.rebuild()
 
     def calc_num_rows(self):
@@ -83,10 +83,7 @@ class DisassemblyTable(cg.HexTable):
             t = self.parsed
             if t is None:
                 return "", 0
-            i = row - t.start_index
-            start = t.text_starts[i]
-            count = t.line_lengths[i]
-            text = t.text_buffer[start:start + count].tostring()
+            text = t[row - t.start_index]
         elif col == 0:
             p = self.current
             e = p.entries

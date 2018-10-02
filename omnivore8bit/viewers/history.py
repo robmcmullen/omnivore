@@ -22,8 +22,8 @@ log = logging.getLogger(__name__)
 
 
 class InstructionHistoryTable(cg.VirtualTable):
-    column_labels = ["History"]
-    column_sizes = [40]
+    column_labels = ["^Instruction", "^Result"]
+    column_sizes = [21, 12]
 
     def __init__(self, linked_base):
         self.virtual_linked_base = linked_base
@@ -61,7 +61,7 @@ class InstructionHistoryTable(cg.VirtualTable):
         if t is None:
             return "", 0
         try:
-            text = t[row - self.visible_history_start_row]
+            text = t[row - self.visible_history_start_row][col]
         except IndexError:
             print(f"tried row {row} out of {self.visible_history_lookup_table}")
             text = f"row {row} out of bounds"
@@ -83,7 +83,9 @@ class InstructionHistoryTable(cg.VirtualTable):
     def rebuild(self):
         v = self.virtual_linked_base
         emu = v.emulator
-        self.current_num_rows = emu.num_cpu_history_entries
+        self.current_num_rows = len(emu.cpu_history)
+        segment = DefaultSegment(emu.cpu_history.entries.view(np.uint8))
+        v.segment = segment
         print("CPU HISTORY ENTRIES", self.current_num_rows)
         self.init_boundaries()
 
