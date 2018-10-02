@@ -248,7 +248,6 @@ int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, 
 }
 
 int stringify_entry_6502_history(history_entry_t *h_entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
-    int extra;
     int val;
     char *first_t, *h;
     history_6502_t *entry = (history_frame_t *)h_entry;
@@ -289,8 +288,14 @@ int stringify_entry_6502_history(history_entry_t *h_entry, char *t, char *hexdig
     }
     else *t++=' ', *t++=' ', *t++=' ';
     *t++=' ';
-    extra = stringify_entry_6502(entry, t, hexdigits, lc, labels);
-    return (int)(t - first_t) + extra;
+    t += stringify_entry_6502(entry, t, hexdigits, lc, labels);
+    if (entry->flag == FLAG_BRANCH_TAKEN) {
+        *t++=' ', *t++=' ', *t++='(', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
+    }
+    else if (entry->flag == FLAG_BRANCH_NOT_TAKEN) {
+        *t++=' ', *t++=' ', *t++='(', *t++='n', *t++='o', *t++='t', *t++=' ', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
+    }
+    return (int)(t - first_t);
 }
 
 int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {

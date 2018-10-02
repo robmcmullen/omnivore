@@ -169,7 +169,7 @@ class Opcode:
 
     @property
     def operation_type(self):
-        return "FLAG_BRANCH" if self.pcr else ""
+        return "FLAG_BRANCH_TAKEN" if self.pcr else ""
 
     @property
     def parser_category(self):

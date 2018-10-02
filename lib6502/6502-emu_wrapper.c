@@ -89,6 +89,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	write_addr = NULL;
 	read_addr = NULL;
 	jumping = 0;
+	branch_taken = 0;
 	extra_cycles = 0;
 	before_value_index = 0;
 
@@ -131,7 +132,13 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	if (inst.cycles == 7) extra_cycles = 0;
 	if (entry) {
 		entry->cycles = inst.cycles + extra_cycles;
-		if (entry->sp != SP) {
+		if (branch_taken == 1) {
+			entry->flag = FLAG_BRANCH_TAKEN;
+		}
+		else if (branch_taken == -1) {
+			entry->flag = FLAG_BRANCH_NOT_TAKEN;
+		}
+		else if (entry->sp != SP) {
 			;
 		}
 		else if (before_value_index > 0) {

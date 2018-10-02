@@ -59,15 +59,16 @@ typedef struct {
 
 
 /* flags */
-#define FLAG_BRANCH 1
-#define FLAG_JUMP 2
-#define FLAG_RTS 3
-#define FLAG_RTI 4
-#define FLAG_ORIGIN 5
-#define FLAG_DATA_BYTES 6
-#define FLAG_WRITE_ONE 7
-#define FLAG_WRITE_TWO 8
-#define FLAG_WRITE_THREE 9
+#define FLAG_BRANCH_TAKEN 1
+#define FLAG_BRANCH_NOT_TAKEN 2
+#define FLAG_JUMP 3
+#define FLAG_RTS 4
+#define FLAG_RTI 5
+#define FLAG_ORIGIN 6
+#define FLAG_DATA_BYTES 7
+#define FLAG_WRITE_ONE 8
+#define FLAG_WRITE_TWO 9
+#define FLAG_WRITE_THREE 10
 #define FLAG_REPEATED_BYTES 10
 #define FLAG_TARGET_ADDR 32
 #define FLAG_LABEL 64
