@@ -88,7 +88,6 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 
 	write_addr = NULL;
 	read_addr = NULL;
-	jumping = 0;
 	result_flag = NOP;
 	extra_cycles = 0;
 	before_value_index = 0;
@@ -125,7 +124,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	}
 
 	inst.function();
-	if (jumping == 0) PC += count;
+	if (result_flag != JUMP) PC += count;
 
 	// 7 cycle instructions (e.g. ROL $nnnn,X) don't have a penalty cycle for
 	// crossing a page boundary.
@@ -150,14 +149,11 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 			entry->flag = FLAG_REG_Y;
 			entry->after1 = Y;
 		}
-		else if (entry->sr != SR.byte) {
-			entry->flag = FLAG_REG_SR;
-			entry->after1 = SR.byte;
-		}
 		else if (entry->sp != SP) {
 			;
 		}
-		else if (before_value_index > 0) {
+		else if ((before_value_index > 0) && (write_addr >= memory) && (write_addr < memory + (256*256))) {
+			/* if write_addr outside of memory, the dest is a register */
 			entry->target_addr = (uint8_t *)write_addr - memory;
 			entry->before1 = before_value[0];
 			entry->after1 = *(uint8_t *)write_addr;
@@ -169,6 +165,10 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		else if (read_addr && (read_addr >= memory) && (read_addr < memory + (256*256))) {
 			entry->target_addr = (uint8_t *)read_addr - memory;
 			entry->flag = FLAG_READ_ONE;
+		}
+		if (entry->sr != SR.byte) {
+			entry->flag = FLAG_REG_SR;
+			entry->after1 = SR.byte;
 		}
 	}
 
