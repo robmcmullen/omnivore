@@ -6,8 +6,8 @@ HISTORY_ENTRY_DTYPE = np.dtype([
     ("pc", np.uint16),
     ("target_addr", np.uint16),
     ("num_bytes", np.uint8),
-    ("flag", np.uint8),
     ("disassembler_type", np.uint8),
+    ("flag", np.uint8),
     ("cycles", np.uint8),
     ("instruction", np.uint8, 16),
 ])
@@ -16,10 +16,10 @@ HISTORY_6502_DTYPE = np.dtype([
     ("pc", np.uint16),
     ("target_addr", np.uint16),
     ("num_bytes", np.uint8),
-    ("flag", np.uint8),
     ("disassembler_type", np.uint8),
+    ("flag", np.uint8),
     ("cycles", np.uint8),
-    ("instruction", np.uint8, 4),
+    ("instruction", np.uint8, 3),
     ("a", np.uint8),
     ("x", np.uint8),
     ("y", np.uint8),
@@ -31,14 +31,15 @@ HISTORY_6502_DTYPE = np.dtype([
     ("after2", np.uint8),
     ("before3", np.uint8),
     ("after3", np.uint8),
-    ("extra", np.uint8),
+    ("extra1", np.uint8),
+    ("extra2", np.uint8),
 ])
 
 HISTORY_FRAME_DTYPE = np.dtype([
     ("frame_number", np.uint32),
     ("num_bytes", np.uint8),
-    ("flag", np.uint8),
     ("disassembler_type", np.uint8),
+    ("flag", np.uint8),
     ("cycles", np.uint8),
     ("instruction", np.uint8, 16),
 ])
