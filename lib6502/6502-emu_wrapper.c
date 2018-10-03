@@ -89,7 +89,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	write_addr = NULL;
 	read_addr = NULL;
 	jumping = 0;
-	branch_taken = 0;
+	result_flag = NOP;
 	extra_cycles = 0;
 	before_value_index = 0;
 
@@ -132,11 +132,27 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	if (inst.cycles == 7) extra_cycles = 0;
 	if (entry) {
 		entry->cycles = inst.cycles + extra_cycles;
-		if (branch_taken == 1) {
+		if (result_flag == BRANCH_TAKEN) {
 			entry->flag = FLAG_BRANCH_TAKEN;
 		}
-		else if (branch_taken == -1) {
+		else if (result_flag == BRANCH_NOT_TAKEN) {
 			entry->flag = FLAG_BRANCH_NOT_TAKEN;
+		}
+		else if (entry->a != A) {
+			entry->flag = FLAG_REG_A;
+			entry->after1 = A;
+		}
+		else if (entry->x != X) {
+			entry->flag = FLAG_REG_X;
+			entry->after1 = X;
+		}
+		else if (entry->y != Y) {
+			entry->flag = FLAG_REG_Y;
+			entry->after1 = Y;
+		}
+		else if (entry->sr != SR.byte) {
+			entry->flag = FLAG_REG_SR;
+			entry->after1 = SR.byte;
 		}
 		else if (entry->sp != SP) {
 			;
@@ -147,11 +163,12 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 			entry->after1 = *(uint8_t *)write_addr;
 			entry->flag = FLAG_WRITE_ONE;
 		}
-		else if (write_addr) {
+		else if (write_addr && (write_addr >= memory) && (write_addr < memory + (256*256))) {
 			entry->target_addr = (uint8_t *)write_addr - memory;
 		}
-		else if (read_addr) {
+		else if (read_addr && (read_addr >= memory) && (read_addr < memory + (256*256))) {
 			entry->target_addr = (uint8_t *)read_addr - memory;
+			entry->flag = FLAG_READ_ONE;
 		}
 	}
 

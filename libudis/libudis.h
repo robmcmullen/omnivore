@@ -7,6 +7,15 @@
 /* default 32k entries, plenty for one frame */
 #define HISTORY_ENTRIES (256 * 128)
 
+/* cycles
+
+	abaaaccc
+
+	a: 1 = target addr is used, 0 = not
+	b: 1 = target addr is write, 0 = not
+	c = number of cycles (0 - 7)
+*/
+
 typedef struct {
 	uint16_t pc;
 	uint16_t target_addr;
@@ -71,6 +80,10 @@ typedef struct {
 #define FLAG_WRITE_THREE 10
 #define FLAG_READ_ONE 11
 #define FLAG_REPEATED_BYTES 12
+#define FLAG_REG_A 13
+#define FLAG_REG_X 14
+#define FLAG_REG_Y 15
+#define FLAG_REG_SR 16
 #define FLAG_TARGET_ADDR 32
 #define FLAG_LABEL 64
 #define FLAG_UNDOC 128
