@@ -8,6 +8,8 @@
 
 long cycles_per_frame;
 
+int apple2_mode = 0;
+
 
 uint8_t simple_kernel[] = {
 	0xa9,0x00,0x85,0x80,0xa9,0x20,0x85,0x81,
@@ -308,9 +310,16 @@ int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoi
 	int bpid;
 	frame_status_t *status = &output->status;
 
-	memory[0xc000] = input->keychar;
+	if (apple2_mode) {
+		memory[0xc000] = input->keychar;
+	}
 	status->final_cycle_in_frame = cycles_per_frame - 1;
 	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints, history);
 	lib6502_get_current_state(output);
 	return bpid;
+}
+
+void lib6502_set_a2_emulation_mode(int mode) {
+	if (mode) apple2_mode = 1;
+	else apple2_mode = 0;
 }

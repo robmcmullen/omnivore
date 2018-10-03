@@ -22,6 +22,9 @@ class Crabapple(Generic6502):
 
     mime_prefix = "application/vnd.apple2"
 
+    def configure_emulator_defaults(self):
+        lib6502.set_a2_emulation_mode(1)
+
     def generate_save_state_memory_blocks(self):
         cpu_offset = self.state_start_offset
         memory_offset = cpu_offset + d.CPU_DTYPE.itemsize

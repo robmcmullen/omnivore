@@ -114,13 +114,17 @@ class EmulatorBase(Debugger):
     def stack_pointer(self):
         raise NotImplementedError("define stack_pointer property in subclass")
 
+    @stack_pointer.setter
+    def stack_pointer(self, value):
+        raise NotImplementedError("define stack_pointer property in subclass")
+
     @property
     def program_counter(self):
-        raise NotImplementedError("define stack_pointer property in subclass")
+        raise NotImplementedError("define program_counter property in subclass")
 
     @program_counter.setter
     def program_counter(self, value):
-        raise NotImplementedError("define stack_pointer property in subclass")
+        raise NotImplementedError("define program_counter property in subclass")
 
     @property
     def current_cpu_status(self):
@@ -167,8 +171,12 @@ class EmulatorBase(Debugger):
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
         self.low_level_interface.start_emulator(self.args)
+        self.configure_emulator_defaults()
         self.emulator_started = True
         self.configure_io_arrays()
+
+    def configure_emulator_defaults(self):
+        pass
 
     def configure_io_arrays(self):
         if not self.emulator_started:

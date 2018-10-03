@@ -47,6 +47,10 @@ class Generic6502(EmulatorBase):
     def stack_pointer(self):
         return self.cpu_state[4]
 
+    @stack_pointer.setter
+    def stack_pointer(self, value):
+        self.cpu_state[4] = value
+
     @property
     def program_counter(self):
         return self.cpu_state[0]
@@ -54,6 +58,9 @@ class Generic6502(EmulatorBase):
     @program_counter.setter
     def program_counter(self, value):
         self.cpu_state[0] = value
+
+    def configure_emulator_defaults(self):
+        lib6502.set_a2_emulation_mode(0)
 
     def generate_save_state_memory_blocks(self):
         cpu_offset = self.state_start_offset
