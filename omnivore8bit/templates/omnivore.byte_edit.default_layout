@@ -8,7 +8,7 @@
         }, 
         {
             "control": {"items_per_row": 99, "zoom": 1},
-            "name": "disassembly",
+            "name": "disasm",
             "uuid": "07a96e5a-b8bc-4104-a45d-0c92c6d20673"
         }, 
         {

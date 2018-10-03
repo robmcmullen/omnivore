@@ -96,7 +96,7 @@ class ByteEditor(FrameworkEditor):
 
     pane_creation_count = 0
 
-    default_viewers = "hex,bitmap,char,disassembly"
+    default_viewers = "hex,bitmap,char,disasm"
 
     #### trait default values
 
