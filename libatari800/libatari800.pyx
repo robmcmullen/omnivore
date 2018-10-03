@@ -54,14 +54,14 @@ def configure_state_arrays(np.ndarray input not None, np.ndarray output not None
     obuf = output.view(np.uint8)
     a8bridge_configure_state_arrays(&ibuf[0], &obuf[0])
 
-def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray breakpoints not None, np.ndarray history):
+def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray breakpoints not None, history_storage):
     cdef np.uint8_t[:] ibuf
     cdef np.uint8_t[:] obuf
     cdef np.uint8_t[:] dbuf
     cdef np.uint8_t *hbuf
     cdef np.uint8_t[:] tmp
-    if history is not None:
-        tmp = history.view(np.uint8)
+    if history_storage is not None:
+        tmp = history_storage.history_array.view(np.uint8)
         hbuf = &tmp[0]
     else:
         hbuf = <np.uint8_t *>0
