@@ -307,23 +307,14 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     else if (entry->flag == FLAG_REG_A) {
         *t++='A', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
-        *t++=' ', *t++='(';
-        h = &hexdigits[entry->a*2]; *t++=*h++; *t++=*h++;
-        *t++=')';
     }
     else if (entry->flag == FLAG_REG_X) {
         *t++='X', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
-        *t++=' ', *t++='(';
-        h = &hexdigits[entry->x*2]; *t++=*h++; *t++=*h++;
-        *t++=')';
     }
     else if (entry->flag == FLAG_REG_Y) {
         *t++='Y', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
-        *t++=' ', *t++='(';
-        h = &hexdigits[entry->y*2]; *t++=*h++; *t++=*h++;
-        *t++=')';
     }
     else if (entry->flag == FLAG_REG_SR) {
         changed = entry->sr ^ entry->after1;
