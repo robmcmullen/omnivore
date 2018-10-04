@@ -397,6 +397,16 @@ void CPU_NMI(void)
 	INC_RET_NESTING;
 }
 
+void CPU_VBI(void) {
+	history_interrupt_t *entry;
+
+	entry = (history_interrupt_t *)libudis_get_next_entry(LIBATARI800_History, DISASM_ATARI800_VBI_START);
+	if (entry) {
+		entry->pc = CPU_regPC;
+	}
+	CPU_NMI();
+}
+
 /* Check pending IRQ, helps in (not only) Lucasfilm games */
 #define CPUCHECKIRQ \
 	if (CPU_IRQ && !(CPU_regP & CPU_I_FLAG) && ANTIC_xpos < ANTIC_xpos_limit) { \
@@ -1594,6 +1604,10 @@ void CPU_GO(int limit)
 		if (MONITOR_break_ret && --MONITOR_ret_nesting <= 0)
 			MONITOR_break_step = TRUE;
 #endif
+		entry = (history_interrupt_t *)libudis_get_next_entry(LIBATARI800_History, DISASM_ATARI800_VBI_END);
+		if (entry) {
+			entry->pc = CPU_regPC;
+		}
 		DONE
 
 	OPCODE(41)				/* EOR (ab,x) */

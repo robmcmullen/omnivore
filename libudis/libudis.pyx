@@ -378,20 +378,25 @@ cdef class StringifiedHistory:
         if num_entries > self.history_text.max_lines:
             num_entries = self.history_text.max_lines
         cdef int count
+        cdef int disassembler_type
         cdef string_func_t stringifier
         cdef history_entry_t *h
 
         self.clear()
         while num_entries > 0:
             h = &history.entries[index]
-            stringifier = stringifier_map[h.disassembler_type]
+            disassembler_type = h.disassembler_type
+            stringifier = stringifier_map[disassembler_type]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
             count = stringifier(h, self.history_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
             self.history_text.store(count)
 
-            stringifier = stringifier_map[h.disassembler_type + 1]
+            if disassembler_type < 192:
+                stringifier = stringifier_map[h.disassembler_type + 1]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-            count = stringifier(h, self.result_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+                count = stringifier(h, self.result_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+            else:
+                count = 0
             self.result_text.store(count)
 
             num_entries -= 1

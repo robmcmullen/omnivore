@@ -82,6 +82,16 @@ typedef struct {
 } history_frame_t; /* 24 bytes */
 
 typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[16];
+} history_interrupt_t; /* 24 bytes */
+
+typedef struct {
 	int32_t num_allocated_entries;
 	int32_t num_entries;
 	int32_t first_entry_index;
@@ -127,14 +137,21 @@ typedef struct {
 #define DISASM_ANTIC_DL 30
 #define DISASM_JUMPMAN_HARVEST 31
 #define DISASM_JUMPMAN_LEVEL 32
-#define DISASM_FRAME_START 128
-#define DISASM_FRAME_START_RESULT 129
-#define DISASM_FRAME_END 130
-#define DISASM_FRAME_END_RESULT 131
-#define DISASM_6502_HISTORY 132
-#define DISASM_6502_HISTORY_RESULT 133
-#define DISASM_ATARI800_HISTORY 134
-#define DISASM_ATARI800_HISTORY_RESULT 135
+
+/* types 128-191 are for history entries that have result entries */
+#define DISASM_6502_HISTORY 128
+#define DISASM_6502_HISTORY_RESULT 129
+#define DISASM_ATARI800_HISTORY 130
+#define DISASM_ATARI800_HISTORY_RESULT 131
+
+/* types 192-254 don't have results */
+#define DISASM_FRAME_START 192
+#define DISASM_FRAME_END 193
+#define DISASM_ATARI800_VBI_START 194
+#define DISASM_ATARI800_VBI_END 195
+#define DISASM_ATARI800_DLI_START 196
+#define DISASM_ATARI800_DLI_END 197
+
 #define DISASM_UNKNOWN 255
 
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);

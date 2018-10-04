@@ -3214,7 +3214,7 @@ void ANTIC_Frame(int draw_display)
 	ANTIC_NMIST = 0x5f;				/* Set VBLANK */
 	if (ANTIC_NMIEN & 0x40) {
 		CPU_GO(ANTIC_NMI_C);
-		CPU_NMI();
+		CPU_VBI();
 	}
 	ANTIC_xpos += ANTIC_DMAR;
 	GOEOL;

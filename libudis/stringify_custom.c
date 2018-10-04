@@ -375,6 +375,42 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     return (int)(t - first_t);
 }
 
+int stringify_entry_atari800_vbi_start(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+    history_frame_t *frame = (history_frame_t *)entry;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='V', *t++='B', *t++='I';
+    return (int)(t - first_t);
+}
+
+int stringify_entry_atari800_vbi_end(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+    history_frame_t *frame = (history_frame_t *)entry;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='V', *t++='B', *t++='I', *t++=' ', *t++='E', *t++='n', *t++='d';
+    return (int)(t - first_t);
+}
+
+int stringify_entry_atari800_dli_start(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+    history_frame_t *frame = (history_frame_t *)entry;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='D', *t++='L', *t++='I';
+    return (int)(t - first_t);
+}
+
+int stringify_entry_atari800_dli_end(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t;
+    history_frame_t *frame = (history_frame_t *)entry;
+
+    first_t = t;
+    *t++='-', *t++='-', *t++='D', *t++='L', *t++='I', *t++=' ', *t++='E', *t++='n', *t++='d';
+    return (int)(t - first_t);
+}
+
 int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     char *first_t;
 
