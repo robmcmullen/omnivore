@@ -48,8 +48,10 @@
 #include "cycle_map.h"
 #endif
 
+#include "libudis.h"
 #include "libdebugger.h"
 extern frame_status_t *LIBATARI800_Status;
+extern emulator_history_t *LIBATARI800_History;
 extern UBYTE *memory_access;
 extern UBYTE *access_type;
 void memory_type_range(int addr, int count, int type) {

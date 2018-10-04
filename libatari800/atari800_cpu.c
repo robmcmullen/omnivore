@@ -76,8 +76,10 @@
 #endif /* BASIC */
 #endif /* ASAP */
 
+#include "libudis.h"
 #include "libdebugger.h"
 extern frame_status_t *LIBATARI800_Status;
+extern emulator_history_t *LIBATARI800_History;
 extern UBYTE *memory_access;
 extern UBYTE *access_type;
 
@@ -474,6 +476,299 @@ UWORD PEEK_CODE_WORD() {
 	return MEMORY_dGetWord(PC);
 }
 
+typedef enum {
+	ACC,
+	ABS,
+	ABSX,
+	ABSY,
+	IMM,
+	IMPL,
+	IND,
+	XIND,
+	INDY,
+	REL,
+	ZP,
+	ZPX,
+	ZPY,
+	JMP_IND_BUG,
+} Mode;
+
+int addressing_mode_instruction_lengths[] = {
+	1, /* ACC */
+	3, /* ABS */
+	3, /* ABSX */
+	3, /* ABSY */
+	2, /* IMM */
+	1, /* IMPL */
+	3, /* IND */
+	2, /* XIND */
+	2, /* INDY */
+	2, /* REL */
+	2, /* ZP */
+	2, /* ZPX */
+	2, /* ZPY */
+	3  /* JMP_IND_BUG */
+};
+
+Mode addressing_mode_of_instructions[256] = {
+	IMPL, /* BRK impl */
+	XIND, /* ORA X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZP, /* ORA zpg */
+	ZP, /* ASL zpg */
+	IMPL, /* ??? */
+	IMPL, /* PHP impl */
+	IMM, /* ORA # */
+	ACC, /* ASL A */
+	IMPL, /* ??? */
+	ABS, /* ??? */
+	ABS, /* ORA abs */
+	ABS, /* ASL abs */
+	IMPL, /* ??? */
+	REL, /* BPL rel */
+	INDY, /* ORA ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZPX, /* ORA zpg,X */
+	ZPX, /* ASL zpg,X */
+	IMPL, /* ??? */
+	IMPL, /* CLC impl */
+	ABSY, /* ORA abs,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* ??? */
+	ABSX, /* ORA abs,X */
+	ABSX, /* ASL abs,X */
+	IMPL, /* ??? */
+	ABS, /* JSR abs */
+	XIND, /* AND X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* BIT zpg */
+	ZP, /* AND zpg */
+	ZP, /* ROL zpg */
+	IMPL, /* ??? */
+	IMPL, /* PLP impl */
+	IMM, /* AND # */
+	ACC, /* ROL A */
+	IMPL, /* ??? */
+	ABS, /* BIT abs */
+	ABS, /* AND abs */
+	ABS, /* ROL abs */
+	IMPL, /* ??? */
+	REL, /* BMI rel */
+	INDY, /* AND ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZPX, /* AND zpg,X */
+	ZPX, /* ROL zpg,X */
+	IMPL, /* ??? */
+	IMPL, /* SEC impl */
+	ABSY, /* AND abs,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* ??? */
+	ABSX, /* AND abs,X */
+	ABSX, /* ROL abs,X */
+	IMPL, /* ??? */
+	IMPL, /* RTI impl */
+	XIND, /* EOR X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZP, /* EOR zpg */
+	ZP, /* LSR zpg */
+	IMPL, /* ??? */
+	IMPL, /* PHA impl */
+	IMM, /* EOR # */
+	ACC, /* LSR A */
+	IMPL, /* ??? */
+	ABS, /* JMP abs */
+	ABS, /* EOR abs */
+	ABS, /* LSR abs */
+	IMPL, /* ??? */
+	REL, /* BVC rel */
+	INDY, /* EOR ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZPX, /* EOR zpg,X */
+	ZPX, /* LSR zpg,X */
+	IMPL, /* ??? */
+	IMPL, /* CLI impl */
+	ABSY, /* EOR abs,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* ??? */
+	ABSX, /* EOR abs,X */
+	ABSX, /* LSR abs,X */
+	IMPL, /* ??? */
+	IMPL, /* RTS impl */
+	XIND, /* ADC X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZP, /* ADC zpg */
+	ZP, /* ROR zpg */
+	IMPL, /* ??? */
+	IMPL, /* PLA impl */
+	IMM, /* ADC # */
+	ACC, /* ROR A */
+	IMPL, /* ??? */
+	JMP_IND_BUG, /* JMP ind */
+	ABS, /* ADC abs */
+	ABS, /* ROR abs */
+	IMPL, /* ??? */
+	REL, /* BVS rel */
+	INDY, /* ADC ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZPX, /* ADC zpg,X */
+	ZPX, /* ROR zpg,X */
+	IMPL, /* ??? */
+	IMPL, /* SEI impl */
+	ABSY, /* ADC abs,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* ??? */
+	ABSX, /* ADC abs,X */
+	ABSX, /* ROR abs,X */
+	IMPL, /* ??? */
+	IMM, /* ??? */
+	XIND, /* STA X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* STY zpg */
+	ZP, /* STA zpg */
+	ZP, /* STX zpg */
+	IMPL, /* ??? */
+	IMPL, /* DEY impl */
+	IMPL, /* ??? */
+	IMPL, /* TXA impl */
+	IMPL, /* ??? */
+	ABS, /* STY abs */
+	ABS, /* STA abs */
+	ABS, /* STX abs */
+	IMPL, /* ??? */
+	REL, /* BCC rel */
+	INDY, /* STA ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZPX, /* STY zpg,X */
+	ZPX, /* STA zpg,X */
+	ZPY, /* STX zpg,Y */
+	IMPL, /* ??? */
+	IMPL, /* TYA impl */
+	ABSY, /* STA abs,Y */
+	IMPL, /* TXS impl */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* STA abs,X */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	IMM, /* LDY # */
+	XIND, /* LDA X,ind */
+	IMM, /* LDX # */
+	IMPL, /* ??? */
+	ZP, /* LDY zpg */
+	ZP, /* LDA zpg */
+	ZP, /* LDX zpg */
+	IMPL, /* ??? */
+	IMPL, /* TAY impl */
+	IMM, /* LDA # */
+	IMPL, /* TAX impl */
+	IMPL, /* ??? */
+	ABS, /* LDY abs */
+	ABS, /* LDA abs */
+	ABS, /* LDX abs */
+	IMPL, /* ??? */
+	REL, /* BCS rel */
+	INDY, /* LDA ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZPX, /* LDY zpg,X */
+	ZPX, /* LDA zpg,X */
+	ZPY, /* LDX zpg,Y */
+	IMPL, /* ??? */
+	IMPL, /* CLV impl */
+	ABSY, /* LDA abs,Y */
+	IMPL, /* TSX impl */
+	IMPL, /* ??? */
+	ABSX, /* LDY abs,X */
+	ABSX, /* LDA abs,X */
+	ABSY, /* LDX abs,Y */
+	IMPL, /* ??? */
+	IMM, /* CPY # */
+	XIND, /* CMP X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* CPY zpg */
+	ZP, /* CMP zpg */
+	ZP, /* DEC zpg */
+	IMPL, /* ??? */
+	IMPL, /* INY impl */
+	IMM, /* CMP # */
+	IMPL, /* DEX impl */
+	IMPL, /* ??? */
+	ABS, /* CPY abs */
+	ABS, /* CMP abs */
+	ABS, /* DEC abs */
+	IMPL, /* ??? */
+	REL, /* BNE rel */
+	INDY, /* CMP ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZPX, /* CMP zpg,X */
+	ZPX, /* DEC zpg,X */
+	IMPL, /* ??? */
+	IMPL, /* CLD impl */
+	ABSY, /* CMP abs,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* ??? */
+	ABSX, /* CMP abs,X */
+	ABSX, /* DEC abs,X */
+	IMPL, /* ??? */
+	IMM, /* CPX # */
+	XIND, /* SBC X,ind */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* CPX zpg */
+	ZP, /* SBC zpg */
+	ZP, /* INC zpg */
+	IMPL, /* ??? */
+	IMPL, /* INX impl */
+	IMM, /* SBC # */
+	IMPL, /* NOP impl */
+	IMPL, /* ??? */
+	ABS, /* CPX abs */
+	ABS, /* SBC abs */
+	ABS, /* INC abs */
+	IMPL, /* ??? */
+	REL, /* BEQ rel */
+	INDY, /* SBC ind,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ZP, /* ??? */
+	ZPX, /* SBC zpg,X */
+	ZPX, /* INC zpg,X */
+	IMPL, /* ??? */
+	IMPL, /* SED impl */
+	ABSY, /* SBC abs,Y */
+	IMPL, /* ??? */
+	IMPL, /* ??? */
+	ABSX, /* ??? */
+	ABSX, /* SBC abs,X */
+	ABSX, /* INC abs,X */
+	IMPL /* ??? */
+};
+
 /* 6502 emulation routine */
 #ifndef NO_GOTO
 __extension__ /* suppress -ansi -pedantic warnings */
@@ -583,6 +878,7 @@ void CPU_GO(int limit)
 
 	UWORD addr;
 	UBYTE data;
+	history_atari800_t *entry;
 #define insn data
 
 /*
@@ -639,7 +935,23 @@ void CPU_GO(int limit)
 		UWORD old_PC = GET_PC();
 #endif
 
-
+		entry = (history_atari800_t *)libudis_get_next_entry(LIBATARI800_History, DISASM_6502_HISTORY);
+		if (entry) {
+			entry->pc = GET_PC();
+			entry->a = A;
+			entry->x = X;
+			entry->y = Y;
+			entry->sp = S;
+			entry->sr = CPU_regP;
+			entry->before1 = 0;
+			entry->after1 = 0;
+			entry->before2 = 0;
+			entry->after2 = 0;
+			entry->before3 = 0;
+			entry->after3 = 0;
+			entry->antic_xpos = ANTIC_xpos;
+			entry->antic_ypos = ANTIC_ypos;
+		}
 #ifdef MONITOR_BREAKPOINTS
 	breakpoint_return:
 #endif
@@ -698,6 +1010,18 @@ void CPU_GO(int limit)
 #endif
 
 		insn = GET_CODE_BYTE();
+		if (entry) {
+			entry->instruction[0] = insn;
+			entry->num_bytes = addressing_mode_instruction_lengths[addressing_mode_of_instructions[insn]];
+			if (entry->num_bytes == 2) {
+				entry->instruction[1] = PEEK_CODE_BYTE();
+			}
+			else if (entry->num_bytes == 3) {
+				int w = PEEK_CODE_WORD();
+				entry->instruction[1] = w & 0xff;
+				entry->instruction[2] = w >> 8;
+			}
+		}
 
 #ifdef MONITOR_BREAKPOINTS
 #ifdef MONITOR_BREAK
@@ -2429,6 +2753,21 @@ void CPU_GO(int limit)
 #else
 	next:
 #endif
+		if (entry) {
+			entry->cycles = ANTIC_xpos - entry->antic_xpos;
+			if (entry->a != A) {
+				entry->flag = FLAG_REG_A;
+				entry->after1 = A;
+			}
+			else if (entry->x != X) {
+				entry->flag = FLAG_REG_X;
+				entry->after1 = X;
+			}
+			else if (entry->y != Y) {
+				entry->flag = FLAG_REG_Y;
+				entry->after1 = Y;
+			}
+		}
 
 #ifdef MONITOR_PROFILE
 		{

@@ -111,6 +111,11 @@ class Atari800(EmulatorBase):
         return "A=%02x X=%02x Y=%02x SP=%02x FLAGS=%02x PC=%04x" % (a, x, y, sp, p, pc)
 
     @property
+    def program_counter(self):
+        a, p, sp, x, y, _, pc = self.cpu_state
+        return pc
+
+    @property
     def current_antic_status(self):
         antic_offset = self.output[0]['tag_antic']
         registers = self.raw_state[antic_offset:antic_offset+d.ANTIC_DTYPE.itemsize]

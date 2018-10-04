@@ -24,5 +24,8 @@ history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type) {
 	entry->disassembler_type = type;
 	entry->num_bytes = 0;
 	entry->flag = 0;
+	entry->instruction[0] = 254;
+	entry->instruction[1] = 253;
+	entry->instruction[2] = 252;
 	return entry;
 }

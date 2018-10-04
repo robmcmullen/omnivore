@@ -50,6 +50,29 @@ typedef struct {
 } history_6502_t; /* 24 bytes */
 
 typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[3];
+	uint8_t a;
+	uint8_t x;
+	uint8_t y;
+	uint8_t sp;
+	uint8_t sr;
+	uint8_t before1;
+	uint8_t after1;
+	uint8_t before2;
+	uint8_t after2;
+	uint8_t before3;
+	uint8_t after3;
+	uint8_t antic_xpos;
+	uint8_t antic_ypos;
+} history_atari800_t; /* 24 bytes */
+
+typedef struct {
 	uint32_t frame_number;
 	uint8_t num_bytes;
 	uint8_t disassembler_type;
