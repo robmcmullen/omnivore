@@ -54,6 +54,8 @@ disassembler_type = {
     "frame_end_result": 131,
     "6502_history": 132,
     "6502_history_result": 133,
+    "atari800_history": 134,
+    "atari800_history_result": 135,
     "unknown_disassembler": 255,
 }
 disassembler_type_max = max(disassembler_type.values())
@@ -78,6 +80,8 @@ custom_stringifiers = [
     CustomEntry('jumpman_harvest', 'stringify_entry_jumpman_harvest', 'int', stringifier_signature),
     CustomEntry('6502_history', 'stringify_entry_6502_history', 'int', stringifier_signature),
     CustomEntry('6502_history_result', 'stringify_entry_6502_history_result', 'int', stringifier_signature),
+    CustomEntry('atari800_history', 'stringify_entry_atari800_history', 'int', stringifier_signature),
+    CustomEntry('atari800_history_result', 'stringify_entry_6502_history_result', 'int', stringifier_signature),
     CustomEntry('unknown_disassembler', 'stringify_entry_unknown_disassembler', 'int', stringifier_signature),
 ]
 

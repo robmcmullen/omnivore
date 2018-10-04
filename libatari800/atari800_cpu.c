@@ -935,7 +935,7 @@ void CPU_GO(int limit)
 		UWORD old_PC = GET_PC();
 #endif
 
-		entry = (history_atari800_t *)libudis_get_next_entry(LIBATARI800_History, DISASM_6502_HISTORY);
+		entry = (history_atari800_t *)libudis_get_next_entry(LIBATARI800_History, DISASM_ATARI800_HISTORY);
 		if (entry) {
 			entry->pc = GET_PC();
 			entry->a = A;
@@ -949,7 +949,7 @@ void CPU_GO(int limit)
 			entry->after2 = 0;
 			entry->before3 = 0;
 			entry->after3 = 0;
-			entry->antic_xpos = ANTIC_xpos;
+			entry->antic_xpos = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
 			entry->antic_ypos = ANTIC_ypos;
 		}
 #ifdef MONITOR_BREAKPOINTS

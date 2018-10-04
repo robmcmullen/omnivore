@@ -133,6 +133,8 @@ typedef struct {
 #define DISASM_FRAME_END_RESULT 131
 #define DISASM_6502_HISTORY 132
 #define DISASM_6502_HISTORY_RESULT 133
+#define DISASM_ATARI800_HISTORY 134
+#define DISASM_ATARI800_HISTORY_RESULT 135
 #define DISASM_UNKNOWN 255
 
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
