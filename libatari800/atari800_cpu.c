@@ -966,6 +966,7 @@ void CPU_GO(int limit)
 			entry->x = X;
 			entry->y = Y;
 			entry->sp = S;
+			CPU_GetStatus();
 			entry->sr = CPU_regP;
 			entry->before1 = 0;
 			entry->after1 = 0;
