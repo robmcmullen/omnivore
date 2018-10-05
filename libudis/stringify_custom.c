@@ -360,6 +360,14 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     //     *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
     //     *t++=' ';
     // }
+    else if (masked_flag == FLAG_PEEK_MEMORY) {
+        *t++='$';
+        h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        *t++='=';
+        h = &hexdigits[entry->before1*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
+    }
     else if (masked_flag == FLAG_REG_A || masked_flag == FLAG_LOAD_A_FROM_MEMORY) {
         *t++='A', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
@@ -376,8 +384,8 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
         *t++=' ';
     }
     if (entry->flag & FLAG_REG_SR) {
-        changed = entry->sr ^ entry->before1_or_sr;
-        val = entry->before1_or_sr;
+        changed = entry->sr ^ entry->after3;
+        val = entry->after3;
         if (changed & 0x80) {*t++='N'; *t++='='; if (val&0x80) *t++='1'; else *t++='0'; *t++=' ';}
         if (changed & 0x40) {*t++='V'; *t++='='; if (val&0x40) *t++='1'; else *t++='0'; *t++=' ';}
         if (changed & 0x10) {*t++='B'; *t++='='; if (val&0x10) *t++='1'; else *t++='0'; *t++=' ';}

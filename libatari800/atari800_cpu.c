@@ -971,7 +971,7 @@ void CPU_GO(int limit)
 			entry->sp = S;
 			CPU_GetStatus();
 			entry->sr = CPU_regP;
-			entry->before1_or_sr = 0;
+			entry->before1 = 0;
 			entry->after1 = 0;
 			entry->before2 = 0;
 			entry->after2 = 0;
@@ -2820,10 +2820,13 @@ void CPU_GO(int limit)
 				if (entry->flag == 0) entry->flag = FLAG_REG_Y;
 				entry->after1 = Y;
 			}
+			else if (entry->flag == FLAG_PEEK_MEMORY) {
+				entry->before1 = MEMORY_mem[entry->target_addr];
+			}
 			CPU_GetStatus();
 			if (entry->sr != CPU_regP) {
 				entry->flag |= FLAG_REG_SR;
-				entry->before1_or_sr = CPU_regP;
+				entry->after3 = CPU_regP;
 			}
 		}
 

@@ -38,7 +38,7 @@ typedef struct {
 	uint8_t y;
 	uint8_t sp;
 	uint8_t sr;
-	uint8_t before1_or_sr;
+	uint8_t before1;
 	uint8_t after1;
 	uint8_t before2;
 	uint8_t after2;
@@ -61,7 +61,7 @@ typedef struct {
 	uint8_t y;
 	uint8_t sp;
 	uint8_t sr;
-	uint8_t before1_or_sr;
+	uint8_t before1;
 	uint8_t after1;
 	uint8_t before2;
 	uint8_t after2;
