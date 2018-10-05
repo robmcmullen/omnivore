@@ -39,7 +39,7 @@ typedef struct {
 	uint8_t y;
 	uint8_t sp;
 	uint8_t sr;
-	uint8_t before1;
+	uint8_t before1_or_sr;
 	uint8_t after1;
 	uint8_t before2;
 	uint8_t after2;
@@ -62,7 +62,7 @@ typedef struct {
 	uint8_t y;
 	uint8_t sp;
 	uint8_t sr;
-	uint8_t before1;
+	uint8_t before1_or_sr;
 	uint8_t after1;
 	uint8_t before2;
 	uint8_t after2;
@@ -117,10 +117,10 @@ typedef struct {
 #define FLAG_REG_A 13
 #define FLAG_REG_X 14
 #define FLAG_REG_Y 15
-#define FLAG_REG_SR 16
-#define FLAG_TARGET_ADDR 32
-#define FLAG_LABEL 64
-#define FLAG_UNDOC 128
+#define FLAG_TARGET_ADDR 64
+#define FLAG_REG_SR 128
+
+#define FLAG_RESULT_MASK 0x3f
 
 /* disassembler types */
 #define DISASM_DATA 0

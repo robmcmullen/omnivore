@@ -117,7 +117,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		entry->y = Y;
 		entry->sp = SP;
 		entry->sr = SR.byte;
-		entry->before1 = 0;
+		entry->before1_or_sr = 0;
 		entry->after1 = 0;
 		entry->before2 = 0;
 		entry->after2 = 0;
@@ -157,7 +157,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		else if ((before_value_index > 0) && (write_addr >= memory) && (write_addr < memory + (256*256))) {
 			/* if write_addr outside of memory, the dest is a register */
 			entry->target_addr = (uint8_t *)write_addr - memory;
-			entry->before1 = before_value[0];
+			entry->before1_or_sr = before_value[0];
 			entry->after1 = *(uint8_t *)write_addr;
 			entry->flag = FLAG_WRITE_ONE;
 		}
@@ -169,8 +169,8 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 			entry->flag = FLAG_READ_ONE;
 		}
 		if (entry->sr != SR.byte) {
-			entry->flag = FLAG_REG_SR;
-			entry->after1 = SR.byte;
+			entry->flag |= FLAG_REG_SR;
+			entry->before1_or_sr = SR.byte;
 		}
 	}
 

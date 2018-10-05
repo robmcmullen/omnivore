@@ -968,7 +968,7 @@ void CPU_GO(int limit)
 			entry->sp = S;
 			CPU_GetStatus();
 			entry->sr = CPU_regP;
-			entry->before1 = 0;
+			entry->before1_or_sr = 0;
 			entry->after1 = 0;
 			entry->before2 = 0;
 			entry->after2 = 0;
@@ -2799,6 +2799,11 @@ void CPU_GO(int limit)
 			else if (entry->y != Y) {
 				entry->flag = FLAG_REG_Y;
 				entry->after1 = Y;
+			}
+			CPU_GetStatus();
+			if (entry->sr != CPU_regP) {
+				entry->flag |= FLAG_REG_SR;
+				entry->before1_or_sr = CPU_regP;
 			}
 		}
 

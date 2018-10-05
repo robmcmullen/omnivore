@@ -332,45 +332,53 @@ int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *he
 }
 
 int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
-    int val, changed;
+    int val, changed, masked_flag;
     char *first_t, *h;
     history_6502_t *entry = (history_frame_t *)h_entry;
 
+    masked_flag = entry->flag & FLAG_RESULT_MASK;
     first_t = t;
-    if (entry->flag == FLAG_BRANCH_TAKEN) {
+    if (masked_flag == FLAG_BRANCH_TAKEN) {
         *t++='(', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
+        *t++=' ';
     }
-    else if (entry->flag == FLAG_BRANCH_NOT_TAKEN) {
+    else if (masked_flag == FLAG_BRANCH_NOT_TAKEN) {
         *t++='(', *t++='n', *t++='o', *t++='t', *t++=' ', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
+        *t++=' ';
     }
-    else if (entry->flag == FLAG_REG_A) {
+    else if (masked_flag == FLAG_READ_ONE) {
+        *t++='R', *t++='e', *t++='a', *t++='d';
+        *t++=' ';
+    }
+    else if (masked_flag == FLAG_WRITE_ONE) {
+        *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
+        *t++=' ';
+    }
+    else if (masked_flag == FLAG_REG_A) {
         *t++='A', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
     }
-    else if (entry->flag == FLAG_REG_X) {
+    else if (masked_flag == FLAG_REG_X) {
         *t++='X', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
     }
-    else if (entry->flag == FLAG_REG_Y) {
+    else if (masked_flag == FLAG_REG_Y) {
         *t++='Y', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
     }
-    else if (entry->flag == FLAG_REG_SR) {
-        changed = entry->sr ^ entry->after1;
-        val = entry->after1;
-        if (changed & 0x80) {*t++=' '; *t++='N'; *t++='='; if (val&0x80) *t++='1'; else *t++='0';}
-        if (changed & 0x40) {*t++=' '; *t++='V'; *t++='='; if (val&0x40) *t++='1'; else *t++='0';}
-        if (changed & 0x10) {*t++=' '; *t++='B'; *t++='='; if (val&0x10) *t++='1'; else *t++='0';}
-        if (changed & 0x8) {*t++=' '; *t++='D'; *t++='='; if (val&0x8) *t++='1'; else *t++='0';}
-        if (changed & 0x4) {*t++=' '; *t++='I'; *t++='='; if (val&0x4) *t++='1'; else *t++='0';}
-        if (changed & 0x2) {*t++=' '; *t++='Z'; *t++='='; if (val&0x2) *t++='1'; else *t++='0';}
-        if (changed & 0x1) {*t++=' '; *t++='C'; *t++='='; if (val&0x1) *t++='1'; else *t++='0';}
-    }
-    else if (entry->flag == FLAG_READ_ONE) {
-        *t++='R', *t++='e', *t++='a', *t++='d';
-    }
-    else if (entry->flag == FLAG_WRITE_ONE) {
-        *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
+    if (entry->flag & FLAG_REG_SR) {
+        changed = entry->sr ^ entry->before1_or_sr;
+        val = entry->before1_or_sr;
+        if (changed & 0x80) {*t++='N'; *t++='='; if (val&0x80) *t++='1'; else *t++='0'; *t++=' ';}
+        if (changed & 0x40) {*t++='V'; *t++='='; if (val&0x40) *t++='1'; else *t++='0'; *t++=' ';}
+        if (changed & 0x10) {*t++='B'; *t++='='; if (val&0x10) *t++='1'; else *t++='0'; *t++=' ';}
+        if (changed & 0x8) {*t++='D'; *t++='='; if (val&0x8) *t++='1'; else *t++='0'; *t++=' ';}
+        if (changed & 0x4) {*t++='I'; *t++='='; if (val&0x4) *t++='1'; else *t++='0'; *t++=' ';}
+        if (changed & 0x2) {*t++='Z'; *t++='='; if (val&0x2) *t++='1'; else *t++='0'; *t++=' ';}
+        if (changed & 0x1) {*t++='C'; *t++='='; if (val&0x1) *t++='1'; else *t++='0'; *t++=' ';}
     }
     return (int)(t - first_t);
 }
