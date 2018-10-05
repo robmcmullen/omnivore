@@ -144,15 +144,19 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 			entry->target_addr = (uint8_t *)read_addr - memory;
 			entry->before1 = *(uint8_t *)read_addr;
 		}
-		else if (entry->a != A) {
+		else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY) {
+			entry->target_addr = (uint8_t *)write_addr - memory;
+			entry->before1 = before_value[0];
+		}
+		else if (entry->a != A || entry->flag == FLAG_REG_A || entry->flag == FLAG_LOAD_A_FROM_MEMORY) {
 			if (entry->flag != 0) entry->flag = FLAG_REG_A;
 			entry->after1 = A;
 		}
-		else if (entry->x != X) {
+		else if (entry->x != X || entry->flag == FLAG_REG_X || entry->flag == FLAG_LOAD_X_FROM_MEMORY) {
 			if (entry->flag != 0) entry->flag = FLAG_REG_X;
 			entry->after1 = X;
 		}
-		else if (entry->y != Y) {
+		else if (entry->y != Y || entry->flag == FLAG_REG_Y || entry->flag == FLAG_LOAD_Y_FROM_MEMORY) {
 			if (entry->flag != 0) entry->flag = FLAG_REG_Y;
 			entry->after1 = Y;
 		}

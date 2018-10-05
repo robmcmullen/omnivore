@@ -166,16 +166,16 @@ int opcode_history_flags_6502[256] = {
     FLAG_STORE_A_IN_MEMORY, /* STA abs,X */
     0, /* ??? */
     0, /* ??? */
-    0, /* LDY # */
+    FLAG_REG_Y, /* LDY # */
     FLAG_LOAD_A_FROM_MEMORY, /* LDA X,ind */
-    0, /* LDX # */
+    FLAG_REG_X, /* LDX # */
     0, /* ??? */
     FLAG_LOAD_Y_FROM_MEMORY, /* LDY zpg */
     FLAG_LOAD_A_FROM_MEMORY, /* LDA zpg */
     FLAG_LOAD_X_FROM_MEMORY, /* LDX zpg */
     0, /* ??? */
     0, /* TAY impl */
-    0, /* LDA # */
+    FLAG_REG_A, /* LDA # */
     0, /* TAX impl */
     0, /* ??? */
     FLAG_LOAD_Y_FROM_MEMORY, /* LDY abs */

@@ -342,7 +342,7 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
         *t++='$';
         h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
         h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
-        *t++='-', *t++='>';
+        *t++=' ';
     }
     if (masked_flag == FLAG_BRANCH_TAKEN) {
         *t++='(', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
@@ -360,6 +360,27 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     //     *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
     //     *t++=' ';
     // }
+    if (masked_flag == FLAG_STORE_A_IN_MEMORY || masked_flag == FLAG_STORE_X_IN_MEMORY || masked_flag == FLAG_STORE_Y_IN_MEMORY) {
+        *t++='$';
+        h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        *t++='=';
+        switch (masked_flag) {
+            case FLAG_STORE_X_IN_MEMORY:
+            val = entry->x;
+            break;
+            case FLAG_STORE_Y_IN_MEMORY:
+            val = entry->y;
+            break;
+            default:
+            val = entry->a;
+        }
+        h = &hexdigits[val*2]; *t++=*h++; *t++=*h++;
+        *t++=' ';
+        *t++='(', *t++='w', *t++='a', *t++='s', *t++=' ';
+        h = &hexdigits[entry->before1*2]; *t++=*h++; *t++=*h++;
+        *t++=')';
+    }
     else if (masked_flag == FLAG_PEEK_MEMORY) {
         *t++='$';
         h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
