@@ -135,11 +135,11 @@ def convert_fmt(fmt):
     return fmt, argorder
 
 
-ParserCategory = namedtuple('ParserCategory', ['length', 'mode', 'leadin', 'undoc', 'pcr', 'target_addr', 'operation_type'])
+ParserCategory = namedtuple('ParserCategory', ['length', 'mode', 'leadin', 'undoc', 'pcr', 'target_addr', 'operation_type', 'disassembler_type_name'])
 
 
 class Opcode:
-    def __init__(self, opcode, optable_entry):
+    def __init__(self, opcode, optable_entry, disassembler_type_name):
         self.leadin = None
         self.opcode = opcode
         self.fourth_byte = None
@@ -162,6 +162,13 @@ class Opcode:
             self.opcode = opcode & 0xff
         else:
             self.leadin_offset = 0
+
+        # undocumented (illegal) instructions will be flagged with the regular
+        # CPU's parser, not the undocumented CPU parser
+        if not self.undoc and disassembler_type_name.endswith("UNDOC"):
+            self.disassembler_type_name = disassembler_type_name[:-5]
+        else:
+            self.disassembler_type_name = disassembler_type_name
 
     def __str__(self):
         return f"{self.mnemonic}: {hex(self.opcode)} {self.length} {self.mode}"
@@ -187,7 +194,7 @@ class Opcode:
 
     @property
     def parser_category(self):
-        return ParserCategory(self.length, self.mode, self.leadin, self.undoc, self.pcr, self.target_addr, self.operation_type)
+        return ParserCategory(self.length, self.mode, self.leadin, self.undoc, self.pcr, self.target_addr, self.operation_type, self.disassembler_type_name)
 
 
 class CPU:
@@ -208,16 +215,22 @@ class CPU:
         self.opcode_table = c['opcodeTable']
         self.opcodes = []
         self.leadin_opcodes = defaultdict(list)
+        self.num_undoc = 0
         self.gen_opcodes()
         self.gen_stringifier()
 
     def __str__(self):
         return f"{self.name}: {len(self.opcodes)} opcodes, {len(self.leadin_opcodes)} leadin opcodes {tuple([hex(a) for a in self.leadin_opcodes.keys()])}"
 
+    @property
+    def has_undoc(self):
+        return self.num_undoc > 0
+
     def gen_opcodes(self):
+        self.num_undoc = 0
         for value, optable in list(self.opcode_table.items()):
             try:
-                opcode = Opcode(value, optable)
+                opcode = Opcode(value, optable, self.disassembler_type_name)
             except UnimplementedZ80Opcode:
                 continue
             print(opcode, self.address_modes[opcode.mode], self.argorder[opcode.mode])
@@ -225,6 +238,8 @@ class CPU:
                 self.leadin_opcodes[opcode.leadin].append(opcode)
             else:
                 self.opcodes.append(opcode)
+            if opcode.undoc:
+                self.num_undoc += 1
 
     def gen_parser_combos(self, opcodes):
         combos = defaultdict(list)
@@ -319,12 +334,15 @@ truncated2:
         text = self.template.replace("$NAME", self.function_name).replace("$CASES", self.cases).replace("$RETURN_TYPE", self.function_return_type).replace("$SIGNATURE", self.function_signature)
         return text
 
-    def create_cases(self):
+    def create_cases(self, undoc_only=False):
         single_byte_opcode_cases = []
         for cat, opcodes in self.cpu.gen_parser_combos(self.cpu.opcodes).items():
-            print(f"{self.cpu}: {cat}, opcodes:{opcodes}")
-            case = self.gen_case(cat, opcodes, "\t")
-            single_byte_opcode_cases.append(case)
+            if undoc_only and self.cpu.has_undoc and not cat.undoc:
+                print(f"requested undoc only; skipping cat {cat}")
+            else:
+                print(f"{self.cpu}: {cat}, opcodes:{opcodes}")
+                case = self.gen_case(cat, opcodes, "\t")
+                single_byte_opcode_cases.append(case)
         text = merge_cases_to_text(single_byte_opcode_cases)
 
         leadin_byte_opcode_cases = []
@@ -352,13 +370,11 @@ truncated2:
         flags = []
         if cat.operation_type:
             flags.append(cat.operation_type)
-        if cat.undoc:
-            flags.append("FLAG_UNDOC")
         if cat.target_addr:
             flags.append("FLAG_TARGET_ADDR")
         if flags:
             body.append(f"\tentry->flag = {' | '.join(flags)};")
-        body.append(f"\tentry->disassembler_type = {self.cpu.disassembler_type_name};")
+        body.append(f"\tentry->disassembler_type = {cat.disassembler_type_name};")
         body.append("\tbreak;\n\n")
         case_text = "\n".join([extra_indent + line for line in case]) + "\n"
         body_text = "\n".join([extra_indent + line for line in body]) + "\n"
@@ -379,12 +395,12 @@ truncated2:
                         body.append(f"\tentry->instruction[1] = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                        body.append(f"\tlabels[rel] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[rel] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\top1 = *src;")
                         body.append(f"\tentry->instruction[1] = op1;")
-                        body.append(f"\tlabels[op1] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[op1] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = op1;")
                     else:
                         body.append(f"\tentry->instruction[1] = *src;")
@@ -400,7 +416,7 @@ truncated2:
                     body.append(f"\tentry->instruction[2] = op2;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[addr] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
                 elif cat.leadin < 256:
                     if cat.pcr:
@@ -408,12 +424,12 @@ truncated2:
                         body.append(f"\tentry->instruction[2] = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                        body.append(f"\tlabels[rel] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[rel] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\top1 = *src;")
                         body.append(f"\tentry->instruction[2] = op1;")
-                        body.append(f"\tlabels[op1] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[op1] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = op1;")
                     else:
                         body.append(f"\tentry->instruction[2] = *src;")
@@ -429,7 +445,7 @@ truncated2:
                     body.append(f"\tentry->instruction[3] = op3;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[addr] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
                 elif cat.leadin < 256:
                     order = self.cpu.argorder[cat.mode]
@@ -443,11 +459,11 @@ truncated2:
                         body.append("\tif (addr > 32768) addr -= 0x10000;")
                         # limit relative address to 64k address space
                         body.append("\trel = (pc + 2 + addr) & 0xffff;")
-                        body.append(f"\tlabels[rel] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[rel] = {cat.disassembler_type_name};")
                         body.append("\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = {self.cpu.disassembler_type_name};")
+                        body.append(f"\tlabels[addr] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
 
         return body
@@ -505,7 +521,7 @@ case 0x%x:
 
     def create_cases(self):
         self.goto_targets = {}
-        text = super().create_cases()
+        text = super().create_cases(True)
         self.targets = ""
         for target in self.goto_targets.values():
             self.targets += target
