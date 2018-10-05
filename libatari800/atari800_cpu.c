@@ -372,8 +372,10 @@ void CPU_PutStatus(void)
 			ANTIC_xpos++; \
 		ANTIC_xpos++; \
 		SET_PC(addr); \
+		if (entry) entry->flag = FLAG_BRANCH_TAKEN; \
 		DONE \
 	} \
+	else if (entry) entry->flag = FLAG_BRANCH_NOT_TAKEN; \
 	PC++; \
 	DONE
 #endif
