@@ -3051,7 +3051,7 @@ void ANTIC_Frame(int draw_display)
 					ANTIC_NMIST = 0x9f;
 					if (ANTIC_NMIEN & 0x80) {
 						CPU_GO(ANTIC_antic2cpu_ptr[ANTIC_NMI_C]);
-						CPU_NMI();
+						CPU_DLI();
 					}
 				}
 			}
@@ -3066,7 +3066,7 @@ void ANTIC_Frame(int draw_display)
 				ANTIC_NMIST = 0x9f;
 				if (ANTIC_NMIEN & 0x80) {
 					CPU_GO(ANTIC_NMI_C);
-					CPU_NMI();
+					CPU_DLI();
 				}
 			}
 		}
