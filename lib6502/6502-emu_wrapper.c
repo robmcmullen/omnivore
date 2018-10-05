@@ -118,12 +118,12 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		entry->y = Y;
 		entry->sp = SP;
 		entry->sr = SR.byte;
-		entry->after3 = 0;
+		entry->before1 = 0;
 		entry->after1 = 0;
 		entry->before2 = 0;
 		entry->after2 = 0;
-		entry->before2 = 0;
-		entry->after2 = 0;
+		entry->before3 = 0;
+		entry->after3 = 0;
 	}
 
 	inst.function();
