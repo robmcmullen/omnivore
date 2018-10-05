@@ -318,14 +318,14 @@ void CPU_PutStatus(void)
 #define OP_BYTE     PEEK_CODE_BYTE()
 #define OP_WORD     PEEK_CODE_WORD()
 #define IMMEDIATE   GET_CODE_BYTE()
-#define ABSOLUTE    addr = PEEK_CODE_WORD(); PC += 2
-#define ZPAGE       addr = GET_CODE_BYTE()
-#define ABSOLUTE_X  addr = PEEK_CODE_WORD() + X; PC += 2
-#define ABSOLUTE_Y  addr = PEEK_CODE_WORD() + Y; PC += 2
-#define INDIRECT_X  addr = (UBYTE) (GET_CODE_BYTE() + X); addr = zGetWord(addr)
-#define INDIRECT_Y  addr = GET_CODE_BYTE(); addr = zGetWord(addr) + Y
-#define ZPAGE_X     addr = (UBYTE) (GET_CODE_BYTE() + X)
-#define ZPAGE_Y     addr = (UBYTE) (GET_CODE_BYTE() + Y)
+#define ABSOLUTE    addr = PEEK_CODE_WORD(); PC += 2; if (entry) entry->target_addr = addr
+#define ZPAGE       addr = GET_CODE_BYTE(); if (entry) entry->target_addr = addr
+#define ABSOLUTE_X  addr = PEEK_CODE_WORD() + X; PC += 2; if (entry) entry->target_addr = addr
+#define ABSOLUTE_Y  addr = PEEK_CODE_WORD() + Y; PC += 2; if (entry) entry->target_addr = addr
+#define INDIRECT_X  addr = (UBYTE) (GET_CODE_BYTE() + X); addr = zGetWord(addr); if (entry) entry->target_addr = addr
+#define INDIRECT_Y  addr = GET_CODE_BYTE(); addr = zGetWord(addr) + Y; if (entry) entry->target_addr = addr
+#define ZPAGE_X     addr = (UBYTE) (GET_CODE_BYTE() + X); if (entry) entry->target_addr = addr
+#define ZPAGE_Y     addr = (UBYTE) (GET_CODE_BYTE() + Y); if (entry) entry->target_addr = addr
 #endif /* PREFETCH_CODE */
 
 /* Instructions */
@@ -905,6 +905,7 @@ void CPU_GO(int limit)
 	UWORD addr;
 	UBYTE data;
 	history_atari800_t *entry;
+	int save_byte_at_target_addr;
 #define insn data
 
 /*
@@ -1048,6 +1049,23 @@ void CPU_GO(int limit)
 				entry->instruction[1] = w & 0xff;
 				entry->instruction[2] = w >> 8;
 			}
+			entry->flag = opcode_history_flags_6502[insn];
+			switch (entry->flag) {
+			case FLAG_MEMORY_ALTER:
+			case FLAG_MEMORY_READ_ALTER_A:
+			case FLAG_STORE_A_IN_MEMORY:
+			case FLAG_STORE_X_IN_MEMORY:
+			case FLAG_STORE_Y_IN_MEMORY:
+				save_byte_at_target_addr = 1;
+				break;
+
+			default:
+				save_byte_at_target_addr = 0;
+				break;
+			}
+		}
+		else {
+			save_byte_at_target_addr = 0;
 		}
 
 #ifdef MONITOR_BREAKPOINTS
@@ -2790,16 +2808,16 @@ void CPU_GO(int limit)
 #endif
 		if (entry) {
 			entry->cycles = ANTIC_xpos - entry->antic_xpos;
-			if (entry->a != A) {
-				entry->flag = FLAG_REG_A;
+			if (entry->a != A || entry->flag == FLAG_LOAD_A_FROM_MEMORY) {
+				if (entry->flag == 0) entry->flag = FLAG_REG_A;
 				entry->after1 = A;
 			}
-			else if (entry->x != X) {
-				entry->flag = FLAG_REG_X;
+			else if (entry->x != X || entry->flag == FLAG_LOAD_X_FROM_MEMORY) {
+				if (entry->flag == 0) entry->flag = FLAG_REG_X;
 				entry->after1 = X;
 			}
-			else if (entry->y != Y) {
-				entry->flag = FLAG_REG_Y;
+			else if (entry->y != Y || entry->flag == FLAG_LOAD_Y_FROM_MEMORY) {
+				if (entry->flag == 0) entry->flag = FLAG_REG_Y;
 				entry->after1 = Y;
 			}
 			CPU_GetStatus();

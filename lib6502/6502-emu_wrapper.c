@@ -80,13 +80,14 @@ uint16_t last_pc;
 int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 {
 	int count;
-	uint8_t last_sp;
+	uint8_t last_sp, opcode;
 	intptr_t index;
 
 	last_pc = PC;
 	last_sp = SP;
 
-	inst = instructions[memory[PC]];
+	opcode = memory[PC];
+	inst = instructions[opcode];
 
 	write_addr = NULL;
 	read_addr = NULL;
@@ -108,8 +109,8 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 	if (entry) {
 		entry->pc = PC;
 		entry->num_bytes = count;
-		entry->flag = 0;
-		entry->instruction[0] = memory[PC];
+		entry->flag = opcode_history_flags_6502[opcode];
+		entry->instruction[0] = opcode;
 		if (count > 1) entry->instruction[1] = memory[PC + 1];
 		if (count > 2) entry->instruction[2] = memory[PC + 2];
 		entry->a = A;
@@ -140,15 +141,15 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 			entry->flag = FLAG_BRANCH_NOT_TAKEN;
 		}
 		else if (entry->a != A) {
-			entry->flag = FLAG_REG_A;
+			if (entry->flag != 0) entry->flag = FLAG_REG_A;
 			entry->after1 = A;
 		}
 		else if (entry->x != X) {
-			entry->flag = FLAG_REG_X;
+			if (entry->flag != 0) entry->flag = FLAG_REG_X;
 			entry->after1 = X;
 		}
 		else if (entry->y != Y) {
-			entry->flag = FLAG_REG_Y;
+			if (entry->flag != 0) entry->flag = FLAG_REG_Y;
 			entry->after1 = Y;
 		}
 		else if (entry->sp != SP) {
@@ -159,14 +160,14 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 			entry->target_addr = (uint8_t *)write_addr - memory;
 			entry->before1_or_sr = before_value[0];
 			entry->after1 = *(uint8_t *)write_addr;
-			entry->flag = FLAG_WRITE_ONE;
+			// entry->flag = FLAG_WRITE_ONE;
 		}
 		else if (write_addr && (write_addr >= memory) && (write_addr < memory + (256*256))) {
 			entry->target_addr = (uint8_t *)write_addr - memory;
 		}
 		else if (read_addr && (read_addr >= memory) && (read_addr < memory + (256*256))) {
 			entry->target_addr = (uint8_t *)read_addr - memory;
-			entry->flag = FLAG_READ_ONE;
+			// entry->flag = FLAG_READ_ONE;
 		}
 		if (entry->sr != SR.byte) {
 			entry->flag |= FLAG_REG_SR;

@@ -154,6 +154,7 @@ extensions = [
             "libatari800/atari800/src/roms/altirra_basic.h",
             "libdebugger/libdebugger.h",
             "libudis/libudis.h",
+            "libudis/libudis_flags.h",
         ],
         extra_compile_args = extra_compile_args,
         extra_link_args = extra_link_args,
@@ -172,6 +173,7 @@ extensions = [
             "lib6502/6502-emu_wrapper.h",
             "lib6502/6502-emu/6502.h",
             "libudis/libudis.h",
+            "libudis/libudis_flags.h",
         ],
         extra_compile_args = extra_compile_args,
         extra_link_args = extra_link_args,
@@ -190,6 +192,7 @@ extensions = [
         ],
         depends = [
             "libudis/libudis.h",
+            "libudis/libudis_flags.h",
         ],
         extra_compile_args = extra_compile_args,
         include_dirs = [np.get_include()],

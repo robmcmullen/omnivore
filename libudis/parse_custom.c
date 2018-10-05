@@ -12,7 +12,6 @@ int parse_entry_data(history_entry_t *entry, unsigned char *src, unsigned int pc
     first_instruction_ptr = entry->instruction;
     entry->pc = (unsigned short)pc;
     entry->target_addr = 0;
-    entry->flag = FLAG_DATA_BYTES;
     entry->disassembler_type = DISASM_DATA;
     
     unsigned char opcode = src[0];
@@ -124,7 +123,6 @@ int parse_entry_jumpman_harvest(history_entry_t *entry, unsigned char *src, unsi
     first_instruction_ptr = entry->instruction;
     entry->pc = (unsigned short)pc;
     entry->target_addr = 0;
-    entry->flag = FLAG_DATA_BYTES;
     entry->disassembler_type = DISASM_JUMPMAN_HARVEST;
     
     unsigned char opcode = src[0];

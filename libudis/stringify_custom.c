@@ -317,10 +317,10 @@ int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *he
     first_t = t;
     t += stringify_entry_6502_cpu_registers(h_entry, t, hexdigits, lc, labels);
     *t++=' ';
-    t += sprintf(t, "%3d", (int)entry->antic_ypos | ((entry->antic_xpos & 0x80)<<1));
-    *t++=' ';
-    t += sprintf(t, "%3d", entry->antic_xpos & 0x7f);
-    *t++=' ';
+    // t += sprintf(t, "%3d", (int)entry->antic_ypos | ((entry->antic_xpos & 0x80)<<1));
+    // *t++=' ';
+    // t += sprintf(t, "%3d", entry->antic_xpos & 0x7f);
+    // *t++=' ';
     h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
     h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
     *t++=' ';
@@ -338,6 +338,12 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
 
     masked_flag = entry->flag & FLAG_RESULT_MASK;
     first_t = t;
+    if (masked_flag == FLAG_LOAD_A_FROM_MEMORY || masked_flag == FLAG_LOAD_X_FROM_MEMORY || masked_flag == FLAG_LOAD_Y_FROM_MEMORY) {
+        *t++='$';
+        h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        *t++='-', *t++='>';
+    }
     if (masked_flag == FLAG_BRANCH_TAKEN) {
         *t++='(', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
         *t++=' ';
@@ -346,25 +352,25 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
         *t++='(', *t++='n', *t++='o', *t++='t', *t++=' ', *t++='t', *t++='a', *t++='k', *t++='e', *t++='n', *t++=')';
         *t++=' ';
     }
-    else if (masked_flag == FLAG_READ_ONE) {
-        *t++='R', *t++='e', *t++='a', *t++='d';
-        *t++=' ';
-    }
-    else if (masked_flag == FLAG_WRITE_ONE) {
-        *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
-        *t++=' ';
-    }
-    else if (masked_flag == FLAG_REG_A) {
+    // else if (masked_flag == FLAG_READ_ONE) {
+    //     *t++='R', *t++='e', *t++='a', *t++='d';
+    //     *t++=' ';
+    // }
+    // else if (masked_flag == FLAG_WRITE_ONE) {
+    //     *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
+    //     *t++=' ';
+    // }
+    else if (masked_flag == FLAG_REG_A || masked_flag == FLAG_LOAD_A_FROM_MEMORY) {
         *t++='A', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
         *t++=' ';
     }
-    else if (masked_flag == FLAG_REG_X) {
+    else if (masked_flag == FLAG_REG_X || masked_flag == FLAG_LOAD_X_FROM_MEMORY) {
         *t++='X', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
         *t++=' ';
     }
-    else if (masked_flag == FLAG_REG_Y) {
+    else if (masked_flag == FLAG_REG_Y || masked_flag == FLAG_LOAD_Y_FROM_MEMORY) {
         *t++='Y', *t++='=';
         h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
         *t++=' ';
