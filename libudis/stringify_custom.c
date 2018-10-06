@@ -360,12 +360,15 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     //     *t++='W', *t++='r', *t++='i', *t++='t', *t++='e';
     //     *t++=' ';
     // }
-    if (masked_flag == FLAG_STORE_A_IN_MEMORY || masked_flag == FLAG_STORE_X_IN_MEMORY || masked_flag == FLAG_STORE_Y_IN_MEMORY) {
+    if (masked_flag == FLAG_STORE_A_IN_MEMORY || masked_flag == FLAG_STORE_X_IN_MEMORY || masked_flag == FLAG_STORE_Y_IN_MEMORY || masked_flag == FLAG_MEMORY_ALTER) {
         *t++='$';
         h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
         h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
         *t++='=';
         switch (masked_flag) {
+            case FLAG_MEMORY_ALTER:
+            val = entry->after1;
+            break;
             case FLAG_STORE_X_IN_MEMORY:
             val = entry->x;
             break;

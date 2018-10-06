@@ -2807,6 +2807,10 @@ void CPU_GO(int limit)
 			else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY) {
 				entry->before1 = save_byte_at_target_addr;
 			}
+			else if (entry->flag == FLAG_MEMORY_ALTER) {
+				entry->before1 = save_byte_at_target_addr;
+				entry->after1 = MEMORY_mem[entry->target_addr];
+			}
 			else if (entry->flag == FLAG_PEEK_MEMORY) {
 				entry->before1 = MEMORY_mem[entry->target_addr];
 			}
