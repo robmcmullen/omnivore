@@ -71,18 +71,25 @@ class EmulationDocument(SegmentedDocument):
 
     ##### trait default values
 
-    def _emulator_type_changed(self, value):
+    @classmethod
+    def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False):
         try:
-            emu_cls = find_emulator(value)
+            emu_cls = find_emulator(emulator_type)
         except UnknownEmulatorError:
-            try:
-                emu_cls = guess_emulator(self.source_document)
-            except UnknownEmulatorError:
-                emu_cls = emu.default_emulator
+            if not emulator_type:
+                # if no value specified, try to determine from binary data
+                try:
+                    emu_cls = guess_emulator(self.source_document)
+                except UnknownEmulatorError:
+                    emu_cls = emu.default_emulator
+            else:
+                # if emulator name specified but not known, return error
+                raise RuntimeError(f"Unknown emulator {emulator_type}")
         emu = emu_cls()
         emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
-        self.emulator = emu
+        doc = cls(emulator_type=emulator_type, emulator=emu, source_document=source_document)
+        return doc
 
     @property
     def timer_delay(self):
