@@ -510,7 +510,7 @@ class Undocumented6502Disassembler(Basic6502Disassembler):
 
 class Flagged6502Disassembler(Undocumented6502Disassembler):
     name = "6502 (highlighted undocumented opcodes)"
-    highlight_flags = udis_fast.flags.FLAG_UNDOC
+    # highlight_flags = udis_fast.flags.FLAG_UNDOC
 
 
 class Basic65C02Disassembler(Basic6502Disassembler):
