@@ -172,6 +172,7 @@ extensions = [
         depends = [
             "lib6502/6502-emu_wrapper.h",
             "lib6502/6502-emu/6502.h",
+            "libdebugger/libdebugger.h",
             "libudis/libudis.h",
             "libudis/libudis_flags.h",
         ],

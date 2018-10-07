@@ -42,6 +42,8 @@ TOKEN_LIST_SIZE = (NUM_BREAKPOINT_ENTRIES * TOKENS_PER_BREAKPOINT)
 # Breakpoint #0 is used internally for stepping the CPU
 DEBUGGER_COMMANDS_DTYPE = np.dtype([
     ("num_breakpoints", np.uint32),
+    ("last_pc", np.uint32),
+    ("breakpoint_type", np.uint8, NUM_BREAKPOINT_ENTRIES),
     ("breakpoint_status", np.uint8, NUM_BREAKPOINT_ENTRIES),
     ("tokens", np.uint16, TOKEN_LIST_SIZE),
 ])
@@ -69,19 +71,20 @@ DEBUGGER_COMMANDS_DTYPE = np.dtype([
 # error is corrected.
 
 BREAKPOINT_EMPTY = 0
-
 BREAKPOINT_ENABLED = 0x20
-BREAKPOINT_COUNT_INSTRUCTIONS = 0x21
-BREAKPOINT_COUNT_CYCLES = 0x22
-BREAKPOINT_AT_RETURN = 0x23
-BREAKPOINT_COUNT_FRAMES = 0x24
-
 BREAKPOINT_DISABLED = 0x40
-
 BREAKPOINT_ERROR = 0x80
 EVALUATION_ERROR = 0x81  # a problem with the postfix definition
 STACK_UNDERFLOW = 0x82  # too many operators/not enough values
 STACK_OVERFLOW = 0x83  # too many values
+
+# breakpoint types
+BREAKPOINT_NORMAL = 0
+BREAKPOINT_COUNT_INSTRUCTIONS = 0x1
+BREAKPOINT_COUNT_CYCLES = 0x2
+BREAKPOINT_AT_RETURN = 0x3
+BREAKPOINT_COUNT_FRAMES = 0x4
+BREAKPOINT_INFINITE_LOOP = 0x5
 
 
 # contitional breakpoint definitions

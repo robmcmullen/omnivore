@@ -49,19 +49,20 @@ typedef struct {
 
 /* breakpoint/watchpoint status values */
 #define BREAKPOINT_EMPTY 0
-
 #define BREAKPOINT_ENABLED 0x20
-#define BREAKPOINT_COUNT_INSTRUCTIONS 0x21
-#define BREAKPOINT_COUNT_CYCLES 0x22
-#define BREAKPOINT_AT_RETURN 0x23
-#define BREAKPOINT_COUNT_FRAMES 0x24
-
 #define BREAKPOINT_DISABLED 0x40
-
 #define BREAKPOINT_ERROR 0x80
 #define EVALUATION_ERROR 0x81  /* a problem with the postfix definition */
 #define STACK_UNDERFLOW 0x82  /* too many operators/not enough values */
 #define STACK_OVERFLOW 0x83  /* too many values */
+
+/* breakpoint types */
+#define BREAKPOINT_NORMAL 0
+#define BREAKPOINT_COUNT_INSTRUCTIONS 0x1
+#define BREAKPOINT_COUNT_CYCLES 0x2
+#define BREAKPOINT_AT_RETURN 0x3
+#define BREAKPOINT_COUNT_FRAMES 0x4
+#define BREAKPOINT_INFINITE_LOOP 0x5
 
 /* status values returned */
 #define NO_BREAKPOINT_FOUND -1
@@ -69,6 +70,8 @@ typedef struct {
 /* NOTE: breakpoint #0 is reserved for stepping the cpu */
 typedef struct {
         int num_breakpoints;
+        int last_pc; /* infinite loop check */
+        uint8_t breakpoint_type[NUM_BREAKPOINT_ENTRIES];
         uint8_t breakpoint_status[NUM_BREAKPOINT_ENTRIES];
         uint16_t tokens[TOKEN_LIST_SIZE];  /* indexed by breakpoint number * TOKENS_PER_BREAKPOINT */
 } breakpoints_t;

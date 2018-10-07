@@ -102,7 +102,7 @@ class Breakpoint:
             self.simple_address(addr)
 
     def __str__(self):
-        return f"<breakpoint {self.id}, status={self.status}, terms={self.terms}>"
+        return f"<breakpoint {self.id}, status={self.status}, type={self.type}, terms={self.terms}>"
 
     @property
     def status(self):
@@ -113,6 +113,16 @@ class Breakpoint:
     def status(self, status):
         c = self.debugger.debug_cmd[0]
         c['breakpoint_status'][self.id] = status
+
+    @property
+    def type(self):
+        c = self.debugger.debug_cmd[0]
+        return c['breakpoint_type'][self.id]
+
+    @type.setter
+    def type(self, type):
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = type
 
     @property
     def terms(self):
@@ -132,7 +142,7 @@ class Breakpoint:
     @property
     def enabled(self):
         c = self.debugger.debug_cmd[0]
-        return bool(c['breakpoint_status'][self.id] & dd.BREAKPOINT_ENABLED)
+        return bool(c['breakpoint_status'][self.id] == dd.BREAKPOINT_ENABLED)
 
     @property
     def had_error(self):
@@ -142,33 +152,38 @@ class Breakpoint:
     def simple_address(self, addr):
         # shortcut to create a PC=addr breakpoint
         c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_NORMAL
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         self.terms = (dd.REG_PC, dd.NUMBER, addr, dd.OP_EQ, dd.END_OF_LIST)
 
     def step_into(self, count):
         # shortcut to create a break after `count` instructions
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] = dd.BREAKPOINT_COUNT_INSTRUCTIONS
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_INSTRUCTIONS
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         c['tokens'][self.index] = count
         self.enable()
 
     def count_cycles(self, count):
         # shortcut to create a break after `count` instructions
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] = dd.BREAKPOINT_COUNT_CYCLES
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_CYCLES
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         c['tokens'][self.index] = count
         self.enable()
 
     def count_frames(self, count):
         # shortcut to create a break after `count` instructions
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] = dd.BREAKPOINT_COUNT_FRAMES
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_FRAMES
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         c['tokens'][self.index] = count
         self.enable()
 
     def break_at_return(self):
         # shortcut to create a PC=addr breakpoint
         c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_NORMAL
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         sp = self.debugger.stack_pointer
         self.terms = (dd.OPCODE_TYPE, dd.OPCODE_RETURN, dd.REG_SP, dd.NUMBER, sp, dd.OP_EQ, dd.OP_LOGICAL_AND, dd.END_OF_LIST)
@@ -177,18 +192,19 @@ class Breakpoint:
     def clear(self):
         c = self.debugger.debug_cmd[0]
         status = dd.BREAKPOINT_DISABLED if self.id == 0 else dd.BREAKPOINT_EMPTY
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_NORMAL
         c['breakpoint_status'][self.id] = status
         c['tokens'][self.index] = dd.END_OF_LIST
 
     def enable(self):
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] |= dd.BREAKPOINT_ENABLED
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         if self.id >= c['num_breakpoints']:
             c['num_breakpoints'] = self.id + 1
 
     def disable(self):
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_status'][self.id] &= ~dd.BREAKPOINT_ENABLED
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_DISABLED
 
 
 class Debugger(Serializable):
@@ -209,9 +225,11 @@ class Debugger(Serializable):
 
     def clear_all_breakpoints(self):
         c = self.debug_cmd[0]
+        c['breakpoint_type'][:] = dd.BREAKPOINT_NORMAL
         c['breakpoint_status'][:] = 0
         c['breakpoint_status'][0] = dd.BREAKPOINT_DISABLED
         c['num_breakpoints'] = 0
+        c['last_pc'] = -1
 
     def create_breakpoint(self, addr=None):
         c = self.debug_cmd[0]
