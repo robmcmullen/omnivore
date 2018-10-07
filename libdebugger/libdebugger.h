@@ -57,7 +57,7 @@ typedef struct {
 #define STACK_OVERFLOW 0x83  /* too many values */
 
 /* breakpoint types */
-#define BREAKPOINT_NORMAL 0
+#define BREAKPOINT_CONDITIONAL 0
 #define BREAKPOINT_COUNT_INSTRUCTIONS 0x1
 #define BREAKPOINT_COUNT_CYCLES 0x2
 #define BREAKPOINT_AT_RETURN 0x3

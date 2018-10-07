@@ -152,7 +152,7 @@ class Breakpoint:
     def simple_address(self, addr):
         # shortcut to create a PC=addr breakpoint
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_type'][self.id] = dd.BREAKPOINT_NORMAL
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         self.terms = (dd.REG_PC, dd.NUMBER, addr, dd.OP_EQ, dd.END_OF_LIST)
 
@@ -183,7 +183,7 @@ class Breakpoint:
     def break_at_return(self):
         # shortcut to create a PC=addr breakpoint
         c = self.debugger.debug_cmd[0]
-        c['breakpoint_type'][self.id] = dd.BREAKPOINT_NORMAL
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         sp = self.debugger.stack_pointer
         self.terms = (dd.OPCODE_TYPE, dd.OPCODE_RETURN, dd.REG_SP, dd.NUMBER, sp, dd.OP_EQ, dd.OP_LOGICAL_AND, dd.END_OF_LIST)
@@ -192,7 +192,7 @@ class Breakpoint:
     def clear(self):
         c = self.debugger.debug_cmd[0]
         status = dd.BREAKPOINT_DISABLED if self.id == 0 else dd.BREAKPOINT_EMPTY
-        c['breakpoint_type'][self.id] = dd.BREAKPOINT_NORMAL
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
         c['breakpoint_status'][self.id] = status
         c['tokens'][self.index] = dd.END_OF_LIST
 
@@ -225,7 +225,7 @@ class Debugger(Serializable):
 
     def clear_all_breakpoints(self):
         c = self.debug_cmd[0]
-        c['breakpoint_type'][:] = dd.BREAKPOINT_NORMAL
+        c['breakpoint_type'][:] = dd.BREAKPOINT_CONDITIONAL
         c['breakpoint_status'][:] = 0
         c['breakpoint_status'][0] = dd.BREAKPOINT_DISABLED
         c['num_breakpoints'] = 0
