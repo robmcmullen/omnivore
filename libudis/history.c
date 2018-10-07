@@ -280,9 +280,12 @@ history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type) {
 	}
 	history->cumulative_count++;
 	entry = &history->entries[history->latest_entry_index];
+	entry->pc = 0;
+	entry->target_addr = 0;
 	entry->disassembler_type = type;
 	entry->num_bytes = 0;
 	entry->flag = 0;
+	entry->cycles = 0;
 	entry->instruction[0] = 254;
 	entry->instruction[1] = 253;
 	entry->instruction[2] = 252;

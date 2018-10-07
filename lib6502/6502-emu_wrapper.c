@@ -309,8 +309,17 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 			bpid = libdebugger_check_breakpoints(breakpoints, cycles, &lib6502_register_callback);
 		}
 		if (bpid >= 0) {
+			history_breakpoint_t *b;
+
 			status->frame_status = FRAME_BREAKPOINT;
 			status->breakpoint_id = bpid;
+			b = (history_breakpoint_t *)libudis_get_next_entry(history, DISASM_BREAKPOINT);
+			if (b) {
+				b->pc = PC;
+				b->breakpoint_id = bpid;
+				b->breakpoint_type = breakpoints->breakpoint_type[bpid];
+				b->breakpoint_status = breakpoints->breakpoint_status[bpid];
+			}
 			return bpid;
 		}
 	} while (status->current_cycle_in_frame < status->final_cycle_in_frame);

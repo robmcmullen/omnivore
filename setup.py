@@ -196,7 +196,7 @@ extensions = [
             "libudis/libudis_flags.h",
         ],
         extra_compile_args = extra_compile_args,
-        include_dirs = [np.get_include()],
+        include_dirs = ["libdebugger", "libudis", np.get_include()],
         ),
 ]
 

@@ -58,6 +58,8 @@ disassembler_type = {
     "atari800_vbi_end": 195,
     "atari800_dli_start": 196,
     "atari800_dli_end": 197,
+    "breakpoint": 253,
+    "user_defined": 254,
     "unknown_disassembler": 255,
 }
 disassembler_type_max = max(disassembler_type.values())
@@ -86,6 +88,8 @@ custom_stringifiers = [
     CustomEntry('atari800_vbi_end', 'stringify_entry_atari800_vbi_end', 'int', stringifier_signature),
     CustomEntry('atari800_dli_start', 'stringify_entry_atari800_dli_start', 'int', stringifier_signature),
     CustomEntry('atari800_dli_end', 'stringify_entry_atari800_dli_end', 'int', stringifier_signature),
+    CustomEntry('breakpoint', 'stringify_entry_breakpoint', 'int', stringifier_signature),
+    CustomEntry('user_defined', 'stringify_entry_blank', 'int', stringifier_signature),
     CustomEntry('unknown_disassembler', 'stringify_entry_unknown_disassembler', 'int', stringifier_signature),
 ]
 

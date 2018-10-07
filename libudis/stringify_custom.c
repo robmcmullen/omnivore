@@ -5,7 +5,17 @@
 
 #include "libudis.h"
 #include "stringify_udis_cpu.h"
+#include "libdebugger.h"
 
+
+static inline char *STRING(char *t, int lc, char *str) {
+    char *c;
+
+    while (c=*str++) {
+        *t++=c;
+    }
+    return t;
+}
 
 int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     char *first_t, *h;
@@ -454,6 +464,25 @@ int stringify_entry_atari800_dli_end(history_entry_t *entry, char *t, char *hexd
 
     first_t = t;
     *t++='-', *t++='-', *t++='D', *t++='L', *t++='I', *t++=' ', *t++='E', *t++='n', *t++='d';
+    return (int)(t - first_t);
+}
+
+int stringify_entry_breakpoint(history_entry_t *h_entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t, *h;
+    history_breakpoint_t *entry = (history_frame_t *)h_entry;
+
+    first_t = t;
+    t = STRING(t, 0, "Break at ");
+    h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
+    switch (entry->breakpoint_type) {
+        case BREAKPOINT_INFINITE_LOOP:
+        t = STRING(t, 0, ": infinite loop detected");
+        break;
+
+        default:
+        break;
+    }
     return (int)(t - first_t);
 }
 

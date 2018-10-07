@@ -91,6 +91,19 @@ typedef struct {
 } history_interrupt_t; /* 24 bytes */
 
 typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t breakpoint_id;
+	uint8_t breakpoint_type;
+	uint8_t breakpoint_status;
+	uint8_t instruction[13];
+} history_breakpoint_t; /* 24 bytes */
+
+typedef struct {
 	int32_t num_allocated_entries;
 	int32_t num_entries;
 	int32_t first_entry_index;
