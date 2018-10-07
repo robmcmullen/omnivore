@@ -472,9 +472,11 @@ int stringify_entry_breakpoint(history_entry_t *h_entry, char *t, char *hexdigit
     history_breakpoint_t *entry = (history_frame_t *)h_entry;
 
     first_t = t;
-    t = STRING(t, 0, "Break at ");
-    h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
-    h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
+    t = STRING(t, 0, "<BREAKPOINT");
+    if (entry->breakpoint_id > 0) {
+        t += sprintf(t, " %d", entry->breakpoint_id);
+    }
+    *t++='>';
     switch (entry->breakpoint_type) {
         case BREAKPOINT_INFINITE_LOOP:
         t = STRING(t, 0, ": infinite loop detected");
@@ -497,4 +499,20 @@ int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *
 
 int stringify_entry_blank(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     return 0;
+}
+
+
+extern string_func_t stringifier_map[];
+
+int stringify_entry_next_instruction(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t, *h;
+    string_func_t stringifier = stringifier_map[entry->cycles];
+
+    return stringifier(entry, t, hexdigits, lc, labels);
+}
+
+int stringify_entry_next_instruction_result(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+    char *first_t, *h;
+
+    return stringify_entry_breakpoint(entry, t, hexdigits, lc, labels);
 }

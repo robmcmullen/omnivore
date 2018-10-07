@@ -77,7 +77,7 @@ void lib6502_restore_state(output_t *buf) {
 
 uint16_t last_pc;
 
-int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
+int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, int perform_step)
 {
 	int count;
 	uint8_t last_sp, opcode;
@@ -88,24 +88,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 
 	opcode = memory[PC];
 	inst = instructions[opcode];
-
-	write_addr = NULL;
-	read_addr = NULL;
-	result_flag = NOP;
-	extra_cycles = 0;
-	before_value_index = 0;
-
-	status->memory_access[PC] = 255;
-	status->access_type[PC] = ACCESS_TYPE_EXECUTE;
 	count = lengths[inst.mode];
-	if (count > 1) {
-		status->memory_access[PC + 1] = 255;
-		status->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
-	}
-	if (count > 2) {
-		status->memory_access[PC + 2] = 255;
-		status->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
-	}
 	if (entry) {
 		entry->pc = PC;
 		entry->num_bytes = count;
@@ -124,6 +107,26 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry)
 		entry->after2 = 0;
 		entry->before3 = 0;
 		entry->after3 = 0;
+	}
+	if (!perform_step) {
+		return 0;
+	}
+
+	write_addr = NULL;
+	read_addr = NULL;
+	result_flag = NOP;
+	extra_cycles = 0;
+	before_value_index = 0;
+
+	status->memory_access[PC] = 255;
+	status->access_type[PC] = ACCESS_TYPE_EXECUTE;
+	if (count > 1) {
+		status->memory_access[PC + 1] = 255;
+		status->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
+	}
+	if (count > 2) {
+		status->memory_access[PC + 2] = 255;
+		status->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
 	}
 
 	inst.function();
@@ -290,7 +293,7 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 	do {
 		last_pc = PC;
 		entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
-		cycles = lib6502_step_cpu(status, entry);
+		cycles = lib6502_step_cpu(status, entry, 1);
 		status->current_instruction_in_frame += 1;
 		status->instructions_since_power_on += 1;
 		status->current_cycle_in_frame += cycles;
@@ -313,12 +316,12 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 
 			status->frame_status = FRAME_BREAKPOINT;
 			status->breakpoint_id = bpid;
-			b = (history_breakpoint_t *)libudis_get_next_entry(history, DISASM_BREAKPOINT);
-			if (b) {
-				b->pc = PC;
+			b = (history_breakpoint_t *)libudis_get_next_entry(history, DISASM_NEXT_INSTRUCTION);
+			if (entry) {
+				lib6502_step_cpu(status, (history_6502_t *)b, 0);
 				b->breakpoint_id = bpid;
 				b->breakpoint_type = breakpoints->breakpoint_type[bpid];
-				b->breakpoint_status = breakpoints->breakpoint_status[bpid];
+				b->disassembler_type_cpu = DISASM_6502_HISTORY;
 			}
 			return bpid;
 		}

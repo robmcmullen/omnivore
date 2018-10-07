@@ -92,15 +92,13 @@ typedef struct {
 
 typedef struct {
 	uint16_t pc;
-	uint16_t target_addr;
+	uint8_t breakpoint_id;
+	uint8_t breakpoint_type;
 	uint8_t num_bytes;
 	uint8_t disassembler_type;
 	uint8_t flag;
-	uint8_t cycles;
-	uint8_t breakpoint_id;
-	uint8_t breakpoint_type;
-	uint8_t breakpoint_status;
-	uint8_t instruction[13];
+	uint8_t disassembler_type_cpu;
+	uint8_t instruction[16];
 } history_breakpoint_t; /* 24 bytes */
 
 typedef struct {
@@ -112,6 +110,7 @@ typedef struct {
 	history_entry_t *entries;
 } emulator_history_t;
 
+typedef int (*string_func_t)(history_entry_t *, char *, char *, int, unsigned short *);
 
 int opcode_history_flags_6502[256];
 

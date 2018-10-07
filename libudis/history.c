@@ -271,14 +271,17 @@ history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type) {
 		return NULL;
 	}
 
-	history->latest_entry_index = (history->latest_entry_index + 1) % history->num_allocated_entries;
-	if ((history->latest_entry_index == history->first_entry_index) && (history->num_entries == history->num_allocated_entries)) {
-		history->first_entry_index = (history->first_entry_index + 1) % history->num_allocated_entries;
+	/* reuse the same history entry if the latest one shows the current state of the CPU */
+	if ((history->latest_entry_index < 0) || (history->entries[history->latest_entry_index].disassembler_type != DISASM_NEXT_INSTRUCTION)) {
+		history->latest_entry_index = (history->latest_entry_index + 1) % history->num_allocated_entries;
+		if ((history->latest_entry_index == history->first_entry_index) && (history->num_entries == history->num_allocated_entries)) {
+			history->first_entry_index = (history->first_entry_index + 1) % history->num_allocated_entries;
+		}
+		if (history->num_entries < history->num_allocated_entries) {
+			history->num_entries++;
+		}
+		history->cumulative_count++;
 	}
-	if (history->num_entries < history->num_allocated_entries) {
-		history->num_entries++;
-	}
-	history->cumulative_count++;
 	entry = &history->entries[history->latest_entry_index];
 	entry->pc = 0;
 	entry->target_addr = 0;

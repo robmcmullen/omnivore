@@ -78,7 +78,7 @@ void lib6502_get_current_state(output_t *output);
 
 void lib6502_restore_state(output_t *output);
 
-int lib6502_step_cpu(frame_status_t *output, history_6502_t *entry);
+int lib6502_step_cpu(frame_status_t *output, history_6502_t *entry, int perform_step);
 
 int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *state, emulator_history_t *history);
 
