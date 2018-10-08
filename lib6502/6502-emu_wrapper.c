@@ -50,6 +50,8 @@ void lib6502_clear_state_arrays(void *input, output_t *output) {
 	status->frame_status = 0;
 	status->cycles_since_power_on = 0;
 	status->instructions_since_power_on = 0;
+	status->use_memory_access = 1;
+	status->brk_into_debugger = 1;
 }
 
 void lib6502_configure_state_arrays(void *input, output_t *output) {
@@ -77,11 +79,12 @@ void lib6502_restore_state(output_t *buf) {
 
 uint16_t last_pc;
 
-int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, int perform_step)
+int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_t *breakpoints)
 {
-	int count;
+	int count, bpid;
 	uint8_t last_sp, opcode;
 	intptr_t index;
+	history_breakpoint_t *b;
 
 	last_pc = PC;
 	last_sp = SP;
@@ -108,8 +111,19 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, int perform_
 		entry->before3 = 0;
 		entry->after3 = 0;
 	}
-	if (!perform_step) {
-		return 0;
+
+	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback);
+	if (bpid >= 0) {
+		status->frame_status = FRAME_BREAKPOINT;
+		status->breakpoint_id = bpid;
+		if (entry) {
+			b = (history_breakpoint_t *)entry;
+			b->breakpoint_id = bpid;
+			b->breakpoint_type = breakpoints->breakpoint_type[bpid];
+			b->disassembler_type = DISASM_NEXT_INSTRUCTION;
+			b->disassembler_type_cpu = DISASM_6502_HISTORY;
+		}
+		return bpid;
 	}
 
 	write_addr = NULL;
@@ -118,18 +132,36 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, int perform_
 	extra_cycles = 0;
 	before_value_index = 0;
 
-	status->memory_access[PC] = 255;
-	status->access_type[PC] = ACCESS_TYPE_EXECUTE;
-	if (count > 1) {
-		status->memory_access[PC + 1] = 255;
-		status->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
-	}
-	if (count > 2) {
-		status->memory_access[PC + 2] = 255;
-		status->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
+	if (status->use_memory_access) {
+		status->memory_access[PC] = 255;
+		status->access_type[PC] = ACCESS_TYPE_EXECUTE;
+		if (count > 1) {
+			status->memory_access[PC + 1] = 255;
+			status->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
+		}
+		if (count > 2) {
+			status->memory_access[PC + 2] = 255;
+			status->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
+		}
 	}
 
+	breakpoints->last_pc = PC;
 	inst.function();
+	if (SR.bits.brk && status->brk_into_debugger) {
+		/* automatically jump into debugger on BRK */
+		PC = breakpoints->last_pc;
+		bpid = libdebugger_brk_instruction(breakpoints);
+		status->frame_status = FRAME_BREAKPOINT;
+		status->breakpoint_id = bpid;
+		if (entry) {
+			b = (history_breakpoint_t *)entry;
+			b->breakpoint_id = bpid;
+			b->breakpoint_type = breakpoints->breakpoint_type[bpid];
+			b->disassembler_type = DISASM_NEXT_INSTRUCTION;
+			b->disassembler_type_cpu = DISASM_6502_HISTORY;
+		}
+		return bpid;
+	}
 	if (result_flag != JUMP) PC += count;
 
 	// 7 cycle instructions (e.g. ROL $nnnn,X) don't have a penalty cycle for
@@ -191,54 +223,60 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, int perform_
 		}
 	}
 
-	if (read_addr != NULL) {
-		index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
-		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
-			status->memory_access[(uint16_t)index] = 255;
-			status->access_type[(uint16_t)index] = ACCESS_TYPE_READ;
+	if (status->use_memory_access) {
+		if (read_addr != NULL) {
+			index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
+			if (index >= 0 && index < MAIN_MEMORY_SIZE) {
+				status->memory_access[(uint16_t)index] = 255;
+				status->access_type[(uint16_t)index] = ACCESS_TYPE_READ;
+			}
 		}
-	}
-	if (write_addr != NULL) {
-		index = (intptr_t)write_addr - (intptr_t)(&memory[0]);
-		if (index >= 0 && index < MAIN_MEMORY_SIZE) {
-			status->memory_access[(uint16_t)index] = 255;
-			status->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
+		if (write_addr != NULL) {
+			index = (intptr_t)write_addr - (intptr_t)(&memory[0]);
+			if (index >= 0 && index < MAIN_MEMORY_SIZE) {
+				status->memory_access[(uint16_t)index] = 255;
+				status->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
+			}
 		}
-	}
 
-	/* Maximum of 3 bytes will have changed on the stack */
-	if (last_sp < SP) {
-		last_sp++;
-		status->memory_access[0x100 + last_sp] = 255;
-		status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+		/* Maximum of 3 bytes will have changed on the stack */
 		if (last_sp < SP) {
 			last_sp++;
 			status->memory_access[0x100 + last_sp] = 255;
 			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+			if (last_sp < SP) {
+				last_sp++;
+				status->memory_access[0x100 + last_sp] = 255;
+				status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+			}
+			if (last_sp < SP) {
+				last_sp++;
+				status->memory_access[0x100 + last_sp] = 255;
+				status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
+			}
 		}
-		if (last_sp < SP) {
-			last_sp++;
-			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
-		}
-	}
-	else if (last_sp > SP) {
-		status->memory_access[0x100 + last_sp] = 255;
-		status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
-		last_sp--;
-		if (last_sp > SP) {
-			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
-			last_sp--;
-		}
-		if (last_sp > SP) {
+		else if (last_sp > SP) {
 			status->memory_access[0x100 + last_sp] = 255;
 			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
 			last_sp--;
+			if (last_sp > SP) {
+				status->memory_access[0x100 + last_sp] = 255;
+				status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
+				last_sp--;
+			}
+			if (last_sp > SP) {
+				status->memory_access[0x100 + last_sp] = 255;
+				status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
+				last_sp--;
+			}
 		}
 	}
 
-	return inst.cycles + extra_cycles;
+	status->current_instruction_in_frame += 1;
+	status->instructions_since_power_on += 1;
+	status->current_cycle_in_frame += inst.cycles + extra_cycles;
+	status->cycles_since_power_on += inst.cycles + extra_cycles;
+	return -1;
 }
 
 int lib6502_register_callback(uint16_t token, uint16_t addr) {
@@ -293,36 +331,14 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 	do {
 		last_pc = PC;
 		entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
-		cycles = lib6502_step_cpu(status, entry, 1);
-		status->current_instruction_in_frame += 1;
-		status->instructions_since_power_on += 1;
-		status->current_cycle_in_frame += cycles;
-		status->cycles_since_power_on += cycles;
+		status->breakpoint_id = -1;
+		bpid = lib6502_step_cpu(status, entry, breakpoints);
 		if (last_pc >= 0x5074 && last_pc < 0xC000) {
 			status->instructions_user += 1;
 			status->cycles_user += cycles;
 			// printf("pc=%04x user cycle = %ld\n", last_pc, status->cycles_user);
 		}
-		if (SR.bits.brk) {
-			/* automatically jump into debugger on BRK */
-			PC = last_pc;
-			bpid = 0;
-		}
-		else {
-			bpid = libdebugger_check_breakpoints(breakpoints, cycles, &lib6502_register_callback);
-		}
 		if (bpid >= 0) {
-			history_breakpoint_t *b;
-
-			status->frame_status = FRAME_BREAKPOINT;
-			status->breakpoint_id = bpid;
-			b = (history_breakpoint_t *)libudis_get_next_entry(history, DISASM_NEXT_INSTRUCTION);
-			if (entry) {
-				lib6502_step_cpu(status, (history_6502_t *)b, 0);
-				b->breakpoint_id = bpid;
-				b->breakpoint_type = breakpoints->breakpoint_type[bpid];
-				b->disassembler_type_cpu = DISASM_6502_HISTORY;
-			}
 			return bpid;
 		}
 	} while (status->current_cycle_in_frame < status->final_cycle_in_frame);

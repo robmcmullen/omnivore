@@ -102,7 +102,11 @@ class Breakpoint:
             self.simple_address(addr)
 
     def __str__(self):
-        return f"<breakpoint {self.id}, status={self.status}, type={self.type}, terms={self.terms}>"
+        if self.id == 0:
+            ref = self.reference_value
+        else:
+            ref = "n/a"
+        return f"<breakpoint {self.id}, status={self.status}, type={self.type}, ref_val={ref} terms={self.terms}>"
 
     @property
     def status(self):
@@ -123,6 +127,16 @@ class Breakpoint:
     def type(self, type):
         c = self.debugger.debug_cmd[0]
         c['breakpoint_type'][self.id] = type
+
+    @property
+    def reference_value(self):
+        c = self.debugger.debug_cmd[0]
+        return c['reference_value'][self.id]
+
+    @reference_value.setter
+    def reference_value(self, type):
+        c = self.debugger.debug_cmd[0]
+        c['reference_value'][self.id] = reference_value
 
     @property
     def terms(self):
@@ -161,6 +175,7 @@ class Breakpoint:
         c = self.debugger.debug_cmd[0]
         c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_INSTRUCTIONS
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['reference_value'][self.id] = self.debugger.instructions_since_power_on
         c['tokens'][self.index] = count
         self.enable()
 
@@ -169,6 +184,7 @@ class Breakpoint:
         c = self.debugger.debug_cmd[0]
         c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_CYCLES
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['reference_value'][self.id] = self.debugger.cycles_since_power_on
         c['tokens'][self.index] = count
         self.enable()
 
@@ -177,6 +193,7 @@ class Breakpoint:
         c = self.debugger.debug_cmd[0]
         c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_FRAMES
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['reference_value'][self.id] = self.debugger.current_frame_number
         c['tokens'][self.index] = count
         self.enable()
 

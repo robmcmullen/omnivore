@@ -49,7 +49,9 @@ if __name__ == "__main__":
         print(emu.main_memory[0xc000:])
         print(emu.program_counter)
         print(emu.current_cpu_status)
-        while emu.current_frame_number < 200:
+        b = emu.create_breakpoint(0xf018)
+        print(b)
+        while emu.current_frame_number < 10:
             brk = emu.next_frame()
             print(emu.main_memory[0xc000:])
             print(emu.current_cpu_status)
@@ -64,16 +66,22 @@ if __name__ == "__main__":
                     print(f"{len(current)}, ")
                     for instruction, result in current:
                         print(instruction, result)
+                    print(f"HIT BREAKPOINT: current instruction = {emu.instructions_since_power_on}")
                     time.sleep(1)
                     num_breaks -= 1
                     if num_breaks <= 0:
                         brk.disable()
                         print(f"DISABLING {brk}")
+                    else:
+                        emu.step_into(1)
+                        print(f"STILL ENABLED: {brk}")
+                    time.sleep(1)
                 else:
                     print(f"break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
                     time.sleep(.1)
                     num_breaks -= 1
                     if num_breaks <= 0:
+                        print(f"disabling break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
                         brk.disable()
                         num_breaks = 10
                         emu.step_into(1)
@@ -86,15 +94,13 @@ if __name__ == "__main__":
                 for instruction, result in current:
                     print(instruction, result)
                 first_entry_of_frame = hist.next_entry_index
-                # if emu.current_frame_number > 11:
-                #     emu.enter_debugger()
                 if emu.current_frame_number > 10:
                     emu.debug_video()
                     # emu.debug_state()
                 if emu.current_frame_number > 100:
                     emu.keypress('A')
-                # if emu.current_frame_number == 180:
-                #     b = emu.create_breakpoint(0xf018)
+                if emu.current_frame_number == 180:
+                    b = emu.create_breakpoint(0xf018)
                 # if emu.current_frame_number == 190:
                 #     b = emu.step_into(100)
 

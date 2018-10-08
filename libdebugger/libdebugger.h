@@ -8,18 +8,25 @@
 #define MAIN_MEMORY_SIZE (256*256)
 
 typedef struct {
-        uint64_t cycles_since_power_on;
-        uint64_t instructions_since_power_on;
-        uint64_t cycles_user;
-        uint64_t instructions_user;
-        uint32_t frame_number;
-        uint32_t current_cycle_in_frame;
-        uint32_t final_cycle_in_frame;
-        uint32_t current_instruction_in_frame;
+        int64_t cycles_since_power_on;
+        int64_t instructions_since_power_on;
+        int64_t cycles_user;
+        int64_t instructions_user;
+        int32_t frame_number;
+        int32_t current_cycle_in_frame;
+        int32_t final_cycle_in_frame;
+        int32_t current_instruction_in_frame;
 
+        int16_t breakpoint_id;
+        int16_t unused1[3];
+
+        /* flags */
         uint8_t frame_status;
-        uint8_t breakpoint_id;
-        uint8_t unused[6]; /* to maintain 64 bit alignment */
+        uint8_t use_memory_access;
+        uint8_t brk_into_debugger; /* enter debugger on BRK */
+        uint8_t unused2[5];
+
+        int64_t unused3[8]; /* 16 x uint64 in header (16*8 bytes) */
 
         uint8_t memory_access[MAIN_MEMORY_SIZE];
         uint8_t access_type[MAIN_MEMORY_SIZE];
@@ -63,14 +70,17 @@ typedef struct {
 #define BREAKPOINT_AT_RETURN 0x3
 #define BREAKPOINT_COUNT_FRAMES 0x4
 #define BREAKPOINT_INFINITE_LOOP 0x5
+#define BREAKPOINT_BRK_INSTRUCTION 0x6
 
 /* status values returned */
 #define NO_BREAKPOINT_FOUND -1
 
 /* NOTE: breakpoint #0 is reserved for stepping the cpu */
 typedef struct {
-        int num_breakpoints;
-        int last_pc; /* infinite loop check */
+        int32_t num_breakpoints;
+        int32_t last_pc; /* allow -1 to signify invalid PC */
+        int32_t unused[14];
+        int64_t reference_value[NUM_BREAKPOINT_ENTRIES];
         uint8_t breakpoint_type[NUM_BREAKPOINT_ENTRIES];
         uint8_t breakpoint_status[NUM_BREAKPOINT_ENTRIES];
         uint16_t tokens[TOKEN_LIST_SIZE];  /* indexed by breakpoint number * TOKENS_PER_BREAKPOINT */
@@ -138,7 +148,9 @@ typedef int (*cpu_state_callback_ptr)(uint16_t token, uint16_t addr);
 
 typedef int (*emu_frame_callback_ptr)(frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *entry);
 
-int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_state_callback_ptr get_emulator_value);
+int libdebugger_brk_instruction(breakpoints_t *breakpoints);
+
+int libdebugger_check_breakpoints(breakpoints_t *, frame_status_t *, cpu_state_callback_ptr);
 
 int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *history);
 

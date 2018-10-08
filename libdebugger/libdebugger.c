@@ -102,8 +102,16 @@ int process_unary(uint16_t token, cpu_state_callback_ptr get_emulator_value, pos
 }
 
 /* returns: index number of breakpoint or -1 if no breakpoint condition met. */
-int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_state_callback_ptr get_emulator_value) {
+int libdebugger_brk_instruction(breakpoints_t *breakpoints) {
+	breakpoints->breakpoint_status[0] = BREAKPOINT_ENABLED;
+	breakpoints->breakpoint_type[0] = BREAKPOINT_BRK_INSTRUCTION;
+	return 0;
+}
+
+/* returns: index number of breakpoint or -1 if no breakpoint condition met. */
+int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *run, cpu_state_callback_ptr get_emulator_value) {
 	uint16_t token, addr, value;
+	int64_t ref_val;
 	int i, num_entries, index, status, btype, final_value, count, current_pc;
 	postfix_stack_t stack;
 
@@ -114,37 +122,38 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_st
 		breakpoints->breakpoint_type[0] = BREAKPOINT_INFINITE_LOOP;
 		return 0;
 	}
-	breakpoints->last_pc = current_pc;
 
 	num_entries = breakpoints->num_breakpoints;
 
-	for (i=0; i < num_entries; i++) {
+	/* Special case for zeroth breakpoint: step conditions & user control */
+	if (breakpoints->breakpoint_status[0] == BREAKPOINT_ENABLED) {
+		btype = breakpoints->breakpoint_type[i];
+		count = (int)breakpoints->tokens[index]; /* tokens are unsigned */
+		ref_val = breakpoints->reference_value[index];
+#ifdef DEBUG_BREAKPOINT
+		printf("checking breakpoint 0: %d, count=%d, ref=%ld\n", btype, count, ref_val);
+#endif
+		if (btype == BREAKPOINT_COUNT_CYCLES) {
+			if (count + ref_val <= run->cycles_since_power_on) return 0;
+		}
+		else if (btype == BREAKPOINT_COUNT_INSTRUCTIONS) {
+			if (count + ref_val <= run->instructions_since_power_on) return 0;
+		}
+		else if (btype == BREAKPOINT_COUNT_FRAMES) {
+			/* only checked at the end of the frame */
+			;
+		}
+	}
+
+	/* process normal breakpoints */
+	for (i=1; i < num_entries; i++) {
 		status = breakpoints->breakpoint_status[i];
 		if (status == BREAKPOINT_ENABLED) {
 			btype = breakpoints->breakpoint_type[i];
 #ifdef DEBUG_BREAKPOINT
 			printf("Breakpoint %d enabled: type=%d\n", i, btype);
 #endif
-
 			index = i * TOKENS_PER_BREAKPOINT;
-			if (i == 0) { /* Check the zeroth breakpoint for step conditions */
-				count = (int)breakpoints->tokens[index]; /* tokens are unsigned */
-				if (btype == BREAKPOINT_COUNT_CYCLES) {
-					if (count - cycles <= 0) return 0;
-					else breakpoints->tokens[index] -= cycles;
-					continue;
-				}
-				else if (btype == BREAKPOINT_COUNT_INSTRUCTIONS) {
-					if (--count <= 0) return 0;
-					else breakpoints->tokens[index] -= 1;
-					continue;
-				}
-				else if (btype == BREAKPOINT_COUNT_FRAMES) {
-					/* only checked at the end of the frame */
-					continue;
-				}
-				/* otherwise, process normally */
-			}
 			clear(&stack);
 			for (count=0; count < TOKENS_PER_BREAKPOINT - 1; count++) {
 				token = breakpoints->tokens[index++];
@@ -172,7 +181,7 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, int cycles, cpu_st
 					else {
 						addr = 0;
 					}
-					if ((token & TOKEN_FLAG) == NUMBER) {
+					if (token == NUMBER) {
 						value = addr;
 #ifdef DEBUG_BREAKPOINT
 						printf("number: op=%d value=%04x\n", token & TOKEN_FLAG, addr);

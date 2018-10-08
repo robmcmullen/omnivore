@@ -12,9 +12,17 @@ FRAME_STATUS_DTYPE = np.dtype([
     ("current_cycle_in_frame", np.uint32),
     ("final_cycle_in_frame", np.uint32),
     ("current_instruction_in_frame", np.uint32),
+
+    ("breakpoint_id", np.int16),
+    ("unused1", np.uint16, 3),
+
     ("frame_status", np.uint8),
-    ("breakpoint_id", np.uint8),
-    ("unused", np.uint8, 6), # needed to maintain 64 bit alignment
+    ("use_memory_access", np.uint8),
+    ("brk_into_debugger", np.uint8),
+    ("unused2", np.uint8, 5),
+
+    ("unused3", np.uint64, 8), # fill header to 128 bytes
+
     ("memory_access", np.uint8, MAIN_MEMORY_SIZE),
     ("access_type", np.uint8, MAIN_MEMORY_SIZE),
 ])
@@ -42,7 +50,9 @@ TOKEN_LIST_SIZE = (NUM_BREAKPOINT_ENTRIES * TOKENS_PER_BREAKPOINT)
 # Breakpoint #0 is used internally for stepping the CPU
 DEBUGGER_COMMANDS_DTYPE = np.dtype([
     ("num_breakpoints", np.uint32),
-    ("last_pc", np.uint32),
+    ("last_pc", np.int32),
+    ("unused", np.uint32, 14),
+    ("reference_value", np.int64, NUM_BREAKPOINT_ENTRIES),
     ("breakpoint_type", np.uint8, NUM_BREAKPOINT_ENTRIES),
     ("breakpoint_status", np.uint8, NUM_BREAKPOINT_ENTRIES),
     ("tokens", np.uint16, TOKEN_LIST_SIZE),

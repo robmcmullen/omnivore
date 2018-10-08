@@ -111,6 +111,10 @@ class EmulatorBase(Debugger):
         return self.status['cycles_since_power_on'][0]
 
     @property
+    def instructions_since_power_on(self):
+        return self.status['instructions_since_power_on'][0]
+
+    @property
     def stack_pointer(self):
         raise NotImplementedError("define stack_pointer property in subclass")
 
