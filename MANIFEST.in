@@ -1,15 +1,8 @@
-include *.rst
-include LICENSE
-recursive-include libatari800/atari800/src *.c *.h
-exclude libatari800/atari800/src/config.h
-recursive-include libatari800/atari800/src *.inc
-recursive-exclude libatari800/atari800/src amiga/* android/* android/*/* dc/* dos/* falcon/* gles2/* javanvm/* sdl/* win32/* win32/*/* wince/* wince/*/*
-include libatari800/*.c libatari800/*.pyx
-recursive-include libatari800/include *.h
-include lib6502/*.c lib6502/*.pyx lib6502/6502-emu/6502.c lib6502/6502-emu/6502.h
-include libatasm/atasm/LICENSE
-include libatasm/atasm/VERSION.TXT
-include libatasm/atasm/atasm.*
-recursive-include libatasm/atasm/src *.c *.h Makefile
-recursive-include libatasm/atasm *.c *.pyx
-recursive-include libatasm/atasm/tests *.py *.m65 Makefile
+include lib6502/*.h
+include libatari800/*.h
+include libatasm/*.pyx
+include libdebugger/*.h
+include libudis/*.h
+include libudis/*.pyx
+include run.py wxatari.py
+include test_disasm.py test_libatasm.py test_libudis.py

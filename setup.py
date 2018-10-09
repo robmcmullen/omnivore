@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 from setuptools import setup, find_packages, Extension
 import numpy as np
 
@@ -9,6 +10,10 @@ except ImportError:
     def cythonize(args):
         return args
 
+if not os.path.exists("omni8bit/disassembler/cputables.py"):
+    subprocess.run([sys.executable, 'libudis/cpugen.py'])
+if not os.path.exists("libudis/parse_udis_cpu.c"):
+    subprocess.run([sys.executable, 'libudis/parse_gen.py'])
 
 if sys.platform.startswith("win"):
     extra_compile_args = ["-DMSVC", "-D_CRT_SECURE_NO_WARNINGS", "/Zi"]
@@ -227,33 +232,6 @@ extensions = [
       )
 ]
 
-cmdclass = dict()
-
-# Cython is only used when creating a source distribution. Users don't need
-# to install Cython unless they are modifying the .pyx files themselves.
-if "sdist" in sys.argv:
-    import subprocess
-    if not os.path.exists("omni8bit/disassembler/cputables.py"):
-        subprocess.run(['python', 'libudis/cpugen.py'])
-    if not os.path.exists("libudis/parse_udis_cpu.c"):
-        subprocess.run(['python', 'libudis/disasm_gen.py'])
-    try:
-        from Cython.Build import cythonize
-        from distutils.command.sdist import sdist as _sdist
-
-        class sdist(_sdist):
-            def run(self):
-                cythonize(["libatari800/libatari800.pyx"], gdb_debug=True)
-                cythonize(["lib6502/lib6502.pyx"], gdb_debug=True)
-                cythonize(["libudis/disasm_info.pyx"], gdb_debug=True)
-                cythonize(["libudis/disasm_speedups_monolithic.pyx"], gdb_debug=True)
-                _sdist.run(self)
-        cmdclass["sdist"] = sdist
-    except ImportError:
-        # assume the user doesn't have Cython and hope that the C file
-        # is included in the source distribution.
-        pass
-
 exec(compile(open('omni8bit/_metadata.py').read(), 'omni8bit/_metadata.py', 'exec'))
 
 setup(
@@ -277,9 +255,8 @@ setup(
     """.splitlines() if len(c.strip()) > 0],
     description = "Unified front-end providing common interface to control several 8 bit emulators",
     long_description = open('README.rst').read(),
-    cmdclass = cmdclass,
     ext_modules = cythonize(extensions),
-    packages = ["omni8bit"],
+    packages = find_packages(exclude=["libudis"]),
     install_requires = [
     'numpy',
     'pyopengl',
