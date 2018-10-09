@@ -1,4 +1,4 @@
-from .pyatasm_mac65 import mac65_assemble
+from .libatasm import mac65_assemble
 
 class Assemble(object):
     def __init__(self, source, verbose=False):

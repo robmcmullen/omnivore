@@ -203,6 +203,28 @@ extensions = [
         extra_compile_args = extra_compile_args,
         include_dirs = ["libdebugger", "libudis", np.get_include()],
         ),
+    Extension("omni8bit.pyatasm.libatasm",
+        sources = ["libatasm/libatasm.pyx",
+            "libatasm/cython_interface.c",
+            "libatasm/atasm/src/asm.c",
+            "libatasm/atasm/src/symbol.c",
+            "libatasm/atasm/src/parser.c",
+            "libatasm/atasm/src/setparse.c",
+            "libatasm/atasm/src/inc_path.c",
+            "libatasm/atasm/src/crc32.c",
+            "libatasm/atasm/src/atasm_err.c",
+            ],
+        depends = [
+            "libatasm/atasm/src/atasm_err.h",
+            "libatasm/atasm/src/compat.h",
+            "libatasm/atasm/src/directive.h",
+            "libatasm/atasm/src/inc_path.h",
+            "libatasm/atasm/src/ops.h",
+            "libatasm/atasm/src/symbol.h",
+            ],
+      extra_compile_args = extra_compile_args,
+      include_dirs = ["libatasm/atasm/src"],
+      )
 ]
 
 cmdclass = dict()

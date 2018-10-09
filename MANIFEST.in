@@ -7,4 +7,9 @@ recursive-exclude libatari800/atari800/src amiga/* android/* android/*/* dc/* do
 include libatari800/*.c libatari800/*.pyx
 recursive-include libatari800/include *.h
 include lib6502/*.c lib6502/*.pyx lib6502/6502-emu/6502.c lib6502/6502-emu/6502.h
-
+include libatasm/atasm/LICENSE
+include libatasm/atasm/VERSION.TXT
+include libatasm/atasm/atasm.*
+recursive-include libatasm/atasm/src *.c *.h Makefile
+recursive-include libatasm/atasm *.c *.pyx
+recursive-include libatasm/atasm/tests *.py *.m65 Makefile

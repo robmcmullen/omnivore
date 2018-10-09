@@ -10,7 +10,12 @@ Currently available are:
 
 * libatari800, an embedded port of the Atari800 emulator
 * lib6502, a generic 6502 emulator based on David Buchanan's 6502-emu
+* crabapple, a thin layer atop of lib6502 that provides some (tiny, small amount of) Apple ][+ compatibily
 
+
+Other features include:
+
+* ATasm; a 6502 cross-assembler based on MAC/65 syntax
 
 
 Prerequisites
@@ -18,7 +23,7 @@ Prerequisites
 
 
 * C compiler
-* python 2.7 (but not 3.x yet) capable of building C extensions
+* python 3.6 (or above) capable of building C extensions
 * numpy
 
 Optionally:
@@ -43,6 +48,7 @@ To compile from source::
 
     git clone https://github.com/robmcmullen/omni8bit.git
     cd omni8bit
+    git submodule init
     python setup.py sdist && python setup.py build_ext --inplace
 
 Your version of python must be able to build C extensions, which should be
@@ -60,6 +66,46 @@ Windows compatibility code was used in libatari800:
   and licensed under the MIT license which is GPL compatible
 
 
+ATasm
+=========
+
+Omni8bit provides a python front-end to the usage of ATasm, meaning you can
+compile 6502 code right from your python program.
+
+From the ATasm readme::
+
+    ATasm is a 6502 command-line cross-assembler that is compatible with the
+    original Mac/65 macroassembler released by OSS software.  Code
+    development can now be performed using "modern" editors and compiles
+    with lightning speed.
+
+A simple example::
+
+    #!/usr/bin/env python
+
+    from omni8bit.pyatasm import Assemble
+
+    asm = Assemble("tests/works.m65")
+
+    if asm:
+        print(asm.segments)
+        print(asm.equates)
+        print(asm.labels)
+    else:
+        print(asm.errors)
+
+Because omni8bit is a very thin wrapper around ATasm (and very little ATasm
+code was changed) it needs to creates files to do its work. These files will be
+created in the same directory as the source file, so the directory must be
+writeable.
+
+The segments attribute will contain a list of 3-tuples, each tuple being the
+start address, the end address, and the bytes for each segment of the assembly.
+A segment is defined as a contiguous sequence of bytes. If there is change of
+origin, a new segment will be created.
+
+
+
 License
 ==========
 
@@ -67,6 +113,7 @@ License
 * Dirent is Copyright (c) 2015 Toni Rönkkö
 * libatari800 is Copyright (c) 2018 Rob McMullen (feedback@playermissile.com)
 * 6502-emu is Copyright (c) 2017 David Buchanan (licensed under the MIT license)
+* ATasm is Copyright (c) 1998-2014 Mark Schmelzenbach
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
