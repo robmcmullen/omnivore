@@ -1,0 +1,173 @@
+	symbol .= table
+	value = 10
+	wsync = $D40A
+
+	*=$600
+DLI
+	pha                     ; this is a test of comments
+	lda #8+3*2
+	sta WSYNC
+	sta $d000
+	pla
+	rti
+
+	 .MACRO VDLI 
+	 ldy # <%1
+	 ldx # >%1
+	 lda #$c0
+	 sty $0200
+	 stx $0201
+	 sta $d40e
+	 .ENDM 
+
+	.MACRO PUSHXY
+	txa
+	pha
+	tya
+	pha
+	.ENDM
+			
+	.IF 1
+	  .IF 0
+	  lda #0
+	  .ENDIF
+	PUSHXY
+	.ELSE
+	.IF 1
+	  lda #1
+	  .IF 0
+	  lda #3
+	  .ELSE
+	  lda #4
+	  .ENDIF
+	.ELSE
+	  lda #0
+	.ENDIF
+	VDLI DLI
+	.ENDIF
+ 
+begin   ldx #>symbol
+	lda table,x
+	lda #1
+	symbol .= symbol + 1
+	lda #>symbol
+	.rept 4         ; repeat test
+	asl a
+	.endr
+z1	rts
+z2  pha
+z3  lda #0
+z4  sta $d000
+z5	sta $d002
+
+	BOB = 14
+
+c4	lda #BOB
+	lda #12*3+2
+z6	lda #.DEF BOB
+	lda #.DEF JOHN
+	lda #[3+7]*3+2
+
+	 lda #<7+6*5+[3+value]
+	 lda #>table*20
+	 lda #>$4000
+
+; addressing check
+	LDA  #$07       ; Immediate mode
+	LDA  $1F        ; Zero page absolute
+	LDA  $0800      ; Absolute
+	CLC             ; Implied
+	JMP  ($0036)    ; Indirect absolute
+	LDA  $FE90,X    ; Absolute indexed (by X)
+	LDA  $FE90,Y    ; Absolute indexed (by Y)
+	LDA  $2A,X      ; Zero page indexed
+	LDA  ($2A,X)    ; Indexed indirect
+	LDA  ($2A),Y    ; Indirect indexed
+	BCC  $03        ; Relative
+	BCC  $0603      ; Relative (alternate form)
+	LSR  A          ; Accumulator
+	LSR             ; Accumulator (alternate form)
+	ora $04
+	ora #16
+	ora $600,x
+
+; opcode check
+	adc #01
+	and #01
+	asl A
+	bcc *+2
+	bcs *+2
+	beq *+2
+	bit $01
+	bmi *+2
+	bne *+2
+	bpl *+2
+	brk
+	bvc *+2
+	bvs *+2
+	clc
+	cld
+	cli
+	clv
+	cmp #01
+	cpx #01
+	cpy #01
+	dec $01
+	dex
+	dey
+	eor #01
+	inc $01
+	inx
+	iny
+	jmp *+3
+	jsr *+3
+	lda #01
+	ldx #01
+	ldy #01
+	lsr A
+	nop
+	ora #01
+	pha
+	php
+	pla
+	plp
+	rol A
+	ror A
+	rti
+	rts
+	sbc #01
+	sec
+	sed
+	sei
+	sta $01
+	stx $01
+	sty $01
+	tax
+	tay
+	tsx
+	txa
+	txs
+	tya
+
+table   .rept 5
+	symbol .= symbol+$10
+	.word symbol    
+	.endr
+
+atable  .rept 20
+	.word [*-atable]/2*40
+	.endr
+
+newchar .BYTE "this is a test",0
+	.BYTE +80,"test",0
+	.CBYTE "test"
+	.SBYTE "TEST",'A
+	.FLOAT 3.14128
+	.WORD $1234,-1,1
+	.DBYTE $1234,-1,1
+data    .byte 0,1,2,3,4,5,7
+	.dc 6 0
+	.byte 0,1,2,3,4,5,7,0,1,2,3,4,5,7,0,1,2,3,4,5,7,0,1,2,3,4,5,7,99
+L1      .ds 8
+L2      *=*+8
+L3      .dc 6 0

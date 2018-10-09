@@ -1,0 +1,9 @@
+
+ *= $F000
+ .byte $AA, $55
+
+ *= $FF00
+ .byte $FF, $FF
+
+ *= $FFFE
+ .byte $55, $AA

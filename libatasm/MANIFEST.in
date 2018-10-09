@@ -1,0 +1,7 @@
+include *.rst
+include LICENSE
+include VERSION.TXT
+include atasm.*
+recursive-include src *.c *.h Makefile
+recursive-include pyatasm *.c *.pyx
+recursive-include tests *.py *.m65 Makefile
