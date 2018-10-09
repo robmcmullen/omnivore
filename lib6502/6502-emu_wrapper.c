@@ -308,7 +308,7 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 		opcode = memory[last_pc];
 		if (opcode == 0x60) value = 8;
 		else value = 0;
-#ifdef DEBUG_CALLBACK
+#ifdef DEBUG_REGISTER_CALLBACK
 		printf("opcode_type at PC=%04x: opcode=%02x value=%02x\n", last_pc, opcode, value);
 #endif
 		break;
@@ -316,7 +316,7 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 		default:
 		value = 0;
 	}
-#ifdef DEBUG_CALLBACK
+#ifdef DEBUG_REGISTER_CALLBACK
 	printf("lib6502_register_callback: token=%d addr=%04x value=%04x\n", token, addr, value);
 #endif
 	return value;

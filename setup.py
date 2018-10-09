@@ -20,6 +20,11 @@ else:
     extra_link_args = []
     libatari800_config_include = "libatari800/include/linux"
 
+# extra_compile_args.append("-DDEBUG_THREAD_STATUS")
+# extra_compile_args.append("-DDEBUG_REGISTER_CALLBACK")
+# extra_compile_args.append("-DDEBUG_BREAKPOINT")
+# extra_compile_args.append("-DDEBUG_POSTFIX_STACK")
+
 extensions = [
     Extension("omni8bit.atari800.libatari800",
         sources = [
