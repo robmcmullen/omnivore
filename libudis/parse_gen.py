@@ -879,8 +879,10 @@ if __name__ == "__main__":
         cpu = CPU(name)
         known.append(cpu)
 
+    destdir = os.path.dirname(__file__) + "/"
+
     generated_parsers = []
-    with open("parse_udis_cpu.c", "w") as fh:
+    with open(destdir + "parse_udis_cpu.c", "w") as fh:
         fh.write(c_disclaimer)
         c_includes = set()
         for cpu in known:
@@ -895,7 +897,7 @@ if __name__ == "__main__":
 
     generated_stringifiers = []
     c_includes = set()
-    with open("stringify_udis_cpu.c", "w") as fh:
+    with open(destdir + "stringify_udis_cpu.c", "w") as fh:
         fh.write(c_disclaimer)
         for cpu in known:
             print(f"computing {cpu}")
@@ -910,7 +912,7 @@ if __name__ == "__main__":
         fh.write("\n\n")
         gen_map(fh, generated_stringifiers)
 
-    filename = "stringify_udis_cpu.h"
+    filename = destdir + "stringify_udis_cpu.h"
     with open(filename, "w") as fh:
         fh.write(c_disclaimer)
         gen_start_guard(fh, filename)
@@ -918,4 +920,4 @@ if __name__ == "__main__":
         gen_header(fh, generated_stringifiers)
         gen_end_guard(fh, filename)
 
-    gen_pyx("declarations.pyx", generated_parsers, generated_stringifiers)
+    gen_pyx(destdir + "declarations.pyx", generated_parsers, generated_stringifiers)
