@@ -77,6 +77,17 @@ HISTORY_INTERRUPT_DTYPE = np.dtype([
     ("instruction", np.uint8, 16),
 ])
 
+HISTORY_BREAKPOINT_DTYPE = np.dtype([
+    ("pc", np.uint16),
+    ("breakpoint_id", np.uint8),
+    ("breakpoint_type", np.uint8),
+    ("num_bytes", np.uint8),
+    ("disassembler_type", np.uint8),
+    ("flag", np.uint8),
+    ("disassembler_type_cpu", np.uint8),
+    ("instruction", np.uint8, 16),
+])
+
 EMULATOR_HISTORY_HEADER_DTYPE = np.dtype([
     ("num_allocated_entries", np.int32),
     ("num_entries", np.int32),
