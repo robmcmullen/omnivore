@@ -9,7 +9,8 @@ from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import DefaultSegment
 
-from omni8bit.disassembler import flags, HISTORY_ATARI800_DTYPE, HISTORY_FRAME_DTYPE
+from omni8bit.disassembler import flags
+from omni8bit.disassembler import dtypes as dd
 
 from omnivore.utils.wx import compactgrid as cg
 from omnivore8bit.byte_edit.linked_base import VirtualLinkedBase
@@ -58,8 +59,11 @@ class InstructionHistoryTable(cg.VirtualTable):
         for line in range(start_line, last_line, step):
             h = emu.cpu_history[line]
             t = h['disassembler_type']
+            if t == flags.DISASM_NEXT_INSTRUCTION:
+                h = h.view(dtype=dd.HISTORY_BREAKPOINT_DTYPE)
+                t = h['disassembler_type_cpu']
             if t == flags.DISASM_ATARI800_HISTORY:
-                h = h.view(dtype=HISTORY_ATARI800_DTYPE)
+                h = h.view(dtype=dd.HISTORY_ATARI800_DTYPE)
                 x = h['antic_xpos']
                 y = h['antic_ypos']
                 if x & 0x80:
@@ -67,7 +71,7 @@ class InstructionHistoryTable(cg.VirtualTable):
                     y = y | 0x100
                 yield "%3d %3d" % (y, x)
             elif t == flags.DISASM_FRAME_START or t == flags.DISASM_FRAME_END:
-                h = h.view(dtype=HISTORY_FRAME_DTYPE)
+                h = h.view(dtype=dd.HISTORY_FRAME_DTYPE)
                 f = h['frame_number']
                 yield "f%d" % (f)
             else:
