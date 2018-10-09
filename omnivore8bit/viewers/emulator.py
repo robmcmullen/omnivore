@@ -165,8 +165,8 @@ class CPU6502Viewer(CPUParamTableViewer):
 
 class DtypeTable(SegmentVirtualTable):
     emulator_dtype_name = "<from subclass>"
-    col_labels = ["value"]
-    col_sizes = [4]
+    col_labels = ["hex", "dec", "bin"]
+    col_sizes = [4, 4, 8]
     want_col_header = False
     want_row_header = True
     verbose = False
@@ -202,7 +202,12 @@ class DtypeTable(SegmentVirtualTable):
     def get_value_style(self, row, col):
         val = self.data[self.row_offsets_into_data[row]]
         try:
-            text = "%02x" % val
+            if col == 0:
+                text = f"{val:02x}"
+            elif col == 1:
+                text = f"{val}"
+            elif col == 2:
+                text = f"{val:08b}"
         except TypeError:
             text = "..."
         return text, 0
