@@ -36,6 +36,8 @@ extern emulator_history_t *LIBATARI800_History;
 
 void ANTIC_Frame2(frame_status_t *status);
 
+int a8bridge_register_callback(uint16_t token, uint16_t addr);
+
 /*
 vim:ts=4:sw=4:
 */

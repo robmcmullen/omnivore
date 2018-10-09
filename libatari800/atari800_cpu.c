@@ -78,8 +78,10 @@
 
 #include "libudis.h"
 #include "libdebugger.h"
+#include "atari800_bridge.h"
 extern frame_status_t *LIBATARI800_Status;
 extern emulator_history_t *LIBATARI800_History;
+extern breakpoints_t *LIBATARI800_Breakpoints;
 extern UBYTE *memory_access;
 extern UBYTE *access_type;
 
@@ -962,9 +964,16 @@ void CPU_GO(int limit)
 		UWORD old_PC = GET_PC();
 #endif
 
+		UWORD last_pc;
+		int cyc = ANTIC_xpos;
+		int check_breakpoints = 1;
+recreate_history_entry:
+
+		LIBATARI800_Status->breakpoint_id = -1;
+		last_pc = GET_PC();
 		entry = (history_atari800_t *)libudis_get_next_entry(LIBATARI800_History, DISASM_ATARI800_HISTORY);
 		if (entry) {
-			entry->pc = GET_PC();
+			entry->pc = last_pc;
 			entry->a = A;
 			entry->x = X;
 			entry->y = Y;
@@ -980,6 +989,7 @@ void CPU_GO(int limit)
 			entry->antic_xpos = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
 			entry->antic_ypos = ANTIC_ypos;
 		}
+
 #ifdef MONITOR_BREAKPOINTS
 	breakpoint_return:
 #endif
@@ -1050,6 +1060,28 @@ void CPU_GO(int limit)
 				entry->instruction[2] = w >> 8;
 			}
 			entry->flag = opcode_history_flags_6502[insn];
+		}
+
+		if (LIBATARI800_Breakpoints && check_breakpoints) {
+			int bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, LIBATARI800_Status, &a8bridge_register_callback);
+			if (bpid >= 0) {
+				LIBATARI800_Status->frame_status = FRAME_BREAKPOINT;
+				LIBATARI800_Status->breakpoint_id = bpid;
+				LIBATARI800_Breakpoints->last_pc = last_pc;
+				if (entry) {
+					history_breakpoint_t *b = (history_breakpoint_t *)entry;
+					b->breakpoint_id = bpid;
+					b->breakpoint_type = LIBATARI800_Breakpoints->breakpoint_type[bpid];
+					b->disassembler_type = DISASM_NEXT_INSTRUCTION;
+					b->disassembler_type_cpu = DISASM_ATARI800_HISTORY;
+				}
+				DO_BREAK;
+				if (LIBATARI800_Breakpoints->last_pc == last_pc) {
+					check_breakpoints = 0;
+				}
+				PC = last_pc;
+				goto recreate_history_entry;
+			}
 		}
 
 #ifdef MONITOR_BREAKPOINTS
@@ -2790,8 +2822,9 @@ void CPU_GO(int limit)
 #else
 	next:
 #endif
+		cyc = ANTIC_xpos - cyc;
 		if (entry) {
-			entry->cycles = ANTIC_xpos - entry->antic_xpos;
+			entry->cycles = cyc;
 			if (entry->a != A || entry->flag == FLAG_REG_A || entry->flag == FLAG_LOAD_A_FROM_MEMORY) {
 				if (entry->flag == 0) entry->flag = FLAG_REG_A;
 				entry->after1 = A;
@@ -2820,6 +2853,11 @@ void CPU_GO(int limit)
 				entry->after3 = CPU_regP;
 			}
 		}
+
+		LIBATARI800_Status->current_instruction_in_frame += 1;
+		LIBATARI800_Status->instructions_since_power_on += 1;
+		LIBATARI800_Status->current_cycle_in_frame += cyc;
+		LIBATARI800_Status->cycles_since_power_on += cyc;
 
 #ifdef MONITOR_PROFILE
 		{

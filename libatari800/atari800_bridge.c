@@ -310,7 +310,7 @@ int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emul
 		printf("a8bridge_calc_frame has the talking stick\n");
 #endif
 	}
-	return -1;
+	return LIBATARI800_Status->breakpoint_id;
 }
 
 

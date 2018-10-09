@@ -49,7 +49,10 @@ if __name__ == "__main__":
         print(emu.main_memory[0xc000:])
         print(emu.program_counter)
         print(emu.current_cpu_status)
-        b = emu.create_breakpoint(0xf018)
+        if emu_name == "atari800":
+            b = emu.create_breakpoint(0xf267)
+        else:
+            b = emu.create_breakpoint(0xf018)
         print(b)
         while emu.current_frame_number < 10:
             brk = emu.next_frame()
