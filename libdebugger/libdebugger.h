@@ -88,10 +88,12 @@ typedef struct {
 
 
 /* operation flags */
-#define OP_BINARY 0x8000
-#define OP_UNARY 0x4000
-#define VALUE_ARGUMENT 0x2000
-#define TOKEN_FLAG 0x0fff
+#define OP_UNARY 0x1000
+#define OP_BINARY 0x2000
+#define VALUE_ARGUMENT 0x3000
+
+#define OP_MASK 0xf000
+#define TOKEN_MASK 0x0fff
 
 /* operations */
 #define END_OF_LIST 0

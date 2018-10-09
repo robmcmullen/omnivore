@@ -108,7 +108,7 @@ int libdebugger_brk_instruction(breakpoints_t *breakpoints) {
 
 /* returns: index number of breakpoint or -1 if no breakpoint condition met. */
 int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *run, cpu_state_callback_ptr get_emulator_value) {
-	uint16_t token, addr, value;
+	uint16_t token, op, addr, value;
 	int64_t ref_val;
 	int i, num_entries, index, status, btype, final_value, count, current_pc;
 	postfix_stack_t stack;
@@ -155,25 +155,26 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 			clear(&stack);
 			for (count=0; count < TOKENS_PER_BREAKPOINT - 1; count++) {
 				token = breakpoints->tokens[index++];
+				op = token & OP_MASK;
 #ifdef DEBUG_BREAKPOINT
 				printf("  index=%d, count=%d token=%x\n", index-1, count, token);
 #endif
 				if (token == END_OF_LIST) goto compute;
 
-				if (token & OP_BINARY) {
+				if (op == OP_BINARY) {
 #ifdef DEBUG_BREAKPOINT
-					printf("  binary: op=%d\n", token & TOKEN_FLAG);
+					printf("  binary: op=%d\n", op);
 #endif
 					process_binary(token, &stack);
 				}
-				else if (token & OP_UNARY) {
+				else if (op == OP_UNARY) {
 #ifdef DEBUG_BREAKPOINT
-					printf("  unary: op=%d\n", token & TOKEN_FLAG);
+					printf("  unary: op=%d\n", op);
 #endif
 					process_unary(token, get_emulator_value, &stack);
 				}
 				else {
-					if (token & VALUE_ARGUMENT) {
+					if (op == VALUE_ARGUMENT) {
 						addr = breakpoints->tokens[index++];
 					}
 					else {
@@ -182,14 +183,14 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 					if (token == NUMBER) {
 						value = addr;
 #ifdef DEBUG_BREAKPOINT
-						printf("  number: op=%d value=%04x\n", token & TOKEN_FLAG, addr);
+						printf("  number: op=%d value=%04x\n", op, addr);
 #endif
 
 					}
 					else {
 						value = get_emulator_value(token, addr);
 #ifdef DEBUG_BREAKPOINT
-						printf("  emu value: op=%d value=%04x\n", token & TOKEN_FLAG, value);
+						printf("  emu value: op=%d value=%04x\n", op, value);
 #endif
 					}
 					push(&stack, value);
