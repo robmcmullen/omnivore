@@ -1,35 +1,43 @@
+from ..assembler.assembler_base import AssemblerBase, AssemblerResult
 from .libatasm import mac65_assemble
 
-class Assemble(object):
-    def __init__(self, source, verbose=False):
-        self.verbose = verbose
+class ATasm(AssemblerBase):
+    name = "atasm"
+    pretty_name = "ATasm (MAC/65)"
+    cpu = "6502"
+
+    comment_char = ";"
+    origin = "*="
+    data_byte = ".byte"
+    data_byte_prefix = "$"
+    data_byte_separator = ", "
+
+    def __init__(self, verbose=False):
+        AssemblerBase.__init__(self, verbose)
+
+    def assemble(self, source):
         if isinstance(source, str):
             source = source.encode("utf-8")
-        self.errors, text = mac65_assemble(source)
-        self.segments = []
-        self.transitory_equates = {}
-        self.equates = {}
-        self.labels = {}
+        result = AssemblerResult()
+        result.errors, text = mac65_assemble(source)
         self.current_parser = self.null_parser
-        self.first_addr = None
-        self.last_addr = None
-        self.current_bytes = []
+        result.first_addr = None
+        result.last_addr = None
+        result.current_bytes = []
         if text:
-            self.parse(text)
+            self.parse(result, text)
+        return result
 
-    def __len__(self):
-        return len(self.segments)
-
-    def null_parser(self, line, cleanup=False):
+    def null_parser(self, result, line, cleanup=False):
         pass
 
-    def source_parser(self, line, cleanup=False):
+    def source_parser(self, result, line, cleanup=False):
         if cleanup:
-            if self.verbose: print("Code block: %x-%x" % (self.first_addr, self.last_addr))
-            self.segments.append((self.first_addr, self.last_addr, self.current_bytes))
-            self.first_addr = None
-            self.last_addr = None
-            self.current_bytes = []
+            if self.verbose: print("Code block: %x-%x" % (result.first_addr, result.last_addr))
+            result.segments.append((result.first_addr, result.last_addr, result.current_bytes))
+            result.first_addr = None
+            result.last_addr = None
+            result.current_bytes = []
             return
 
         lineno, addr, data, text = line[0:5], line[6:10], line[12:30], line[31:]
@@ -38,46 +46,46 @@ class Assemble(object):
         #print hex(index), b
         if b:
             count = len(b)
-            if self.first_addr is None:
-                self.first_addr = self.last_addr = addr
-            elif addr != self.last_addr:
-                if self.verbose: print("Code block: %x-%x" % (self.first_addr, self.last_addr))
-                self.segments.append((self.first_addr, self.last_addr, self.current_bytes))
-                self.first_addr = self.last_addr = addr
-                self.current_bytes = []
+            if result.first_addr is None:
+                result.first_addr = result.last_addr = addr
+            elif addr != result.last_addr:
+                if self.verbose: print("Code block: %x-%x" % (result.first_addr, result.last_addr))
+                result.segments.append((result.first_addr, result.last_addr, result.current_bytes))
+                result.first_addr = result.last_addr = addr
+                result.current_bytes = []
 
-            self.current_bytes.extend(b)
-            self.last_addr += count
+            result.current_bytes.extend(b)
+            result.last_addr += count
 
-    def equates_parser(self, line, cleanup=False):
+    def equates_parser(self, result, line, cleanup=False):
         if cleanup:
             return
         symbol, addr = line.split(": ")
         if symbol[0] == "*":
-            self.transitory_equates[symbol[1:].lower()] = int(addr, 16)
+            result.transitory_equates[symbol[1:].lower()] = int(addr, 16)
         else:
-            self.equates[symbol.lower()] = int(addr, 16)
+            result.equates[symbol.lower()] = int(addr, 16)
 
-    def symbol_parser(self, line, cleanup=False):
+    def symbol_parser(self, result, line, cleanup=False):
         if cleanup:
             return
         symbol, addr = line.split(": ")
-        self.labels[symbol.lower()] = int(addr, 16)
+        result.labels[symbol.lower()] = int(addr, 16)
 
-    def parse(self, text):
+    def parse(self, result, text):
         for line in text.splitlines():
             line = line.strip()
             if not line:
                 continue
             if self.verbose: print("parsing:", line)
             if line.startswith("Source:"):
-                self.current_parser(None, cleanup=True)
+                self.current_parser(result, None, cleanup=True)
                 self.current_parser = self.source_parser
             elif line == "Equates:":
-                self.current_parser(None, cleanup=True)
+                self.current_parser(result, None, cleanup=True)
                 self.current_parser = self.equates_parser
             elif line == "Symbol table:":
-                self.current_parser(None, cleanup=True)
+                self.current_parser(result, None, cleanup=True)
                 self.current_parser = self.symbol_parser
             else:
-                self.current_parser(line)
+                self.current_parser(result, line)

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
-from omni8bit.pyatasm import Assemble
+from omni8bit.assembler import find_assembler
 
-asm = Assemble("libatasm/atasm/tests/works.m65")
+assembler_cls = find_assembler("atasm")
+assembler = assembler_cls()
+
+asm = assembler.assemble("libatasm/atasm/tests/works.m65")
 
 if asm:
     print(asm.segments)

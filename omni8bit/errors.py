@@ -15,3 +15,9 @@ class FrameNotFinishedError(Omni8bitError):
     attempted while in the middle of a frame.
     """
     pass
+
+
+class UnknownAssemblerError(Omni8bitError):
+    """Raised when the requested assembler is not available
+    """
+    pass
