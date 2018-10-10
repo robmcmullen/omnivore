@@ -10,7 +10,7 @@ from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 from atrcopy import DefaultSegment
 
 from omnivore.utils.wx import compactgrid as cg
-from omnivore8bit.byte_edit.linked_base import VirtualLinkedBase
+from omnivore8bit.byte_edit.linked_base import VirtualTableLinkedBase
 
 from ..ui.segment_grid import SegmentGridControl
 
@@ -95,7 +95,10 @@ class VirtualTestViewer(SegmentViewer):
     def replace_linked_base(cls, linked_base):
         # the new linked base decouples the cursor here from the other segments
         segment = DefaultSegment(np.arange(400, dtype=np.uint8))
-        return VirtualLinkedBase(editor=linked_base.editor, segment=segment)
+        return VirtualTableLinkedBase(editor=linked_base.editor, segment=segment)
+
+    def create_post(self):
+        self.linked_base.table = self.control.table
 
     # properties
 

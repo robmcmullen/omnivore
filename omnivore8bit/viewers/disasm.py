@@ -11,7 +11,7 @@ from atrcopy import DefaultSegment
 from omni8bit.disassembler import DisassemblyConfig, flags
 
 from omnivore.utils.wx import compactgrid as cg
-from omnivore8bit.byte_edit.linked_base import VirtualLinkedBase
+from omnivore8bit.byte_edit.linked_base import VirtualTableLinkedBase
 
 from ..ui.segment_grid import SegmentGridControl
 

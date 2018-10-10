@@ -7,6 +7,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined
 
 from omnivore.framework.undo_panel import UndoHistoryPanel
+from ..byte_edit.linked_base import VirtualTableLinkedBase
 from ..byte_edit.segments import SegmentList
 from . import SegmentViewer
 
@@ -39,6 +40,26 @@ class BaseInfoViewer(SegmentViewer):
 
     def get_notification_count(self):
         return 0
+
+
+class VirtualTableInfoViewer(BaseInfoViewer):
+    """Info viewer for data that based on data from the segment but doesn't
+    display the actual bytes segment in any one-to-one manner. This decouples
+    the caret locations so clicking here won't move the cursor in other views.
+    """
+
+    @classmethod
+    def replace_linked_base(cls, linked_base):
+        # the new linked base decouples the cursor here from the other segments
+        return VirtualTableLinkedBase(editor=linked_base.editor, segment=linked_base.segment)
+
+    def create_post(self):
+        self.linked_base.table = self.control.table
+
+    # override caret display to not respond to caret move requests from other
+    # viewers
+    def show_caret(self, control, index, bit):
+        pass
 
 
 CommentItem = namedtuple('CommentItem', ('segment', 'index', 'label', 'font', 'type'))

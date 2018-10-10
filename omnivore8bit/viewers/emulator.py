@@ -14,7 +14,8 @@ from omnivore.utils.command import DisplayFlags
 from ..byte_edit.segments import SegmentList
 from ..ui.segment_grid import SegmentVirtualGridControl, SegmentVirtualTable, SegmentGridTextCtrl
 from . import SegmentViewer
-from .info import BaseInfoViewer
+from .info import VirtualTableInfoViewer
+from ..byte_edit.linked_base import VirtualTableLinkedBase
 
 import logging
 log = logging.getLogger(__name__)
@@ -108,6 +109,9 @@ class CPU6502Table(SegmentVirtualTable):
     # a, p, sp, x, y, _, pc. It's overridden below in compute_col_lookup
     col_from_cpu_state = [0, 3, 4, 1, 1, 1, 1, 1, 1, 1, 1, 2, 6]
 
+    def calc_last_valid_index(self):
+        return self.items_per_row
+
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.cpu_state
         self.compute_col_lookup(data.dtype)
@@ -138,7 +142,7 @@ class CPU6502Table(SegmentVirtualTable):
         return "cpu"
 
 
-class CPUParamTableViewer(BaseInfoViewer):
+class CPUParamTableViewer(VirtualTableInfoViewer):
     name = "<base class>"
 
     viewer_category = "Emulator"
@@ -150,9 +154,6 @@ class CPUParamTableViewer(BaseInfoViewer):
     @property
     def linked_base_segment_identifier(self):
         return ""
-
-    def show_caret(self, control, index, bit):
-        pass
 
 
 class CPU6502Viewer(CPUParamTableViewer):
@@ -171,12 +172,7 @@ class DtypeTable(SegmentVirtualTable):
     want_row_header = True
     verbose = False
 
-    def get_data_style_view(self, linked_base):
-        data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
-        print((data.dtype.names))
-        return data, data
-
-    def calc_labels(self):
+    def calc_num_rows(self):
         self.row_labels = []
         offsets = []
         self.label_char_width = 1
@@ -189,7 +185,19 @@ class DtypeTable(SegmentVirtualTable):
             if size > self.label_char_width:
                 self.label_char_width = size
         self.row_offsets_into_data = np.asarray(offsets, dtype=np.int32)
-        self.num_rows = len(self.row_labels)
+        return len(self.row_labels)
+
+    def calc_last_valid_index(self):
+        return (self.items_per_row * self.num_rows) - 1
+
+    def get_data_style_view(self, linked_base):
+        data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
+        print((data.dtype.names))
+        return data, data
+
+    def create_row_labels(self):
+        # already generated above
+        pass
 
     def get_row_label_text(self, start_line, num_lines, step=1):
         last_line = min(start_line + num_lines, self.num_rows)

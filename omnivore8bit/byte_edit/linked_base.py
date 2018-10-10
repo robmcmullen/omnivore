@@ -496,11 +496,18 @@ class LinkedBase(CaretHandler):
         self.calc_action_enabled_flags()
 
 
-class VirtualLinkedBase(LinkedBase):
-    """A LinkedBase for virtual data; that is, data that is computed on the
-    fly or data that is generated and doesn't physically reside in the 
-    segment data.
+class VirtualTableLinkedBase(LinkedBase):
+    """A LinkedBase for virtual data; that is, data that is computed on the fly
+    or data that is generated and doesn't physically reside in the segment
+    data. It is linked to a HexTable that provides the sizing information.
     """
+
+    table = Any
+
+    @property
+    def document_length(self):
+        return self.table.last_valid_index + 1
+
     def find_segment_parser(self, parsers, segment_name=None):
         log.debug("segment change operations ignored on VirtualLinkedBase")
 
