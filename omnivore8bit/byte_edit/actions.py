@@ -13,20 +13,20 @@ from pyface.api import YES, NO
 
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
-from omnivore.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
-from omnivore.utils.command import StatusFlags
+from omnivore_framework.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+from omnivore_framework.utils.command import StatusFlags
 
 from .commands import *
 from ..arch.disasm import ANTIC_DISASM, JUMPMAN_LEVEL, JUMPMAN_HARVEST, UNINITIALIZED_DATA
 from ..arch.ui.antic_colors import AnticColorDialog
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
+from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from ..ui.dialogs import SegmentOrderDialog, SegmentInterleaveDialog
 from ..arch.machine import Machine
 from ..document import SegmentedDocument
-from omnivore.framework.minibuffer import *
-from omnivore.utils.textutil import parse_int_label_dict
-from omnivore.utils.nputil import count_in_range
-from omnivore.utils.jsonutil import dict_to_list
+from omnivore_framework.framework.minibuffer import *
+from omnivore_framework.utils.textutil import parse_int_label_dict
+from omnivore_framework.utils.nputil import count_in_range
+from omnivore_framework.utils.jsonutil import dict_to_list
 from .. import clipboard_commands as cc
 from .. import emulators as emu
 

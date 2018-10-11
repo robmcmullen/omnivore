@@ -1,12 +1,12 @@
 import wx
 
 from .mouse_event_mixin import MouseEventMixin
-from omnivore.utils.command import DisplayFlags
-from omnivore.utils.wx import compactgrid as cg
-from omnivore.utils.wx.char_event_mixin import CharEventMixin
-from omnivore.framework.mouse_mode import MouseMode
+from omnivore_framework.utils.command import DisplayFlags
+from omnivore_framework.utils.wx import compactgrid as cg
+from omnivore_framework.utils.wx.char_event_mixin import CharEventMixin
+from omnivore_framework.framework.mouse_mode import MouseMode
 from ..arch.disasm import get_style_name
-from omnivore.framework import actions as fa
+from omnivore_framework.framework import actions as fa
 from ..byte_edit import actions as ba
 from ..viewers import actions as va
 from ..commands import SetRangeValueCommand

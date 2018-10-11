@@ -6,8 +6,8 @@ import numpy as np
 
 from traits.api import on_trait_change, Bool, Undefined
 
-from omnivore.utils.nputil import intscale
-from omnivore.utils.wx import compactgrid as cg
+from omnivore_framework.utils.nputil import intscale
+from omnivore_framework.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from . import SegmentViewer

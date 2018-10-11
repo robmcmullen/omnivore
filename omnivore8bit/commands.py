@@ -1,9 +1,9 @@
 import numpy as np
 
-from omnivore.utils.command import Command, UndoInfo
-from omnivore.utils.sortutil import ranges_to_indexes, indexes_to_ranges
-from omnivore.utils.file_guess import FileGuess
-from omnivore.utils.permute import bit_reverse_table
+from omnivore_framework.utils.command import Command, UndoInfo
+from omnivore_framework.utils.sortutil import ranges_to_indexes, indexes_to_ranges
+from omnivore_framework.utils.file_guess import FileGuess
+from omnivore_framework.utils.permute import bit_reverse_table
 
 import logging
 log = logging.getLogger(__name__)

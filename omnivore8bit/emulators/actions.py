@@ -13,11 +13,11 @@ from pyface.api import YES, NO
 
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
-from omnivore.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
-from omnivore.utils.command import StatusFlags
+from omnivore_framework.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+from omnivore_framework.utils.command import StatusFlags
 
 from subprocess import *
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
+from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from ..ui.dialogs import SegmentOrderDialog
 from .. import emulators as emu
 from .document import EmulationDocument

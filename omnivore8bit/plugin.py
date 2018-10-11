@@ -4,7 +4,7 @@ import os
 # Enthought library imports.
 from traits.api import List, TraitError
 
-from omnivore.framework.plugin import FrameworkPlugin
+from omnivore_framework.framework.plugin import FrameworkPlugin
 
 
 class OmnivoreEditorPlugin(FrameworkPlugin):

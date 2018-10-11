@@ -1,8 +1,8 @@
 import numpy as np
 
-from omnivore.utils.command import Command, UndoInfo
+from omnivore_framework.utils.command import Command, UndoInfo
 from .commands import SegmentCommand
-from omnivore.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
+from omnivore_framework.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
 
 import logging
 log = logging.getLogger(__name__)

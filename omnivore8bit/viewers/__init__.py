@@ -6,15 +6,15 @@ import wx
 from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, on_trait_change, HasTraits, Undefined
 from envisage.api import ExtensionPoint
 
-from omnivore.framework.plugin import FrameworkPlugin
+from omnivore_framework.framework.plugin import FrameworkPlugin
 from ..byte_edit.linked_base import LinkedBase
-import omnivore.framework.actions as fa
+import omnivore_framework.framework.actions as fa
 from ..byte_edit import actions as ba
 from ..clipboard_commands import PasteCommand
 from ..arch import fonts
 
-from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
-from omnivore.utils.command import DisplayFlags
+from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from omnivore_framework.utils.command import DisplayFlags
 
 from ..arch.machine import Machine, Atari800
 from ..utils import searchutil

@@ -8,11 +8,11 @@ import wx
 import numpy as np
 
 # Enthought library imports.
-from omnivore.framework.enthought_api import Action, ActionItem
+from omnivore_framework.framework.enthought_api import Action, ActionItem
 
-from omnivore.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
-from omnivore.utils.textutil import text_to_int
-from omnivore.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
+from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
+from omnivore_framework.utils.textutil import text_to_int
+from omnivore_framework.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
 from ..byte_edit.actions import UseSegmentAction
 
 from ..viewers.commands import SetValueCommand

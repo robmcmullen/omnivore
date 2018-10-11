@@ -68,7 +68,7 @@ def main(argv):
         _.setLevel(logging.WARNING)
 
     # check for logging early so we can get logging output during application init
-    import omnivore.utils.wx.error_logger as error_logger
+    import omnivore_framework.utils.wx.error_logger as error_logger
     if "-d" in argv:
         i = argv.index("-d")
         error_logger.enable_loggers(argv[i+1])
@@ -100,15 +100,17 @@ def main(argv):
         plugins.extend(omnivore8bit.viewers.plugins)
     except ImportError as e:
         plugins = []
+        raise
     except ModuleNotFoundError as e:
         plugins = []
+        raise
 
-    # Crypto is separated to make it easy to make it optional for those
-    # framework users who don't want the extra dependencies
-    import omnivore_extra.crypto.file_type
-    plugins.extend(omnivore_extra.crypto.file_type.plugins)
+    # # Crypto is separated to make it easy to make it optional for those
+    # # framework users who don't want the extra dependencies
+    # import omnivore_extra.crypto.file_type
+    # plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
-    from omnivore.app_init import run
+    from omnivore_framework.app_init import run
     from omnivore8bit.document import SegmentedDocument
     run(plugins=plugins, use_eggs=False, document_class=SegmentedDocument)
 
@@ -117,7 +119,7 @@ def main(argv):
 
 if __name__ == '__main__':
     import sys
-    from omnivore.app_init import setup_frozen_logging
+    from omnivore_framework.app_init import setup_frozen_logging
     
     setup_frozen_logging()
     main(sys.argv)

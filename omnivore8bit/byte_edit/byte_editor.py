@@ -12,17 +12,17 @@ from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, F
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
-from omnivore.framework.editor import FrameworkEditor
-import omnivore.framework.clipboard as clipboard
-from omnivore.utils.file_guess import FileMetadata
-from omnivore.utils.wx.tilemanager import TileManager
-from omnivore.templates import get_template
+from omnivore_framework.framework.editor import FrameworkEditor
+import omnivore_framework.framework.clipboard as clipboard
+from omnivore_framework.utils.file_guess import FileMetadata
+from omnivore_framework.utils.wx.tilemanager import TileManager
+from omnivore_framework.templates import get_template
 from ..arch.machine import Machine, Atari800
 from ..document import SegmentedDocument
 from ..utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
 from .. import emulators as emu
 
-from omnivore.utils.processutil import run_detach
+from omnivore_framework.utils.processutil import run_detach
 
 from .linked_base import LinkedBase
 

@@ -7,9 +7,9 @@ from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_
 
 from traits.api import on_trait_change, Bool, Undefined, Int, Str, Dict, Any
 
-from omnivore.utils.nputil import intscale
-from omnivore.utils.wx import compactgrid as cg
-from omnivore.templates import get_template
+from omnivore_framework.utils.nputil import intscale
+from omnivore_framework.utils.wx import compactgrid as cg
+from omnivore_framework.templates import get_template
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel

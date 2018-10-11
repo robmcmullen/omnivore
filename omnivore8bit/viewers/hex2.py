@@ -8,7 +8,7 @@ from traits.api import on_trait_change, Bool
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
-from omnivore.utils.wx import compactgrid as cg
+from omnivore_framework.utils.wx import compactgrid as cg
 from ..arch.disasm import get_style_name
 
 from ..byte_edit.actions import GotoIndexAction

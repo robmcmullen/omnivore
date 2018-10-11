@@ -258,7 +258,7 @@ if __name__ == "__main__":
     """
     simple test for the dialog
     """
-    from omnivore8bit.arch.machine import Machine
+    from omnivore.arch.machine import Machine
 
     a = wx.App(False)
     import wx.lib.inspection

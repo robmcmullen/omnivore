@@ -5,8 +5,8 @@ import numpy as np
 import jsonpickle
 import fs
 
-from omnivore.framework.document import BaseDocument, TraitNumpyConverter
-from omnivore.utils.file_guess import FileGuess
+from omnivore_framework.framework.document import BaseDocument, TraitNumpyConverter
+from omnivore_framework.utils.file_guess import FileGuess
 
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool

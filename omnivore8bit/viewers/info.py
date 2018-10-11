@@ -6,7 +6,7 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
-from omnivore.framework.undo_panel import UndoHistoryPanel
+from omnivore_framework.framework.undo_panel import UndoHistoryPanel
 from ..byte_edit.linked_base import VirtualTableLinkedBase
 from ..byte_edit.segments import SegmentList
 from . import SegmentViewer

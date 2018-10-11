@@ -4,8 +4,8 @@ import wx
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 
-from omnivore.utils.permute import bit_reverse_table
-from omnivore.utils.nputil import intscale, intwscale, intwscale_font
+from omnivore_framework.utils.permute import bit_reverse_table
+from omnivore_framework.utils.nputil import intscale, intwscale, intwscale_font
 
 from . import colors
 from .atascii import internal_to_atascii, atascii_to_internal

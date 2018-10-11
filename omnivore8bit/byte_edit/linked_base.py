@@ -13,9 +13,9 @@ from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, F
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
-from omnivore.framework.editor import FrameworkEditor
-from omnivore.framework.caret import CaretHandler
-from omnivore.utils.command import DisplayFlags
+from omnivore_framework.framework.editor import FrameworkEditor
+from omnivore_framework.framework.caret import CaretHandler
+from omnivore_framework.utils.command import DisplayFlags
 from ..utils.segmentutil import SegmentData, DefaultSegment
 from . import actions as ba
 from . import commands as bc

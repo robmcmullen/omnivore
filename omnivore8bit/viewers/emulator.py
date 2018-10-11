@@ -7,10 +7,10 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
-import omni8bit.atari800 as a8
+from omni8bit.ui.screen import BitmapScreen
 
-from omnivore.utils.wx import compactgrid as cg
-from omnivore.utils.command import DisplayFlags
+from omnivore_framework.utils.wx import compactgrid as cg
+from omnivore_framework.utils.command import DisplayFlags
 from ..byte_edit.segments import SegmentList
 from ..ui.segment_grid import SegmentVirtualGridControl, SegmentVirtualTable, SegmentGridTextCtrl
 from . import SegmentViewer
@@ -74,7 +74,7 @@ class Atari800Viewer(EmulatorViewer):
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
-        return a8.BitmapScreen(parent, linked_base.emulator)
+        return BitmapScreen(parent, linked_base.emulator)
 
     def show_caret(self, control, index, bit):
         pass

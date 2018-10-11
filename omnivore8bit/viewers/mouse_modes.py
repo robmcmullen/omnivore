@@ -11,11 +11,11 @@ import numpy as np
 from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, Undefined, CArray
 
 # Local imports.
-from omnivore.utils.command import Overlay
+from omnivore_framework.utils.command import Overlay
 from ..utils.drawutil import get_bounds
 from ..byte_edit.commands import ChangeByteCommand
 from ..clipboard_commands import PasteCommand, PasteRectCommand
-from omnivore.framework.mouse_mode import MouseMode
+from omnivore_framework.framework.mouse_mode import MouseMode
 
 from .map_commands import *
 

@@ -4,13 +4,13 @@ import bisect
 import fs
 import numpy as np
 
-from omnivore.framework.errors import ProgressCancelError
-from omnivore.utils.command import Command, UndoInfo
+from omnivore_framework.framework.errors import ProgressCancelError
+from omnivore_framework.utils.command import Command, UndoInfo
 from ..commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetRangeCommand, SetRangeValueCommand
-from omnivore.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from ..utils.searchutil import AlgorithmSearcher
-from omnivore.utils.file_guess import FileGuess
-from omnivore.utils.permute import bit_reverse_table
+from omnivore_framework.utils.file_guess import FileGuess
+from omnivore_framework.utils.permute import bit_reverse_table
 
 import logging
 log = logging.getLogger(__name__)

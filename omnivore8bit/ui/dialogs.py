@@ -9,10 +9,10 @@ from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 from atrcopy import get_xex
 
-from omnivore.utils.processutil import which
-from omnivore.utils.textutil import text_to_int
-from omnivore.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
-from omnivore.utils.wx.dialogs import DictEditDialog
+from omnivore_framework.utils.processutil import which
+from omnivore_framework.utils.textutil import text_to_int
+from omnivore_framework.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
+from omnivore_framework.utils.wx.dialogs import DictEditDialog
 
 from ..document import SegmentedDocument
 

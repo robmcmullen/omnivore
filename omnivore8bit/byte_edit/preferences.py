@@ -37,7 +37,7 @@ class ByteEditPreferences(PreferencesHelper):
     #### 'PreferencesHelper' interface ########################################
 
     # The path to the preference node that contains the preferences.
-    preferences_path = 'omnivore.task.byte_edit'
+    preferences_path = 'omnivore_framework.task.byte_edit'
 
     #### Preferences ##########################################################
 

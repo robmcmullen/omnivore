@@ -5,7 +5,7 @@ import wx
 import wx.lib.scrolledpanel as scrolled
 import wx.lib.buttons as buttons
 
-from omnivore.utils.wx.tilelist import TileButton
+from omnivore_framework.utils.wx.tilelist import TileButton
 
 import logging
 log = logging.getLogger(__name__)
@@ -156,8 +156,8 @@ if __name__ == '__main__':
     import sys
     sys.path[0:0] = [".."]
     print(sys.path)
-    import omnivore8bit.arch.fonts as fonts
-    import omnivore8bit.arch.colors as colors
+    import omnivore.arch.fonts as fonts
+    import omnivore.arch.colors as colors
 
     class Wrapper(object):
         def __init__(self, **kwargs):
