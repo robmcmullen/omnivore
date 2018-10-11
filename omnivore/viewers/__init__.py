@@ -704,12 +704,12 @@ class ByteViewersPlugin(FrameworkPlugin):
     """
 
     # Extension point IDs.
-    VIEWERS = 'omnivore8bit.viewers'
+    VIEWERS = 'omnivore.viewers'
 
     #### 'IPlugin' interface ##################################################
 
     # The plugin's unique identifier.
-    id = 'omnivore8bit.viewer.plugin'
+    id = 'omnivore.viewer.plugin'
 
     # The plugin's name (suitable for displaying to the user).
     name = 'Omnivore Byte Viewers'
@@ -719,7 +719,7 @@ class ByteViewersPlugin(FrameworkPlugin):
     viewers = List(contributes_to=VIEWERS)
 
     segment_viewers = ExtensionPoint(
-        List(Instance(SegmentViewer)), id="omnivore8bit.viewers", desc="A list of SegmentViewers that can display the data in a segment"
+        List(Instance(SegmentViewer)), id="omnivore.viewers", desc="A list of SegmentViewers that can display the data in a segment"
     )
 
     def _viewers_default(self):

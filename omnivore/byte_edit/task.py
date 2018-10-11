@@ -675,7 +675,7 @@ class ByteEditTask(FrameworkTask):
 
     @property
     def known_viewers(self):
-        viewers = self.window.application.get_extensions('omnivore8bit.viewers')
+        viewers = self.window.application.get_extensions('omnivore.viewers')
         return viewers
 
     def find_viewer_by_name(self, name):

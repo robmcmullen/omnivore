@@ -90,14 +90,14 @@ def main(argv):
         sys.settrace(trace_calls)
 
     try:
-        from omnivore8bit.plugin import OmnivoreEditorPlugin
+        from omnivore.plugin import OmnivoreEditorPlugin
         plugins = [OmnivoreEditorPlugin()]
 
-        import omnivore8bit.file_type
-        plugins.extend(omnivore8bit.file_type.plugins)
+        import omnivore.file_type
+        plugins.extend(omnivore.file_type.plugins)
         
-        import omnivore8bit.viewers
-        plugins.extend(omnivore8bit.viewers.plugins)
+        import omnivore.viewers
+        plugins.extend(omnivore.viewers.plugins)
     except ImportError as e:
         plugins = []
         raise
@@ -111,7 +111,7 @@ def main(argv):
     # plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
     from omnivore_framework.app_init import run
-    from omnivore8bit.document import SegmentedDocument
+    from omnivore.document import SegmentedDocument
     run(plugins=plugins, use_eggs=False, document_class=SegmentedDocument)
 
     logging.shutdown()
