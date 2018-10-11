@@ -7,7 +7,7 @@ from atrcopy import find_diskimage
 
 from ..debugger import Debugger
 from ..debugger.dtypes import FRAME_STATUS_DTYPE
-from ..history import History
+from .save_state import FrameHistory
 from .. import disassembler as disasm
 
 import logging
@@ -49,7 +49,7 @@ class EmulatorBase(Debugger):
         self.bootfile = None
         self.frame_count = 0
         self.frame_event = []
-        self.history = History()
+        self.frame_history = FrameHistory()
         self.offsets = None
         self.names = None
         self.save_state_memory_blocks = None
@@ -378,15 +378,15 @@ class EmulatorBase(Debugger):
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
         frame_number = int(self.status['frame_number'][0])
-        if force or self.history.is_memorable(frame_number):
+        if force or self.frame_history.is_memorable(frame_number):
             print(f"Saving history at {frame_number}")
             d = self.calc_current_state()
-            self.history.save_frame(frame_number, d)
+            self.frame_history.save_frame(frame_number, d)
             self.print_history(frame_number)
 
     def get_history(self, frame_number):
         frame_number = int(frame_number)
-        raw = self.history[frame_number]
+        raw = self.frame_history[frame_number]
         status = raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
         output = raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
         return status, output
@@ -401,27 +401,27 @@ class EmulatorBase(Debugger):
         if frame_number < 0:
             return
         try:
-            d = self.history[frame_number]
+            d = self.frame_history[frame_number]
         except KeyError:
             log.error(f"{frame_number} not in history")
             pass
         else:
             self.restore_state(d)
-            # self.history[(frame_number + 1):] = []  # remove frames newer than this
-            # print(("  %d items remain in history" % len(self.history)))
+            # self.frame_history[(frame_number + 1):] = []  # remove frames newer than this
+            # print(("  %d items remain in history" % len(self.frame_history)))
             # self.frame_event = []
 
     def print_history(self, frame_number):
-        d = self.history[frame_number]
+        d = self.frame_history[frame_number]
         status = d[:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
         output = d[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
-        print("history[%d] of %d: %d %s" % (status['frame_number'], len(self.history), len(d), output['state'][0][0:8]))
+        print("history[%d] of %d: %d %s" % (status['frame_number'], len(self.frame_history), len(d), output['state'][0][0:8]))
 
     def get_previous_history(self, frame_cursor):
-        return self.history.get_previous_frame(frame_cursor)
+        return self.frame_history.get_previous_frame(frame_cursor)
 
     def get_next_history(self, frame_cursor):
-        return self.history.get_next_frame(frame_cursor)
+        return self.frame_history.get_next_frame(frame_cursor)
 
     # graphics
 

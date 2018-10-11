@@ -87,7 +87,7 @@ ccontinue|cc NUMBER
 import numpy as np
 
 from . import dtypes as dd
-from ..persistence import Serializable
+from ..utils.persistence import Serializable
 
 import logging
 log = logging.getLogger(__name__)

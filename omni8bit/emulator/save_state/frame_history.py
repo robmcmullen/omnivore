@@ -3,13 +3,13 @@ import tempfile
 
 import numpy as np
 
-from ..persistence import Serializable
+from ...utils.persistence import Serializable
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class History(Serializable):
+class FrameHistory(Serializable):
     name = None
 
     serializable_attributes = ['frame_history']
