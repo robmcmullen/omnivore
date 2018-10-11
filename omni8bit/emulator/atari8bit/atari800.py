@@ -7,7 +7,7 @@ from . import dtypes as d
 from . import akey
 from .colors import NTSC
 from ..emulator_base import EmulatorBase
-from ..errors import FrameNotFinishedError
+from ...errors import FrameNotFinishedError
 
 import logging
 log = logging.getLogger(__name__)

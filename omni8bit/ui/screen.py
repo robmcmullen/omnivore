@@ -12,7 +12,7 @@ except ImportError:
 
 import numpy as np
 
-from ..atari800.colors import NTSC
+from ..emulator.atari8bit.colors import NTSC
 from .intscale import intscale
 from .ui_wx import wxGLSLTextureCanvas, wxLegacyTextureCanvas
 

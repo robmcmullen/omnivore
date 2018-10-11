@@ -7,7 +7,7 @@ np.set_printoptions(formatter={'int':hex})
 from . import lib6502
 from . import dtypes as d
 from ..emulator_base import EmulatorBase
-from .. import disassembler as disasm
+from ... import disassembler as disasm
 
 import logging
 logging.basicConfig(level=logging.WARNING)

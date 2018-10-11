@@ -31,7 +31,7 @@ else:
 # extra_compile_args.append("-DDEBUG_POSTFIX_STACK")
 
 extensions = [
-    Extension("omni8bit.atari800.libatari800",
+    Extension("omni8bit.emulator.atari8bit.libatari800",
         sources = [
             "libatari800/atari800_bridge.c",
             "libatari800/atari800_antic.c",
@@ -171,7 +171,7 @@ extensions = [
         include_dirs = [libatari800_config_include, "libatari800/atari800/src", "libatari800/atari800/src/libatari800", "libdebugger", "libudis", np.get_include()],
         undef_macros = [ "NDEBUG" ],
     ),
-    Extension("omni8bit.generic6502.lib6502",
+    Extension("omni8bit.emulator.generic6502.lib6502",
         sources = [
             "lib6502/lib6502.pyx",
             "lib6502/6502-emu_wrapper.c",
@@ -208,7 +208,7 @@ extensions = [
         extra_compile_args = extra_compile_args,
         include_dirs = ["libdebugger", "libudis", np.get_include()],
         ),
-    Extension("omni8bit.pyatasm.libatasm",
+    Extension("omni8bit.assembler.pyatasm.libatasm",
         sources = ["libatasm/libatasm.pyx",
             "libatasm/cython_interface.c",
             "libatasm/atasm/src/asm.c",

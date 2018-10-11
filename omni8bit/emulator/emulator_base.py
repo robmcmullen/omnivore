@@ -5,10 +5,10 @@ import numpy as np
 
 from atrcopy import find_diskimage
 
-from .debugger import Debugger
-from .debugger.dtypes import FRAME_STATUS_DTYPE
-from .history import History
-from . import disassembler as disasm
+from ..debugger import Debugger
+from ..debugger.dtypes import FRAME_STATUS_DTYPE
+from ..history import History
+from .. import disassembler as disasm
 
 import logging
 log = logging.getLogger(__name__)

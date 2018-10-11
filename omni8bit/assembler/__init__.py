@@ -5,10 +5,8 @@ log = logging.getLogger(__name__)
 known_assemblers = []
 default_assembler = None
 
-from ..pyatasm import ATasm
-
 try:
-    from ..pyatasm import ATasm
+    from .pyatasm import ATasm
     known_assemblers.append(ATasm)
     if default_assembler is None:
         default_assembler = ATasm
