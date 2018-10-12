@@ -8,27 +8,48 @@ Omnivore 2.0
 Abstract
 ========
 
-Omnivore - the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
+Omnivore - the 8-bit binary editor, emulator, and debugger
 
 Omnivore is a cross-platform app for modern hardware (running linux, MacOS and
 Windows) to work with executables or disk images of Atari 8-bit and Apple ][+
 machines.
 
-Omnivore is a:
+Features include:
 
+* emulator with debugger (see below)
 * binary editor
-* disassembler
-* miniassembler
+* disassembler (6502, 65C02, 6809, and many other 8-bit CPU architectures)
+* 6502 cross-assembler (ATasm, uses MAC/65 syntox)
 * graphics editor
 * map editor
 * Jumpman level editor (Atari 8-bit platform only)
 
-and soon will contain **a full emulator** for the Atari 8-bit and Apple ][+ machines with these features:
+Emulator
+---------
+
+Omnivore provides unified front-end to several 8-bit CPU and system emulators
+to provide a common set of control methods for both normal operation and
+debugging purposes. This is used as the basis for the emulation support in
+Omnivore.
+
+Currently available are:
+
+* libatari800, an embedded port of the `atari800 emulator <https://atari800.github.io/>`_
+* lib6502, a generic 6502 emulator based on `David Buchanan's 6502-emu <https://github.com/DavidBuchanan314/6502-emu>`_
+* crabapple, a thin layer atop of lib6502 that provides some (tiny, small amount of) Apple ][+ compatibily
+
+The debugger includes:
 
 * rewind capability to return to previous point of emulation
-* debugger able to step forward **and** backward
+* debugger able to step forward (**and**, soon, backward)
 * change any portion of memory or processor state
-* CPU history browser
+* CPU instruction history browser
+* memory access visualizer
+* memory map labels, used for disassembler
+* customizable memory viewer using labels and data types
+
+
+
 
 A Tribute
 ---------
@@ -123,7 +144,7 @@ Get the source from cloning it from github::
 
     $ git clone https://github.com/robmcmullen/omnivore.git
     $ cd omnivore
-    $ python installdeps.py
+    $ git submodule init
     $ python setup.py build_ext --inplace
 
 
@@ -148,7 +169,7 @@ repainting all the character graphics), but it is only required if you were
 going to debug or recompile those specific .pyx files.  Cython is not needed
 for hacking on the python code.
 
-Should you change a cython file (e.g. omnivore8bit/arch/antic_speedups.pyx),
+Should you change a cython file (e.g. omnivore/arch/antic_speedups.pyx),
 use the command ``python setup-cython.py`` to turn that into a C extension,
 then use ``python setup.py build_ext --inplace`` to regenerate the dynamic
 libraries.
@@ -167,11 +188,65 @@ understand.  I intend to produce some sample plugins to provide some examples
 in case others would like to provide more functionality to Omnivore.
 
 
+Usage
+=======
+
+In addition to the Omnivore program itself, this module can be used in other
+projects. For example, Omnivore supplies a python front-end to the cross
+assembler ATasm, meaning you can compile 6502 code right from your python
+program.
+
+ATasm Example
+-----------------
+
+From the ATasm readme::
+
+    ATasm is a 6502 command-line cross-assembler that is compatible with the
+    original Mac/65 macroassembler released by OSS software.  Code
+    development can now be performed using "modern" editors and compiles
+    with lightning speed.
+
+A simple example::
+
+    #!/usr/bin/env python
+
+    from omnivore.assembler import find_assembler
+
+    assembler_cls = find_assembler("atasm")
+    assembler = assembler_cls()
+
+    asm = assembler.assemble("libatasm/atasm/tests/works.m65")
+
+    if asm:
+        print(asm.segments)
+        print(asm.equates)
+        print(asm.labels)
+    else:
+        print(asm.errors)
+
+Because omnivore provides a very thin wrapper around ATasm (and very little
+ATasm code was changed) it needs to creates files to do its work. These files
+will be created in the same directory as the source file, so the directory must
+be writeable.
+
+The segments attribute will contain a list of 3-tuples, each tuple being the
+start address, the end address, and the bytes for each segment of the assembly.
+A segment is defined as a contiguous sequence of bytes. If there is change of
+origin, a new segment will be created.
+
+
+
 Disclaimer
 ==========
 
-Omnivore, the Atari 8-bit binary editor sponsored by the Player/Missile Podcast
-Copyright (c) 2014-2017 Rob McMullen (feedback@playermissile.com)
+No warranty is expressed or implied. Do not taunt Happy Fun Ball.
+
+
+Licenses
+========
+
+Omnivore, the 8-bit binary editor, emulator, and debugger
+Copyright (c) 2014-2018 Rob McMullen (feedback@playermissile.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -188,31 +263,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-Enthought License
------------------
+Other Licenses
+---------------
 
-Copyright (c) 2006-2014, Enthought, Inc.
-All rights reserved.
+* `dirent.h <https://github.com/tronkko/dirent>`_ is Copyright (c) 2015 Toni Rönkkö. It is Windows compatibility code used in libatari800 and licensed under the MIT license which is GPL compatible. See the file LICENSE.MIT in the source distribution.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+* atari800 is Copyright (c) 1995-1998 David Firth and Copyright (c) 1998-2018 Atari800 development team, licensed under the GPL, same as Omnivore itself.
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-* Neither the name of Enthought, Inc. nor the names of its contributors may
-  be used to endorse or promote products derived from this software without
-  specific prior written permission.
+* `6502-emu <https://github.com/DavidBuchanan314/6502-emu>`_ is Copyright (c) 2017 David Buchanan and licensed under the MIT license. See the file LICENSE.MIT in the source distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* `udis <https://github.com/jefftranter/udis>`_ is Copyright (c) Jeff Tranter. It is the basis for libudis, my fast C disassembler. It is licensed under the Apache 2.0 license. See the file LICENSE.apache in the source distribution.
+
+* `ATasm <http://atari.miribilist.com/atasm/>`_ is Copyright (c) 1998-2014 Mark Schmelzenbach and licensed under the GPL, the same as Omnivore itself.
+
+* `tinycthread <https://tinycthread.github.io/>`_ is Copyright (c) 2012 Marcus Geelnard and Copyright (c) 2013-2016 Evan Nemerson, licensed under the zlib/libpng license. See the file LICENSE.tinycthread in the source distribution.
+
