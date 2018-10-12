@@ -1,6 +1,6 @@
 import numpy as np
 
-import omni8bit.disassembler as udis_fast
+import ..disassembler as udis_fast
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 

@@ -7,7 +7,7 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
-from omni8bit.ui.screen import BitmapScreen
+from ..ui.screen import BitmapScreen
 
 from omnivore_framework.utils.wx import compactgrid as cg
 from omnivore_framework.utils.command import DisplayFlags

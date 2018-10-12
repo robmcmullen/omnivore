@@ -1,9 +1,11 @@
 [submodule "lib6502/6502-emu"]
 	path = lib6502/6502-emu
 	url = git@github.com:robmcmullen/6502-emu.git
+	branch = lib6502
 [submodule "libatari800/atari800"]
 	path = libatari800/atari800
 	url = git@github.com:robmcmullen/atari800.git
+	branch = libatari800-only
 [submodule "libudis/udis"]
 	path = libudis/udis
-	url = https://github.com/robmcmullen/udis.git
+	url = git@github.com:robmcmullen/udis.git

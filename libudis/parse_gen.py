@@ -23,13 +23,13 @@ import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
 # mnemonic flags
-from omni8bit.disassembler.flags import und, z80bit, lbl, pcr
+from omnivore.disassembler.flags import und, z80bit, lbl, pcr
 
 import logging
 log = logging.getLogger(__name__)
 
-# from omni8bit.disassembler.flags import *
-from omni8bit.disassembler import cputables
+# from omnivore.disassembler.flags import *
+from omnivore.disassembler import cputables
 
 # This is declared here so that CPUs will have consistent types for backward
 # compatibility. Do not reuse ID numbers if CPUs are removed from this list.

@@ -1,6 +1,6 @@
 import wx
 
-from omni8bit import find_emulator, default_emulator
+from .. import find_emulator, default_emulator
 
 from .document import EmulationDocument
 

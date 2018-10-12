@@ -8,7 +8,7 @@ from pyface.tasks.api import Task, TaskWindow, TaskLayout, PaneItem, IEditor, \
 from pyface.tasks.action.api import SMenuBar, SMenu, SToolBar, SchemaAddition
 from traits.api import on_trait_change, Property, Instance, Any, Event, Int, Bool
 
-from omni8bit import known_emulators
+from .. import known_emulators
 
 from omnivore_framework.framework.task import FrameworkTask
 from omnivore_framework.framework import actions as fa

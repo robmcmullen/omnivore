@@ -9,8 +9,8 @@ from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import DefaultSegment
 
-from omni8bit.disassembler import flags
-from omni8bit.disassembler import dtypes as dd
+from ..disassembler import flags
+from ..disassembler import dtypes as dd
 
 from omnivore_framework.utils.wx import compactgrid as cg
 from ..byte_edit.linked_base import VirtualTableLinkedBase

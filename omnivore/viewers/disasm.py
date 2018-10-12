@@ -8,7 +8,7 @@ import wx
 from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
 from atrcopy import DefaultSegment
-from omni8bit.disassembler import DisassemblyConfig, flags
+from ..disassembler import DisassemblyConfig, flags
 
 from omnivore_framework.utils.wx import compactgrid as cg
 from ..byte_edit.linked_base import VirtualTableLinkedBase

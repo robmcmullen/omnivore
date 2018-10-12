@@ -8,7 +8,7 @@ from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, SegmentPa
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float, Undefined
 
-from omni8bit import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError
+from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError
 
 from ..document import SegmentedDocument
 
