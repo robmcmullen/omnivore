@@ -1,8 +1,0 @@
-include lib6502/*.h
-include libatari800/*.h
-include libatasm/*.pyx
-include libdebugger/*.h
-include libudis/*.h
-include libudis/*.pyx
-include run.py wxatari.py
-include test_disasm.py test_libatasm.py test_libudis.py
