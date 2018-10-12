@@ -1,6 +1,6 @@
 import numpy as np
 
-import ..disassembler as udis_fast
+from .. import disassembler as udis_fast
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, user_bit_mask, data_style
 

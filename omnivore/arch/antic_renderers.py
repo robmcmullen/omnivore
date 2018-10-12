@@ -1148,7 +1148,7 @@ def get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, byte
     print(f"SLOW VERSION OF get_numpy_memory_access_image; frame = {current_frame_number}")
     print(source)
 
-    import ..debugger.dtypes as dd
+    from ..debugger import dtypes as dd
 
     for j in range(nr):
         for i in range(bytes_per_row):
