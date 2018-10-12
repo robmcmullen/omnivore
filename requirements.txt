@@ -1,7 +1,0 @@
-numpy
-atrcopy>=3.1.0
-jsonpickle
-bson<1.0.0
-configobj
-pyparsing
-pyatasm
