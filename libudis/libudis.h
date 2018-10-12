@@ -1,0 +1,120 @@
+#ifndef LIBUDIS_H
+#define LIBUDIS_H
+#include <stdint.h>
+
+#include "libudis_flags.h"
+
+/* The history structure must match the definition in omni8bit/disassembler/dtypes.py */
+
+/* cycles
+
+	abaaaccc
+
+	a: 1 = target addr is used, 0 = not
+	b: 1 = target addr is write, 0 = not
+	c = number of cycles (0 - 7)
+*/
+
+typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[16];
+} history_entry_t; /* 24 bytes */
+
+typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[3];
+	uint8_t a;
+	uint8_t x;
+	uint8_t y;
+	uint8_t sp;
+	uint8_t sr;
+	uint8_t before1;
+	uint8_t after1;
+	uint8_t before2;
+	uint8_t after2;
+	uint8_t before3;
+	uint8_t after3;
+	uint8_t extra1;
+	uint8_t extra2;
+} history_6502_t; /* 24 bytes */
+
+typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[3];
+	uint8_t a;
+	uint8_t x;
+	uint8_t y;
+	uint8_t sp;
+	uint8_t sr;
+	uint8_t before1;
+	uint8_t after1;
+	uint8_t before2;
+	uint8_t after2;
+	uint8_t before3;
+	uint8_t after3;
+	uint8_t antic_xpos;
+	uint8_t antic_ypos;
+} history_atari800_t; /* 24 bytes */
+
+typedef struct {
+	uint32_t frame_number;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[16];
+} history_frame_t; /* 24 bytes */
+
+typedef struct {
+	uint16_t pc;
+	uint16_t target_addr;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t cycles;
+	uint8_t instruction[16];
+} history_interrupt_t; /* 24 bytes */
+
+typedef struct {
+	uint16_t pc;
+	uint8_t breakpoint_id;
+	uint8_t breakpoint_type;
+	uint8_t num_bytes;
+	uint8_t disassembler_type;
+	uint8_t flag;
+	uint8_t disassembler_type_cpu;
+	uint8_t instruction[16];
+} history_breakpoint_t; /* 24 bytes */
+
+typedef struct {
+	int32_t num_allocated_entries;
+	int32_t num_entries;
+	int32_t first_entry_index;
+	int32_t latest_entry_index;
+	uint32_t cumulative_count;
+	history_entry_t *entries;
+} emulator_history_t;
+
+typedef int (*string_func_t)(history_entry_t *, char *, char *, int, unsigned short *);
+
+int opcode_history_flags_6502[256];
+
+history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
+
+
+#endif /* LIBUDIS_H */
