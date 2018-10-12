@@ -1,13 +1,7 @@
-# setup file for only the framework part of Omnivore. Includes:
+# setup file for only the framework part of Omnivore_framework. Includes:
 #
 # Enthought (traits, traitsui, pyface, apptools, envisage)
 # pyfilesystem
-# 
-# Doesn't include:
-#
-# omnivore8bit
-# omnivore_extra
-# udis
 #
 import os
 import sys
@@ -31,8 +25,8 @@ install_requires = [
 
 cmdclass = dict()
 
-import omnivore
-full_version = omnivore.__version__
+import omnivore_framework
+full_version = omnivore_framework.__version__
 spaceless_version = full_version.replace(" ", "_")
 
 common_includes = [
@@ -68,7 +62,7 @@ common_includes = [
     "pyface.ui.wx.tasks.*",
     "pyface.ui.wx.workbench.*",
 ]
-common_includes.extend(omnivore.get_py2exe_toolkit_includes())
+common_includes.extend(omnivore_framework.get_py2exe_toolkit_includes())
 
 py2app_includes = [
 ]
@@ -117,7 +111,7 @@ package_data = {
                'ui/wx/images/*',
                'ui/wx/grid/images/*',
                ],
-    'omnivore': ['icons/*.png',
+    'omnivore_framework': ['icons/*.png',
                  'icons/*.ico',
                  'utils/*.png',
                  'templates/*',
@@ -125,7 +119,7 @@ package_data = {
     }
 
 # Remove qt & other unnecessary stuff
-packages = [p for p in find_packages() if not (".qt4" in p or "omnivore8bit" in p or "omnivore_extra" in p)]
+packages = [p for p in find_packages() if not ".qt4" in p]
 #print(all_packages)
 
 base_dist_dir = "dist-%s" % spaceless_version
@@ -142,10 +136,10 @@ data_files = []
 setup(
     name = 'omnivore-framework',
     version = full_version,
-    author = omnivore.__author__,
-    author_email = omnivore.__author_email__,
-    url = omnivore.__url__,
-    download_url = ('%s/%s.tar.gz' % (omnivore.__download_url__, full_version)),
+    author = omnivore_framework.__author__,
+    author_email = omnivore_framework.__author_email__,
+    url = omnivore_framework.__url__,
+    download_url = ('%s/%s.tar.gz' % (omnivore_framework.__download_url__, full_version)),
     classifiers = [c.strip() for c in """\
         Development Status :: 5 - Production/Stable
         Intended Audience :: Developers

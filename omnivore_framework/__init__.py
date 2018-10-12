@@ -5,8 +5,8 @@
 __author__ = "Rob McMullen"
 __author_email__ = "feedback@playermissile.com"
 __url__ = "http://playermissile.com/omnivore"
-__download_url__ = "https://github.com/robmcmullen/omnivore/archive"
-__bug_report_url__ = "https://github.com/robmcmullen/omnivore/issues"
+__download_url__ = "https://github.com/robmcmullen/omnivore_framework/archive"
+__bug_report_url__ = "https://github.com/robmcmullen/omnivore_framework/issues"
 
 # The real version number is maintained in a file that's under version control
 # so I don't have to keep updating and checking in the file
