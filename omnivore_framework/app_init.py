@@ -88,7 +88,7 @@ def setup_frozen_logging():
         sys.stderr = sys.stdout
 
 
-def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[], startup_task="", application_name="Omnivore", debug_log=False, document_class=None):
+def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[], startup_task="", application_name="Omnivore", debug_log=False, document_class=None, about_version=""):
     """Start the application
     
     :param plugins: list of user plugins
@@ -172,7 +172,6 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[],
     import os
     image_paths = image_path[:]
     image_paths.append(get_image_path("icons"))
-    image_paths.append(get_image_path("../omnivore8bit/icons"))
     resource_manager.extra_paths.extend(image_paths)
 
     from .templates import template_subdirs
@@ -185,6 +184,8 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[],
         kwargs['name'] = application_name
     if document_class:
         kwargs['document_class'] = document_class
+    if about_version:
+        kwargs['about_version'] = about_version
 
     # Create a debugging log
     if debug_log:

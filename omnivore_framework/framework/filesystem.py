@@ -19,10 +19,12 @@ import logging
 log = logging.getLogger(__name__)
 
 from .. import __version__, __author__, __author_email__, __url__
-substitutes = {
+
+def calc_about_app(version):
+    substitutes = {
     'prog': 'Omnivore XL',
-    'yearrange': '2014-2017',
-    'version': __version__,
+    'yearrange': '2014-2018',
+    'version': str(version),
     'description': "The binary editor and disassembler for modern 8-bit hackers",
     'tagline': "Byte into the meat of 8-bit software!",
     'author': __author__,
@@ -56,9 +58,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 <li>Charles Mangin for the Apple ][ and KIM-1 memory maps
 </ul>""",
     }
-substitutes['copyright'] = 'Copyright (c) %(yearrange)s %(author)s (%(author_email)s)' % substitutes
+    substitutes['copyright'] = 'Copyright (c) %(yearrange)s %(author)s (%(author_email)s)' % substitutes
 
-about = {
+    about = {
     "omnivore": """<html>
 <h2>%(prog)s %(version)s</h2>
 
@@ -76,8 +78,12 @@ about = {
 
 <p>%(contributors)s</p>
 """ % substitutes,
-    "logo.png": ImageResource('omnivore256'),
     }
+    return about
+
+about = {
+    "logo.png": ImageResource('omnivore256'),
+}
 
 
 # FIXME: can't seem to figure out how to create a subclass of InputStream,
@@ -349,11 +355,19 @@ def init_about_filesystem(task_factories):
     opener.add(AboutOpener)
     opener.add(TemplateOpener)
     opener.add(BlankOpener)
-    for name, text in about.items():
-        save_to_about_filesystem(name, text)
+    populate_about(about)
+    init_about_app(__version__)
     for factory in task_factories:
         for name, text in factory.factory.about_filesystem.items():
             save_to_about_filesystem(name, text)
+
+def populate_about(about_dict):
+    for name, text in about_dict.items():
+        save_to_about_filesystem(name, text)
+
+def init_about_app(version):
+    about = calc_about_app(version)
+    populate_about(about)
 
 def save_to_about_filesystem(name, text):
     url = "about://%s" % name

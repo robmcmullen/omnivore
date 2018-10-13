@@ -19,7 +19,7 @@ from apptools.preferences.api import Preferences
 # Local imports.
 from .enthought_api import FrameworkTaskWindow
 from .persistence import FilePersistenceMixin
-from .filesystem import init_filesystems
+from .filesystem import init_filesystems, init_about_app
 from .document import BaseDocument
 from . import documentation
 from ..help import get_htmlhelp, MissingDocumentationError
@@ -93,6 +93,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
 
     document_class = Any
 
+    about_version = Str
+
     documents = List
 
     last_clipboard_check_time = Float(-1)
@@ -146,6 +148,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
         # Note: happens after _window_created_fired and _window_open_fired
         log.debug("STARTING!!!")
         init_filesystems(self.task_factories)
+        if self.about_version:
+            init_about_app(self.about_version)
         loaded = False
         parser = argparse.ArgumentParser(description="Application parser")
         parser.add_argument("-t", "--task_id", "--task-id", "--edit_with","--edit-with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
