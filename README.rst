@@ -145,6 +145,7 @@ Get the source from cloning it from github::
     $ git clone https://github.com/robmcmullen/omnivore.git
     $ cd omnivore
     $ git submodule init
+    $ git submodule update
     $ python setup.py build_ext --inplace
 
 
