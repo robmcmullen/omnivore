@@ -105,6 +105,9 @@ def main(argv):
         plugins = []
         raise
 
+    from omnivore_framework import get_image_path
+    image_path = [get_image_path("omnivore/icons")]
+
     # # Crypto is separated to make it easy to make it optional for those
     # # framework users who don't want the extra dependencies
     # import omnivore_extra.crypto.file_type
@@ -112,7 +115,8 @@ def main(argv):
 
     from omnivore_framework.app_init import run
     from omnivore.document import SegmentedDocument
-    run(plugins=plugins, use_eggs=False, document_class=SegmentedDocument)
+    from omnivore._metadata import __version__
+    run(plugins=plugins, use_eggs=False, image_path=image_path, document_class=SegmentedDocument, about_version=__version__)
 
     logging.shutdown()
 
