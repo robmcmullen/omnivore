@@ -272,6 +272,7 @@ setup(
     description = "Unified front-end providing common interface to control several 8 bit emulators",
     long_description = open('README.rst').read(),
     ext_modules = cythonize(extensions),
+    include_dirs = [np.get_include()],
     packages = find_packages(exclude=["libudis"]),
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
     zip_safe = False,
