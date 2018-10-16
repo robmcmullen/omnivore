@@ -6,8 +6,8 @@ import pytest
 
 import numpy as np
 
-import omni8bit
-from omni8bit.history import History
+import omnivore
+from omnivore.history import History
 
 def compare(array1, array2, name="output"):
     diffs = np.where(array1 - array2 != 0)[0]
@@ -17,7 +17,7 @@ def compare(array1, array2, name="output"):
 
 class TestHistory(object):
     def setup(self):
-        emu_cls = omni8bit.find_emulator('6502')
+        emu_cls = omnivore.find_emulator('6502')
         self.emu = emu_cls()
         self.emu.configure_emulator()
 

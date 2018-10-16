@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from omni8bit.udis_fast import miniasm
+from omnivore.udis_fast import miniasm
 
 
 cputests = [

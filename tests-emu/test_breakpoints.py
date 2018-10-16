@@ -3,7 +3,7 @@ sys.path[0:0] = [".."]
 
 import pytest
 
-from omni8bit import debugger
+from omnivore import debugger
 
 from mock import DummyEmulator
 

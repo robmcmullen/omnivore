@@ -18,7 +18,8 @@ try:
 except RuntimeError:
     log.warning("cputables.py not generated; disassembler and mini assembler will not be available")
 except ModuleNotFoundError:
-    log.warning("udis_fast C extensions not created; disassembler and mini assembler will not be availabe")
+    log.warning("libudis C extensions not created; disassembler and mini assembler will not be availabe")
+    raise
 except ImportError as e:
     log.warning(f"libudis C extension not loaded (likely an undefined symbol):\n{str(e)}")
 

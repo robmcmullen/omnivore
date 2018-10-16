@@ -4,7 +4,7 @@ sys.path[0:0] = [".."]
 import numpy as np
 np.set_printoptions(formatter={'int':hex})
 
-from omni8bit.emulator_base import EmulatorBase
+from omnivore.emulator_base import EmulatorBase
 
 import logging
 logging.basicConfig(level=logging.WARNING)

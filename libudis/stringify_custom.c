@@ -303,18 +303,17 @@ int stringify_entry_6502_opcode(history_entry_t *h_entry, char *t, char *hexdigi
     return (int)(t - first_t);
 }
 
-int stringify_entry_6502_history(history_entry_t *h_entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
+int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels) {
     char *first_t, *h;
-    history_6502_t *entry = (history_frame_t *)h_entry;
 
     first_t = t;
-    t += stringify_entry_6502_cpu_registers(h_entry, t, hexdigits, lc, labels);
+    t += stringify_entry_6502_cpu_registers(entry, t, hexdigits, lc, labels);
     *t++=' ';
     h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
     h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
     *t++=' ';
     *t++=' ';
-    t += stringify_entry_6502_opcode(h_entry, t, hexdigits, lc, labels);
+    t += stringify_entry_6502_opcode(entry, t, hexdigits, lc, labels);
     *t++=' ';
     t += stringify_entry_6502(entry, t, hexdigits, lc, labels);
     return (int)(t - first_t);
@@ -337,7 +336,7 @@ int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *he
     *t++=' ';
     t += stringify_entry_6502_opcode(h_entry, t, hexdigits, lc, labels);
     *t++=' ';
-    t += stringify_entry_6502(entry, t, hexdigits, lc, labels);
+    t += stringify_entry_6502(h_entry, t, hexdigits, lc, labels);
     return (int)(t - first_t);
 }
 

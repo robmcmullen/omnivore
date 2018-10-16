@@ -23,7 +23,7 @@ import sys
 module_dir = os.path.realpath(os.path.abspath(".."))
 if module_dir not in sys.path:
     sys.path.insert(0, module_dir)
-import omni8bit.atari800 as a8
+import omnivore.atari800 as a8
 akey = a8.akey
 
 import logging

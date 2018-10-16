@@ -7,7 +7,7 @@ import numpy as np
 
 from atrcopy import DefaultSegment
 
-from omni8bit.disassembler import DisassemblyConfig
+from omnivore.disassembler import DisassemblyConfig
 
 
 if __name__ == "__main__":

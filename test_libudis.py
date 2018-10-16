@@ -7,8 +7,8 @@ import numpy as np
 
 from atrcopy import find_diskimage, DefaultSegment, SegmentData
 
-import omni8bit.disassembler.dtypes as ud
-from omni8bit.disassembler import ParsedDisassembly, DisassemblyConfig
+import omnivore.disassembler.dtypes as ud
+from omnivore.disassembler import ParsedDisassembly, DisassemblyConfig
 
 
 nops = np.zeros(256, dtype=np.uint8) + 0xea

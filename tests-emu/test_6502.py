@@ -6,7 +6,7 @@ import pytest
 
 import numpy as np
 
-import omni8bit
+import omnivore
 
 
 def compare(array1, array2, name="output"):
@@ -19,7 +19,7 @@ class Test6502(object):
     emu_name = '6502'
 
     def setup(self):
-        emu_cls = omni8bit.find_emulator(self.emu_name)
+        emu_cls = omnivore.find_emulator(self.emu_name)
         self.emu = emu_cls()
         self.emu.configure_emulator()
 
@@ -153,7 +153,7 @@ class Test6502(object):
 
 class TestAtari800(Test6502):
     emu_name = "atari800"
-    emu = omni8bit.find_emulator(emu_name)()
+    emu = omnivore.find_emulator(emu_name)()
 
     def test_coldstart(self):
         emu = self.__class__.emu
@@ -174,7 +174,7 @@ class TestAtari800(Test6502):
         diffs = np.where(state - state2 != 0)[0]
         print(f"diff values: {state[diffs]}\n{state2[diffs]}\n{diffs}")
 
-        from omni8bit.atari800.save_state_parser import parse_state
+        from omnivore.atari800.save_state_parser import parse_state
         s = parse_state(state2[emu.state_start_offset:], emu.state_start_offset)
         print(s)
 

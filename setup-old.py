@@ -35,7 +35,7 @@ install_requires = [
     'pyparsing>=2.2.0',
     'wxpython>=4.0.1',
     'traits>=4.6'
-    # 'omni8bit',
+    # 'omnivore',
     ]
 
 

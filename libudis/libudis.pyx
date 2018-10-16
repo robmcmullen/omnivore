@@ -1,3 +1,4 @@
+# cython: language_level=3
 from libc.stdio cimport printf
 import cython
 import numpy as np
@@ -7,7 +8,7 @@ from libudis.libudis cimport history_entry_t, emulator_history_t, parse_func_t, 
 
 from libudis.declarations cimport find_parse_function, find_string_function
 
-from omni8bit.disassembler.dtypes import HISTORY_ENTRY_DTYPE
+from omnivore.disassembler.dtypes import HISTORY_ENTRY_DTYPE
 
 cdef extern:
     string_func_t stringifier_map[]

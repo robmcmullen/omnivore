@@ -6,8 +6,8 @@ import time
 
 import numpy as np
 
-import omni8bit
-import omni8bit.debugger.dtypes as d
+import omnivore
+import omnivore.debugger.dtypes as d
 
 class Segment:
     def __init__(self, data, origin):
@@ -31,8 +31,8 @@ if __name__ == "__main__":
             emu_name = "6502"
             data = np.fromfile(os.path.join(os.path.dirname(__file__), "lib6502/6502-emu/test/nestest-real-6502.rom"), dtype=np.uint8)
             segment = Segment(data, 0xc000)
-        emu_cls = omni8bit.find_emulator(emu_name)
-    except omni8bit.UnknownEmulatorError:
+        emu_cls = omnivore.find_emulator(emu_name)
+    except omnivore.UnknownEmulatorError:
         print(("Unknown emulator: %s" % emu_name))
     else:
         print(("Emulating: %s" % emu_cls.pretty_name))

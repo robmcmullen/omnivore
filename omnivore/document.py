@@ -45,7 +45,7 @@ class SegmentedDocument(BaseDocument):
     emulator_breakpoint_event = Event
 
     # default emulator class, if the user selects something different than the
-    # normal default. This is usually None, which means that omni8bit will
+    # normal default. This is usually None, which means that omnivore will
     # chose the best emulator based on the type of this segment
     emulator_class_override = Any(None)
 

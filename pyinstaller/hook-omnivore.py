@@ -104,7 +104,7 @@ subpkgs = [
     "pyface",
     "omnivore",
     "omnivore8bit",
-    "omni8bit",
+    "omnivore",
 ]
 
 hiddenimports = collect_submodules_traitsui("traitsui", qt_filter)
