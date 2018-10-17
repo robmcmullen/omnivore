@@ -19,7 +19,8 @@ install_requires = [
     'configobj',
     'pyparsing',
     'pytz',
-    'traits>=4.6'
+    'traits>=4.6',
+    'wxpython>=4.0.3'
     ]
 
 
