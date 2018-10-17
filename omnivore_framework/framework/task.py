@@ -296,6 +296,7 @@ class FrameworkTask(Task):
             self.window.application.successfully_loaded_event = source.metadata.uri
         else:
             editor.view_document(source.document, source)
+        self.window.application.editor_created_event = editor
         self.activated()
 
     def find_tab_or_open(self, document):

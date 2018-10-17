@@ -73,6 +73,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
 
     successfully_saved_event = Event
 
+    editor_created_event = Event
+
     plugin_event = Event
 
     preferences_changed_event = Event
