@@ -7,20 +7,7 @@ from traits.trait_base import get_resource_path
 import logging
 log = logging.getLogger(__name__)
 
-template_subdirs = ["", "../../omnivore8bit/templates"]
-try:
-    import atrcopy
-except ImportError:
-    pass
-except SyntaxError:
-    pass  # importing python 3 code in python 2
-else:
-    try:
-        path = atrcopy.get_template_path()
-        template_subdirs.append(path)
-    except AttributeError:
-        # skip an old version of atrcopy that happens to be installed
-        pass
+template_subdirs = [""]
 
 
 def construct_path(template_dir, name):
