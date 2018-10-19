@@ -108,6 +108,13 @@ def main(argv):
     from omnivore_framework import get_image_path
     image_path = [get_image_path("omnivore/icons")]
 
+    from omnivore_framework.templates import template_subdirs
+    import omnivore
+    template_subdirs.append(get_image_path("templates", omnivore))
+    import atrcopy
+    path = atrcopy.get_template_path()
+    template_subdirs.append(path)
+
     # # Crypto is separated to make it easy to make it optional for those
     # # framework users who don't want the extra dependencies
     # import omnivore_extra.crypto.file_type
