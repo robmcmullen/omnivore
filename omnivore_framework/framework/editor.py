@@ -140,6 +140,15 @@ class FrameworkEditor(Editor):
         except RuntimeError as e:
             self.task.error(str(e))
 
+    def load_existing_document(self, doc, old_editor, **kwargs):
+        log.debug("loading document: %s" % doc)
+        try:
+            self.document = doc
+            self.init_extra_metadata(self.document, **kwargs)
+            self.view_document(self.document, **kwargs)
+        except RuntimeError as e:
+            self.task.error(str(e))
+
     def preprocess_document(self, doc):
         """ Hook for subclasses to modify document based on arguments to the
         application.

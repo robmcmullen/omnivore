@@ -295,7 +295,7 @@ class FrameworkTask(Task):
             editor.load_document(source)
             self.window.application.successfully_loaded_event = source.metadata.uri
         else:
-            editor.view_document(source.document, source)
+            editor.load_existing_document(source.document, source)
         self.window.application.editor_created_event = editor
         self.activated()
 
