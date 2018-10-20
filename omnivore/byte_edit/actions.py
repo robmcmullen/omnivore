@@ -316,18 +316,12 @@ class CustomDisassemblerAction(EditorAction):
     enabled_name = 'can_copy'
     disassembly_type = 0
 
-    def set_style(self, segment, ranges):
-        segment.clear_style_ranges(ranges, user=user_bit_mask)
-        segment.set_style_ranges(ranges, user=self.disassembly_type)
-
     def perform(self, event):
         e = self.active_editor
         s = e.segment
         ranges = s.get_style_ranges(selected=True)
-        self.set_style(s, ranges)
-        f = StatusFlags()
-        f.byte_style_changed = True
-        e.process_flags(f)
+        cmd = SetDisassemblyTypeCommand(s, ranges, self.disassembly_type)
+        e.process_command(cmd)
 
 class MarkSelectionAsCodeAction(CustomDisassemblerAction):
     """Marks the selected bytes as valid code to be disassembled using the
@@ -335,9 +329,7 @@ class MarkSelectionAsCodeAction(CustomDisassemblerAction):
 
     """
     name = 'Code'
-
-    def set_style(self, segment, ranges):
-        segment.clear_style_ranges(ranges, data=True, user=1)
+    disassembly_type = 0
 
 
 class MarkSelectionAsDataAction(CustomDisassemblerAction):
@@ -346,15 +338,7 @@ class MarkSelectionAsDataAction(CustomDisassemblerAction):
 
     """
     name = 'Data'
-
-    def set_style(self, segment, ranges):
-        segment.clear_style_ranges(ranges, user=user_bit_mask)
-        segment.set_style_ranges(ranges, data=True)
-        # check if the segment can be merged with a previous data segment
-        index = ranges[0][0]
-        while index > 0 and (segment.style[index-1] & user_bit_mask) == data_style:
-            index -= 1
-        ranges[0] = (index, ranges[0][1])
+    disassembly_type = 1
 
 
 class MarkSelectionAsDisplayListAction(CustomDisassemblerAction):

@@ -4,6 +4,8 @@ import bisect
 import fs
 import numpy as np
 
+from atrcopy import not_user_bit_mask, data_style
+
 from omnivore_framework.framework.errors import ProgressCancelError
 from omnivore_framework.utils.command import Command, UndoInfo
 from ..commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetRangeCommand, SetRangeValueCommand
@@ -443,3 +445,39 @@ class SegmentMemoryMapCommand(ChangeMetadataCommand):
 
     def undo_change(self, editor, old_data):
         editor.segment.memory_map = old_data
+
+
+class SetRangeStyleCommand(SetRangeValueCommand):
+    short_name = "set_range_style"
+    pretty_name = "Set style of ranges"
+
+    def do_change(self, editor, undo):
+        indexes = self.range_to_index_function(self.ranges)
+        old_style = self.segment.style[indexes].copy()
+        self.segment.style[indexes] = self.data
+        return old_style
+
+    def set_undo_flags(self, flags):
+        flags.keep_selection = True
+        flags.byte_style_changed = True
+
+    def undo_change(self, editor, old_data):
+        indexes = self.range_to_index_function(self.ranges)
+        self.segment.style[indexes] = old_data
+
+
+class SetDisassemblyTypeCommand(SetRangeStyleCommand):
+    short_name = "set_disasm_type"
+    pretty_name = "Set Disassembly Type"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ('value', 'int'),
+            ]
+
+    def do_change(self, editor, undo):
+        indexes = self.range_to_index_function(self.ranges)
+        old_style = self.segment.style[indexes].copy()
+        self.segment.style[indexes] &= not_user_bit_mask
+        self.segment.style[indexes] |= self.data
+        return old_style
