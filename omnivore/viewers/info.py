@@ -28,6 +28,9 @@ class BaseInfoViewer(SegmentViewer):
     def update_toolbar(self):
         pass
 
+    def sync_caret(self, flags):
+        pass
+
     def recalc_data_model(self):
         self.control.recalc_view()
         self.control.refresh_view()
