@@ -239,7 +239,7 @@ def create_data_object(viewer, name):
         serializer_cls = known_clipboard_serializers[name]
     except IndexError:
         raise ClipboardError("Unknown format name %s" % name)
-    log.debug("create_data_object: viewer=%s name=%s" % (viewer, name))
+    log.debug("create_data_object: cls=%s viewer=%s name=%s" % (serializer_cls, viewer, name))
     data_obj = serializer_cls.selection_to_data_object(viewer)
     if data_obj is None:
         raise ClipboardError("Viewer %s can't encode as a %s." % (viewer, serializer_cls.pretty_name.lower()))

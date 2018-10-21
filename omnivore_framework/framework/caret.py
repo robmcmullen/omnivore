@@ -175,6 +175,22 @@ class CaretList(list):
                 ranges.append((c.index, c.index + 1))
         return ranges
 
+    @property
+    def has_selection(self):
+        """True if any caret has a selection"""
+        for caret in self:
+            if caret.has_selection:
+                return True
+        return False
+
+    @property
+    def carets_with_selection(self):
+        c = []
+        for caret in self:
+            if caret.has_selection:
+                c.append(caret)
+        return c
+
     def new_caret(self, index):
         caret = Caret(index)
         self.append(caret)
@@ -312,19 +328,11 @@ class CaretHandler(HasTraits):
 
     @property
     def has_selection(self):
-        """True if any caret has a selection"""
-        for caret in self.carets:
-            if caret.has_selection:
-                return True
-        return False
+        return self.carets.has_selection
 
     @property
     def carets_with_selection(self):
-        c = []
-        for caret in self.carets:
-            if caret.has_selection:
-                c.append(caret)
-        return c
+        return self.carets.carets_with_selection
 
     #### command flag processors
 
@@ -481,6 +489,7 @@ class CaretHandler(HasTraits):
         log.debug("processing caret flags: %s" % str(flags))
 
         if flags.old_carets is not None:
+            log.debug(f"old_carets: {flags.old_carets}")
             if flags.add_caret:
                 self.carets.add_old_carets(flags.old_carets)
                 caret_moved = True
@@ -490,6 +499,7 @@ class CaretHandler(HasTraits):
                     self.carets.new_caret(flags.caret_index)
                 self.carets.remove_old_carets()
                 caret_moved = True
+                log.debug("force_single_caret")
             else:
                 self.validate_carets()
                 caret_state = self.carets.get_state()
@@ -501,7 +511,9 @@ class CaretHandler(HasTraits):
                     self.set_anchors(index, index)
                 visible_range = True
                 self.sync_caret_event = flags
+                log.debug("caret_moved")
         elif flags.force_single_caret:
+            log.debug(f"force_single_caret: caret_index={flags.caret_index}")
             if flags.caret_index is not None:
                 c = Caret(flags.caret_index)
                 self.carets.force_single_caret(c)
@@ -510,7 +522,9 @@ class CaretHandler(HasTraits):
 
 
         if flags.index_range is not None:
+            log.debug(f"index_range: {flags.index_range}")
             if flags.select_range:
+                log.debug(f"select_range")
                 self.set_anchors(flags.index_range[0], flags.index_range[1])
                 document.change_count += 1
             visible_range = True
@@ -518,6 +532,7 @@ class CaretHandler(HasTraits):
         if visible_range:
             # Only update the range on the current editor, not other views
             # which are allowed to remain where they are
+            log.debug(f"visible_range: index_visible={flags.index_visible}")
             if flags.index_visible is None:
                 flags.index_visible = self.carets.current.index
             self.ensure_visible_event = flags
@@ -528,6 +543,7 @@ class CaretHandler(HasTraits):
             flags.source_control.move_viewport_origin(flags.viewport_origin)
             flags.skip_source_control_refresh = True
             flags.refresh_needed = True
+        log.debug(f"FINISHED process_caret_flags: refresh_needed={flags.refresh_needed}, skip_source_control_refresh={flags.skip_source_control_refresh}")
 
     def post_process_caret_flags(self, flags, document):
         """Perform any caret updates after the data model has been regenerated

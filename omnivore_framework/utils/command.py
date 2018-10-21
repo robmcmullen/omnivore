@@ -305,6 +305,8 @@ class StatusFlags(object):
             self.caret_column = flags.caret_column
         if flags.force_single_caret:
             self.force_single_caret = flags.force_single_caret
+        if flags.keep_selection:
+            self.keep_selection = flags.keep_selection
         if flags.source_control:
             self.source_control = flags.source_control
         if flags.advance_caret_position_in_control:

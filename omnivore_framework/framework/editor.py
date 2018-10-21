@@ -548,14 +548,17 @@ class FrameworkEditor(Editor):
             self.metadata_dirty = True
 
         if flags.data_model_changed:
+            log.debug(f"process_flags: data_model_changed")
             d.data_model_changed = True
             d.change_count += 1
             flags.rebuild_ui = True
         elif flags.byte_values_changed:
+            log.debug(f"process_flags: byte_values_changed")
             d.byte_values_changed = flags.index_range
             d.change_count += 1
             flags.refresh_needed = True
         elif flags.byte_style_changed:
+            log.debug(f"process_flags: byte_style_changed")
             d.byte_style_changed = flags.index_range
             d.change_count += 1
             flags.rebuild_ui = True
@@ -564,8 +567,10 @@ class FrameworkEditor(Editor):
         self.caret_handler.post_process_caret_flags(flags, d)
 
         if flags.rebuild_ui:
+            log.debug(f"process_flags: rebuild_ui")
             d.recalc_event = True
         if flags.refresh_needed:
+            log.debug(f"process_flags: refresh_needed")
             self.caret_handler.refresh_event = flags
 
     def popup_context_menu_from_commands(self, control, commands):
