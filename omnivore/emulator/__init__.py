@@ -8,8 +8,9 @@ default_emulator = None
 debug_import = False
 
 try:
-    from .atari8bit import wxAtari800
+    from .atari8bit import wxAtari800, wxAtari800XL
     known_emulators.append(wxAtari800)
+    known_emulators.append(wxAtari800XL)
     if default_emulator is None:
         default_emulator = wxAtari800
 except ImportError as e:
