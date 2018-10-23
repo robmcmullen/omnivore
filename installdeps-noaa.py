@@ -6,7 +6,6 @@ import glob
 
 deps = [
     ['git@github.com:robmcmullen/GnomeTools.git', {'builddir': 'post_gnome', 'branch': 'py3'}],
-    ['https://github.com/robmcmullen/OWSLib.git',],
     ['https://github.com/fathat/glsvg.git',],
     ['https://github.com/robmcmullen/pyugrid.git',],
 ]
