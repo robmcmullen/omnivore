@@ -26,11 +26,21 @@ class ClipboardCommand(SegmentCommand):
 
     def get_clipped_indexes(self, editor):
         s = self.serializer
-        caret = s.dest_carets.current.index
         if s.clipboard_indexes is not None:
+            caret = s.dest_carets.current.index
             indexes = s.clipboard_indexes.copy() - s.clipboard_indexes[0] + caret
+        elif s.dest_carets.has_selection:
+            ranges = collapse_overlapping_ranges(s.dest_carets.selected_ranges_including_carets)
+            log.debug("ranges:", ranges)
+            indexes = ranges_to_indexes(ranges)
+            log.debug("indexes:", indexes)
         else:
-            indexes = np.arange(caret, caret + np.alen(s.clipboard_data))
+            count = len(s.clipboard_data)
+            ranges = [(c.anchor_start_index, c.anchor_start_index + count) for c in s.dest_carets]
+            ranges = collapse_overlapping_ranges(ranges)
+            log.debug("ranges:", ranges)
+            indexes = ranges_to_indexes(ranges)
+            log.debug("indexes:", indexes)
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
         log.debug("indexes after limits: %s" % str(indexes))
