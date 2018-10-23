@@ -9,10 +9,6 @@ else:
     develop_instead_of_link = False
 
 deps = [
-    ['git@github.com:robmcmullen/pyface.git', {'branch': 'wx4may2018'}, True],
-    ['git@github.com:robmcmullen/traitsui.git', {'branch': 'wx4may2018'}, True],
-    ['https://github.com/enthought/apptools.git', {}, True],
-    ['git@github.com:robmcmullen/envisage.git', {}, False],
     ['git@github.com:robmcmullen/pyfilesystem.git', {'branch': 'py3'}, False],
 ]
 
@@ -36,57 +32,62 @@ setup = "python setup.py "
 
 link_map = {
     "pyfilesystem": "fs",
+    "GnomeTools": "post_gnome",
 }
 
 linkdir = os.getcwd()
 topdir = os.path.join(os.getcwd(), "deps")
 
-for dep in deps:
-    os.chdir(topdir)
-    repourl, options, run2to3 = dep
-    print(dep, repourl, options, run2to3)
-    if repourl.startswith("http") or repourl.startswith("git@"):
-        print("UPDATING %s" % repourl)
-        _, repo = os.path.split(repourl)
-        repodir, _ = os.path.splitext(repo)
-        if os.path.exists(repodir):
-            os.chdir(repodir)
-            git(['pull'])
-        else:
-            git(['clone', repourl])
-    else:
-        repodir = repourl
-
-    setupdir = options.get('builddir', ".")
-    if run2to3:
-        builddir = os.path.join(setupdir, "build/lib")
-    else:
-        builddir = setupdir
-
-    command = options.get('command',
-        setup + "build")
-    link = repodir
-    if "install" in command:
-        link = None
-    else:
-        link = repodir
-    if command:
+def install_update_deps(deps, link_map):
+    for dep in deps:
         os.chdir(topdir)
-        os.chdir(repodir)
-        if 'branch' in options:
-            git(['checkout', options['branch']])
-        os.chdir(setupdir)
-        subprocess.call(command.split())
-        if "install" not in command and develop_instead_of_link:
-            subprocess.call(["python", "setup.py", "develop"])
-
-    if link and sys.platform != "win32":
-        os.chdir(linkdir)
-        name = link_map.get(repodir, repodir)
-        if name is None:
-            print(("No link for %s" % repodir))
+        repourl, options, run2to3 = dep
+        print(dep, repourl, options, run2to3)
+        if repourl.startswith("http") or repourl.startswith("git@"):
+            print("UPDATING %s" % repourl)
+            _, repo = os.path.split(repourl)
+            repodir, _ = os.path.splitext(repo)
+            if os.path.exists(repodir):
+                os.chdir(repodir)
+                git(['pull'])
+            else:
+                git(['clone', repourl])
         else:
-            src = os.path.normpath(os.path.join("deps", repodir, builddir, name))
-            if os.path.islink(name):
-                os.unlink(name)
-            os.symlink(src, name)
+            repodir = repourl
+
+        setupdir = options.get('builddir', ".")
+        if run2to3:
+            builddir = os.path.join(setupdir, "build/lib")
+        else:
+            builddir = setupdir
+
+        command = options.get('command',
+            setup + "build")
+        link = repodir
+        if "install" in command:
+            link = None
+        else:
+            link = repodir
+        if command:
+            os.chdir(topdir)
+            os.chdir(repodir)
+            if 'branch' in options:
+                git(['checkout', options['branch']])
+            os.chdir(setupdir)
+            subprocess.call(command.split())
+            if "install" not in command and develop_instead_of_link:
+                subprocess.call(["python", "setup.py", "develop"])
+
+        if link and sys.platform != "win32":
+            os.chdir(linkdir)
+            name = link_map.get(repodir, repodir)
+            if name is None:
+                print(("No link for %s" % repodir))
+            else:
+                src = os.path.normpath(os.path.join("deps", repodir, builddir, name))
+                if os.path.islink(name):
+                    os.unlink(name)
+                os.symlink(src, name)
+
+if __name__ == "__main__":
+    install_update_deps(deps, link_map)
