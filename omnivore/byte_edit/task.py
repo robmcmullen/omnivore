@@ -18,7 +18,7 @@ from .preferences import ByteEditPreferences
 from . import actions as ba
 from ..viewers import actions as va
 from ..jumpman import commands as ja
-from ..emulators import actions as ea
+from ..emulator import actions as ea
 from ..arch import fonts, colors, machine
 from ..utils.segmentutil import iter_known_segment_parsers
 

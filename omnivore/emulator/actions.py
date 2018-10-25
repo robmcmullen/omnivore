@@ -19,7 +19,6 @@ from omnivore_framework.utils.command import StatusFlags
 from subprocess import *
 from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from ..ui.dialogs import SegmentOrderDialog
-from .. import emulators as emu
 from .document import EmulationDocument
 
 if sys.platform == "darwin":

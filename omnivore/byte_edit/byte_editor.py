@@ -20,7 +20,7 @@ from omnivore_framework.templates import get_template
 from ..arch.machine import Machine, Atari800
 from ..document import SegmentedDocument
 from ..utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
-from .. import emulators as emu
+from .. import emulator as emu
 
 from omnivore_framework.utils.processutil import run_detach
 

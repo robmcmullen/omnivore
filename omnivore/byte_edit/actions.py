@@ -28,7 +28,6 @@ from omnivore_framework.utils.textutil import parse_int_label_dict
 from omnivore_framework.utils.nputil import count_in_range
 from omnivore_framework.utils.jsonutil import dict_to_list
 from .. import clipboard_commands as cc
-from .. import emulators as emu
 
 if sys.platform == "darwin":
     RADIO_STYLE = "toggle"
