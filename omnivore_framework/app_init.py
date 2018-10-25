@@ -206,6 +206,7 @@ def run(plugins=[], use_eggs=True, egg_path=[], image_path=[], template_path=[],
         i = extra_args.index("-d")
         error_logger.enable_loggers(extra_args[i+1])
     app = FrameworkApplication(plugin_manager=plugin_manager, command_line_args=extra_args, **kwargs)
+    wx.GetApp().tasks_application = app
 
     app.run()
 

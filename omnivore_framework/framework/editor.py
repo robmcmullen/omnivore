@@ -18,6 +18,7 @@ from ..utils.file_guess import FileGuess
 from ..framework.document import DocumentError
 from ..framework.caret import CaretHandler
 from . import clipboard
+from . import loader
 
 import logging
 log = logging.getLogger(__name__)
@@ -124,7 +125,7 @@ class FrameworkEditor(Editor):
             self.load_document(source, **kwargs)
         else:
             log.debug("loading FileGuess object: %s" % source)
-            doc = self.task.window.application.guess_document(source)
+            doc = loader.guess_document(source)
             self.load_document(doc, **kwargs)
         doc.read_only = doc.metadata.check_read_only()
 

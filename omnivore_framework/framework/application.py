@@ -22,6 +22,7 @@ from .persistence import FilePersistenceMixin
 from .filesystem import init_filesystems, init_about_app
 from .document import BaseDocument
 from . import documentation
+from . import loader
 from ..help import get_htmlhelp, MissingDocumentationError
 from .preferences import FrameworkPreferences, \
     FrameworkPreferencesPane
@@ -179,8 +180,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
                 i += 1
                 continue
             log.debug("processing %s" % arg)
-            task_id = self.find_best_task_id(options.task_id)
-            self.load_file(arg, None, task_id=task_id, task_arguments=task_arguments)
+            task_id = loader.find_best_task_id(options.task_id)
+            loader.load_file(arg, None, task_id=task_id, task_arguments=task_arguments)
             i += 1
 
         # if any files were successfully loaded, some task will have an active
@@ -192,13 +193,11 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
                     break
 
         if not loaded:
-            factory = self.get_task_factory(self.startup_task)
+            factory = loader.get_task_factory(self.startup_task)
             url = factory.factory.about_application
             if url:
                 log.debug("No filename on command line, starting %s in %s" % (url, factory.factory.editor_id))
-                self.load_file(url)
-        app = wx.GetApp()
-        app.tasks_application = self
+                loader.load_file(url)
 
         self.debug_show_focused = options.show_focused
 
@@ -206,7 +205,7 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
             idle = self.on_idle_build_docs
         else:
             idle = self.on_idle
-        app.Bind(wx.EVT_IDLE, idle)
+        wx.GetApp().Bind(wx.EVT_IDLE, idle)
 
     @property
     def application_initialization_finished(self):
@@ -343,211 +342,8 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
             event.window._wx_on_mousewheel = types.MethodType(_task_window_wx_on_mousewheel, event.window)
             event.window.control.Bind(wx.EVT_MOUSEWHEEL, event.window._wx_on_mousewheel)
 
-    #### API
-
-    def guess_document(self, guess):
-        service = self.get_service("omnivore_framework.file_type.i_file_recognizer.IFileRecognizerDriver")
-        log.debug("SERVICE!!! %s" % service)
-
-        # Attempt to classify the guess using the file recognizer service
-        document = service.recognize(guess)
-        log.debug("created document %s (mime=%s)" % (document, document.metadata.mime))
-        return document
-
-    def load_file(self, uri, active_task=None, task_id="", in_current_window=False, **kwargs):
-        log.debug("load_file: uri=%s task_id=%s" % (uri, task_id))
-        from ..utils.file_guess import FileGuess
-        # The FileGuess loads the first part of the file and tries to identify it.
-        try:
-            guess = FileGuess(uri)
-        except fs.errors.FSError as e:
-            log.error("File load error: %s" % str(e))
-            if active_task is not None:
-                active_task.window.error(str(e), "File Load Error")
-            return
-
-        if len(guess.raw_bytes) == 0:
-            if active_task is not None:
-                active_task.window.error("Zero length file!\nUnable to determine file type.", "File Load Error")
-            return
-
-        # Attempt to classify the guess using the file recognizer service
-        document = self.guess_document(guess)
-        log.debug("using %s for %s" % (document.__class__.__name__, guess.metadata.uri))
-        if document.load_error:
-            if self.active_window:
-                self.active_window.warning(document.load_error, "Document Load Error")
-
-        # Short circuit: if the file can be edited by the active task, use that!
-        if active_task is not None and active_task.can_edit(document):
-            log.debug("active task %s can edit %s" % (active_task, document))
-            active_task.new(document, **kwargs)
-            return
-
-        possibilities = self.get_possible_task_factories(document, task_id)
-        if not possibilities:
-            log.debug("no editor for %s" % uri)
-            return
-        best = self.find_best_task_factory(document, possibilities)
-        log.debug("best task match: %s" % best.id)
-
-        if active_task is not None:
-            # Ask the active task if it's OK to load a different editor
-            if not active_task.allow_different_task(guess, best.factory):
-                return
-            dummy = self.document_class(metadata="application/octet-stream")
-            if active_task.can_edit(document) and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
-                log.debug("Active task %s allows application/octet-stream" % active_task.id)
-                active_task.new(document, **kwargs)
-                return
-            if in_current_window:
-                task = self.create_task_in_window(best.id, active_task.window)
-                task.new(document, **kwargs)
-                return
-
-        # Look for existing task in current windows
-        task = self.find_active_task_of_type(best.id)
-        if task:
-            log.debug("Found task %s in current window" % best.id)
-            task.new(document, **kwargs)
-            return
-
-        log.debug("Creating task %s in current window" % best.id)
-        self.create_task_from_factory_id(document, best.id, **kwargs)
-
-    def get_possible_task_factories(self, document, task_id=""):
-        possibilities = []
-        for factory in self.task_factories:
-            log.debug("checking factory: %s=%s for %s" % (factory.id, factory.name, task_id))
-            if task_id:
-                if factory.id == task_id or factory.factory.editor_id == task_id:
-                    possibilities.append(factory)
-            elif hasattr(factory.factory, "can_edit"):
-                if factory.factory.can_edit(document):
-                    log.debug("  can edit: %s" % document)
-                    possibilities.append(factory)
-        log.debug("get_possible_task_factories: %s" % str([(p.name, p.id) for p in possibilities]))
-        return possibilities
-
-    def find_best_task_factory(self, document, factories):
-        scores = []
-        for factory in factories:
-            log.debug("factory: %s=%s" % (factory.id, factory.name))
-            if document.last_task_id == factory.id or document.last_task_id == factory.factory.editor_id:
-                # short circuit if document is requesting a specific task
-                return factory
-            score = factory.factory.get_match_score(document)
-            scores.append((score, factory))
-        scores.sort()
-        log.debug("find_best_task_factory: %s" % str([(s, p.name, p.id) for (s, p) in scores]))
-        return scores[-1][1]
-
-    def get_task_factory(self, task_id):
-        for factory in self.task_factories:
-            if factory.id == task_id or factory.factory.editor_id == task_id:
-                return factory
-        return None
-
-    def find_best_task_id(self, task_id):
-        if task_id:
-            for factory in self.task_factories:
-                if factory.id == task_id or ".%s." % task_id in factory.id or ".%s" % task_id in factory.id:
-                    return factory.id
-        return ""  # empty string will result in scanning the file for the best match
-
-    def create_task_from_factory_id(self, guess, factory_id, **kwargs):
-        window = self.active_window
-        log.debug("  window=%s" % str(window))
-        for task in window.tasks:
-            if task.id == factory_id:
-                break
-        else:
-            task = self.create_task(factory_id)
-        self.add_task_to_window(window, task)
-        task.new(guess, **kwargs)
-        return task
-
-    def create_task_in_window(self, task_id, window):
-        log.debug("creating %s task" % task_id)
-        task = self.create_task(task_id)
-        self.add_task_to_window(window, task)
-        return task
-
-    def add_task_to_window(self, window, task):
-        window.add_task(task)
-        window.activate_task(task)
-        self.restore_perspective(window, task)
-
-    def find_active_task_of_type(self, task_id):
-        # Until remove_task bug is fixed, don't create any new windows, just
-        # add a new task to the current window unless the task already exists
-        w = list(self.windows)
-        if not w:
-            # OS X might not have any windows open; a menubar is allowed to
-            # exist without windows.
-            return None
-        try:
-            i = w.index(self.active_window)
-            w[0:0] = [self.active_window]
-            w.pop(i)
-        except ValueError:
-            pass
-
-        for window in w:
-            for t in window.tasks:
-                if t.id == task_id:
-                    log.debug("found non-active task in current window; activating!")
-                    window.activate_task(t)
-                    return t
-        if window:
-            task = self.create_task_in_window(task_id, window)
-            return task
-#        # Check active window first, then other windows
-#        w = list(self.windows)
-#        try:
-#            i = w.index(self.active_window)
-#            w[0:0] = [self.active_window]
-#            w.pop(i)
-#        except ValueError:
-#            pass
-#
-#        for window in w:
-#            log.debug("window: %s" % window)
-#            log.debug("  active task: %s" % window.active_task)
-#            if window.active_task.id == task_id:
-#                log.debug("  found active task")
-#                return window.active_task
-#        log.debug("  no active task matches %s" % task_id)
-#        for window in w:
-#            task = window.active_task
-#            if task is None:
-#                continue
-#            # if no editors in the task, replace the task with the new task
-#            log.debug("  window %s: %d" % (window, len(task.editor_area.editors)))
-#            if len(task.editor_area.editors) == 0:
-#                log.debug("  replacing unused task!")
-#                # The bugs in remove_task seem to have been fixed so that the
-#                # subsequent adding of a new task does seem to work now.  But
-#                # I'm leaving in the workaround for now of simply closing the
-#                # active window, forcing the new task to open in a new window.
-#                if True:
-#                    log.debug("removing task %s" % task)
-#                    print window
-#                    #window.remove_task(task)
-#                    task = self.create_task_in_window(task_id, window)
-#                    return task
-#                else:
-#                    window.close()
-#                    return None
-
-    def find_or_create_task_of_type(self, task_id):
-        task = self.find_active_task_of_type(task_id)
-        if not task:
-            log.debug("task %s not found in active windows; creating new window" % task_id)
-            window = self.create_window()
-            task = self.create_task_in_window(task_id, window)
-            window.open()
-        return task
+    def load_file(self, *args, **kwargs):
+        return loader.load_file(*args, **kwargs)
 
     # Override the default window closing event handlers only on Mac because
     # Mac allows the application to remain open while no windows are open

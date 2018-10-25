@@ -15,6 +15,7 @@ from ..utils.file_guess import FileGuess
 from ..utils.wx.dialogs import get_file_dialog_wildcard, prompt_for_dec
 from ..utils.wx.error_logger import show_logging_frame
 from ..templates import iter_templates
+from . import loader
 
 import logging
 log = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class NewFileAction(Action):
     uri = Str
 
     def perform(self, event=None):
-        task = event.task.window.application.find_or_create_task_of_type(self.task_id)
+        task = loader.find_or_create_task_of_type(self.task_id)
         log.debug("Loading %s as %s" % (self.uri, task))
         guess = FileGuess(self.uri)
         task.new(guess)
@@ -87,7 +88,7 @@ class NewEmptyFileAction(EditorAction):
             uri = "blank://%d" % val
             guess = FileGuess(uri)
             # self.task.new(guess)
-            e.task.window.application.load_file(uri, e.task)
+            loader.load_file(uri, e.task)
 
 
 class NewFileGroup(Group):
@@ -118,9 +119,9 @@ class NewFileGroup(Group):
         task_id = "omnivore_framework.text_edit"
         for template in iter_templates():
             name = template.get("label", template["uri"])
-            task_id = self.application.find_best_task_id(template.get("task", "byte_edit"))
+            task_id = loader.find_best_task_id(template.get("task", "byte_edit"))
             if not task_id:
-                task_id = self.application.find_best_task_id("byte_edit")
+                task_id = loader.find_best_task_id("byte_edit")
                 log.error("No task for %s, defaulting to %s" % (name, task_id))
             log.debug("NewFileAction for %s as %s" % (name, task_id))
             action = NewFileAction(name=name, uri=template["uri"], task_id=task_id)
@@ -167,7 +168,7 @@ class OpenAction(Action):
     def perform(self, event):
         path = event.task.prompt_local_file_dialog()
         if path is not None:
-            event.task.window.application.load_file(path, event.task)
+            loader.load_file(path, event.task)
 
 
 class SaveAction(EditorAction):
@@ -218,7 +219,7 @@ class RevertAction(EditorAction):
         if result:
             try:
                 guess = FileGuess(uri)
-                document = event.task.window.application.guess_document(guess)
+                document = loader.guess_document(guess)
                 self.active_editor.load(document)
             except fs.errors.FSError as e:
                 event.task.error("Can't revert from %s:\n\n%s" % (uri, str(e)), 'Revert Error')
@@ -535,7 +536,7 @@ class NewViewInNewTaskAction(Action):
     factory_id = Str
 
     def perform(self, event):
-        event.task.window.application.create_task_from_factory_id(event.task.active_editor, self.factor_id)
+        loader.create_task_from_factory_id(event.task.active_editor, self.factor_id)
 
 
 class NewViewInGroup(TaskDynamicSubmenuGroup):
@@ -561,7 +562,7 @@ class NewViewInGroup(TaskDynamicSubmenuGroup):
         e = self.task.active_editor
         items = []
         if e:
-            factories = self.task.window.application.get_possible_task_factories(e.document)
+            factories = loader.get_possible_task_factories(e.document)
             for factory in factories:
                 action = NewViewInNewTaskAction(name="In a %s Tab" % factory.name, factor_id=factory.id)
                 items.append(ActionItem(action=action))
