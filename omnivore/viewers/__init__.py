@@ -732,13 +732,13 @@ class ByteViewersPlugin(FrameworkPlugin):
         from ..viewers.map2 import MapViewer
         # from ..viewers.tile import TileViewer
         from ..viewers.jumpman2 import JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer
-        from ..viewers.emulator import Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
+        from ..viewers.emulator import VideoViewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer
         from ..viewers.apple2 import HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer
         from ..viewers.memory import MemoryAccessViewer
         from ..viewers.skeleton import VirtualTestViewer
         from ..viewers.disasm import DisassemblyViewer
         from ..viewers.history import InstructionHistoryViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, Atari800Viewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer, VirtualTestViewer, InstructionHistoryViewer]
+        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, VideoViewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer, VirtualTestViewer, InstructionHistoryViewer]
 
 plugins = [ByteViewersPlugin()]

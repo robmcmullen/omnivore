@@ -67,10 +67,10 @@ class EmulatorViewer(SegmentViewer):
             self.update_window_title()
 
 
-class Atari800Viewer(EmulatorViewer):
-    name = "atari800"
+class VideoViewer(EmulatorViewer):
+    name = "video"
 
-    pretty_name = "Atari 800"
+    pretty_name = "Emulator Video Output"
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -81,7 +81,8 @@ class Atari800Viewer(EmulatorViewer):
 
     @property
     def window_title(self):
-        return f"{self.pretty_name} (frame {self.linked_base.emulator.current_frame_number})"
+        emu = self.linked_base.emulator
+        return f"{emu.pretty_name} (frame {emu.current_frame_number})"
 
     def update_window_title(self):
         self.update_caption()
