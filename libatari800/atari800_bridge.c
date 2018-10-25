@@ -21,6 +21,8 @@
 #include "sound.h"
 #endif
 #include "util.h"
+#include "cartridge.h"
+#include "ui.h"
 
 /* mainloop includes */
 #include "antic.h"
@@ -374,6 +376,26 @@ void a8bridge_restore_state(output_template_t *output)
 {
 	LIBATARI800_StateLoad(output->state);
 }
+
+
+/* Stub routines */
+
+int UI_SelectCartType(int k) {
+	return CARTRIDGE_NONE;
+}
+
+void UI_Run(void) {
+	;
+}
+
+int UI_is_active;
+int UI_alt_function;
+int UI_current_function;
+char UI_atari_files_dir[UI_MAX_DIRECTORIES][FILENAME_MAX];
+char UI_saved_files_dir[UI_MAX_DIRECTORIES][FILENAME_MAX];
+int UI_n_atari_files_dir;
+int UI_n_saved_files_dir;
+
 
 /*
 vim:ts=4:sw=4:
