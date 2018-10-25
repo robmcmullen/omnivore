@@ -30,11 +30,14 @@ class OmnivoreEditorPlugin(FrameworkPlugin):
 
     def _preferences_panes_default(self):
         from .byte_edit import ByteEditPreferencesPane
-        return [ByteEditPreferencesPane]
+        from .emulator import EmulatorPreferencesPane
+        return [ByteEditPreferencesPane, EmulatorPreferencesPane]
 
     def _tasks_default(self):
         from .byte_edit import ByteEditTask
+        from .emulator.task import EmulatorTask
 
         return self.task_factories_from_tasks([
             ByteEditTask,
+            EmulatorTask,
             ])

@@ -20,7 +20,7 @@ from omnivore_framework.templates import get_template
 from ..arch.machine import Machine, Atari800
 from ..document import SegmentedDocument
 from ..utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
-from .. import emulator as emu
+from ..emulator.document import EmulationDocument
 
 from omnivore_framework.utils.processutil import run_detach
 
@@ -154,34 +154,6 @@ class ByteEditor(FrameworkEditor):
             log.error("invalid data in default layout")
             e = {}
         return e
-
-    def preprocess_document(self, doc):
-        if self.task_arguments:
-            args = {}
-            for arg in self.task_arguments.split(","):
-                if "=" in arg:
-                    arg, v = arg.split("=", 1)
-                else:
-                    v = None
-                args[arg] = v
-            if "emulator" in args:
-                if "skip_frames" in args:
-                    skip = int(args["skip_frames"])
-                else:
-                    skip = 0
-                source_doc = doc
-                try:
-                    doc = emu.EmulationDocument.create_document(source_document=doc, emulator_type=args.get('emulator', '6502'), skip_frames_on_boot=skip)
-                except RuntimeError:
-                    raise
-                else:
-                    doc.boot(source_doc.container_segment)
-        try:
-            doc.emulator_type
-            self.has_emulator = True
-        except:
-            pass
-        return doc
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))

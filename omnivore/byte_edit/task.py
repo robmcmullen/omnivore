@@ -242,13 +242,12 @@ class ByteEditTask(FrameworkTask):
 
     ui_layout_overrides = {
         "menu": {
-            "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Emulation", "Documents", "Window", "Help"],
+            "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Documents", "Window", "Help"],
             "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "SizeGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
             "Segment": ["ListGroup", "ActionGroup"],
-            "Disk Image": ["ParserGroup", "ActionGroup"],
+            "Disk Image": ["ParserGroup", "ActionGroup", "EmulatorGroup"],
             "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
-            "Emulation":  ["BootGroup", "ConfigGroup", "CommandGroup"],
         },
     }
 
@@ -633,7 +632,7 @@ class ByteEditTask(FrameworkTask):
             ja.RecompileAction(),
             ]
 
-    def get_actions_Menu_Emulation_BootGroup(self):
+    def get_actions_Menu_DiskImage_EmulatorGroup(self):
         actions = []
         actions.append(ea.UseEmulatorAction(name="Default Based on Disk Image", emulator=None))
         for e in known_emulators:
@@ -646,21 +645,6 @@ class ByteEditTask(FrameworkTask):
                     *actions,
                     id="emug1", separator=True),
                 id='emu1', separator=False, name="Available Emulators"),
-            ea.PauseResumeAction(),
-            ea.PreviousSaveStateAction(),
-            ea.NextSaveStateAction(),
-            Separator(),
-            ea.StepAction(),
-            ea.StepIntoAction(),
-            ea.StepOverAction(),
-            ea.EndOfFrameAction(),
-            Separator(),
-            ea.StartAction(),
-            ea.SelectAction(),
-            ea.OptionAction(),
-            Separator(),
-            ea.WarmstartAction(),
-            ea.ColdstartAction(),
             ]
 
     def get_keyboard_actions(self):

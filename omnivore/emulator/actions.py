@@ -54,9 +54,6 @@ class BootDiskImageAction(EditorAction):
         doc.boot()
         self.task.new(doc)
 
-    def _update_enabled(self, ui_state):
-        self.enabled = not self.active_editor.has_emulator
-
 
 class BootSegmentAction(EditorAction):
     """Start an emulator by pre-populating memory using the contents of some
@@ -70,9 +67,6 @@ class BootSegmentAction(EditorAction):
         doc = EmulationDocument.create_document(source_document=source, emulator_type=source.emulator_class_override)
         doc.boot(self.active_editor.segment)
         self.task.new(doc)
-
-    def _update_enabled(self, ui_state):
-        self.enabled = not self.active_editor.has_emulator
 
 
 class LoadSegmentAction(EditorAction):
@@ -88,9 +82,6 @@ class LoadSegmentAction(EditorAction):
         doc.load(self.active_editor.segment)
         self.task.new(doc)
 
-    def _update_enabled(self, ui_state):
-        self.enabled = not self.active_editor.has_emulator
-
 
 class EmulatorAction(EditorAction):
     """Base class for emulator actions
@@ -100,9 +91,6 @@ class EmulatorAction(EditorAction):
 
     def perform(self, event=None):
         print("emulate!")
-
-    def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator
 
 
 class PauseResumeAction(EmulatorAction):
@@ -119,8 +107,7 @@ class PauseResumeAction(EmulatorAction):
             self.active_editor.document.restart_emulator()
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator
-        if self.enabled and not self.active_editor.document.emulator_running:
+        if not self.active_editor.document.emulator_running:
             self.name = "Resume"
         else:
             self.name = "Pause"
@@ -137,7 +124,7 @@ class StepAction(EmulatorAction):
         self.active_editor.document.debugger_step()
 
     def _update_enabled(self, ui_state):
-        self.enabled = self.active_editor.has_emulator and self.active_editor.document.emulator_paused
+        self.enabled = self.active_editor.document.emulator_paused
 
 
 class StepIntoAction(StepAction):
