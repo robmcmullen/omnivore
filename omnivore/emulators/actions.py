@@ -51,7 +51,7 @@ class BootDiskImageAction(EditorAction):
 
     def perform(self, event=None):
         source = self.active_editor.document
-        doc = EmulationDocument(source_document=source, emulator_type=source.emulator_class_override)
+        doc = EmulationDocument.create_document(source_document=source, emulator_type=source.emulator_class_override)
         doc.boot()
         self.task.new(doc)
 
@@ -68,7 +68,7 @@ class BootSegmentAction(EditorAction):
 
     def perform(self, event=None):
         source = self.active_editor.document
-        doc = EmulationDocument(source_document=source, emulator_type=source.emulator_class_override)
+        doc = EmulationDocument.create_document(source_document=source, emulator_type=source.emulator_class_override)
         doc.boot(self.active_editor.segment)
         self.task.new(doc)
 

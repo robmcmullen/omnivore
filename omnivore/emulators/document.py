@@ -79,9 +79,9 @@ class EmulationDocument(SegmentedDocument):
             if not emulator_type:
                 # if no value specified, try to determine from binary data
                 try:
-                    emu_cls = guess_emulator(self.source_document)
+                    emu_cls = guess_emulator(source_document)
                 except UnknownEmulatorError:
-                    emu_cls = emu.default_emulator
+                    emu_cls = default_emulator
             else:
                 # if emulator name specified but not known, return error
                 raise RuntimeError(f"Unknown emulator {emulator_type}")
