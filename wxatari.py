@@ -23,7 +23,8 @@ import sys
 module_dir = os.path.realpath(os.path.abspath(".."))
 if module_dir not in sys.path:
     sys.path.insert(0, module_dir)
-import omnivore.atari800 as a8
+import omnivore.emulator.atari8bit as a8
+import omnivore.ui.screen as screen
 akey = a8.akey
 
 import logging
@@ -267,13 +268,13 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
         self.SetSizer(self.box)
 
         if self.options.unaccelerated or wx.Platform == "__WXMSW__":
-            control = a8.BitmapScreen
+            control = screen.BitmapScreen
         elif self.options.glsl and HAS_OPENGL:
-            control = a8.GLSLScreen
+            control = screen.GLSLScreen
         elif HAS_OPENGL:
-            control = a8.OpenGLScreen
+            control = screen.OpenGLScreen
         else:
-            control = a8.BitmapScreen
+            control = screen.BitmapScreen
         self.set_display(control)
 
         self.frame_cursor = -1
