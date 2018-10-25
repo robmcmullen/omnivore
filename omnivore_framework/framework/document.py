@@ -156,7 +156,7 @@ class BaseDocument(HasTraits):
         return cls(raw_bytes=b"")
 
     def __str__(self):
-        return "Document(id=%s): %s" % (self.document_id, self.metadata.uri)
+        return f"Document: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}"
 
     def __len__(self):
         return np.alen(self.raw_bytes)
