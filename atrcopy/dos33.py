@@ -1,7 +1,7 @@
 import numpy as np
 
 from . import errors
-from .diskimages import BaseHeader, DiskImageBase
+from .diskimages import BaseHeader, DiskImageBase, Bootable
 from .utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
 from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
 from .executables import get_bsave
@@ -594,7 +594,7 @@ class Dos33DiskImage(DiskImageBase):
         return segment
 
 
-class Dos33BinFile:
+class Dos33BinFile(Bootable):
     """Parse a binary chunk into segments according to the DOS 3.3 binary
     dump format
     """
@@ -636,6 +636,9 @@ class Dos33BinFile:
 
         else:
             raise errors.InvalidBinaryFile(f"Invalid BSAVE header")
+
+    def create_emulator_boot_segment(self):
+        return self.segments[0]
 
 
 class ProdosHeader(Dos33Header):

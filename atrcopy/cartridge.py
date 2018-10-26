@@ -303,4 +303,11 @@ class RomImage(DiskImageBase):
     def parse_segments(self):
         r = self.rawdata
         s = ObjSegment(r, 0, 0, self.header.main_origin, name="Main Bank")
-        return [s]
+        self.segments = [s]
+
+    def create_emulator_boot_segment(self):
+        print(self.segments)
+        s = self.segments[0]
+        if s.origin == 0:
+            return None
+        return s

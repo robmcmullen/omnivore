@@ -92,7 +92,12 @@ class BaseHeader:
         return self.sector_class(self.sector_size, data)
 
 
-class DiskImageBase:
+class Bootable:
+    def create_emulator_boot_segment(self):
+        return ObjSegment(self.rawdata, 0, 0, 0)
+
+
+class DiskImageBase(Bootable):
     default_executable_extension = None
 
     def __init__(self, rawdata, filename="", create=False):

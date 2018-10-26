@@ -1,7 +1,7 @@
 import numpy as np
 
 from . import errors
-from .diskimages import DiskImageBase, BaseHeader
+from .diskimages import DiskImageBase, BaseHeader, Bootable
 from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
 from .utils import *
 from .executables import get_xex
@@ -267,7 +267,7 @@ class RunAddressSegment(ObjSegment):
 
 
 
-class AtariDosFile:
+class AtariDosFile(Bootable):
     """Parse a binary chunk into segments according to the Atari DOS object
     file format.
     
