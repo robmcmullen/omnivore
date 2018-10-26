@@ -51,8 +51,12 @@ class BootDiskImageAction(EditorAction):
     def perform(self, event=None):
         source = self.active_editor.document
         doc = EmulationDocument.create_document(source_document=source, emulator_type=source.emulator_class_override)
-        doc.boot()
-        self.task.new(doc)
+        try:
+            doc.boot()
+        except RuntimeError as e:
+            self.task.error(str(e))
+        else:
+            self.task.new(doc)
 
 
 class BootSegmentAction(EditorAction):
@@ -65,8 +69,12 @@ class BootSegmentAction(EditorAction):
     def perform(self, event=None):
         source = self.active_editor.document
         doc = EmulationDocument.create_document(source_document=source, emulator_type=source.emulator_class_override)
-        doc.boot(self.active_editor.segment)
-        self.task.new(doc)
+        try:
+            doc.boot(self.active_editor.segment)
+        except RuntimeError as e:
+            self.task.error(str(e))
+        else:
+            self.task.new(doc)
 
 
 class LoadSegmentAction(EditorAction):

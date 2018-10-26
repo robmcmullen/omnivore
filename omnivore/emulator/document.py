@@ -8,7 +8,7 @@ from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, SegmentPa
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float, Undefined
 
-from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError
+from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError, EmulatorError
 
 from ..document import SegmentedDocument
 
@@ -163,7 +163,7 @@ class EmulationDocument(SegmentedDocument):
             boot_data = segment.data
             origin = segment.origin
         else:
-            raise EmulatorError(f"Can't find bootable segment in {self}")
+            raise EmulatorError(f"Can't find bootable segment in {self.source_document}")
         emu.boot_from_segment(segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
