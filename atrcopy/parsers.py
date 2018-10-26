@@ -4,7 +4,7 @@ from .segments import SegmentData, DefaultSegment
 from .kboot import KBootImage
 from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, AtariDiskImage
 from .spartados import SpartaDosDiskImage
-from .cartridge import AtariCartImage, get_known_carts
+from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage
 from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
@@ -139,6 +139,21 @@ class AtariCartSegmentParser(SegmentParser):
         return self.image_type(r, self.cart_type)
 
 
+class Atari8bitCartParser(SegmentParser):
+    menu_name = "Atari Home Computer Cartridge"
+    image_type = Atari8bitCartImage
+
+
+class Atari5200CartParser(SegmentParser):
+    menu_name = "Atari 5200 Cartridge"
+    image_type = Atari5200CartImage
+
+
+class RomParser(SegmentParser):
+    menu_name = "ROM Image"
+    image_type = RomImage
+
+
 class MameZipParser(SegmentParser):
     menu_name = "MAME ROM Zipfile"
     image_type = MameZipImage
@@ -251,11 +266,16 @@ mime_parsers = {
         XexSegmentParser,
         ],
     "application/vnd.atari8bit.cart": [
+        Atari8bitCartParser,
         ],
     "application/vnd.atari8bit.5200_cart": [
+        Atari5200CartParser,
         ],
     "application/vnd.mame_rom": [
         MameZipParser,
+        ],
+    "application/vnd.rom": [
+        RomParser,
         ],
     "application/vnd.apple2.dsk": [
         Dos33SegmentParser,
@@ -274,6 +294,7 @@ mime_parse_order = [
     "application/vnd.mame_rom",
     "application/vnd.apple2.dsk",
     "application/vnd.apple2.bin",
+    "application/vnd.rom",
     ]
 
 pretty_mime = {
@@ -282,6 +303,7 @@ pretty_mime = {
     "application/vnd.atari8bit.cart": "Atari 8-bit Cartridge",
     "application/vnd.atari8bit.5200_cart":"Atari 5200 Cartridge",
     "application/vnd.mame_rom": "MAME",
+    "application/vnd.rom": "ROM Image",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",
     "application/vnd.apple2.bin": "Apple ][ Binary",
 }

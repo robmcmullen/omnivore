@@ -196,11 +196,7 @@ class A8CartHeader:
                     self.possible_types.add(i)
 
 
-class AtariCartImage(DiskImageBase):
-    def __init__(self, rawdata, cart_type, filename=""):
-        self.cart_type = cart_type
-        DiskImageBase.__init__(self, rawdata, filename)
-
+class BaseAtariCartImage(DiskImageBase):
     def __str__(self):
         return str(self.header)
 
@@ -209,12 +205,10 @@ class AtariCartImage(DiskImageBase):
         try:
             self.header = A8CartHeader(data)
         except errors.InvalidCartHeader:
-            self.header = A8CartHeader()
-            self.header.set_type(self.cart_type)
+            raise errors.InvalidDiskImage("Missing cart header")
 
     def strict_check(self):
-        if self.header.cart_type != self.cart_type:
-            raise errors.InvalidDiskImage("Cart type doesn't match type defined in header")
+        raise NotImplementedError
 
     def relaxed_check(self):
         if self.header.cart_type != self.cart_type:
@@ -259,6 +253,28 @@ class AtariCartImage(DiskImageBase):
         return segments
 
 
+class AtariCartImage(BaseAtariCartImage):
+    def __init__(self, rawdata, cart_type, filename=""):
+        self.cart_type = cart_type
+        DiskImageBase.__init__(self, rawdata, filename)
+
+    def strict_check(self):
+        if self.header.cart_type != self.cart_type:
+            raise errors.InvalidDiskImage("Cart type doesn't match type defined in header")
+
+
+class Atari8bitCartImage(BaseAtariCartImage):
+    def strict_check(self):
+        if "5200" in self.header.cart_name:
+            raise errors.InvalidDiskImage("5200 Carts don't work in the home computers.")
+
+
+class Atari5200CartImage(BaseAtariCartImage):
+    def strict_check(self):
+        if "5200" not in self.header.cart_name:
+            raise errors.InvalidDiskImage("Home computer carts don't work in the 5200.")
+
+
 def add_cart_header(bytes):
     header = A8CartHeader(create=True)
     header.check_size(len(bytes))
@@ -267,3 +283,24 @@ def add_cart_header(bytes):
     data[0:hlen] = header.to_array()
     data[hlen:] = bytes
     return data
+
+
+class RomImage(DiskImageBase):
+    def __str__(self):
+        return f"{len(self.rawdata) // 1024}k ROM image"
+
+    def read_header(self):
+        self.header = A8CartHeader()
+
+    def strict_check(self):
+        self.check_size()
+
+    def check_size(self):
+        size = len(self)
+        if (size & (size - 1)) != 0:
+            raise errors.InvalidDiskImage("ROM image not a power of 2")
+
+    def parse_segments(self):
+        r = self.rawdata
+        s = ObjSegment(r, 0, 0, self.header.main_origin, name="Main Bank")
+        return [s]
