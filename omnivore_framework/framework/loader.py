@@ -139,14 +139,15 @@ def load_document(document, active_task=None, task_id="", in_current_window=True
         if not active_task.allow_different_task(guess, best.factory):
             return
         dummy = app.document_class(metadata="application/octet-stream")
-        if active_task.can_edit(document) and active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
-            log.debug("Active task %s allows application/octet-stream" % active_task.id)
-            active_task.new(document, **kwargs)
-            return
-        if in_current_window:
-            task = create_task_in_window(best.id, active_task.window)
-            task.new(document, **kwargs)
-            return
+        if active_task.can_edit(document):
+            if active_task.ask_attempt_loading_as_octet_stream(guess, best.factory):
+                log.debug("Active task %s allows application/octet-stream" % active_task.id)
+                active_task.new(document, **kwargs)
+                return
+            elif in_current_window:
+                task = create_task_in_window(best.id, active_task.window)
+                task.new(document, **kwargs)
+                return
 
     # Look for existing task in current windows
     task = find_active_task_of_type(best.id)
@@ -222,7 +223,7 @@ def create_task_from_factory_id(factory_id, **kwargs):
 
 def create_task_in_window(task_id, window):
     app = wx.GetApp().tasks_application
-    log.debug("creating %s task" % task_id)
+    log.debug(f"creating {task_id} task in window {window}")
     task = app.create_task(task_id)
     add_task_to_window(window, task)
     return task
@@ -230,7 +231,7 @@ def create_task_in_window(task_id, window):
 def create_task_in_new_window(task_id):
     app = wx.GetApp().tasks_application
     window = app.create_window()
-    log.debug("creating %s task in new window" % task_id)
+    log.debug(f"creating {task_id} task in new window {window}")
     task = create_task_in_window(task_id, window)
     window.open()
     return task

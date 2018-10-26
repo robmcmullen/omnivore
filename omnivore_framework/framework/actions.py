@@ -65,8 +65,7 @@ class NewFileAction(Action):
     def perform(self, event=None):
         task = loader.find_or_create_task_of_type(self.task_id)
         log.debug("Loading %s as %s" % (self.uri, task))
-        guess = FileGuess(self.uri)
-        task.new(guess)
+        loader.load_file(self.uri)
 
     def _get_tooltip(self):
         return 'Open a new %s' % self.name
@@ -168,7 +167,10 @@ class OpenAction(Action):
     def perform(self, event):
         path = event.task.prompt_local_file_dialog()
         if path is not None:
-            loader.load_file(path, event.task)
+            try:
+                loader.load_file(path, event.task)
+            except Exception as e:
+                event.task.error(str(s))
 
 
 class SaveAction(EditorAction):
