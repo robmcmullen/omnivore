@@ -126,7 +126,7 @@ class SegmentedDocument(BaseDocument):
 
     def __str__(self):
         lines = []
-        lines.append("Document(id=%s): %s" % (self.document_id, self.metadata.uri))
+        lines.append(f"Document: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}")
         if log.isEnabledFor(logging.DEBUG):
             lines.append("parser: %s" % self.segment_parser)
             lines.append("segments:")

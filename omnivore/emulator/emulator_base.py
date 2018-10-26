@@ -25,7 +25,8 @@ class EmulatorBase(Debugger):
     cpu = "<base>"
     pretty_name = "<pretty name>"
 
-    mime_prefix = "<mime type>"
+    mime_prefix = ""
+    mime_types = set()
 
     serializable_attributes = ['input_raw', 'output_raw', 'frame_count']
     serializable_computed = {'input_raw', 'output_raw'}
@@ -141,7 +142,9 @@ class EmulatorBase(Debugger):
         except:
             pass
         else:
-            if mime.startswith(cls.mime_prefix):
+            if mime in cls.mime_types:
+                return True
+            elif cls.mime_prefix and mime.startswith(cls.mime_prefix):
                 return True
         return False
 

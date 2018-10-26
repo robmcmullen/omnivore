@@ -84,7 +84,7 @@ class Atari800(EmulatorBase):
 
     low_level_interface = liba8
 
-    mime_prefix = "application/vnd.atari8bit"
+    mime_types = set(["application/vnd.atari8bit.atr", "application/vnd.atari8bit.xex", "application/vnd.atari8bit.cart",])
 
     def serialize_to_dict(self):
         if not self.is_frame_finished:

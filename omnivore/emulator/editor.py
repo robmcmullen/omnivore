@@ -21,6 +21,7 @@ from ..byte_edit.byte_editor import ByteEditor
 from ..arch.machine import Machine, Atari800
 from .document import EmulationDocument
 from ..utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
+from .. import guess_emulator
 
 from omnivore_framework.utils.processutil import run_detach
 
@@ -54,6 +55,7 @@ class EmulatorEditor(ByteEditor):
     def preprocess_document(self, doc):
         args = {}
         skip = 0
+        log.debug(f"preprocess_document: EmulatorEditor, {doc}")
         if self.task_arguments:
             for arg in self.task_arguments.split(","):
                 if "=" in arg:
@@ -66,6 +68,11 @@ class EmulatorEditor(ByteEditor):
         try:
             doc.emulator_type
         except:
-            doc = EmulationDocument.create_document(source_document=doc, emulator_type=args.get('machine', '6502'), skip_frames_on_boot=skip)
+            try:
+                emulator_type = args['machine']
+            except KeyError:
+                emulator_type = guess_emulator(doc)
+            doc = EmulationDocument.create_document(source_document=doc, emulator_type=emulator_type, skip_frames_on_boot=skip)
         doc.boot(doc.source_document.container_segment)
+        log.debug(f"Using emulator {doc.emulator_type}")
         return doc

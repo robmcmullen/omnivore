@@ -20,7 +20,7 @@ class Crabapple(Generic6502):
     name = "crabapple"
     pretty_name = "Crabapple 2+"
 
-    mime_prefix = "application/vnd.apple2"
+    mime_types = set(["application/vnd.apple2.bin"])
 
     def configure_emulator_defaults(self):
         lib6502.set_a2_emulation_mode(1)
