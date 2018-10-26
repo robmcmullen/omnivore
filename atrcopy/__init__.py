@@ -54,29 +54,29 @@ def process(image, dirent, options):
         print(dirent)
 
 
-def find_diskimage(filename):
+def find_diskimage(filename, verbose=False):
     if filename == ".":
         parser = LocalFilesystem()
     else:
         with open(filename, "rb") as fh:
-            if options.verbose:
+            if verbose:
                 print("Loading file %s" % filename)
             data = to_numpy(fh.read())
         parser = None
-        container = guess_container(data, options.verbose)
+        container = guess_container(data, verbose)
         if container is not None:
             data = container.unpacked
         rawdata = SegmentData(data)
         for mime in mime_parse_order:
-            if options.verbose:
+            if verbose:
                 print("Trying MIME type %s" % mime)
-            parser = guess_parser_for_mime(mime, rawdata, options.verbose)
+            parser = guess_parser_for_mime(mime, rawdata, verbose)
             if parser is None:
                 continue
-            if options.verbose:
+            if verbose:
                 print("Found parser %s" % parser.menu_name)
             mime2 = guess_detail_for_mime(mime, rawdata, parser)
-            if mime != mime2 and options.verbose:
+            if mime != mime2 and verbose:
                 print("Signature match: %s" % mime2)
             break
     if parser is None:
@@ -227,7 +227,7 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             log.debug("read data for %s" % s.name)
     for name in obj_files:
         try:
-            parser = find_diskimage(name)
+            parser = find_diskimage(name, options.verbose)
         except errors.AtrError as e:
             print(f"skipping {name}: {e}")
         else:
@@ -381,7 +381,7 @@ def create_image(template, name):
         else:
             with open(name, "wb") as fh:
                 fh.write(data)
-            parser = find_diskimage(name)
+            parser = find_diskimage(name, options.verbose)
             print("created %s: %s" % (name, str(parser.image)))
             list_files(parser.image, [])
     else:
@@ -587,7 +587,7 @@ def run():
         boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
         try:
-            parser = find_diskimage(disk_image_name)
+            parser = find_diskimage(disk_image_name, options.verbose)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
             print(f"{disk_image_name}: {e}")
         else:
