@@ -93,8 +93,7 @@ def guess_document(guess):
 
 #### File loader
 
-def load_file(uri, active_task=None, task_id="", in_current_window=False, **kwargs):
-    app = wx.GetApp().tasks_application
+def load_file(uri, active_task=None, task_id="", in_current_window=True, **kwargs):
     log.debug("load_file: uri=%s task_id=%s" % (uri, task_id))
     from ..utils.file_guess import FileGuess
     # The FileGuess loads the first part of the file and tries to identify it.
@@ -117,6 +116,10 @@ def load_file(uri, active_task=None, task_id="", in_current_window=False, **kwar
     if document.load_error:
         if app.active_window:
             app.active_window.warning(document.load_error, "Document Load Error")
+    load_document(document, active_task, task_id, in_current_window, guess, **kwargs)
+
+def load_document(document, active_task=None, task_id="", in_current_window=True, guess=None, **kwargs):
+    app = wx.GetApp().tasks_application
 
     # Short circuit: if the file can be edited by the active task, use that!
     if active_task is not None and active_task.can_edit(document):
@@ -126,12 +129,12 @@ def load_file(uri, active_task=None, task_id="", in_current_window=False, **kwar
 
     possibilities = get_possible_task_factories(document, task_id)
     if not possibilities:
-        log.debug("no editor for %s" % uri)
+        log.debug("no editor for %s" % document.metadata.uri)
         return
     best = find_best_task_factory(document, possibilities)
     log.debug("best task match: %s" % best.id)
 
-    if active_task is not None:
+    if active_task is not None and guess is not None:
         # Ask the active task if it's OK to load a different editor
         if not active_task.allow_different_task(guess, best.factory):
             return
@@ -149,11 +152,13 @@ def load_file(uri, active_task=None, task_id="", in_current_window=False, **kwar
     task = find_active_task_of_type(best.id)
     if task:
         log.debug("Found task %s in current window" % best.id)
-        task.new(document, **kwargs)
-        return
-
-    log.debug("Creating task %s in current window" % best.id)
-    create_task_from_factory_id(document, best.id, **kwargs)
+    elif in_current_window:
+        log.debug("Creating task %s in current window" % best.id)
+        task = create_task_from_factory_id(best.id, **kwargs)
+    else:
+        log.debug("Creating task %s in new window" % best.id)
+        task = create_task_in_new_window(best.id, **kwargs)
+    task.new(document, **kwargs)
 
 def get_possible_task_factories(document, task_id=""):
     app = wx.GetApp().tasks_application
@@ -198,17 +203,21 @@ def find_best_task_id(task_id):
                 return factory.id
     return ""  # empty string will result in scanning the file for the best match
 
-def create_task_from_factory_id(guess, factory_id, **kwargs):
+def create_task_from_factory_id(factory_id, **kwargs):
     app = wx.GetApp().tasks_application
     window = app.active_window
+    if window is None:
+        w = get_window_search_order()
+        if not w:
+            # no windows at all! create a new one
+            return create_task_in_new_window(factory_id)
+        window = w[0]
     log.debug("  window=%s" % str(window))
     for task in window.tasks:
         if task.id == factory_id:
             break
     else:
-        task = app.create_task(factory_id)
-    add_task_to_window(window, task)
-    task.new(guess, **kwargs)
+        task = create_task_in_window(factory_id, window)
     return task
 
 def create_task_in_window(task_id, window):
@@ -216,6 +225,14 @@ def create_task_in_window(task_id, window):
     log.debug("creating %s task" % task_id)
     task = app.create_task(task_id)
     add_task_to_window(window, task)
+    return task
+
+def create_task_in_new_window(task_id):
+    app = wx.GetApp().tasks_application
+    window = app.create_window()
+    log.debug("creating %s task in new window" % task_id)
+    task = create_task_in_window(task_id, window)
+    window.open()
     return task
 
 def add_task_to_window(window, task):
@@ -228,8 +245,7 @@ def remove_task_from_window(window, task):
     app = wx.GetApp().tasks_application
     window.remove_task(task)
 
-def find_active_task_of_type(task_id):
-
+def get_window_search_order():
     app = wx.GetApp().tasks_application
     # Until remove_task bug is fixed, don't create any new windows, just
     # add a new task to the current window unless the task already exists
@@ -237,23 +253,26 @@ def find_active_task_of_type(task_id):
     if not w:
         # OS X might not have any windows open; a menubar is allowed to
         # exist without windows.
-        return None
+        return []
     try:
         i = w.index(app.active_window)
-        w[0:0] = [app.active_window]
         w.pop(i)
+        w[0:0] = [app.active_window]
     except ValueError:
         pass
+    return w
 
+def find_active_task_of_type(task_id):
+    w = get_window_search_order()
     for window in w:
         for t in window.tasks:
             if t.id == task_id:
                 log.debug("found non-active task in current window; activating!")
                 window.activate_task(t)
                 return t
-    if window:
-        task = create_task_in_window(task_id, window)
-        return task
+    # if window:
+    #     task = create_task_in_window(task_id, window)
+    #     return task
 #        # Check active window first, then other windows
 #        w = list(app.windows)
 #        try:
