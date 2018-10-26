@@ -15,6 +15,7 @@ from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_heade
 
 from omnivore_framework.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 from omnivore_framework.utils.command import StatusFlags
+from omnivore_framework.framework import loader
 
 from subprocess import *
 from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
@@ -56,7 +57,7 @@ class BootDiskImageAction(EditorAction):
         except RuntimeError as e:
             self.task.error(str(e))
         else:
-            self.task.new(doc)
+            loader.load_document(doc, in_current_window=False)
 
 
 class BootSegmentAction(EditorAction):
@@ -74,7 +75,7 @@ class BootSegmentAction(EditorAction):
         except RuntimeError as e:
             self.task.error(str(e))
         else:
-            self.task.new(doc)
+            loader.load_document(doc, in_current_window=False)
 
 
 class LoadSegmentAction(EditorAction):
@@ -88,7 +89,7 @@ class LoadSegmentAction(EditorAction):
         source = self.active_editor.document
         doc = EmulationDocument(source_document=source, emulator_type=source.emulator_class_override)
         doc.load(self.active_editor.segment)
-        self.task.new(doc)
+        loader.load_document(doc)
 
 
 class EmulatorAction(EditorAction):

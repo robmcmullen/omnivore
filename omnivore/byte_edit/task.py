@@ -670,7 +670,7 @@ class ByteEditTask(FrameworkTask):
 
     @classmethod
     def can_edit(cls, document):
-        return document.metadata.mime == "application/octet-stream" or document.segments
+        return not hasattr(document, "emulator_type") and (document.metadata.mime == "application/octet-stream" or document.segments)
 
     @classmethod
     def get_match_score(cls, document):
