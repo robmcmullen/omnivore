@@ -84,17 +84,13 @@ class Generic6502(EmulatorBase):
         raw = self.raw_array[offset:offset + d.MAIN_MEMORY_SIZE]
         return raw
 
-    def boot_from_segment(self, segment, all_segments):
-        if segment is None or segment.origin == 0:
-            s = self.find_default_boot_segment(all_segments)
-            if s is not None:
-                segment = s
+    def boot_from_raw(self, data, origin):
         # for now, simply copies data into main memory
-        start = segment.origin
-        end = start + len(segment)
-        log.debug(f"Copying {segment} to memory: {start:#04x}-{end:#04x}")
-        self.main_memory[start:end] = segment.data
-        self.cpu_state[0] = segment.origin
+        end = origin + len(data)
+        print("THOSEUHOEUROEUH", data)
+        log.debug(f"Copying data to memory: {origin:#04x}-{end:#04x}")
+        self.main_memory[origin:end] = data
+        self.cpu_state[0] = origin
         lib6502.restore_state(self.output_raw)
         self.debug_state()
         self.last_boot_state = self.calc_current_state()

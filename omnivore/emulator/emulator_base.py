@@ -218,22 +218,25 @@ class EmulatorBase(Debugger):
                 return segment
         return None
 
-    def boot_from_segment(self, boot_segment, all_segments):
+    def boot_from_segment(self, boot_segment):
+        if boot_segment is not None:
+            data = boot_segment.data
+            origin = boot_segment.origin
+            self.boot_from_raw(data, origin)
+
+    def boot_from_raw(self, data, origin):
         if self.bootfile is not None:
             try:
                 os.remove(self.bootfile)
                 self.bootfile = None
             except:  # MSW raises WindowsError, but that's not defined cross-platform
                 log.warning("Unable to remove temporary boot file %s." % self.bootfile)
-        if boot_segment is not None:
-            fd, self.bootfile = tempfile.mkstemp(".atari_boot_segment")
-            fh = os.fdopen(fd, "wb")
-            fh.write(boot_segment.data.tobytes())
-            fh.close()
-            log.debug(f"Created temporary file {self.bootfile} to use as boot disk image")
-            self.boot_from_file(self.bootfile)
-        else:
-            self.bootfile = None
+        fd, self.bootfile = tempfile.mkstemp(".omnivore_boot_segment")
+        fh = os.fdopen(fd, "wb")
+        fh.write(data)
+        fh.close()
+        log.debug(f"Created temporary file {self.bootfile} to use as boot disk image")
+        self.boot_from_file(self.bootfile)
 
     def boot_from_file(self, filename):
         parser = find_diskimage(filename, True)

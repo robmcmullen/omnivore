@@ -73,6 +73,6 @@ class EmulatorEditor(ByteEditor):
             except KeyError:
                 emulator_type = guess_emulator(doc)
             doc = EmulationDocument.create_document(source_document=doc, emulator_type=emulator_type, skip_frames_on_boot=skip)
-        doc.boot(doc.source_document.container_segment)
+        doc.boot()
         log.debug(f"Using emulator {doc.emulator_type}")
         return doc

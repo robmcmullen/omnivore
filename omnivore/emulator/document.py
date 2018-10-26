@@ -154,7 +154,17 @@ class EmulationDocument(SegmentedDocument):
     def boot(self, segment=None):
         emu = self.emulator
         emu.configure_emulator([])
-        emu.boot_from_segment(segment, self.source_document.segments)
+        if segment is None:
+            segment = self.source_document.segment_parser.image.create_emulator_boot_segment()
+        elif segment.origin == 0:
+            segment = emu.find_default_boot_segment(self.source_document.segments)
+
+        if segment is not None:
+            boot_data = segment.data
+            origin = segment.origin
+        else:
+            raise EmulatorError(f"Can't find bootable segment in {self}")
+        emu.boot_from_segment(segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()
         self.create_segments()
