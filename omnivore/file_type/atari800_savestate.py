@@ -49,7 +49,6 @@ class Atari800Parser(SegmentParser):
     def parse(self):
         d = self.segment_data.data
         values = d[0:10].view(self.format)[0]
-        print(values[0])
         if values[0] == "ATARI800":
             if values[1] == 8 and (values[2] == 0 or values[2] == 1):
                 self.parse_segments()
@@ -75,7 +74,6 @@ class Atari800Parser(SegmentParser):
             comments, segments = parse_atari800(d)
             self.set_comments(comments)
             for start, end, origin, name in segments:
-                print(("Adding:", start, end, origin, name))
                 segment = ObjSegment(r[start:end], 0, 0, origin, name=name)
                 self.segments.append(segment)
 
