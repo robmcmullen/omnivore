@@ -158,6 +158,13 @@ class SegmentedDocument(BaseDocument):
         self.segments.extend(parser.segments)
         self.segments.extend(self.user_segments)
 
+    def set_segment_parser(self, parser_cls):
+        log.debug("setting parser: %s" % parser_cls)
+        self.segment_parser = parser_cls(self.container_segment.rawdata)
+        self.segments = []
+        self.segments.extend(self.segment_parser.segments)
+        self.segments.extend(self.user_segments)
+
     def parse_sub_segments(self, segment):
         mime, parser = iter_parsers(segment.rawdata)
         if parser is not None:

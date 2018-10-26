@@ -111,7 +111,7 @@ class SegmentParserAction(EditorAction):
         return self.segment_parser.menu_name
 
     def perform(self, event):
-        self.active_editor.set_segment_parser(self.segment_parser)
+        self.active_editor.document.set_segment_parser(self.segment_parser)
 
     def _update_checked(self, ui_state):
         if self.active_editor:
