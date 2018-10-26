@@ -181,7 +181,10 @@ class FrameworkApplication(TasksApplication, FilePersistenceMixin):
                 continue
             log.debug("processing %s" % arg)
             task_id = loader.find_best_task_id(options.task_id)
-            loader.load_file(arg, None, task_id=task_id, task_arguments=task_arguments)
+            try:
+                loader.load_file(arg, None, task_id=task_id, task_arguments=task_arguments)
+            except RuntimeError as e:
+                log.error(f"Error loading {arg}: {str(e)}")
             i += 1
 
         # if any files were successfully loaded, some task will have an active

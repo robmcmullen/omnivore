@@ -284,18 +284,28 @@ class FrameworkTask(Task):
             self.error("Failed creating editor: %s" % str(e))
             return
         self.editor_area.add_editor(editor)
-        self.editor_area.activate_editor(editor)
         log.debug("new: source=%s editor=%s" % (source, editor))
+        existing = False
         if hasattr(source, 'get_metadata') or source is None:
-            editor.load(source, **kwargs)
-            if source is not None:
-                self.window.application.successfully_loaded_event = source.metadata.uri
+            pass
         elif hasattr(source, 'document_id'):
             source.load_permute(editor)
-            editor.load_document(source)
-            self.window.application.successfully_loaded_event = source.metadata.uri
         else:
             editor.load_existing_document(source.document, source)
+            existing = True
+
+        if not existing:
+            try:
+                editor.load(source, **kwargs)
+            except RuntimeError as e:
+                log.error(f"Error loading {source}, not adding editor")
+                self.error(str(e))
+                self.editor_area.remove_editor(editor)
+                return
+            else:
+                if source is not None:
+                    self.window.application.successfully_loaded_event = source.metadata.uri
+        self.editor_area.activate_editor(editor)
         self.window.application.editor_created_event = editor
         self.activated()
 

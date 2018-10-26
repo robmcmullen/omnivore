@@ -224,6 +224,10 @@ def add_task_to_window(window, task):
     window.activate_task(task)
     app.restore_perspective(window, task)
 
+def remove_task_from_window(window, task):
+    app = wx.GetApp().tasks_application
+    window.remove_task(task)
+
 def find_active_task_of_type(task_id):
 
     app = wx.GetApp().tasks_application

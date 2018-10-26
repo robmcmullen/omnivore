@@ -123,6 +123,7 @@ class FrameworkEditor(Editor):
             self.init_blank_document(doc, **kwargs)
         elif hasattr(source, 'document_id'):
             self.load_document(source, **kwargs)
+            doc = self.document
         else:
             log.debug("loading FileGuess object: %s" % source)
             doc = loader.guess_document(source)
@@ -134,12 +135,9 @@ class FrameworkEditor(Editor):
 
     def load_document(self, doc, **kwargs):
         log.debug("loading document: %s" % doc)
-        try:
-            self.document = self.preprocess_document(doc)
-            self.init_extra_metadata(self.document, **kwargs)
-            self.view_document(self.document, **kwargs)
-        except RuntimeError as e:
-            self.task.error(str(e))
+        self.document = self.preprocess_document(doc)
+        self.init_extra_metadata(self.document, **kwargs)
+        self.view_document(self.document, **kwargs)
 
     def load_existing_document(self, doc, old_editor, **kwargs):
         log.debug("loading document: %s" % doc)
