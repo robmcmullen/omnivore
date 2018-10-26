@@ -119,6 +119,7 @@ class A8CartHeader:
         ('checksum', '>u4'),
         ('unused','>u4')
         ])
+    nominal_length = format.itemsize
     file_format = "Cart"
 
     def __init__(self, bytes=None, create=False):
@@ -138,7 +139,7 @@ class A8CartHeader:
         self.main_origin = 0
         self.possible_types = set()
         if create:
-            self.header_offset = 16
+            self.header_offset = self.nominal_length
             self.check_size(0)
         if bytes is None:
             return
@@ -149,7 +150,7 @@ class A8CartHeader:
                 raise errors.InvalidCartHeader
             self.cart_type = int(values[1])
             self.crc = int(values[2])
-            self.header_offset = 16
+            self.header_offset = self.nominal_length
             self.set_type(self.cart_type)
         else:
             raise errors.InvalidCartHeader
@@ -160,8 +161,15 @@ class A8CartHeader:
     def __len__(self):
         return self.header_offset
 
+    @property
+    def valid(self):
+        return self.cart_type != -1
+
+    def calc_crc_from_data(self, data):
+        self.crc = 0
+
     def to_array(self):
-        raw = np.zeros([16], dtype=np.uint8)
+        raw = np.zeros([self.nominal_length], dtype=np.uint8)
         values = raw.view(dtype=self.format)[0]
         values[0] = b'CART'
         values[1] = self.cart_type
@@ -189,7 +197,7 @@ class A8CartHeader:
     def check_size(self, size):
         self.possible_types = set()
         k, r = divmod(size, 1024)
-        if r == 0 or r == 16:
+        if r == 0 or r == self.nominal_length:
             for i, t in enumerate(known_cart_types):
                 valid_size = t[0]
                 if k == valid_size:
@@ -205,7 +213,7 @@ class BaseAtariCartImage(DiskImageBase):
         try:
             self.header = A8CartHeader(data)
         except errors.InvalidCartHeader:
-            raise errors.InvalidDiskImage("Missing cart header")
+            self.header = A8CartHeader()
 
     def strict_check(self):
         raise NotImplementedError
@@ -217,10 +225,10 @@ class BaseAtariCartImage(DiskImageBase):
             self.header.set_type(self.cart_type)
 
     def check_size(self):
-        if self.header is None:
+        if not self.header.valid:
             return
         k, rem = divmod((len(self) - len(self.header)), 1024)
-        c = get_cart(self.cart_type)
+        c = get_cart(self.header.cart_type)
         log.debug("checking type=%d, k=%d, rem=%d for %s, %s" % (self.cart_type, k, rem, c[1], c[2]))
         if rem > 0:
             raise errors.InvalidDiskImage("Cart not multiple of 1K")
@@ -252,13 +260,31 @@ class BaseAtariCartImage(DiskImageBase):
             segments.append(s)
         return segments
 
+    def create_emulator_boot_segment(self):
+        print(self.segments)
+        h = self.header
+        k, rem = divmod(len(self), 1024)
+        if rem == 0:
+            h.calc_crc_from_data(self.bytes)
+            data_with_header = np.empty(len(self) + h.nominal_length, dtype=np.uint8)
+            data_with_header[0:h.nominal_length] = h.to_array()
+            data_with_header[h.nominal_length:] = self.bytes
+            r = SegmentData(data_with_header)
+        else:
+            r = self.rawdata
+        s = ObjSegment(r, 0, 0, self.header.main_origin, name="Cart image")
+        return s
+
 
 class AtariCartImage(BaseAtariCartImage):
     def __init__(self, rawdata, cart_type, filename=""):
+        c = get_cart(cart_type)
         self.cart_type = cart_type
         DiskImageBase.__init__(self, rawdata, filename)
 
     def strict_check(self):
+        if not self.header.valid:
+            raise errors.InvalidDiskImage("Missing cart header")
         if self.header.cart_type != self.cart_type:
             raise errors.InvalidDiskImage("Cart type doesn't match type defined in header")
 
@@ -267,12 +293,14 @@ class Atari8bitCartImage(BaseAtariCartImage):
     def strict_check(self):
         if "5200" in self.header.cart_name:
             raise errors.InvalidDiskImage("5200 Carts don't work in the home computers.")
+        AtariCartImage.strict_check(self)
 
 
 class Atari5200CartImage(BaseAtariCartImage):
     def strict_check(self):
         if "5200" not in self.header.cart_name:
             raise errors.InvalidDiskImage("Home computer carts don't work in the 5200.")
+        AtariCartImage.strict_check(self)
 
 
 def add_cart_header(bytes):
