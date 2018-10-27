@@ -750,7 +750,7 @@ class AddCommentAction(ViewerAction):
         return self.active_editor.can_copy
 
     def get_index(self, event):
-        return self.active_editor.caret_index
+        return self.viewer.linked_base.carets.current.index
 
     def perform(self, event):
         e = self.active_editor
