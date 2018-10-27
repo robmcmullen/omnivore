@@ -63,7 +63,7 @@ class EmulatorTask(ByteEditTask):
             "order": ["File", "Edit", "View", "Bytes", "Segment", "Emulation", "Documents", "Window", "Help"],
             "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "SizeGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
-            "Segment": ["ListGroup", "ActionGroup"],
+            "Segment": ["ListGroup", "ActionGroup", "LabelGroup"],
             "Disk Image": ["ParserGroup", "ActionGroup"],
             "Emulation":  ["ConfigGroup", "CommandGroup"],
         },

@@ -70,6 +70,8 @@ class MemoryAccessViewer(SegmentViewer):
 
     pretty_name = "Memory Access"
 
+    viewer_category = "Emulator"
+
     control_cls = MemoryAccessGridControl
 
     has_bitmap = True

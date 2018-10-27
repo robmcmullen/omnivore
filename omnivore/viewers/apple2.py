@@ -162,6 +162,8 @@ class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
 
     pretty_name = "Apple ][ Hi-res Page 1"
 
+    viewer_category = "Video"
+
     control_cls = HiresGridControl
 
     has_bitmap = True
@@ -217,6 +219,8 @@ class TextPage1Viewer(AppleSegmentChecker, c.CharViewer):
     name = "text1"
 
     pretty_name = "Apple ][ Text Page 1"
+
+    viewer_category = "Video"
 
     control_cls = TextGridControl
 

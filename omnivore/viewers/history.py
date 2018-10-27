@@ -143,6 +143,8 @@ class InstructionHistoryViewer(SegmentViewer):
 
     pretty_name = "Instruction History"
 
+    viewer_category = "Emulator"
+
     control_cls = InstructionHistoryGridControl
 
     # trait defaults

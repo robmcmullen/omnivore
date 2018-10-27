@@ -245,7 +245,7 @@ class ByteEditTask(FrameworkTask):
             "order": ["File", "Edit", "View", "Bytes", "Jumpman", "Segment", "Disk Image", "Documents", "Window", "Help"],
             "View": ["PredefinedGroup", "ProcessorGroup", "AssemblerGroup", "MemoryMapGroup", "ColorGroup", "FontGroup", "BitmapGroup", "SizeGroup", "ChangeGroup", "ConfigGroup", "ToggleGroup", "TaskGroup", "DebugGroup"],
             "Bytes": ["HexModifyGroup"],
-            "Segment": ["ListGroup", "ActionGroup"],
+            "Segment": ["ListGroup", "ActionGroup", "LabelGroup", "TraceGroup"],
             "Disk Image": ["ParserGroup", "ActionGroup", "EmulatorGroup"],
             "Jumpman":  ["LevelGroup", "SelectionGroup", "CustomCodeGroup"],
         },
@@ -540,8 +540,6 @@ class ByteEditTask(FrameworkTask):
             ba.FindNextBaselineDiffAction(),
             ba.FindPrevBaselineDiffAction(),
             ba.ListDiffAction(),
-            Separator(),
-            ba.SegmentGotoAction(),
             ]
 
     def get_actions_Menu_Segment_ListGroup(self):
@@ -558,6 +556,11 @@ class ByteEditTask(FrameworkTask):
             ba.InterleaveSegmentsAction(),
             ba.SetSegmentOriginAction(),
             Separator(),
+            ba.SegmentGotoAction(),
+            ]
+
+    def get_actions_Menu_Segment_LabelGroup(self):
+        return [
             va.AddCommentAction(),
             va.RemoveCommentAction(),
             va.AddLabelAction(),
@@ -571,7 +574,10 @@ class ByteEditTask(FrameworkTask):
                     ba.ExportSegmentLabelsAction(name="Export All Labels", include_disassembly_labels=True),
                     id="sl2", separator=True),
                 id='segmentlabels1', separator=False, name="Manage Segment Labels"),
-            Separator(),
+            ]
+
+    def get_actions_Menu_Segment_TraceGroup(self):
+        return [
             va.StartTraceAction(),
             va.AddTraceStartPointAction(),
             va.ApplyTraceSegmentAction(),

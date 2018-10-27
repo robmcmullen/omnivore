@@ -215,6 +215,8 @@ class JumpmanViewer(BitmapViewer):
 
     pretty_name = "Jumpman Level Editor"
 
+    viewer_category = "Jumpman"
+
     control_cls = JumpmanGridControl
 
     has_bitmap = True
@@ -446,6 +448,8 @@ class TriggerPaintingViewer(BaseInfoViewer):
 
     pretty_name = "Jumpman Trigger Painting"
 
+    viewer_category = "Jumpman"
+
     control_cls = TriggerList
 
     def recalc_data_model(self):
@@ -494,6 +498,8 @@ class LevelSummaryViewer(BaseInfoViewer):
     name = "level_summary"
 
     pretty_name = "Jumpman Level Summary"
+
+    viewer_category = "Jumpman"
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
