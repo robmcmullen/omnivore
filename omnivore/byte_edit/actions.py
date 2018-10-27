@@ -621,8 +621,8 @@ class SegmentGotoAction(EditorAction):
             s = e.segment
             index = addr - s.origin
             if e.segment.is_valid_index(index):
-                e.index_clicked(index, 0, None)
-                e.task.status_bar.message = e.get_label_at_index(index)
+                e.focused_viewer.sync_caret_to_index(index)
+                e.task.status_bar.message = e.focused_viewer.get_label_at_index(index)
             else:
                 segments = e.document.find_segments_in_range(addr)
                 if len(segments) > 1:
@@ -633,8 +633,8 @@ class SegmentGotoAction(EditorAction):
                     if len(segments) > 1:
                         segments = segments[1:] # Skip ALL segment if others are available
                     segment_num, segment, index = segments[0]
-                    e.view_segment_number(segment_num)
-                    e.index_clicked(index, 0, None)
+                    e.linked_base.view_segment_number(segment_num)
+                    e.focused_viewer.sync_caret_to_index(index)
                     e.task.status_bar.message = "%s in segment %s" % (e.get_label_at_index(index), e.segment.name)
         else:
             e.task.status_bar.message = error
