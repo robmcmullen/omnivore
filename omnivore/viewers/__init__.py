@@ -308,6 +308,18 @@ class SegmentViewer(HasTraits):
     # example, process_ensure_visible is the trait change handler that calls
     # ensure_visible to do the actual work of repositioning the viewer.
 
+    @on_trait_change('linked_base.editor.document.byte_values_changed')
+    def byte_values_changed(self, flags):
+        log.debug("byte_values_changed: %s flags=%s" % (self, str(flags)))
+        if flags is not Undefined:
+            self.refresh_view_for_value_change(flags)
+
+    @on_trait_change('linked_base.editor.document.byte_style_changed')
+    def byte_style_changed(self, flags):
+        log.debug("byte_style_changed: %s flags=%s" % (self, str(flags)))
+        if flags is not Undefined:
+            self.refresh_view_for_style_change(flags)
+
     @on_trait_change('linked_base.editor.document.data_model_changed')
     def process_data_model_change(self, evt):
         log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
@@ -440,6 +452,12 @@ class SegmentViewer(HasTraits):
         else:
             log.debug("refresh_event: refreshing %s" % self.control)
             self.control.refresh_view()
+
+    def refresh_view_for_value_change(self, flags):
+        self.refresh_view(flags)
+
+    def refresh_view_for_style_change(self, flags):
+        self.refresh_view(flags)
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
