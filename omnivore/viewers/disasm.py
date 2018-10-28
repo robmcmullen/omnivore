@@ -94,6 +94,17 @@ class DisassemblyTable(cg.HexTable):
             else:
                 text = ""
         elif col == 2:
+            s = self.linked_base.segment
+            index, _ = self.get_index_range(row, col)
+            e = self.current.entries
+            comments = []
+            for i in range(index, index + e[row]['num_bytes']):
+                comments.append(s.get_comment(i))
+            if comments:
+                text = " ".join([str(c) for c in comments])
+            else:
+                text = ""
+        elif col == 3:
             e = self.current.entries
             text = str(e[row]['disassembler_type'])
         else:
