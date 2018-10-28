@@ -7,7 +7,7 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined, Any, Instance
 
-from atrcopy import DefaultSegment
+from atrcopy import DefaultSegment, not_user_bit_mask
 from ..disassembler import DisassemblyConfig, flags
 
 from omnivore_framework.utils.wx import compactgrid as cg
@@ -79,42 +79,42 @@ class DisassemblyTable(cg.HexTable):
             yield "%04x" % (entries[line]['pc'])
 
     def get_value_style(self, row, col):
-        if col == 1:
-            t = self.parsed
-            if t is None:
-                return "", 0
-            text = t[row - t.start_index]
-        elif col == 0:
+        index, _ = self.get_index_range(row, col)
+        style = 0
+        if self.is_index_valid(index):
+            s = self.linked_base.segment
             p = self.current
             e = p.entries
-            addr = e[row]['pc']
-            has_label = p.labels[addr]
-            if has_label:
-                text = "L%04x" % addr
+            if col == 1:
+                t = self.parsed
+                if t is None:
+                    text = ""
+                else:
+                    text = t[row - t.start_index]
+            elif col == 0:
+                addr = e[row]['pc']
+                has_label = p.labels[addr]
+                if has_label:
+                    text = "L%04x" % addr
+                else:
+                    text = ""
+            elif col == 2:
+                comments = []
+                for i in range(index, index + e[row]['num_bytes']):
+                    comments.append(s.get_comment(i))
+                if comments:
+                    text = " ".join([str(c) for c in comments])
+                else:
+                    text = ""
+            elif col == 3:
+                text = str(e[row]['disassembler_type'])
             else:
-                text = ""
-        elif col == 2:
-            s = self.linked_base.segment
-            index, _ = self.get_index_range(row, col)
-            e = self.current.entries
-            comments = []
+                text = f"r{row}c{col}"
             for i in range(index, index + e[row]['num_bytes']):
-                comments.append(s.get_comment(i))
-            if comments:
-                text = " ".join([str(c) for c in comments])
-            else:
-                text = ""
-        elif col == 3:
-            e = self.current.entries
-            text = str(e[row]['disassembler_type'])
+                style |= (s.style[i] & not_user_bit_mask)
         else:
-            text = f"r{row}c{col}"
-        s = self.linked_base.segment
-        index, _ = self.get_index_range(row, col)
-        if self.is_index_valid(index):
-            style = s.style[index]
-            return text, style
-        return "", 0
+            text = ""
+        return text, style
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         self.parsed = self.current.stringify(start_row, visible_rows)
