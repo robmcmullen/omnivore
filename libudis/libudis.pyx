@@ -211,14 +211,14 @@ cdef class ParsedDisassembly:
         #print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
         while i > 0:
             i -= 1
-            old_label = labels[pc + i]
+            old_label = labels[(pc + i) & 0xffff]
             if old_label:
                 #print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
                 while index_to_row[i - 1] == index_to_row[i] and i > 1:
                     i -= 1
                 #if labels[pc + i] == 0:
                 #    print "  disasm_info: added label at %04x" % (pc + i)
-                labels[pc + i] = old_label
+                labels[(pc + i) & 0xffff] = old_label
 
     def parse_test(self, cpu_type, np.ndarray[np.uint8_t, ndim=1] src):
         cdef parse_func_t processor
