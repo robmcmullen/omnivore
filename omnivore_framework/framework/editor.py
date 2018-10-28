@@ -553,13 +553,13 @@ class FrameworkEditor(Editor):
             flags.rebuild_ui = True
         elif flags.byte_values_changed:
             log.debug(f"process_flags: byte_values_changed")
-            d.byte_values_changed = flags.index_range
             d.change_count += 1
+            d.byte_values_changed = flags
             flags.refresh_needed = True
         elif flags.byte_style_changed:
             log.debug(f"process_flags: byte_style_changed")
-            d.byte_style_changed = flags.index_range
             d.change_count += 1
+            d.byte_style_changed = flags
             flags.rebuild_ui = True
             flags.refresh_needed = True
 
