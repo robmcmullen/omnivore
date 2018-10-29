@@ -214,12 +214,12 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
         e = self.active_editor
         size = prompt_for_hex(e.window.control, "Enter number of bytes in each segment\n(default hex, prefix with # for decimal, %% for binary)", "Multiple Segments")
         if size is not None and size > 0:
-            segments = e.get_segments_from_selection(size)
+            segments = e.linked_base.get_segments_from_selection(size)
             for segment in segments:
                 text = "%04x-%04x" % (segment.origin, segment.origin + len(segment) - 1)
                 segment.name = text
                 e.add_user_segment(segment, False)
-            e.find_segment(segment=segments[0], refresh=True)
+            e.linked_base.find_segment(segment=segments[0], refresh=True)
 
 
 class InterleaveSegmentsAction(EditorAction):
@@ -237,7 +237,7 @@ class InterleaveSegmentsAction(EditorAction):
             factor = dlg.get_interleave()
             segment = interleave_segments(s, factor)
             e.add_user_segment(segment, False)
-            e.find_segment(segment=segment, refresh=True)
+            e.linked_base.find_segment(segment=segment, refresh=True)
         dlg.Destroy()
 
 
