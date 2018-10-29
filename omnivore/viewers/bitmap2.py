@@ -100,8 +100,10 @@ class BitmapLineRenderer(cg.TableLineRenderer):
         if nr > 0:
             bytes_per_row = t.items_per_row
             nc = last_col - first_col
-            first_index = (first_row * bytes_per_row) - t.start_offset
-            last_index = (last_row * bytes_per_row) - t.start_offset
+            offset = t.start_offset % bytes_per_row
+            first_index = (first_row * bytes_per_row) - offset
+            last_index = (last_row * bytes_per_row) - offset
+            log.debug(f"drawing rectangular grid: bpr={bytes_per_row}, first,last={first_index},{last_index}, nr={nr}, start_offset={offset}")
             data = t.data[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_col:last_col].flatten()
             style = t.style[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_col:last_col].flatten()
 
