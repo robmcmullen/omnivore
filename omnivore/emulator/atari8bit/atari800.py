@@ -286,8 +286,6 @@ class Atari800(EmulatorBase):
         self.input['start'] = state
 
 
-
-
 class Atari800XL(Atari800):
     cpu = "6502"
     name = "atari800xl"
@@ -297,6 +295,19 @@ class Atari800XL(Atari800):
         if not emu_args:
             emu_args = [
                 "-xl",
+            ]
+        return emu_args
+
+
+class Atari5200(Atari800):
+    cpu = "6502"
+    name = "atari5200"
+    pretty_name = "Atari 5200"
+
+    def process_args(self, emu_args):
+        if not emu_args:
+            emu_args = [
+                "-5200",
             ]
         return emu_args
 
@@ -458,6 +469,9 @@ try:
     class wxAtari800XL(wxMixin, Atari800XL):
         pass
 
+    class wxAtari5200(wxMixin, Atari5200):
+        pass
+
 
 except ImportError:
     class wxAtari800:
@@ -466,3 +480,6 @@ except ImportError:
     class wxAtari800XL:
         def __init__(self, *args, **kwargs):
             raise RuntimeError("wx not available! Can't run wxAtari800XL")
+    class wxAtari5200:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("wx not available! Can't run wxAtari5200")
