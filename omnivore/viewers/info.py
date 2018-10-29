@@ -251,7 +251,7 @@ class CommentsPanel(wx.VListBox):
         except IndexError:
             font = self.italic_font
             segment_font = self.italic_font
-            segment, index = v.linked_base.find_in_user_segment(item[0])
+            segment, index = v.editor.find_in_user_segment(item[0])
             if segment is not None:
                 label = segment.label(index)
             else:

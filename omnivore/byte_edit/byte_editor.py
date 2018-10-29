@@ -387,8 +387,6 @@ class ByteEditor(FrameworkEditor):
     def added_segment(self, segment, update=True):
         if update:
             self.update_segments_ui()
-            if self.segment_list is not None:
-                self.segment_list.ensure_visible(segment)
         self.metadata_dirty = True
 
     def delete_user_segment(self, segment):

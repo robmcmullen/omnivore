@@ -389,38 +389,6 @@ class LinkedBase(CaretHandler):
 
     #### segment utilities
 
-    def add_user_segment(self, segment, update=True):
-        self.document.add_user_segment(segment)
-        self.added_segment(segment, update)
-
-    def added_segment(self, segment, update=True):
-        if update:
-            self.update_segments_ui()
-            if self.segment_list is not None:
-                self.segment_list.ensure_visible(segment)
-        self.metadata_dirty = True
-
-    def delete_user_segment(self, segment):
-        self.document.delete_user_segment(segment)
-        self.view_segment_number(self.segment_number)
-        self.update_segments_ui()
-        self.metadata_dirty = True
-
-    def find_in_user_segment(self, base_index):
-        for s in self.document.user_segments:
-            try:
-                index = s.get_index_from_base_index(base_index)
-                return s, index
-            except IndexError:
-                continue
-        for s in self.document.segment_parser.segments[1:]:
-            try:
-                index = s.get_index_from_base_index(base_index)
-                return s, index
-            except IndexError:
-                continue
-        return None, None
-
     def get_goto_action_in_segment(self, addr_dest):
         if addr_dest >= 0:
             segment_start = self.segment.origin

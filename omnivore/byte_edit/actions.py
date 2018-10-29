@@ -193,12 +193,12 @@ class GetSegmentFromSelectionAction(EditorAction):
         e = self.active_editor
         text = prompt_for_string(e.window.control, "Enter segment name", "New Segment")
         if text is not None:
-            segment, = e.get_segments_from_selection()
+            segment, = e.linked_base.get_segments_from_selection()
             if not text:
                 text = "%04x-%04x" % (segment.origin, segment.origin + len(segment) - 1)
             segment.name = text
             e.add_user_segment(segment)
-            e.find_segment(segment=segment, refresh=True)
+            e.linked_base.find_segment(segment=segment, refresh=True)
 
 
 class MultipleSegmentsFromSelectionAction(EditorAction):
