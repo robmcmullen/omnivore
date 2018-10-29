@@ -878,13 +878,18 @@ class HexTable(object):
 
     Each column may be displayed across an integer number of cells which is
     controlled by the line renderer.
+
+    If the view of this table should indent the first line to allow the row
+    labels to be even multiples of the number of items per row (e.g. hex view
+    where the labels all end in zero), use row_labels_in_multiples at creation
+    time.
     """
-    def __init__(self, data, style, items_per_row, start_addr=0, start_offset_mask=0):
+    def __init__(self, data, style, items_per_row, start_addr=0, row_labels_in_multiples=False):
         self.data = data
         self.style = style
         self.start_addr = start_addr
         self.items_per_row = items_per_row
-        self.start_offset = start_addr & start_offset_mask if start_offset_mask else 0
+        self.start_offset = start_addr % items_per_row if row_labels_in_multiples else 0
         self.init_boundaries()
         # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.create_row_labels()
