@@ -78,6 +78,12 @@ class SegmentParser:
             raise errors.InvalidSegmentParser(e)
         self.segments.extend(self.image.segments)
 
+    def reconstruct_segments(self, new_rawdata):
+        self.image = self.get_image(new_rawdata)
+        self.segment_data = new_rawdata
+        for s in self.segments:
+            s.reconstruct_raw(new_rawdata)
+
     def get_image(self, r):
         return self.image_type(r)
 
