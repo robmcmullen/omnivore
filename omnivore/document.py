@@ -70,7 +70,6 @@ class SegmentedDocument(BaseDocument):
 
     def load_extra_metadata(self, guess):
         log.debug("extra metadata: parser=%s, mime=%s" % (guess.parser, guess.metadata.mime))
-        self.set_segments(guess.parser)
         extra = self.calc_unserialized_template(guess.metadata.mime)
         if extra:
             log.debug("extra metadata: loaded template for %s" % guess.metadata.mime)
@@ -102,8 +101,7 @@ class SegmentedDocument(BaseDocument):
 
         if 'segment parser' in e:
             parser = e['segment parser']
-            for s in parser.segments:
-                s.reconstruct_raw(self.container_segment.rawdata)
+            parser.reconstruct_segments(self.container_segment.rawdata)
             self.set_segments(parser)
         if 'user segments' in e:
             # Segment objects created by the utils.extra_metadata module
