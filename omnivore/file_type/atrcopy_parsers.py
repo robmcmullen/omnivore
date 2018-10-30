@@ -33,5 +33,5 @@ class AtrcopyRecognizer(HasTraits):
             doc = emu.EmulationDocument(source_document=None, emulator_type=emulator_type)
         else:
             doc = SegmentedDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
-        doc.load_metadata(guess)
+        doc.load_metadata_before_editor(guess)
         return doc

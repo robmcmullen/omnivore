@@ -32,7 +32,7 @@ class Atari800Recognizer(HasTraits):
 
     def load(self, guess):
         doc = SegmentedDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
-        doc.load_metadata(guess)
+        doc.load_metadata_before_editor(guess)
         return doc
 
 Atari800_MACHINE_XLXE = 1

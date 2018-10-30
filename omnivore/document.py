@@ -68,8 +68,8 @@ class SegmentedDocument(BaseDocument):
 
     #### serialization methods
 
-    def load_extra_metadata(self, guess):
-        log.debug("extra metadata: parser=%s, mime=%s" % (guess.parser, guess.metadata.mime))
+    def load_extra_metadata_before_editor(self, guess):
+        log.debug("extra metadata_before_editor: parser=%s, mime=%s" % (guess.parser, guess.metadata.mime))
         extra = self.calc_unserialized_template(guess.metadata.mime)
         if extra:
             log.debug("extra metadata: loaded template for %s" % guess.metadata.mime)
@@ -83,6 +83,13 @@ class SegmentedDocument(BaseDocument):
             # have already been saved in the .omnivore file, so this prevents
             # duplication.
             del extra['user segments']
+
+        # make sure a parser exists; it probably does in most cases, but
+        # emulators use a source document to create the EmulationDocument, and
+        # the EmulationDocument won't have a parser assigned if it isn't being
+        # restored from a .omnivore file
+        if self.segment_parser is None:
+            self.set_segments(guess.parser)
 
         # Overwrite any builtin stuff with saved data from the user
         extra.update(file_extra)
