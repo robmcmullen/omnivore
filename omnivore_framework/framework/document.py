@@ -190,12 +190,12 @@ class BaseDocument(HasTraits):
 
     # serialization
 
-    def load_metadata(self, guess):
-        extra = self.load_extra_metadata(guess)
+    def load_metadata_before_editor(self, guess):
+        extra = self.load_extra_metadata_before_editor(guess)
         self.restore_extra_from_dict(extra)
         self.extra_metadata = extra
 
-    def load_extra_metadata(self, guess):
+    def load_extra_metadata_before_editor(self, guess):
         ext = self.metadata_extension
         return guess.json_metadata.get(ext, dict())
 
