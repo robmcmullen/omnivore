@@ -53,7 +53,7 @@ def get_template(name):
     return source
 
 
-def iter_templates():
+def iter_templates(inf_type=None):
     templates = {}
     for toplevel in template_subdirs:
         pathname = construct_path(toplevel, "*")
@@ -66,6 +66,8 @@ def iter_templates():
                         j = json.loads(fh.read())
                 except ValueError:
                     j = {}
+                if inf_type and j["type"] != inf_type:
+                    continue
                 j["pathname"] = template
                 # Allow full path in template to differentiate default and user
                 # templates with the same name

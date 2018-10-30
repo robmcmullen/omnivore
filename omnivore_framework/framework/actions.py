@@ -116,7 +116,7 @@ class NewFileGroup(Group):
         items = []
 
         task_id = "omnivore_framework.text_edit"
-        for template in iter_templates():
+        for template in iter_templates("new file"):
             name = template.get("label", template["uri"])
             task_id = loader.find_best_task_id(template.get("task", "byte_edit"))
             if not task_id:
