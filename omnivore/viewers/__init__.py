@@ -366,7 +366,7 @@ class SegmentViewer(HasTraits):
     @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):
         log.debug("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
-        if self.linked_base is not None:
+        if self.linked_base is not None and evt is not Undefined:
             self.update_caption()
             self.linked_base.editor.update_pane_names()
 
