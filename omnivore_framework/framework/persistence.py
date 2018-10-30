@@ -7,6 +7,7 @@ import jsonpickle
 from datetime import datetime
 
 from ..third_party.appdirs import user_config_dir, user_log_dir, user_cache_dir, user_data_dir
+from ..templates import template_subdirs
 
 import logging
 log = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ class FilePersistenceMixin(object):
     def setup_file_persistence(self, app_name):
         dirname = user_config_dir(app_name)
         self.app_home_dir = dirname
+        template_subdirs[0:0] = [self.get_config_dir("templates")]
 
         # Make sure it exists!
         if not os.path.exists(self.app_home_dir):

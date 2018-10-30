@@ -24,6 +24,8 @@ def construct_path(template_dir, name):
 
 
 def find_template_path(name):
+    if name.startswith("/"):
+        return name
     checked = []
     for toplevel in template_subdirs:
         pathname = construct_path(toplevel, name)
@@ -52,6 +54,7 @@ def get_template(name):
 
 
 def iter_templates():
+    templates = {}
     for toplevel in template_subdirs:
         pathname = construct_path(toplevel, "*")
         for template in glob.glob(pathname):
@@ -64,7 +67,9 @@ def iter_templates():
                 except ValueError:
                     j = {}
                 j["pathname"] = template
-                j["uri"] = "template://" + os.path.basename(template)
+                # Allow full path in template to differentiate default and user
+                # templates with the same name
+                j["uri"] = "template://" + template
                 if "task" in j and j["task"] == "hex_edit":
                     j["task"] = "byte_edit"
                 log.debug("template json: %s" % str(template))
