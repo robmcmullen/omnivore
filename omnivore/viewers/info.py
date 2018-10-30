@@ -264,7 +264,7 @@ class CommentsPanel(wx.VListBox):
 
     def recalc_view(self):
         comments = self.segment_viewer.document.segments[0].get_sorted_comments()
-        print(("COMMENTS!", str(comments)))
+        # print(("COMMENTS!", str(comments)))
         self.set_items(comments)
 
     def refresh_view(self):
