@@ -148,9 +148,6 @@ class EmulationDocument(SegmentedDocument):
 
     #####
 
-    def calc_layout_template_name(self, task_id):
-        return "%s.emulator_layout" % task_id
-
     def boot(self, segment=None):
         emu = self.emulator
         emu.configure_emulator([])
