@@ -36,7 +36,7 @@ class RecognizerBase(HasTraits):
 
     def load(self, guess):
         doc = BaseDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
-        doc.load_metadata(guess)
+        doc.load_metadata_before_editor(guess)
         return doc
 
 
