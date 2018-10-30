@@ -71,8 +71,13 @@ class EmulationDocument(SegmentedDocument):
 
     ##### trait default values
 
+    #### object methods
+
+    def __str__(self):
+        return f"EmulationDocument: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}. {self.emulator_type} source={self.source_document}"
+
     @classmethod
-    def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False):
+    def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False, extra_metadata=None):
         try:
             emu_cls = find_emulator(emulator_type)
         except UnknownEmulatorError:
@@ -89,6 +94,8 @@ class EmulationDocument(SegmentedDocument):
         emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
         doc = cls(emulator_type=emulator_type, emulator=emu, source_document=source_document)
+        if extra_metadata:
+            doc.restore_save_points_from_dict(extra_metadata)
         return doc
 
     @property
@@ -108,11 +115,12 @@ class EmulationDocument(SegmentedDocument):
 
     def restore_extra_from_dict(self, e):
         SegmentedDocument.restore_extra_from_dict(self, e)
+        self.restore_save_points_from_dict(e)
 
-        if 'emulator_type' in e:
-            self.emulator_type = find_emulator(e['emulator_type'])
+    def restore_save_points_from_dict(self, e):
+        # emulator type will already be set at document creation time
         if 'frame_history' in e:
-            self.emulator.history.restore_from_dict(e)
+            self.emulator.frame_history.restore_from_dict(e)
             self.emulator.configure_io_arrays()
             self.create_segments()
         if 'current_frame' in e:
@@ -123,7 +131,7 @@ class EmulationDocument(SegmentedDocument):
         SegmentedDocument.serialize_extra_to_dict(self, mdict)
 
         mdict["emulator_type"] = self.emulator.name
-        mdict.update(self.emulator.history.serialize_to_dict())
+        mdict.update(self.emulator.frame_history.serialize_to_dict())
         mdict["current_frame"] = self.emulator.serialize_to_dict()
         mdict["skip_frames_on_boot"] = self.skip_frames_on_boot
 
@@ -150,20 +158,21 @@ class EmulationDocument(SegmentedDocument):
 
     def boot(self, segment=None):
         emu = self.emulator
-        emu.configure_emulator([])
-        if segment is None:
-            segment = self.source_document.segment_parser.image.create_emulator_boot_segment()
-        elif segment.origin == 0:
-            segment = emu.find_default_boot_segment(self.source_document.segments)
+        if not emu.has_save_points:
+            emu.configure_emulator([])
+            if segment is None:
+                segment = self.source_document.segment_parser.image.create_emulator_boot_segment()
+            elif segment.origin == 0:
+                segment = emu.find_default_boot_segment(self.source_document.segments)
 
-        if segment is not None:
-            boot_data = segment.data
-            origin = segment.origin
-        else:
-            raise EmulatorError(f"Can't find bootable segment in {self.source_document}")
-        emu.boot_from_segment(segment)
-        for i in range(self.skip_frames_on_boot):
-            emu.next_frame()
+            if segment is not None:
+                boot_data = segment.data
+                origin = segment.origin
+            else:
+                raise EmulatorError(f"Can't find bootable segment in {self.source_document}")
+            emu.boot_from_segment(segment)
+            for i in range(self.skip_frames_on_boot):
+                emu.next_frame()
         self.create_segments()
         self.start_timer()
 

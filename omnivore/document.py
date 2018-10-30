@@ -66,6 +66,11 @@ class SegmentedDocument(BaseDocument):
     def _get_can_resize(self):
         return self.segments and self.container_segment.can_resize
 
+    #### object methods
+
+    def __str__(self):
+        return f"SegmentedDocument: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}"
+
     #### serialization methods
 
     def load_extra_metadata_before_editor(self, guess):

@@ -135,6 +135,10 @@ class EmulatorBase(Debugger):
     def current_cpu_status(self):
         return "not running"
 
+    @property
+    def has_save_points(self):
+        return len(self.frame_history) > 0
+
     @classmethod
     def guess_from_document(cls, document):
         try:

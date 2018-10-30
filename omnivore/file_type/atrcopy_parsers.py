@@ -4,7 +4,7 @@ from atrcopy import iter_parsers, guess_parser_for_mime, SegmentData, errors
 
 from omnivore_framework.file_type.i_file_recognizer import IFileRecognizer
 from ..document import SegmentedDocument
-from .. import emulator as emu
+from ..emulator.document import EmulationDocument
 
 
 @provides(IFileRecognizer)
@@ -29,9 +29,8 @@ class AtrcopyRecognizer(HasTraits):
     def load(self, guess):
         file_metadata = guess.json_metadata.get(".omniemu", {})
         emulator_type = file_metadata.get("emulator_type", None)
-        if emulator_type:
-            doc = emu.EmulationDocument(source_document=None, emulator_type=emulator_type)
-        else:
-            doc = SegmentedDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
+        doc = SegmentedDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
         doc.load_metadata_before_editor(guess)
+        if emulator_type:
+            doc = EmulationDocument.create_document(source_document=doc, emulator_type=emulator_type, extra_metadata=file_metadata)
         return doc
