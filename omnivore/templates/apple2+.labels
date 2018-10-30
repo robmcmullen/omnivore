@@ -1,0 +1,236 @@
+0020 WNDLFT            # Left column of the Scroll Window
+0021 WNDWDTH           # Width of the Scroll Window
+0022 WNDTOP            # Top line of the Scroll Window
+0023 WNDBTM            # Bottom line of Scroll Window
+0024 CH        # Displacement from WNDLFT
+0025 CV 
+0026 GBASL      
+0027 GBASH      
+0028 BASL       
+0029 BASH       
+002A BAS2L      
+002B BAS2H      
+002C H2 
+002D V2 
+002F LASTIN     
+0030 COLOR      
+0031 MODE       
+0032 INVFLG     
+0033 PROMPT     
+0034 YSAV       
+0035 YSAV1      
+0036 CSWL       
+0037 CSWH       
+0038 KSWL       
+0039 KSWH       
+003A PCL        
+003B PCH        
+003C A1L        
+003D A1H        
+003E A2L        
+003F A2H        
+0040 A3L        
+0041 A3H        
+0042 A4L        
+0043 A4H        
+0044 A5L        
+0045 A5H        
+0046 XREG       
+0047 YREG       
+0048 STATUS     
+0049 SPNT       
+004E RNDL       
+004F RNDH       
+0050 ACL        
+0051 ACH        
+0052 XTNDL      
+0053 XTNDH      
+0054 AUXL       
+0055 AUXH       
+                              # IO registers
+C000 KEYBOARD/CLR80COL # latch keyboard data (read) / use 80-column memory mapping (write)
+C001 SET80COL   
+C002 CLRAUXRD          # read from auxilliary 48K
+C003 SETAUXRD   
+C004 CLRAUXWR          # write to auxilliary 48K
+C005 SETAUXWR   
+C006 CLRCXROM          # use external slot ROM
+C007 SETCXROM   
+C008 CLRAUXZP          # use auxilliary ZP, stack, & LC
+C009 SETAUXZP   
+C00A CLRC3ROM          # use external slot C3 ROM
+C00B SETC3ROM   
+C00C CLR80VID          # use 80-column display mode
+C00D SET80VID   
+C00E CLRALTCH          # use alternate character set ROM
+C00F SETALTCH   
+C010 STROBE            # strobe (unlatch) keyboard data
+C011 RDLCBNK2          # reading from LC bank $Dx 2
+C012 RDLCRAM           # reading from LC RAM
+C013 RDRAMRD           # reading from auxilliary 48K
+C014 RDRAMWR           # writing to auxilliary 48K
+C015 RDCXROM           # using external slot ROM
+C016 RDAUXZP           # using auxilliary ZP, stack, & LC
+C017 RDC3ROM           # using external slot C3 ROM
+C018 RD80COL           # using 80-column memory mapping
+C019 RDVBLBAR          # not VBL (VBL signal low)
+C01A RDTEXT            # using text mode
+C01B RDMIXED           # using mixed mode
+C01C RDPAGE2           # using text/graphics page2
+C01D RDHIRES           # using Hi-res graphics mode
+C01E RDALTCH           # using alternate character set ROM
+C01F RD80VID           # using 80-column display mode
+C030 SPEAKER           # toggle speaker diaphragm
+C050 CLRTEXT           # enable text-only mode
+C051 SETTEXT    
+C052 CLRMIXED          # enable graphics/text mixed mode
+C053 SETMIXED   
+C054 TXTPAGE1          # select page1/2 (or page1/1x)
+C055 TXTPAGE2   
+C056 CLRHIRES          # enable Hi-res graphics
+C057 SETHIRES   
+C058 SETAN0            # 4-bit annunciator inputs
+C059 CLRAN0     
+C05A SETAN1     
+C05B CLRAN1     
+C05C SETAN2     
+C05D CLRAN2     
+C05E SETAN3     
+C05F CLRAN3     
+C060 CASSETTE            # Cassette input
+C061 OPNAPPLE          # open apple (command) key data
+C062 CLSAPPLE          # closed apple (option) key data
+C070 PDLTRIG           # trigger paddles
+C081 ROMIN             # RD ROM, WR-enable LC RAM
+C083 LCBANK2           # RD LC RAM bank2, WR-enable LC RAM
+C08B LCBANK1           # RD LC RAM bank1, WR-enable LC RAM
+CFFF CLRC8ROM          # switch out slot C8 ROM
+                              #Keyboard-related ROM routines, from Monitors Peeled
+FD0C RDKEY          # Set screen to blink at cursor saving original character in A-reg. from (BASL),Y
+FD18 RDKEY          # Jump Indirect (KSWL) to KEYIN
+FD1B KEYIN          # Increment random number at RNDL,H while polling keyboard register.
+FD26 KEYIN          # Store A-reg to (BASL),Y (clear blink set by RDKEY routine).
+FD28 KEYIN          # Load A-reg from Keyboard register
+FD2F ESC          # Call RDKEY for Escape key service
+FD32 ESC          # Call ESC1 with char in A-reg to do indicated function.
+FD35 RDCHAR        # Call RDKEY to get next char into A. Compare to $93. =, br to ESC to call for next char and do ESC
+FC2C ESC1        # Using character in A-reg, br to FC2C 64556 -980 ESC1 routine for Escape key service.
+FD3D NOTCR          #Echo keyboard input thru COUT to screen, from IN,X , with INVFLG temporarily set to $FF.
+FD4D NOTCR          #Pickup char from IN,X; if $88 goto BCKSPC; if $98 goto CANCEL; if X-reg (input index) greater than $F7 fall into FD5C.; Otherwise to NOTCR1, bypass Bell
+FD5C NOTCR          #Sound bell if X indicates 248+ input characters.
+FD5F NOTCR1        #Increment X ; If X not zero goto NXTCHAR; If x=o fall into CANCEL
+FD62 CANCEL        #Load $DC (backslash) into A-reg to indicate cancelled input.
+FD64 CANCEL        #Call COUT to print A-reg then fall into GETLNZ
+FD67 GETLNZ        #Print Carriage Return thru COUT
+FD6A GETLN          #Load PROMPT into A-reg
+FD6C GETLN          #Call COUT to print A-reg
+FD6F GETLN          #Load X-reg with $01 for passage thru backspace operation.
+FD71 BCKSPC        #If x=o goto GETLNZ to start over. else decrement X, fall into NXTCHAR
+FD75 NXTCHAR      #Call RDCHAR to get next character If character gotten is $95 (ctrlU cursor right arrow) pick up screen character from (BASL), Y to replace it.
+FD84 ADDINP        #store A-reg to input area at IN,X Compare to return.
+                              #Cassette-related ROM routines, from Monitors Peeled
+FECD WRITE         #
+FEFD READ           #
+FCC9 HEADR         #
+FCFA RD2BIT        #
+FCFD RDBIT         #
+FCEC RDBYTE        #
+FCD6 WRBIT         #
+FEED WRBYTE        #
+                              #programming aids routines, from Monitors Peeled
+FDED COUT        #Write byte in A to screen at CV,CH
+FD8E CROUT          #Print Carriage Return thru COUT
+F948 PRBLNK       #Print three blanks thru COUT
+F94A PRBL2          #Print eX) blanks thru COUT
+F94C PRBL3          #Print character in A followed by (X )-1 blanks
+FF3A BELL        #Print BELL code thru COUT
+FF2D PRERR          #Print "ERR" and BELL thru COUT
+FDE3 PRHEX          #Print low nibble of A as hex char
+FDDA PRBYTE        #Print A-reg as 2 hex nibbles
+F940 PRNTYX        #Print hex of Y,X regs
+F941 PRNTAX        #Print hex of A,X regs
+F944 PRNTX          #Print hex of X reg
+FD96 PRYX2          #Print CR, then hex of Y,X regs, then minus sign or dash
+FD99 PRHEX          #Print hex of Y,X regs, then dash
+FD92 PRA1        #Print CR, hex of A1H,A1L, and dash
+FDA3 XAM8        #Print memory as hex with preceeding address from mmmm to mmm7 where mmmm is contents of A1L,H on entry.
+FDB3 XAM          #Print memory as hex from (A1L,H) to (A2L,H) inclusive.
+FF4A SAVE        #Save A,X,Y,P,S regs at $45-49
+FAD7 REGDSP        #Display registers with names from  $45-49 as SAVEd, with preceeding carriage return.
+FADA RGDSP1        #Display regs as above without CR
+FF3F RESTORE      #Restore regs A,X,Y,P not S from $45
+FA43 STEP        #Execute one instruction at (PCL,H)
+FE2C MOVE        #Move memory contents to (A4L,H) from (A1L,H) thru (A2L,H)
+FE36 VFY          #Compare memory contents (A4L,H) to (A1L,H) thru (A2L,H), differences are displayed.
+FCB4 NXTA4          #Increment A4L,H ($42,43) and
+FCBA NXTA1          #Inc A1L,H (3C,D), set carry if A2L,H not less than A1L,H
+                              # Output Subroutines, from Assembly Lines
+FDED COUT        #Output a character
+FDF0 COUT1          #Output to screen
+FE80 SETINV        #Set Inverse mode
+FE84 SETNORM      #Set Normal Mode
+FD8E CROUT          # Generate a <RETURN>
+FD8B CROUT1        # <RETURN> with clear
+FDDA PRBYTE        # Print a hexadecimal byte
+FDE3 PRHEX          # Print a hexadecimal digit
+F941 PRNTAX        # Print A and X in hexadecimal
+F948 PRBLNK        #Print 3 spaces
+F94A PRBL2          #Print many spaces
+FF3A BELL        #Output a 'bell' character
+FBDD BELL1          # Bep the Apple's speaker
+                              # Input Subroutines, from Assembly Lines
+FD0C RDKEY          #Get an input character
+FD35 RDCHAR        #Get an input character or escape code
+FD1B KEYIN          #Read the Apple's keyboard
+FD6A GETLN          #Get an input line with prompt
+FD67 GETLNZ        #Get an input line
+FD6F GETLN1        #Get an input line, no prompt
+                              #Low-Res Graphics Subroutines, from Assembly Lines
+F864 SETCOL        #Set low-res graphics color
+F85F NEXTCOL      #Increment colorby 3
+F800 PLOT            #Plot a block on the Low-Res Screen
+F819 HLINE          #Draw a horizontal line of blocks
+F828 VLINE          #Draw a vertical line of blocks
+F832 CLRSCR        #Clear the entire low-res screen
+F836 CLRTOP        #Clear the top ofthe low-res Screen
+F871 SCRN        #Read the low-res screen
+                              # Hi-Res Graphics Subroutines, from Assembly Lines
+F3E2 HGR         #Hi-res page 1
+F3D8 HGR2        #Hi-res page 2
+F3F2 HCLR        #Clear to black
+F3F6 BKGND          #Clear to color
+F6F0 HCOLOR        #Set color
+F411 HPOSN          #Position the cursor
+F457 HPLOT          #Plot at cursor
+F5CB HFIND          #Return the cursor position
+F53A HLIN        #Draw a line
+F730 SHNUM          #Load shape number
+F601 DRAW        #Draw a shape
+F65D XDRAW          #Erase a shape (draw XOR)
+                              # Floating Point Accumulator routines, from Assembly Lines
+EBAF ABS          #Absolute value
+EC23 INT          #INT function
+EFAE RND          #Random number
+EB82 SIGN        #Sign of FAC (in Accumulator)
+EB90 SGN          #Sign of FAC (in FAC)
+EE8D SQR          #Square root
+EF09 EXP          #Exponentiation
+E941 LOG          #Logarithm base e
+EE97 FPWRT          #Raise ARG to the FAC power (base e)
+EBB2 FCOMP          #Compare FAC to memory
+EED0 NEGOP          #Multiply by -1
+E7A0 FADDH          #Add 0.5
+EA55 DIV10          #Divide by 10
+EA39 MUL10          #Multiply by 10
+                              # Trig functions, from Assembly Lines
+EFEA COS          #the cosine function of FAC.
+EFFA SIN          #the sine function of FAC.
+EFF1 TAN          #the tangent function of FAC.
+F09E ATN          #the arctangent of FAC.
+ED34 FOUT        #Create a string at the start of the stack
+                              # Other Subroutines, from Assembly Lines
+FCA8 WAIT        #Delay
+FB1E PREAD          #Read a game controller
+FF2D PRERR          #Print 'ERR'
+FF4A IOSAVE        #Save all registers
+FF3F IOREST    #Restore all registers
