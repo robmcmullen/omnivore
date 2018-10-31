@@ -47,6 +47,9 @@ cdef class TextStorage:
     def __len__(self):
         return self.num_lines
 
+    def __contains__(self, index):
+        return index > 0 and index < self.num_lines
+
     def __getitem__(self, index):
         cdef label_info_t *info
         cdef int i, start, count
@@ -103,6 +106,13 @@ cdef class LabelStorage(TextStorage):
     def __init__(self):
         TextStorage.__init__(self, 256*256, 256*256)
 
+    def __contains__(self, index):
+        cdef label_info_t *info
+        cdef int i = index
+
+        info = &self.label_info_data[i]
+        return info.text_start_index > 0
+
     def __getitem__(self, index):
         cdef label_info_t *info
         cdef int i, start, count
@@ -142,7 +152,7 @@ cdef class LabelStorage(TextStorage):
             info.type_code = type_code
             self.text_index += count
             self.num_lines += 1
-            print("assigning value", value, type(value), hex(<long>info))
+            # print("assigning value", value, type(value), hex(<long>info))
             for i in range(count):
                 self.text_buffer[start] = value[i]
                 start += 1
@@ -196,33 +206,16 @@ cdef class LabelStorage(TextStorage):
     def update(self, other):
         cdef label_info_t *info
         cdef int i, start, count
-        cdef np.uint8_t *tmp
         cdef long addr
 
-        print("self")
-        info = <label_info_t *>self.label_info.data
-        print(self, self.label_info.data, hex(<long>info), self.label_info)
-        info = &self.label_info_data[0]
-        print(self, self.label_info.data, hex(<long>info), self.label_info)
-        addr = self.get_label_data_addr()
-        info = <label_info_t *>addr
-        print(self, self.label_info.data, hex(<long>info), self.label_info)
-        print("other")
-        info = <label_info_t *>other.label_info.data
-        print(other, other.label_info.data, hex(<long>info), other.label_info)
         addr = other.get_label_data_addr()
         info = <label_info_t *>addr
-        print(other, other.label_info.data, hex(<long>info), other.label_info)
-        # tmp = other.label_info.data
-        # info = <label_info_t *>tmp
         # print(other, other.label_info.data, hex(<long>info), other.label_info)
-        # if True:
-        #     return
         for i in range(self.max_lines):
             start = info.text_start_index
             if start > 0:
                 count = info.line_length
-                print("found other", i, start, count, info.num_bytes, info.item_count, info.type_code, other.text_buffer[start:start + count])
+                # print("found other", i, start, count, info.num_bytes, info.item_count, info.type_code, other.text_buffer[start:start + count])
                 self[i] = (other.text_buffer[start:start + count], info.num_bytes, info.item_count, info.type_code)
             info += 1
 
@@ -576,7 +569,7 @@ cdef class HistoryStorage:
     def __init__(self, num_entries):
         self.history_array = np.zeros(sizeof(emulator_history_t), dtype=np.uint8)
         self.history = <emulator_history_t *>self.history_array.data
-        printf("libudis: __init__: history_storage: %lx\n", <int>self.history)
+        # printf("libudis: __init__: history_storage: %lx\n", <int>self.history)
         self.history.num_allocated_entries = num_entries
         self.entries = np.zeros(num_entries, dtype=HISTORY_ENTRY_DTYPE)
         self.history.entries = <history_entry_t *>self.entries.data

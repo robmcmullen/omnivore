@@ -69,7 +69,7 @@ class Labels:
         self.write_labels = LabelStorage()
 
     def add(self, addr, r, w, type_description):
-        print(type_description, type(type_description))
+        # print(type_description, type(type_description))
         type_code = int(type_description[-1])
         try:
             item_count = int(type_description[:-1])
@@ -79,12 +79,14 @@ class Labels:
         label = SourceLabel(r, num_bytes, item_count, type_code)
         self.labels[addr] = label
         if w:
+            # print(f"found write label {w} at {addr}")
             self.write_labels[addr] = w
+            # print(f"stored as: {self.get_name(addr, True)}")
 
     def get_name(cls, addr, write=False):
         if write:
             if addr in cls.write_labels:
-                return cls.write_labels[addr].decode('utf-8')
+                return cls.write_labels[addr][0].decode('utf-8')
         if addr in cls.labels:
             return cls.labels[addr][0].decode('utf-8')
         return ""
@@ -109,7 +111,7 @@ class Labels:
 
     def update(self, other):
         self.labels.update(other.labels)
-        # self.write_labels.update(other.write_labels)
+        self.write_labels.update(other.write_labels)
 
 
 def load_memory_map(keyword):
