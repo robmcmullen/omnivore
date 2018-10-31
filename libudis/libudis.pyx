@@ -95,6 +95,149 @@ cdef class TextStorage:
         self.text_ptr += count
         self.num_lines += 1
 
+    def get_label_data_addr(self):
+        return long(<long>&self.label_info_data[0])
+
+
+cdef class LabelStorage(TextStorage):
+    def __init__(self):
+        TextStorage.__init__(self, 256*256, 256*256)
+
+    def __getitem__(self, index):
+        cdef label_info_t *info
+        cdef int i, start, count
+        cdef np.uint8_t num_bytes, item_count, type_code
+
+        if isinstance(index, int):
+            i = index
+            info = &self.label_info_data[i]
+            start = info.text_start_index
+            count = info.line_length
+            return (self.text_buffer[start:start + count].tostring(), info.num_bytes, info.item_count, info.type_code)
+        elif isinstance(index, slice):
+            raise TypeError(f"slicing not yet supported")
+        else:
+            raise TypeError(f"index must be int or slice, not {type(index)}")
+
+    def __setitem__(self, index, value):
+        cdef label_info_t *info
+        cdef int i, start, count
+        cdef np.uint8_t num_bytes, item_count, type_code
+
+        if isinstance(index, int):
+            i = index
+            start = self.text_index
+            try:
+                value, num_bytes, item_count, type_code = value
+            except ValueError:
+                num_bytes = 1
+                item_count = 1
+                type_code = ord(b'b')
+            count = len(value)
+            info = &self.label_info_data[i]
+            info.line_length = count
+            info.text_start_index = self.text_index
+            info.num_bytes = num_bytes
+            info.item_count = item_count
+            info.type_code = type_code
+            self.text_index += count
+            self.num_lines += 1
+            print("assigning value", value, type(value), hex(<long>info))
+            for i in range(count):
+                self.text_buffer[start] = value[i]
+                start += 1
+        elif isinstance(index, slice):
+            raise TypeError(f"setting labels via slices not yet supported")
+        else:
+            raise TypeError(f"index must be int or slice, not {type(index)}")
+
+    def __delitem__(self, index):
+        cdef label_info_t *info
+        cdef int i
+
+        if isinstance(index, int):
+            i = index
+            info = &self.label_info_data[i]
+            info.text_start_index = 0
+            self.num_lines -= 1
+        elif isinstance(index, slice):
+            raise TypeError(f"deleting labels via slices not yet supported")
+        else:
+            raise TypeError(f"index must be int or slice, not {type(index)}")
+
+    def print_all(self):
+        cdef label_info_t *info
+        cdef int i, start, count
+
+        info = &self.label_info_data[0]
+        print("print_all", self, self.label_info.data, hex(<long>info), self.label_info)
+        for i in range(min(5, self.max_lines)):
+            start = info.text_start_index
+            if start > 0:
+                count = info.line_length
+                print("entry:", i, start, count, info.num_bytes, info.item_count, info.type_code, self.text_buffer[start:start + count].tostring())
+            info += 1
+        if self.num_lines - 5 > 0:
+            print("...", self.num_lines - 5, "more")
+        print("total = ", self.num_lines)
+
+    def keys(self):
+        cdef label_info_t *info
+        cdef int i
+
+        addresses = []
+        info = &self.label_info_data[0]
+        for i in range(self.max_lines):
+            if info.text_start_index > 0:
+                addresses.append(i)
+            info += 1
+        return addresses
+
+    def update(self, other):
+        cdef label_info_t *info
+        cdef int i, start, count
+        cdef np.uint8_t *tmp
+        cdef long addr
+
+        print("self")
+        info = <label_info_t *>self.label_info.data
+        print(self, self.label_info.data, hex(<long>info), self.label_info)
+        info = &self.label_info_data[0]
+        print(self, self.label_info.data, hex(<long>info), self.label_info)
+        addr = self.get_label_data_addr()
+        info = <label_info_t *>addr
+        print(self, self.label_info.data, hex(<long>info), self.label_info)
+        print("other")
+        info = <label_info_t *>other.label_info.data
+        print(other, other.label_info.data, hex(<long>info), other.label_info)
+        addr = other.get_label_data_addr()
+        info = <label_info_t *>addr
+        print(other, other.label_info.data, hex(<long>info), other.label_info)
+        # tmp = other.label_info.data
+        # info = <label_info_t *>tmp
+        # print(other, other.label_info.data, hex(<long>info), other.label_info)
+        # if True:
+        #     return
+        for i in range(self.max_lines):
+            start = info.text_start_index
+            if start > 0:
+                count = info.line_length
+                print("found other", i, start, count, info.num_bytes, info.item_count, info.type_code, other.text_buffer[start:start + count])
+                self[i] = (other.text_buffer[start:start + count], info.num_bytes, info.item_count, info.type_code)
+            info += 1
+
+    def clear(self):
+        cdef label_info_t *info
+        cdef int i
+
+        info = &self.label_info_data[0]
+        for i in range(self.max_lines):
+            info.text_start_index = 0
+            info += 1
+        self.num_lines = 0
+        self.text_index = 1  # special case: no string if text_starts[x] == 0
+        self.text_ptr = self.text_buffer_data
+
 
 cdef class StringifiedDisassembly:
     cdef public int origin

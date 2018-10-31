@@ -5,6 +5,8 @@ import numpy as np
 
 from omnivore_framework.templates import get_template
 
+from ..disassembler.libudis import LabelStorage
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -12,10 +14,10 @@ log = logging.getLogger(__name__)
 
 line_re = re.compile("^([a-fA-F0-9]+)\s*([a-zA-Z][a-zA-Z0-9_]*)*\s*([a-zA-Z][a-zA-Z0-9_]*)?\s*(\S*)^")
 
-size_codes = {
-    'b': 1, # "byte",
-    'w': 2, # "word",
-    'l': 4, # "long",
+size_of_type_codes = {
+    ord('b'): 1, # "byte",
+    ord('w'): 2, # "word",
+    ord('l'): 4, # "long",
     }
 
 desc_codes = {
@@ -37,7 +39,7 @@ class Labels:
             if not line or line.startswith("#") or line.startswith(";"):
                 continue
             line = line.split("#")[0]
-            tokens = line.split()
+            tokens = line.encode('utf-8').split()
             count = len(tokens)
             if count < 2:
                 log.warning(f"Missing label on line {line_num}")
@@ -47,27 +49,34 @@ class Labels:
             except ValueError:
                 log.warning(f"Invalid hex digits on line {line_num}: '{tokens[0]}'")
                 continue
-            if "/" in tokens[1]:
-                read_val, write_val = tokens[1].split("/")
+            if b"/" in tokens[1]:
+                read_val, write_val = tokens[1].split(b"/")
             else:
                 read_val = tokens[1]
                 write_val = None
             try:
-                type_code = tokens[2]
+                type_description = tokens[2]
             except IndexError:
-                type_code = 'b'
+                type_description = b'b'
             try:
-                m.add(addr, read_val, write_val, type_code)
+                m.add(addr, read_val, write_val, type_description)
             except RuntimeError:
                 log.warning("Invalid type code on line {line_num}: `'{type_code}'")
         return m
 
     def __init__(self):
-        self.labels = {}
-        self.write_labels = {}
+        self.labels = LabelStorage()
+        self.write_labels = LabelStorage()
 
-    def add(self, addr, r, w, type_code):
-        label = SourceLabel(r, 1, 1, type_code)
+    def add(self, addr, r, w, type_description):
+        print(type_description, type(type_description))
+        type_code = int(type_description[-1])
+        try:
+            item_count = int(type_description[:-1])
+        except ValueError:
+            item_count = 1
+        num_bytes = item_count * size_of_type_codes[type_code]
+        label = SourceLabel(r, num_bytes, item_count, type_code)
         self.labels[addr] = label
         if w:
             self.write_labels[addr] = w
@@ -75,9 +84,9 @@ class Labels:
     def get_name(cls, addr, write=False):
         if write:
             if addr in cls.write_labels:
-                return cls.write_labels[addr]
+                return cls.write_labels[addr].decode('utf-8')
         if addr in cls.labels:
-            return cls.labels[addr][0]
+            return cls.labels[addr][0].decode('utf-8')
         return ""
 
     def __contains__(self, addr):
@@ -91,16 +100,16 @@ class Labels:
                 s = self.labels[addr]
             except KeyError:
                 s = SourceLabel(addr, "", 1, "b")
-            r = s[0]
+            r = s[0].decode('utf-8')
             w = self.get_name(addr, True)
             if r == w:
                 w = ""
-            lines.append(f"{addr:4x}: {r:8} {w:8} {s.type_code}")
+            lines.append(f"{addr:4x}: {r:8} {w:8} {s[3]}")
         return "\n".join(lines)
 
     def update(self, other):
         self.labels.update(other.labels)
-        self.write_labels.update(other.write_labels)
+        # self.write_labels.update(other.write_labels)
 
 
 def load_memory_map(keyword):
@@ -111,19 +120,3 @@ def load_memory_map(keyword):
         return SourceLabel()
     m = SourceLabel.from_text(text)
     return m
-
-
-if __name__ == "__main__":
-    filename = "../templates/atari800.labels"
-    text = open(filename).read()
-    labels1 = Labels.from_text(text)
-    print(str(labels1))
-    filename = "../templates/atari_basic.labels"
-    text = open(filename).read()
-    labels2 = Labels.from_text(text)
-    labels1.update(labels2)
-    filename = "../templates/atari5200.labels"
-    text = open(filename).read()
-    labels2 = Labels.from_text(text)
-    labels1.update(labels2)
-    print(str(labels1))

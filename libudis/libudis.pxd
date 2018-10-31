@@ -21,7 +21,7 @@ cdef struct label_info_t:
     np.int16_t text_start_index;
     np.int8_t line_length;
     np.int8_t num_bytes;
-    np.int8_t items_count;
+    np.int8_t item_count;
     np.int8_t type_code;
 
 ctypedef int (*print_label_bridge_t)(int addr, int rw);
