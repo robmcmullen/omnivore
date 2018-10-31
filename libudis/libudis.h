@@ -116,5 +116,7 @@ extern int opcode_history_flags_6502[256];
 
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
 
+extern int print_label_or_addr(int addr, short *labels, char *t, char *hexdigits, int zero_page);
+
 
 #endif /* LIBUDIS_H */

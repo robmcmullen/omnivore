@@ -8,6 +8,25 @@
 #include "libdebugger.h"
 
 
+int print_label_or_addr(int addr, short *labels, char *t, char *hexdigits, int zero_page) {
+    char *first_t, *h;
+
+    first_t = t;
+    if (labels[addr]) {
+        *t++='L';
+        *t++='_';  /* temporary extra character while debugging conversion process */
+        h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+    }
+    else {
+        *t++='$';
+        if (!zero_page) h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+    }
+    return (int)(t - first_t);
+}
+
+
 static inline char *STRING(char *t, int lc, char *str) {
     char *c;
 
@@ -92,17 +111,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
             *t++='>';
         }
         else {
-            addr = entry->target_addr;
-            if (labels[addr]) {
-                *t++='L';
-                h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
-                h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
-            }
-            else {
-                *t++='$';
-                h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
-                h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
-            }
+            t += print_label_or_addr(entry->target_addr, labels, t, hexdigits, 0);
         }
     }
     else {
@@ -133,17 +142,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
                     *t++='>',*t++=' ';
                 }
                 else {
-                    addr = entry->target_addr;
-                    if (labels[addr]) {
-                        *t++='L';
-                        h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
-                        h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
-                    }
-                    else {
-                        *t++='$';
-                        h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
-                        h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
-                    }
+                    t += print_label_or_addr(entry->target_addr, labels, t, hexdigits, 0);
                     *t++=' ';
                 }
             }

@@ -658,44 +658,15 @@ case 0x%x:
         def flush_hex(operand, indent="\t"):
             lines.append(f"{indent}h = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
 
-        def flush_addr(op1, op2):
-            lines.append(f"\th = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
-
         def flush_label1x8(op1):
-            lines.append(f"\taddr = {op1};")
-            lines.append(f"\tif (labels[addr]) {{")
-            lines.append(f"\t\t*t++='L';")
-            flush_hex(f"addr & 0xff", "\t\t")
-            lines.append(f"\t}}")
-            lines.append(f"\telse {{")
-            lines.append(f"\t\t*t++='$';")
-            flush_hex(f"addr & 0xff", "\t\t")
-            lines.append(f"\t}}")
+            lines.append(f"\tt += print_label_or_addr({op1}, labels, t, hexdigits, 1);")
 
         def flush_label2x8(op1, op2):
             lines.append(f"\taddr = {op2} + 256 * {op1};")
-            lines.append(f"\tif (labels[addr]) {{")
-            lines.append(f"\t\t*t++='L';")
-            flush_hex(f"addr >> 8", "\t\t")
-            flush_hex(f"addr & 0xff", "\t\t")
-            lines.append(f"\t}}")
-            lines.append(f"\telse {{")
-            lines.append(f"\t\t*t++='$';")
-            flush_hex(f"addr >> 8", "\t\t")
-            flush_hex(f"addr & 0xff", "\t\t")
-            lines.append(f"\t}}")
+            lines.append(f"\tt += print_label_or_addr(addr, labels, t, hexdigits, 0);")
 
         def flush_label16(operand):
-            lines.append(f"\tif (labels[{operand}]) {{")
-            lines.append(f"\t\t*t++='L';")
-            flush_hex(f"{operand} >> 8", "\t\t")
-            flush_hex(f"{operand} & 0xff", "\t\t")
-            lines.append(f"\t}}")
-            lines.append(f"\telse {{")
-            lines.append(f"\t\t*t++='$';")
-            flush_hex(f"{operand} >> 8")
-            flush_hex(f"{operand} & 0xff")
-            lines.append(f"\t}}")
+            lines.append(f"\tt += print_label_or_addr({operand}, labels, t, hexdigits, 0);")
 
         def flush_hex16(operand):
             flush_hex("(%s>>8)" % operand)

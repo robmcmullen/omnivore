@@ -67,13 +67,14 @@ if __name__ == "__main__":
         print(e[i])
     print(p.index_to_row)
 
-    # t = p.stringify(0,100)
-    # print(t)
-    # for i in range(len(t)):
-    #     start = t.text_starts[i]
-    #     count = t.line_lengths[i]
-    #     text = t.text_buffer[start:start + count].tostring()
-    #     print(f"text[{start}:{start + count}] = {text}, {e[i+100]}")
+    t = p.stringify(0,100)
+    print(t)
+    d = t.disasm_text
+    for i in range(len(t)):
+        start = d.text_starts[i]
+        count = d.line_lengths[i]
+        text = d.text_buffer[start:start + count].tostring()
+        print(f"text[{start}:{start + count}] = {text}, {e[i+100]}")
 
-    # del p
-    # print("deleted")
+    del p
+    print("deleted")
