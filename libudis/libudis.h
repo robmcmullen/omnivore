@@ -110,13 +110,20 @@ typedef struct {
 	history_entry_t *entries;
 } emulator_history_t;
 
-typedef int (*string_func_t)(history_entry_t *, char *, char *, int, unsigned short *);
+typedef int (*print_label_bridge_t)(int addr, int rw);
+
+typedef struct {
+	uint8_t discovered[256*256];
+	print_label_bridge_t *print_label;
+} jmp_targets_t;
+
+extern int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page);
+
+typedef int (*string_func_t)(history_entry_t *, char *, char *, int, jmp_targets_t *);
 
 extern int opcode_history_flags_6502[256];
 
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
-
-extern int print_label_or_addr(int addr, short *labels, char *t, char *hexdigits, int zero_page);
 
 
 #endif /* LIBUDIS_H */

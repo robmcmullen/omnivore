@@ -21,56 +21,76 @@ cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718
 cdef class TextStorage:
     cdef int max_lines
     cdef public int num_lines
-    cdef public np.ndarray text_starts
-    cdef np.uint16_t *text_starts_data
-    cdef public np.ndarray line_lengths
-    cdef np.uint16_t *line_lengths_data
+    cdef public np.ndarray label_info
+    cdef label_info_t *label_info_data
     cdef public np.ndarray text_buffer
     cdef char *text_buffer_data
     cdef text_buffer_size
     cdef char *text_ptr
-    cdef int text_index
+    cdef np.uint16_t text_index
 
-    def __init__(self, max_lines):
-        self.text_starts = np.zeros(max_lines, dtype=np.uint16)
-        self.text_starts_data = <np.uint16_t *>self.text_starts.data
-        self.line_lengths = np.zeros(max_lines, dtype=np.uint16)
-        self.line_lengths_data = <np.uint16_t *>self.line_lengths.data
-        self.text_buffer_size = max_lines * 256
-        self.text_buffer = np.zeros(self.text_buffer_size + 1000, dtype=np.uint8)
+    def __init__(self, max_lines, buffer_size=None):
+        if buffer_size is None:
+            buffer_size = max_lines * 256
+        self.alloc_arrays(max_lines, buffer_size)
+        self.clear()
+
+    def alloc_arrays(self, max_lines, buffer_size):
+        self.label_info = np.zeros(max_lines * sizeof(label_info_t), dtype=np.uint8)
+        self.label_info_data = <label_info_t *>self.label_info.data
+        buffer_size = min(buffer_size, 256*256)
+        self.text_buffer_size = buffer_size
+        self.text_buffer = np.zeros(buffer_size, dtype=np.uint8)
         self.text_buffer_data = <char *>self.text_buffer.data
         self.max_lines = max_lines
-        self.clear()
 
     def __len__(self):
         return self.num_lines
 
     def __getitem__(self, index):
+        cdef label_info_t *info
+        cdef int i, start, count
+
         if isinstance(index, slice):
             lines = []
             for i in range(*index.indices(len(self))):
-                start = self.text_starts[i]
-                lines.append(self.text_buffer[start:start + self.line_lengths[i]].tostring())
+                info = &self.label_info_data[i]
+                start = info.text_start_index
+                count = info.line_length
+                lines.append(self.text_buffer[start:start + count].tostring())
             return lines
         elif isinstance(index, int):
-            start = self.text_starts[index]
-            return self.text_buffer[start:start + self.line_lengths[index]].tostring()
+            i = index
+            info = &self.label_info_data[i]
+            start = info.text_start_index
+            count = info.line_length
+            return self.text_buffer[start:start + count].tostring()
         else:
             raise TypeError(f"index must be int or slice, not {type(index)}")
 
     def __iter__(self):
+        cdef label_info_t *info
+        cdef int i, start, count
+
         for i in range(self.num_lines):
-            start = self.text_starts[i]
-            yield self.text_buffer[start:start + self.line_lengths[i]].tostring()
+            info = &self.label_info_data[i]
+            start = info.text_start_index
+            count = info.line_length
+            yield self.text_buffer[start:start + count].tostring()
 
     def clear(self):
         self.num_lines = 0
         self.text_index = 0
         self.text_ptr = self.text_buffer_data
 
-    def store(self, count):
-        self.text_starts_data[self.num_lines] = self.text_index
-        self.line_lengths_data[self.num_lines] = count
+    def store(self, int count):
+        cdef label_info_t *info
+        cdef int i
+
+        i = self.num_lines
+        info = &self.label_info_data[i]
+        info.line_length = count
+        info.text_start_index = self.text_index
         self.text_index += count
         self.text_ptr += count
         self.num_lines += 1
@@ -80,8 +100,8 @@ cdef class StringifiedDisassembly:
     cdef public int origin
     cdef public int last_pc
     cdef public int start_index
-    cdef public np.ndarray labels
-    cdef np.uint16_t *labels_data
+    cdef public np.ndarray jmp_targets
+    cdef jmp_targets_t *jmp_targets_data
 
     cdef public TextStorage disasm_text
 
@@ -89,13 +109,13 @@ cdef class StringifiedDisassembly:
     cdef int mnemonic_case
     cdef char *hex_case
 
-    def __init__(self, start_index, max_lines, labels, mnemonic_lower=True, hex_lower=True):
+    def __init__(self, start_index, max_lines, jmp_targets, mnemonic_lower=True, hex_lower=True):
         self.start_index = start_index
         self.disasm_text = TextStorage(max_lines)
         self.mnemonic_case = 1 if mnemonic_lower else 0
         self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
-        self.labels = labels
-        self.labels_data = <np.uint16_t *>self.labels.data
+        self.jmp_targets = jmp_targets
+        self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
         self.clear()
         # for disassembler_type in range(40):
         #     printf("stringifier[%d] = %lx\n", disassembler_type, stringifier_map[disassembler_type])
@@ -134,7 +154,7 @@ cdef class StringifiedDisassembly:
         while num_entries > 0:
             stringifier = stringifier_map[h.disassembler_type]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-            count = stringifier(h, self.disasm_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+            count = stringifier(h, self.disasm_text.text_ptr, self.hex_case, self.mnemonic_case, self.jmp_targets_data)
             self.disasm_text.store(count)
             num_entries -= 1
             h += 1
@@ -149,8 +169,8 @@ cdef class ParsedDisassembly:
     cdef public int origin
     cdef int last_pc
     cdef int current_pc
-    cdef public np.ndarray labels
-    cdef np.uint16_t *labels_data
+    cdef public np.ndarray jmp_targets
+    cdef jmp_targets_t *jmp_targets_data
     cdef public int num_bytes
     cdef np.uint32_t *index_to_row_data
     cdef public np.ndarray index_to_row
@@ -166,8 +186,8 @@ cdef class ParsedDisassembly:
         self.origin = origin
         self.last_pc = origin
         self.current_pc = origin
-        self.labels = np.zeros(256*256, dtype=np.uint16)
-        self.labels_data = <np.uint16_t *>self.labels.data
+        self.jmp_targets = np.zeros(sizeof(jmp_targets_t), dtype=np.uint8)
+        self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
         self.num_bytes = num_bytes
         self.index_to_row = np.zeros(num_bytes + 1, dtype=np.uint32)
@@ -186,7 +206,7 @@ cdef class ParsedDisassembly:
         cdef int i
         while self.current_pc < last_pc and self.num_entries < self.max_entries:
             if num_bytes > 0:
-                count = processor(h, src, self.current_pc, last_pc, self.labels_data)
+                count = processor(h, src, self.current_pc, last_pc, self.jmp_targets_data)
                 src += count
                 num_bytes -= count
                 self.current_pc += count
@@ -200,25 +220,25 @@ cdef class ParsedDisassembly:
 
     cdef fix_offset_labels(self):
         # fast loop in C to check for references to addresses that are in the
-        # middle of an instruction. If found, a label is generated at the first
-        # byte of the instruction
+        # middle of an instruction. If found, a discovered address is generated
+        # at the first byte of the instruction
         cdef int pc = self.origin
         cdef int i = self.num_bytes
-        cdef np.uint16_t *labels = self.labels_data
+        cdef np.uint8_t *jmp_target = <np.uint8_t *>self.jmp_targets_data
         cdef np.uint32_t *index_to_row = self.index_to_row_data
-        cdef int old_label
+        cdef np.uint8_t disassembler_type
 
         #print "pc=%04x, last=%04x, i=%04x" % (pc, pc + i, i)
         while i > 0:
             i -= 1
-            old_label = labels[(pc + i) & 0xffff]
+            old_label = jmp_target[(pc + i) & 0xffff]
             if old_label:
                 #print "disasm_info: found label %04x, index_to_row[%04x]=%04x" % (pc + i, i, index_to_row[i])
                 while index_to_row[i - 1] == index_to_row[i] and i > 1:
                     i -= 1
                 #if labels[pc + i] == 0:
                 #    print "  disasm_info: added label at %04x" % (pc + i)
-                labels[(pc + i) & 0xffff] = old_label
+                jmp_target[(pc + i) & 0xffff] = old_label
 
     def parse_test(self, cpu_type, np.ndarray[np.uint8_t, ndim=1] src):
         cdef parse_func_t processor
@@ -232,7 +252,7 @@ cdef class ParsedDisassembly:
 
     def stringify(self, int index, int num_lines_requested, mnemonic_lower=True, hex_lower=True):
         cdef history_entry_t *h = &self.history_entries[index]
-        output = StringifiedDisassembly(index, num_lines_requested, self.labels, mnemonic_lower, hex_lower)
+        output = StringifiedDisassembly(index, num_lines_requested, self.jmp_targets, mnemonic_lower, hex_lower)
         output.parse_history_entries(h, num_lines_requested)
         return output
 
@@ -332,8 +352,8 @@ cdef class StringifiedHistory:
     cdef public int origin
     cdef public int last_pc
     cdef public int start_index
-    cdef public np.ndarray labels
-    cdef np.uint16_t *labels_data
+    cdef public np.ndarray jmp_targets
+    cdef jmp_targets_t *jmp_targets_data
 
     cdef public TextStorage history_text
     cdef public TextStorage result_text
@@ -348,8 +368,8 @@ cdef class StringifiedHistory:
         self.mnemonic_case = 1 if mnemonic_lower else 0
         self.hex_case = hexdigits_lower if hex_lower else hexdigits_upper
         self.clear()
-        self.labels = np.zeros(256*256, dtype=np.uint16)
-        self.labels_data = <np.uint16_t *>self.labels.data
+        self.jmp_targets = np.zeros(sizeof(jmp_targets_t), dtype=np.uint8)
+        self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
     def __len__(self):
         return self.history_text.num_lines
@@ -389,13 +409,13 @@ cdef class StringifiedHistory:
             disassembler_type = h.disassembler_type
             stringifier = stringifier_map[disassembler_type]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-            count = stringifier(h, self.history_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+            count = stringifier(h, self.history_text.text_ptr, self.hex_case, self.mnemonic_case, self.jmp_targets_data)
             self.history_text.store(count)
 
             if disassembler_type < 192:
                 stringifier = stringifier_map[h.disassembler_type + 1]
             # printf("disassembler: %d, stringifier: %lx\n", h.disassembler_type, stringifier)
-                count = stringifier(h, self.result_text.text_ptr, self.hex_case, self.mnemonic_case, self.labels_data)
+                count = stringifier(h, self.result_text.text_ptr, self.hex_case, self.mnemonic_case, self.jmp_targets_data)
             else:
                 count = 0
             self.result_text.store(count)

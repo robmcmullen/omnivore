@@ -68,14 +68,14 @@ disassembler_type_max = max(disassembler_type.values())
 
 CustomEntry = namedtuple('CustomStringifier', ['cpu_name', 'function_name', 'function_return_type', 'function_signature'])
 
-parser_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, unsigned short *labels"
+parser_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, jmp_targets_t *jmp_targets"
 custom_parsers = [
     CustomEntry('data', 'parse_entry_data', 'int', parser_signature),
     CustomEntry('antic_dl', 'parse_entry_antic_dl', 'int', parser_signature),
     CustomEntry('jumpman_harvest', 'parse_entry_jumpman_harvest', 'int', parser_signature),
 ]
 
-stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc, unsigned short *labels"
+stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets"
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
     CustomEntry('frame_start', 'stringify_entry_frame_start', 'int', stringifier_signature),
@@ -403,12 +403,12 @@ truncated2:
                         body.append(f"\tentry->instruction[1] = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                        body.append(f"\tlabels[rel] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[rel] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\top1 = *src;")
                         body.append(f"\tentry->instruction[1] = op1;")
-                        body.append(f"\tlabels[op1] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[op1] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = op1;")
                     else:
                         body.append(f"\tentry->instruction[1] = *src;")
@@ -424,7 +424,7 @@ truncated2:
                     body.append(f"\tentry->instruction[2] = op2;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[addr] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
                 elif cat.leadin < 256:
                     if cat.pcr:
@@ -432,12 +432,12 @@ truncated2:
                         body.append(f"\tentry->instruction[2] = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
-                        body.append(f"\tlabels[rel] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[rel] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\top1 = *src;")
                         body.append(f"\tentry->instruction[2] = op1;")
-                        body.append(f"\tlabels[op1] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[op1] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = op1;")
                     else:
                         body.append(f"\tentry->instruction[2] = *src;")
@@ -453,7 +453,7 @@ truncated2:
                     body.append(f"\tentry->instruction[3] = op3;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[addr] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
                 elif cat.leadin < 256:
                     order = self.cpu.argorder[cat.mode]
@@ -467,11 +467,11 @@ truncated2:
                         body.append("\tif (addr > 32768) addr -= 0x10000;")
                         # limit relative address to 64k address space
                         body.append("\trel = (pc + 2 + addr) & 0xffff;")
-                        body.append(f"\tlabels[rel] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[rel] = {cat.disassembler_type_name};")
                         body.append("\tentry->target_addr = rel;")
                     elif cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
-                        body.append(f"\tlabels[addr] = {cat.disassembler_type_name};")
+                        body.append(f"\tjmp_targets->discovered[addr] = {cat.disassembler_type_name};")
                         body.append(f"\tentry->target_addr = addr;")
 
         return body
@@ -659,14 +659,14 @@ case 0x%x:
             lines.append(f"{indent}h = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
 
         def flush_label1x8(op1):
-            lines.append(f"\tt += print_label_or_addr({op1}, labels, t, hexdigits, 1);")
+            lines.append(f"\tt += print_label_or_addr({op1}, jmp_targets, t, hexdigits, 1);")
 
         def flush_label2x8(op1, op2):
             lines.append(f"\taddr = {op2} + 256 * {op1};")
-            lines.append(f"\tt += print_label_or_addr(addr, labels, t, hexdigits, 0);")
+            lines.append(f"\tt += print_label_or_addr(addr, jmp_targets, t, hexdigits, 0);")
 
         def flush_label16(operand):
-            lines.append(f"\tt += print_label_or_addr({operand}, labels, t, hexdigits, 0);")
+            lines.append(f"\tt += print_label_or_addr({operand}, jmp_targets, t, hexdigits, 0);")
 
         def flush_hex16(operand):
             flush_hex("(%s>>8)" % operand)
@@ -765,7 +765,7 @@ import cython
 import numpy as np
 cimport numpy as np
 
-from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t
+from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
 
 cdef extern:
 $EXTERNLIST

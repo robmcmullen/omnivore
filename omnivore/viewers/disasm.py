@@ -93,7 +93,7 @@ class DisassemblyTable(cg.HexTable):
                     text = t[row - t.start_index]
             elif col == 0:
                 addr = e[row]['pc']
-                has_label = p.labels[addr]
+                has_label = p.jmp_targets[addr]
                 if has_label:
                     text = "L%04x" % addr
                 else:

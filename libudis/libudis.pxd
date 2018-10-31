@@ -17,6 +17,19 @@ cdef struct emulator_history_t:
     np.uint32_t cumulative_count;
     history_entry_t *entries;
 
-ctypedef int (*parse_func_t)(history_entry_t *, unsigned char *, unsigned int, unsigned int, unsigned short *)
+cdef struct label_info_t:
+    np.int16_t text_start_index;
+    np.int8_t line_length;
+    np.int8_t num_bytes;
+    np.int8_t items_count;
+    np.int8_t type_code;
 
-ctypedef int (*string_func_t)(history_entry_t *, char *, char *, int, unsigned short *)
+ctypedef int (*print_label_bridge_t)(int addr, int rw);
+
+cdef struct jmp_targets_t:
+    np.uint16_t discovered[256*256];
+    print_label_bridge_t *print_label;
+
+ctypedef int (*parse_func_t)(history_entry_t *, unsigned char *, unsigned int, unsigned int, jmp_targets_t *)
+
+ctypedef int (*string_func_t)(history_entry_t *, char *, char *, int, jmp_targets_t *)
