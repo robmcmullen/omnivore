@@ -66,7 +66,7 @@ def iter_templates(inf_type=None):
                         j = json.loads(fh.read())
                 except ValueError:
                     j = {}
-                if inf_type and j["type"] != inf_type:
+                if inf_type and "type" in j and j["type"] != inf_type:
                     continue
                 j["pathname"] = template
                 # Allow full path in template to differentiate default and user
