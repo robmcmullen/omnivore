@@ -9,6 +9,7 @@ from ..debugger import Debugger
 from ..debugger.dtypes import FRAME_STATUS_DTYPE
 from .save_state import FrameHistory
 from .. import disassembler as disasm
+from ..utils.archutil import Labels, load_memory_map
 
 import logging
 log = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ class EmulatorBase(Debugger):
         self.forced_modifier = None
         self.emulator_started = False
         self.cpu_history = None
+        self.labels = None
 
         self.compute_color_map()
         self.screen_rgb, self.screen_rgba = self.calc_screens()
@@ -178,6 +180,7 @@ class EmulatorBase(Debugger):
     ##### Initialization
 
     def configure_emulator(self, emu_args=None, instruction_history_count=100000, *args, **kwargs):
+        self.configure_labels()
         self.init_cpu_history(instruction_history_count)
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
@@ -185,6 +188,11 @@ class EmulatorBase(Debugger):
         self.configure_emulator_defaults()
         self.emulator_started = True
         self.configure_io_arrays()
+
+    def configure_labels(self, labels=None):
+        if labels is None:
+            labels = load_memory_map(self.name)
+        self.labels = labels
 
     def configure_emulator_defaults(self):
         pass
@@ -471,7 +479,7 @@ class EmulatorBase(Debugger):
         display window (which ranges from 0 -> count) to the history entry
         starting at first_entry_index + start_index for count entries.
         """
-        return self.cpu_history.stringify(start_index, count)
+        return self.cpu_history.stringify(start_index, count, self.labels.labels)
 
     @property
     def num_cpu_history_entries(self):

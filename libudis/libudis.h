@@ -110,11 +110,18 @@ typedef struct {
 	history_entry_t *entries;
 } emulator_history_t;
 
-typedef int (*print_label_bridge_t)(int addr, int rw);
+typedef struct {
+    uint32_t text_start_index;
+    int8_t line_length;
+    int8_t num_bytes;
+    int8_t item_count;
+    int8_t type_code;
+} label_info_t;
 
 typedef struct {
 	uint8_t discovered[256*256];
-	print_label_bridge_t *print_label;
+	char *text_storage;
+	label_info_t *labels;
 } jmp_targets_t;
 
 extern int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page);

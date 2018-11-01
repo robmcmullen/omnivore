@@ -30,8 +30,18 @@ SourceLabel = collections.namedtuple('SourceLabel', 'label byte_count item_count
 
 class Labels:
     @classmethod
+    def from_file(cls, filename):
+        text = open(filename).read()
+        return cls.from_text(text)
+
+    @classmethod
     def from_text(cls, text):
         m = cls()
+        try:
+            text = text.decode('utf-8')
+        except AttributeError as e:
+            # already a string!
+            pass
         line_num = 0
         for line in text.splitlines():
             line = line.strip()
@@ -117,8 +127,11 @@ class Labels:
 def load_memory_map(keyword):
     try:
         text = get_template(keyword)
-    except IOError as e:
-        log.error(f"Couldn't find memory map named '{keyword}'")
-        return SourceLabel()
-    m = SourceLabel.from_text(text)
+    except OSError as e:
+        try:
+            text = get_template(keyword + ".labels")
+        except OSError as e:
+            log.error(f"Couldn't find memory map named '{keyword}'")
+            return Labels()
+    m = Labels.from_text(text)
     return m

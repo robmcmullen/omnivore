@@ -10,11 +10,21 @@
 
 int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page) {
     char *first_t, *h;
+    label_info_t *info = &jmp_targets->labels[(addr & 0xffff)];
+    int index, count;
 
     first_t = t;
-    if (jmp_targets->discovered[addr]) {
+    index = info->text_start_index;
+    if (index) {
+        count = info->line_length;
+        h = &jmp_targets->text_storage[index];
+        while (count > 0) {
+            *t++=*h++;
+            count--;
+        }
+    }
+    else if (jmp_targets->discovered[addr]) {
         *t++='L';
-        *t++='_';  /* temporary extra character while debugging conversion process */
         h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
         h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
     }

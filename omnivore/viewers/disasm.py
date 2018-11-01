@@ -20,7 +20,10 @@ from . import SegmentViewer
 import logging
 log = logging.getLogger(__name__)
 
-
+from ..utils.archutil import Labels
+filename = "./omnivore/templates/atari800.labels"
+labels1 = Labels.from_file(filename)
+print(labels1.labels)
 
 class DisassemblyTable(cg.HexTable):
     column_labels = ["Label", "Disassembly", "Comment"]
@@ -117,7 +120,7 @@ class DisassemblyTable(cg.HexTable):
         return text, style
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
-        self.parsed = self.current.stringify(start_row, visible_rows)
+        self.parsed = self.current.stringify(start_row, visible_rows, labels1.labels)
 
     def rebuild(self):
         segment = self.linked_base.segment

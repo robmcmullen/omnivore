@@ -29,7 +29,8 @@ if sys.platform.startswith("win"):
     extra_link_args=['/DEBUG']
     libatari800_config_include = "libatari800/include/win"
 else:
-    extra_compile_args = ["-Og"]
+    extra_compile_args = ["-g"]
+    #extra_compile_args = ["-Og"]
     #extra_compile_args = ["-O3"]
     extra_link_args = []
     libatari800_config_include = "libatari800/include/linux"
