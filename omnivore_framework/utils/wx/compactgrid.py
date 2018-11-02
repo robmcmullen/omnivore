@@ -114,7 +114,10 @@ class DrawTextImageCache(object):
         self.prepare_dc_style(parent, dc, style)
         dc.SetClippingRegion(bg_rect)
         dc.DrawRectangle(bg_rect)
-        dc.DrawText(text, fg_rect.x, fg_rect.y)
+        try:
+            dc.DrawText(text, fg_rect.x, fg_rect.y)
+        except UnicodeDecodeError as e:
+            log.error(f"Unicode error drawing text {repr(text)}: {e}")
         dc.DestroyClippingRegion()
 
     def draw_selected_string_to_dc(self, parent, dc, rect, before, selected, after, insertion_point_index):
