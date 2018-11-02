@@ -25,13 +25,13 @@ int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hex
     }
     else if (jmp_targets->discovered[addr]) {
         *t++='L';
-        h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(addr & 0xff)*2], *t++=*h++, *t++=*h++;
     }
     else {
         *t++='$';
-        if (!zero_page) h = &hexdigits[(addr >> 8)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        if (!zero_page) h = &hexdigits[(addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(addr & 0xff)*2], *t++=*h++, *t++=*h++;
     }
     return (int)(t - first_t);
 }
@@ -57,25 +57,25 @@ int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int l
     if (entry->flag == FLAG_REPEATED_BYTES) {
         t += sprintf(t, "%d", entry->num_bytes);
         *t++='*';
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     }
     else switch(entry->num_bytes) {
     case 8:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     case 7:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     case 6:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     case 5:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     case 4:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     case 3:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     case 2:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     default:
-        h = &hexdigits[(*data++ & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(*data++ & 0xff)*2], *t++=*h++, *t++=*h++;
     }
     return (int)(t - first_t);
 }
@@ -195,49 +195,49 @@ int stringify_entry_jumpman_harvest(history_entry_t *entry, char *t, char *hexdi
     opcode = *data;
 
     if (opcode == 0xff) {
-        h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(opcode & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ',*t++=';',*t++=' ';
         if (lc) *t++='e',*t++='n',*t++='d';
         else *t++='E',*t++='N',*t++='D';
     }
     else if (entry->num_bytes == 7) {
-        h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[1] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[2] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[3] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[4] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[5] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[6] & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(opcode & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[3] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[4] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[5] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[6] & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ',*t++=';',*t++=' ';
         if (lc) *t++='e',*t++='n',*t++='c';
         else *t++='E',*t++='N',*t++='C';
         *t++='=',*t++='$';
-        h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(opcode & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ';
         if (lc) *t++='x';
         else *t++='X';
         *t++='=',*t++='$';
-        h = &hexdigits[(data[1] & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(data[1] & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ';
         if (lc) *t++='y';
         else *t++='Y';
         *t++='=',*t++='$';
-        h = &hexdigits[(data[2] & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(data[2] & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ';
         if (lc) *t++='t',*t++='a',*t++='k',*t++='e';
         else *t++='T',*t++='A',*t++='K',*t++='E';
         *t++='=',*t++='$';
-        h = &hexdigits[(data[4] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[3] & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(data[4] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[3] & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ';
         if (lc) *t++='p',*t++='a',*t++='i',*t++='n',*t++='t';
         else *t++='P',*t++='A',*t++='I',*t++='N',*t++='T';
         *t++='=',*t++='$';
-        h = &hexdigits[(data[6] & 0xff)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(data[5] & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(data[6] & 0xff)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(data[5] & 0xff)*2], *t++=*h++, *t++=*h++;
     }
     else {
-        h = &hexdigits[(opcode & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(opcode & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ',*t++=';',*t++=' ',*t++='[';
         if (lc) *t++='i',*t++='n',*t++='c',*t++='o',*t++='m',*t++='p',*t++='l',*t++='e',*t++='t',*t++='e';
         else *t++='I',*t++='N',*t++='C',*t++='O',*t++='M',*t++='P',*t++='L',*t++='E',*t++='T',*t++='E';
@@ -272,11 +272,11 @@ int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *
     history_6502_t *entry = (history_frame_t *)h_entry;
 
     first_t = t;
-    h = &hexdigits[(entry->a & 0xff)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->a & 0xff)*2], *t++=*h++, *t++=*h++;
     *t++=' ';
-    h = &hexdigits[(entry->x & 0xff)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->x & 0xff)*2], *t++=*h++, *t++=*h++;
     *t++=' ';
-    h = &hexdigits[(entry->y & 0xff)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->y & 0xff)*2], *t++=*h++, *t++=*h++;
     *t++=' ';
     val = entry->sr;
     if (val & 0x80) *t++='N'; else *t++='-';
@@ -288,7 +288,7 @@ int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *
     if (val & 0x2) *t++='Z'; else *t++='-';
     if (val & 0x1) *t++='C'; else *t++='-';
     *t++=' ';
-    h = &hexdigits[(entry->sp & 0xff)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->sp & 0xff)*2], *t++=*h++, *t++=*h++;
     return (int)(t - first_t);
 }
 
@@ -297,15 +297,15 @@ int stringify_entry_6502_opcode(history_entry_t *h_entry, char *t, char *hexdigi
     history_6502_t *entry = (history_frame_t *)h_entry;
 
     first_t = t;
-    h = &hexdigits[entry->instruction[0]*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[entry->instruction[0]*2], *t++=*h++, *t++=*h++;
     *t++=' ';
     if (entry->num_bytes > 1) {
-        h = &hexdigits[entry->instruction[1]*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->instruction[1]*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     else *t++=' ', *t++=' ', *t++=' ';
     if (entry->num_bytes > 2) {
-        h = &hexdigits[entry->instruction[2]*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->instruction[2]*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     else *t++=' ', *t++=' ', *t++=' ';
@@ -318,8 +318,8 @@ int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigit
     first_t = t;
     t += stringify_entry_6502_cpu_registers(entry, t, hexdigits, lc, jmp_targets);
     *t++=' ';
-    h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
-    h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->pc >> 8)*2], *t++=*h++, *t++=*h++;
+    h = &hexdigits[(entry->pc & 0xff)*2], *t++=*h++, *t++=*h++;
     *t++=' ';
     *t++=' ';
     t += stringify_entry_6502_opcode(entry, t, hexdigits, lc, jmp_targets);
@@ -339,8 +339,8 @@ int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *he
     // *t++=' ';
     // t += sprintf(t, "%3d", entry->antic_xpos & 0x7f);
     // *t++=' ';
-    h = &hexdigits[(entry->pc >> 8)*2]; *t++=*h++; *t++=*h++;
-    h = &hexdigits[(entry->pc & 0xff)*2]; *t++=*h++; *t++=*h++;
+    h = &hexdigits[(entry->pc >> 8)*2], *t++=*h++, *t++=*h++;
+    h = &hexdigits[(entry->pc & 0xff)*2], *t++=*h++, *t++=*h++;
     *t++=' ';
     *t++=' ';
     t += stringify_entry_6502_opcode(h_entry, t, hexdigits, lc, jmp_targets);
@@ -358,8 +358,8 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     first_t = t;
     if (masked_flag == FLAG_LOAD_A_FROM_MEMORY || masked_flag == FLAG_LOAD_X_FROM_MEMORY || masked_flag == FLAG_LOAD_Y_FROM_MEMORY) {
         *t++='$';
-        h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(entry->target_addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     if (masked_flag == FLAG_BRANCH_TAKEN) {
@@ -380,8 +380,8 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     // }
     if (masked_flag == FLAG_STORE_A_IN_MEMORY || masked_flag == FLAG_STORE_X_IN_MEMORY || masked_flag == FLAG_STORE_Y_IN_MEMORY || masked_flag == FLAG_MEMORY_ALTER) {
         *t++='$';
-        h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(entry->target_addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++='=';
         switch (masked_flag) {
             case FLAG_MEMORY_ALTER:
@@ -396,33 +396,33 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
             default:
             val = entry->a;
         }
-        h = &hexdigits[val*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[val*2], *t++=*h++, *t++=*h++;
         *t++=' ';
         *t++='(', *t++='w', *t++='a', *t++='s', *t++=' ';
-        h = &hexdigits[entry->before1*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->before1*2], *t++=*h++, *t++=*h++;
         *t++=')';
     }
     else if (masked_flag == FLAG_PEEK_MEMORY) {
         *t++='$';
-        h = &hexdigits[(entry->target_addr >> 8)*2]; *t++=*h++; *t++=*h++;
-        h = &hexdigits[(entry->target_addr & 0xff)*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[(entry->target_addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2], *t++=*h++, *t++=*h++;
         *t++='=';
-        h = &hexdigits[entry->before1*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->before1*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     else if (masked_flag == FLAG_REG_A || masked_flag == FLAG_LOAD_A_FROM_MEMORY) {
         *t++='A', *t++='=';
-        h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->after1*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     else if (masked_flag == FLAG_REG_X || masked_flag == FLAG_LOAD_X_FROM_MEMORY) {
         *t++='X', *t++='=';
-        h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->after1*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     else if (masked_flag == FLAG_REG_Y || masked_flag == FLAG_LOAD_Y_FROM_MEMORY) {
         *t++='Y', *t++='=';
-        h = &hexdigits[entry->after1*2]; *t++=*h++; *t++=*h++;
+        h = &hexdigits[entry->after1*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
     if (entry->flag & FLAG_REG_SR) {
