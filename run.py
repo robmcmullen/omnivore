@@ -108,12 +108,12 @@ def main(argv):
     from omnivore_framework import get_image_path
     image_path = [get_image_path("omnivore/icons")]
 
-    from omnivore_framework.templates import template_subdirs
+    template_path = []
     import omnivore
-    template_subdirs.append(get_image_path("templates", omnivore))
+    template_path.append(get_image_path("templates", omnivore))
     import atrcopy
     path = atrcopy.get_template_path()
-    template_subdirs.append(path)
+    template_path.append(path)
 
     # # Crypto is separated to make it easy to make it optional for those
     # # framework users who don't want the extra dependencies
@@ -123,7 +123,7 @@ def main(argv):
     from omnivore_framework.app_init import run
     from omnivore.document import SegmentedDocument
     from omnivore._metadata import __version__
-    run(plugins=plugins, use_eggs=False, image_path=image_path, document_class=SegmentedDocument, about_version=__version__)
+    run(plugins=plugins, use_eggs=False, image_path=image_path, template_path=template_path, document_class=SegmentedDocument, about_version=__version__)
 
     logging.shutdown()
 
