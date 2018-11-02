@@ -33,7 +33,7 @@ def find_template_path(name):
         if os.path.exists(pathname):
             log.debug("Found template for %s: %s" % (name, pathname))
             return pathname
-        checked.append(os.path.abspath(toplevel))
+        checked.append(os.path.abspath(os.path.dirname(pathname)))
     else:
         raise OSError("No template found for %s in %s" % (name, str(checked)))
 
