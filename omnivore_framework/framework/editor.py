@@ -674,6 +674,13 @@ class FrameworkEditor(Editor):
         # styling can affect formatting, so rebuild display contents
         self.reconfigure_panes()
 
+    @on_trait_change('closed')
+    def editor_closed(self):
+        self.prepare_for_destroy()
+
+    def prepare_for_destroy(self):
+        pass
+
     #### wx hacks
 
     def refresh_toolbar_state(self):

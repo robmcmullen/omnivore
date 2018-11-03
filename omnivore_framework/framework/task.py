@@ -930,6 +930,9 @@ class FrameworkTask(Task):
         """
         close = self._prompt_for_save()
         event.veto = not close
+        if close:
+            for editor in self.editor_area.editors:
+                editor.prepare_for_destroy()
 
     @on_trait_change('editor_area:active_editor')
     def _active_editor_tab_change(self, event):
