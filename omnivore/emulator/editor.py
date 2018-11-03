@@ -45,12 +45,11 @@ class EmulatorEditor(ByteEditor):
     def emulator(self):
         return self.document.emulator
 
-    #### Traits event handlers
-
-    def _closed_changed(self):
-        self.document.stop_timer()
-
     #### ByteEditor interface
+
+    def prepare_for_destroy(self):
+        self.document.stop_timer()
+        ByteEditor.prepare_for_destroy(self)
 
     def preprocess_document(self, doc):
         args = {}

@@ -74,10 +74,6 @@ class ByteEditor(FrameworkEditor):
 
     focused_viewer = Any(None)  # should be Instance(SegmentViewer), but creates circular imports
 
-    # Emulators must be set at editor creation time and there's no way to
-    # change the emulator. All you can do is create a new editor.
-    has_emulator = Bool(False)
-
     linked_bases = List(LinkedBase)
 
     viewers = List(Any)
@@ -126,15 +122,22 @@ class ByteEditor(FrameworkEditor):
     def section_name(self):
         return str(self.segment)
 
-    @property
-    def emulator(self):
-        return self.document.emulator
-
     #### Traits event handlers
 
-    def _closed_changed(self):
-        if self.has_emulator:
-            self.document.stop_timer()
+    def prepare_for_destroy(self):
+        self.focused_viewer = None
+        # Operate on copy of list because you can't iterate and remove from the
+        # same list
+        for v in list(self.viewers):
+            log.debug(f"Closing viewer: {v}")
+            self.viewers.remove(v)
+            v.prepare_for_destroy()
+            del v
+        for b in list(self.linked_bases):
+            log.debug(f"Closing linked_base: {b}")
+            b.prepare_for_destroy()
+            del b
+
 
     ###########################################################################
     # 'FrameworkEditor' interface.

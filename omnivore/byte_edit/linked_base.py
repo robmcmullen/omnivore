@@ -127,6 +127,11 @@ class LinkedBase(CaretHandler):
     def emulator(self):
         return self.editor.emulator
 
+    ##### Cleanup
+
+    def prepare_for_destroy(self):
+        self.editor = None
+
     #### Convenience functions
 
     def __str__(self):
