@@ -125,10 +125,14 @@ class InstructionHistoryGridControl(SegmentGridControl):
     def calc_line_renderer(self):
         return cg.VirtualTableLineRenderer(self, 2, widths=self.default_table_cls.column_sizes, col_labels=self.default_table_cls.column_labels)
 
+    def move_viewport_to_bottom(self):
+        self.move_viewport_origin((self.table.current_num_rows, 0))
+
     def recalc_view(self):
         log.debug(f"recalc_view: {self}")
         self.table.rebuild()
         cg.CompactGrid.recalc_view(self)
+        self.move_viewport_to_bottom()
 
     def refresh_view(self):
         if self.IsShown():
