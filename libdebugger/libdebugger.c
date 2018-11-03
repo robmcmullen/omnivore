@@ -125,9 +125,9 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 
 	/* Special case for zeroth breakpoint: step conditions & user control */
 	if (breakpoints->breakpoint_status[0] == BREAKPOINT_ENABLED) {
-		btype = breakpoints->breakpoint_type[i];
-		count = (int)breakpoints->tokens[index]; /* tokens are unsigned */
-		ref_val = breakpoints->reference_value[index];
+		btype = breakpoints->breakpoint_type[0];
+		count = (int)breakpoints->tokens[0]; /* tokens are unsigned */
+		ref_val = breakpoints->reference_value[0];
 #ifdef DEBUG_BREAKPOINT
 		printf("checking breakpoint 0: %d, count=%d, ref=%ld\n", btype, count, ref_val);
 #endif
