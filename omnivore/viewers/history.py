@@ -118,12 +118,15 @@ class InstructionHistoryGridControl(SegmentGridControl):
     default_table_cls = InstructionHistoryTable
 
     def calc_default_table(self):
-        return self.default_table_cls(self.caret_handler)
+        table = self.default_table_cls(self.caret_handler)
+        table.rebuild()  # find number of rows so scrollbars can be set properly
+        return table
 
     def calc_line_renderer(self):
         return cg.VirtualTableLineRenderer(self, 2, widths=self.default_table_cls.column_sizes, col_labels=self.default_table_cls.column_labels)
 
     def recalc_view(self):
+        log.debug(f"recalc_view: {self}")
         self.table.rebuild()
         cg.CompactGrid.recalc_view(self)
 
