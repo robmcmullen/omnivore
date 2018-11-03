@@ -247,7 +247,7 @@ cdef class StringifiedDisassembly:
     cdef int mnemonic_case
     cdef char *hex_case
 
-    def __init__(self, start_index, max_lines, jmp_targets, labels, mnemonic_lower=True, hex_lower=True):
+    def __init__(self, start_index, max_lines, jmp_targets, labels=None, mnemonic_lower=True, hex_lower=True):
         cdef label_info_t *info
         cdef char *text
         cdef long addr
@@ -259,13 +259,17 @@ cdef class StringifiedDisassembly:
         self.jmp_targets = jmp_targets
         self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
-        addr = labels.get_label_data_addr()
-        info = <label_info_t *>addr
-        self.jmp_targets_data.labels = info
+        if labels is not None:
+            addr = labels.get_text_storage_addr()
+            text = <char *>addr
+            self.jmp_targets_data.text_storage = text
 
-        addr = labels.get_text_storage_addr()
-        text = <char *>addr
-        self.jmp_targets_data.text_storage = text
+            addr = labels.get_label_data_addr()
+            info = <label_info_t *>addr
+            self.jmp_targets_data.labels = info
+        else:
+            self.jmp_targets_data.text_storage = <char *>0
+            self.jmp_targets_data.labels = <label_info_t *>0
 
         self.clear()
         # for disassembler_type in range(40):
@@ -401,7 +405,7 @@ cdef class ParsedDisassembly:
         # printf("processor = %lx\n", processor)
         self.parse_next(processor, <unsigned char *>src.data, len(src))
 
-    def stringify(self, int index, int num_lines_requested, labels, mnemonic_lower=True, hex_lower=True):
+    def stringify(self, int index, int num_lines_requested, labels=None, mnemonic_lower=True, hex_lower=True):
         cdef history_entry_t *h = &self.history_entries[index]
         output = StringifiedDisassembly(index, num_lines_requested, self.jmp_targets, labels, mnemonic_lower, hex_lower)
         output.parse_history_entries(h, num_lines_requested)
@@ -513,7 +517,7 @@ cdef class StringifiedHistory:
     cdef int mnemonic_case
     cdef char *hex_case
 
-    def __init__(self, max_lines, labels, mnemonic_lower=True, hex_lower=True):
+    def __init__(self, max_lines, labels=None, mnemonic_lower=True, hex_lower=True):
         cdef long addr
 
         self.history_text = TextStorage(max_lines)
@@ -524,13 +528,17 @@ cdef class StringifiedHistory:
         self.jmp_targets = np.zeros(sizeof(jmp_targets_t), dtype=np.uint8)
         self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
-        addr = labels.get_text_storage_addr()
-        text = <char *>addr
-        self.jmp_targets_data.text_storage = text
+        if labels is not None:
+            addr = labels.get_text_storage_addr()
+            text = <char *>addr
+            self.jmp_targets_data.text_storage = text
 
-        addr = labels.get_label_data_addr()
-        info = <label_info_t *>addr
-        self.jmp_targets_data.labels = info
+            addr = labels.get_label_data_addr()
+            info = <label_info_t *>addr
+            self.jmp_targets_data.labels = info
+        else:
+            self.jmp_targets_data.text_storage = <char *>0
+            self.jmp_targets_data.labels = <label_info_t *>0
 
     def __len__(self):
         return self.history_text.num_lines
@@ -671,7 +679,7 @@ cdef class HistoryStorage:
         i = last % mod
         print(f"{i}: {self.entries[i]}")
 
-    def stringify(self, int index, int num_lines_requested, labels, mnemonic_lower=True, hex_lower=True):
+    def stringify(self, int index, int num_lines_requested, labels=None, mnemonic_lower=True, hex_lower=True):
         output = StringifiedHistory(num_lines_requested, labels, mnemonic_lower, hex_lower)
         index = (self.history.first_entry_index + index) % self.history.num_allocated_entries
         output.parse_history_entries(self.history, index, num_lines_requested)

@@ -10,11 +10,17 @@
 
 int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page) {
     char *first_t, *h;
-    label_info_t *info = &jmp_targets->labels[(addr & 0xffff)];
+    label_info_t *info;
     int index, count;
 
     first_t = t;
-    index = info->text_start_index;
+    if (jmp_targets->labels) {
+        info = &jmp_targets->labels[(addr & 0xffff)];
+        index = info->text_start_index;
+    }
+    else {
+        index = 0;
+    }
     if (index) {
         count = info->line_length;
         h = &jmp_targets->text_storage[index];
