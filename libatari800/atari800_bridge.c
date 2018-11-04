@@ -6,6 +6,7 @@
 #include "atari800_bridge.h"
 
 #include "libdebugger.h"
+#include "libudis.h"
 
 #include "atari.h"
 #include "afile.h"
@@ -365,6 +366,46 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 		copy_screen(output->video);
 	}
 	return bpid;
+}
+
+void a8bridge_show_current_instruction(history_atari800_t *entry) {
+	int count;
+	uint8_t opcode;
+
+	opcode = MEMORY_mem[CPU_regPC];
+	entry->pc = CPU_regPC;
+	entry->num_bytes = instruction_length_6502[opcode];
+	entry->flag = opcode_history_flags_6502[opcode];
+	entry->instruction[0] = opcode;
+	if (count > 1) entry->instruction[1] = MEMORY_mem[CPU_regPC + 1];
+	if (count > 2) entry->instruction[2] = MEMORY_mem[CPU_regPC + 2];
+	entry->a = CPU_regA;
+	entry->x = CPU_regX;
+	entry->y = CPU_regY;
+	entry->sp = CPU_regS;
+	entry->sr = CPU_regP;
+	entry->before1 = 0;
+	entry->after1 = 0;
+	entry->before2 = 0;
+	entry->after2 = 0;
+	entry->before3 = 0;
+	entry->after3 = 0;
+}
+
+int a8bridge_show_next_instruction(emulator_history_t *history)
+{
+	history_atari800_t *entry;
+	history_breakpoint_t *b;
+
+	entry = (history_atari800_t *)libudis_get_next_entry(history, DISASM_ATARI800_HISTORY);
+	if (entry) {
+		a8bridge_show_current_instruction(entry);
+		b = (history_breakpoint_t *)entry;
+		b->breakpoint_id = 0;
+		b->breakpoint_type = BREAKPOINT_PAUSE_AT_FRAME_START;
+		b->disassembler_type = DISASM_NEXT_INSTRUCTION;
+		b->disassembler_type_cpu = DISASM_ATARI800_HISTORY;
+	}
 }
 
 void a8bridge_get_current_state(output_template_t *output)

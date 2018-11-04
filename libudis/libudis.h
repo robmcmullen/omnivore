@@ -128,7 +128,9 @@ extern int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, ch
 
 typedef int (*string_func_t)(history_entry_t *, char *, char *, int, jmp_targets_t *);
 
-extern int opcode_history_flags_6502[256];
+extern char opcode_history_flags_6502[256];
+
+extern char instruction_length_6502[256];
 
 history_entry_t *libudis_get_next_entry(emulator_history_t *history, int type);
 

@@ -85,7 +85,7 @@ int lib6502_show_current_instruction(history_6502_t *entry)
 	uint8_t opcode;
 
 	opcode = memory[PC];
-	count = lengths[inst.mode];
+	count = instruction_length_6502[opcode];
 	entry->pc = PC;
 	entry->num_bytes = count;
 	entry->flag = opcode_history_flags_6502[opcode];

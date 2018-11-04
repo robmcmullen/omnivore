@@ -9,6 +9,7 @@ cdef extern:
     void a8bridge_get_current_state(void *output)
     void a8bridge_restore_state(void *restore)
     int a8bridge_next_frame(void *input, void *output, void *breakpoints, void *history)
+    void a8bridge_show_next_instruction(void *history)
 
     int libatari800_mount_disk_image(int diskno, const char *filename, int readonly)
     int libatari800_reboot_with_file(const char *filename)
@@ -71,6 +72,16 @@ def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray
     dbuf = breakpoints.view(np.uint8)
     bpid = a8bridge_next_frame(&ibuf[0], &obuf[0], &dbuf[0], hbuf)
     return bpid
+
+def show_next_instruction(history_storage):
+    cdef np.uint8_t *hbuf
+    cdef np.uint8_t[:] tmp
+    if history_storage is not None:
+        tmp = history_storage.history_array.view(np.uint8)
+        hbuf = &tmp[0]
+    else:
+        hbuf = <np.uint8_t *>0
+    a8bridge_show_next_instruction(hbuf)
 
 def get_current_state(np.ndarray output not None):
     cdef np.uint8_t[:] obuf
