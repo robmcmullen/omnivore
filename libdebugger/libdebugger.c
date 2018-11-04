@@ -114,6 +114,7 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 	postfix_stack_t stack;
 
 	current_pc = get_emulator_value(REG_PC, 0);
+	// printf("in libdebugger_check_breakpoints: PC=%04x breakpoint->last_pc=%04x\n", current_pc, breakpoints->last_pc);
 	if (breakpoints->last_pc == current_pc) {
 		/* found infinite loop when same instruction calls itself */
 		breakpoints->breakpoint_status[0] = BREAKPOINT_ENABLED;

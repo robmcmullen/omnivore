@@ -770,11 +770,11 @@ recreate_history_entry:
 		}
 
 		if (LIBATARI800_Breakpoints && check_breakpoints) {
+			// printf("before checking breakpoint; CPU_regPC=%04x PC=%04x last_pc=%04x\n", CPU_regPC, PC, last_pc);
 			int bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, LIBATARI800_Status, &a8bridge_register_callback);
 			if (bpid >= 0) {
 				LIBATARI800_Status->frame_status = FRAME_BREAKPOINT;
 				LIBATARI800_Status->breakpoint_id = bpid;
-				LIBATARI800_Breakpoints->last_pc = last_pc;
 				if (entry) {
 					history_breakpoint_t *b = (history_breakpoint_t *)entry;
 					b->breakpoint_id = bpid;
@@ -790,6 +790,7 @@ recreate_history_entry:
 				goto recreate_history_entry;
 			}
 		}
+		if (LIBATARI800_Breakpoints) LIBATARI800_Breakpoints->last_pc = last_pc;
 
 #ifdef MONITOR_BREAKPOINTS
 #ifdef MONITOR_BREAK
@@ -2565,6 +2566,7 @@ recreate_history_entry:
 		LIBATARI800_Status->instructions_since_power_on += 1;
 		LIBATARI800_Status->current_cycle_in_frame += cyc;
 		LIBATARI800_Status->cycles_since_power_on += cyc;
+		UPDATE_GLOBAL_REGS;
 
 #ifdef MONITOR_PROFILE
 		{
