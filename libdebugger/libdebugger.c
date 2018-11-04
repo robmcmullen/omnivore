@@ -268,11 +268,6 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_s
 		output->current_instruction_in_frame = 0;
 		output->current_cycle_in_frame = 0;
 		libdebugger_memory_access_start_frame(memory, output);
-
-		frame_entry = (history_frame_t *)libudis_get_next_entry(history, DISASM_FRAME_START);
-		if (frame_entry) {
-			frame_entry->frame_number = output->frame_number;
-		}
 	}
 	output->frame_status = FRAME_INCOMPLETE;
 	bpid = calc(output, breakpoints, history);

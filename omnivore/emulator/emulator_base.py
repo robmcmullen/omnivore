@@ -470,6 +470,9 @@ class EmulatorBase(Debugger):
     def cpu_history_show_range(self, from_index, details=False):
         self.cpu_history.debug_range(from_index)
 
+    def cpu_history_show_next_instruction(self):
+        self.low_level_interface.show_next_instruction(self.cpu_history)
+
     def calc_stringified_history(self, start_index, count):
         """Returns an list of indexes into the entries array for the
         range of history requested.

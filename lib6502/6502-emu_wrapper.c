@@ -79,6 +79,32 @@ void lib6502_restore_state(output_t *buf) {
 
 uint16_t last_pc;
 
+int lib6502_show_current_instruction(history_6502_t *entry)
+{
+	int count;
+	uint8_t opcode;
+
+	opcode = memory[PC];
+	count = lengths[inst.mode];
+	entry->pc = PC;
+	entry->num_bytes = count;
+	entry->flag = opcode_history_flags_6502[opcode];
+	entry->instruction[0] = opcode;
+	if (count > 1) entry->instruction[1] = memory[PC + 1];
+	if (count > 2) entry->instruction[2] = memory[PC + 2];
+	entry->a = A;
+	entry->x = X;
+	entry->y = Y;
+	entry->sp = SP;
+	entry->sr = SR.byte;
+	entry->before1 = 0;
+	entry->after1 = 0;
+	entry->before2 = 0;
+	entry->after2 = 0;
+	entry->before3 = 0;
+	entry->after3 = 0;
+}
+
 int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_t *breakpoints)
 {
 	int count, bpid;
@@ -92,25 +118,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	opcode = memory[PC];
 	inst = instructions[opcode];
 	count = lengths[inst.mode];
-	if (entry) {
-		entry->pc = PC;
-		entry->num_bytes = count;
-		entry->flag = opcode_history_flags_6502[opcode];
-		entry->instruction[0] = opcode;
-		if (count > 1) entry->instruction[1] = memory[PC + 1];
-		if (count > 2) entry->instruction[2] = memory[PC + 2];
-		entry->a = A;
-		entry->x = X;
-		entry->y = Y;
-		entry->sp = SP;
-		entry->sr = SR.byte;
-		entry->before1 = 0;
-		entry->after1 = 0;
-		entry->before2 = 0;
-		entry->after2 = 0;
-		entry->before3 = 0;
-		entry->after3 = 0;
-	}
+	if (entry) lib6502_show_current_instruction(entry);
 
 	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback);
 	if (bpid >= 0) {
@@ -345,6 +353,22 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 	status->frame_number += 1;
 
 	return -1;
+}
+
+void lib6502_show_next_instruction(emulator_history_t *history)
+{
+	history_6502_t *entry;
+	history_breakpoint_t *b;
+
+	entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
+	if (entry) {
+		lib6502_show_current_instruction(entry);
+		b = (history_breakpoint_t *)entry;
+		b->breakpoint_id = 0;
+		b->breakpoint_type = BREAKPOINT_PAUSE_AT_FRAME_START;
+		b->disassembler_type = DISASM_NEXT_INSTRUCTION;
+		b->disassembler_type_cpu = DISASM_6502_HISTORY;
+	}
 }
 
 int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoints, emulator_history_t *history)

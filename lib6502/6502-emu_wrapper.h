@@ -84,5 +84,6 @@ int lib6502_step_cpu(frame_status_t *output, history_6502_t *entry, breakpoints_
 
 int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *state, emulator_history_t *history);
 
+void lib6502_show_next_instruction(emulator_history_t *history);
 
 #endif /* _6502_EMU_WRAPPER_H_ */

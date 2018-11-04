@@ -71,6 +71,7 @@ typedef struct {
 #define BREAKPOINT_COUNT_FRAMES 0x4
 #define BREAKPOINT_INFINITE_LOOP 0x5
 #define BREAKPOINT_BRK_INSTRUCTION 0x6
+#define BREAKPOINT_PAUSE_AT_FRAME_START 0x7
 
 /* status values returned */
 #define NO_BREAKPOINT_FOUND -1

@@ -269,6 +269,8 @@ int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, 
     first_t = t;
     *t++='-', *t++='-', *t++='E', *t++='n', *t++='d', *t++=' ', *t++='f', *t++='r', *t++='a', *t++='m', *t++='e', *t++=' ';
     t += sprintf(t, "%d", frame->frame_number);
+    *t++=',', *t++=' ', *t++='s', *t++='t', *t++='a', *t++='r', *t++='t', *t++=' ', *t++='f', *t++='r', *t++='a', *t++='m', *t++='e', *t++=' ';
+    t += sprintf(t, "%d", frame->frame_number + 1);
     return (int)(t - first_t);
 }
 
@@ -486,18 +488,23 @@ int stringify_entry_breakpoint(history_entry_t *h_entry, char *t, char *hexdigit
     history_breakpoint_t *entry = (history_frame_t *)h_entry;
 
     first_t = t;
-    t = STRING(t, 0, "<BREAKPOINT");
-    if (entry->breakpoint_id > 0) {
-        t += sprintf(t, " %d", entry->breakpoint_id);
+    if (entry->breakpoint_type == BREAKPOINT_PAUSE_AT_FRAME_START) {
+        t = STRING(t, 0, "<PAUSED>");
     }
-    *t++='>';
-    switch (entry->breakpoint_type) {
-        case BREAKPOINT_INFINITE_LOOP:
-        t = STRING(t, 0, ": infinite loop detected");
-        break;
+    else {
+        t = STRING(t, 0, "<BREAKPOINT");
+        if (entry->breakpoint_id > 0) {
+            t += sprintf(t, " %d", entry->breakpoint_id);
+        }
+        *t++='>';
+        switch (entry->breakpoint_type) {
+            case BREAKPOINT_INFINITE_LOOP:
+            t = STRING(t, 0, ": infinite loop detected");
+            break;
 
-        default:
-        break;
+            default:
+            break;
+        }
     }
     return (int)(t - first_t);
 }

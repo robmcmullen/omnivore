@@ -239,6 +239,7 @@ class EmulationDocument(SegmentedDocument):
         print("pause")
         emu = self.emulator
         self.stop_timer()
+        emu.cpu_history_show_next_instruction()
         self.emulator_update_screen_event = True
         self.priority_level_refresh_event = 100
 
