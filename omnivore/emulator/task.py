@@ -90,6 +90,7 @@ class EmulatorTask(ByteEditTask):
             ea.StepIntoAction(),
             ea.StepOverAction(),
             ea.EndOfFrameAction(),
+            ea.BreakVBIStart(),
             Separator(),
             ea.StartAction(),
             ea.SelectAction(),

@@ -142,6 +142,14 @@ REG_Z = (210)
 REG_C = (211)
 REG_PC = (212)
 REG_SP = REG_S
+EMU_SCANLINE = (213)
+EMU_COLOR_CLOCK = (214)
+EMU_VBI_START = (215)  # transition to VBI
+EMU_IN_VBI = (216)  # inside VBI
+EMU_VBI_END = (217)  # transition out of VBI
+EMU_DLI_START = (218)  # transition to DLI
+EMU_IN_DLI = (219)  # inside DLI
+EMU_DLI_END = (220)  # transition out of DLI
 NUMBER = (301 | VALUE_ARGUMENT)
 OPCODE_TYPE = (302 | VALUE_ARGUMENT)
 

@@ -386,6 +386,8 @@ void CPU_PutStatus(void)
 #define NCYCLES_X   if ((UBYTE) addr < X) ANTIC_xpos++
 #define NCYCLES_Y   if ((UBYTE) addr < Y) ANTIC_xpos++
 
+int nmi_changing = INTERRUPT_NONE;
+
 /* Triggers a Non-Maskable Interrupt */
 void CPU_NMI(void)
 {
@@ -398,6 +400,7 @@ void CPU_NMI(void)
 	CPU_regPC = MEMORY_dGetWordAligned(0xfffa);
 	CPU_regS = S;
 	ANTIC_xpos += 7; /* handling an interrupt by 6502 takes 7 cycles */
+	nmi_changing = INTERRUPT_START;
 	INC_RET_NESTING;
 }
 
@@ -790,7 +793,12 @@ recreate_history_entry:
 				goto recreate_history_entry;
 			}
 		}
-		if (LIBATARI800_Breakpoints) LIBATARI800_Breakpoints->last_pc = last_pc;
+		if (LIBATARI800_Breakpoints) {
+			LIBATARI800_Breakpoints->last_pc = last_pc;
+		}
+		if (nmi_changing == INTERRUPT_END) {
+			nmi_changing = INTERRUPT_NONE;
+		}
 
 #ifdef MONITOR_BREAKPOINTS
 #ifdef MONITOR_BREAK
@@ -1371,6 +1379,7 @@ recreate_history_entry:
 			}
 			last_nmi_type = 0;
 		}
+		nmi_changing = INTERRUPT_END;
 		DONE
 
 	OPCODE(41)				/* EOR (ab,x) */
@@ -2567,6 +2576,9 @@ recreate_history_entry:
 		LIBATARI800_Status->current_cycle_in_frame += cyc;
 		LIBATARI800_Status->cycles_since_power_on += cyc;
 		UPDATE_GLOBAL_REGS;
+		if (nmi_changing == INTERRUPT_START) {
+			nmi_changing = INTERRUPT_PROCESSING;
+		}
 
 #ifdef MONITOR_PROFILE
 		{

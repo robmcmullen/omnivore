@@ -253,6 +253,11 @@ class EmulationDocument(SegmentedDocument):
         self.emulator.step_into(1)
         self.start_timer()
 
+    def debugger_break_vbi_start(self, count=1):
+        print("stepping")
+        self.emulator.break_vbi_start(count)
+        self.start_timer()
+
     def debugger_count_frames(self, number=1):
         print(f"counting {number} frames")
         self.emulator.count_frames(number)

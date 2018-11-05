@@ -31,6 +31,9 @@ typedef struct {
 
 extern long cycles_per_frame;
 
+extern int nmi_changing;
+extern int last_nmi_type;
+
 extern emulator_history_t *LIBATARI800_History;
 
 

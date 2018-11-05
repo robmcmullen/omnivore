@@ -179,6 +179,15 @@ class Breakpoint:
         c['tokens'][self.index] = count
         self.enable()
 
+    def break_vbi_start(self, count):
+        # shortcut to create a break after `count` instructions
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['tokens'][self.index] = count
+        self.terms = (dd.EMU_VBI_START, dd.END_OF_LIST)
+        self.enable()
+
     def count_cycles(self, count):
         # shortcut to create a break after `count` instructions
         c = self.debugger.debug_cmd[0]
@@ -263,6 +272,10 @@ class Debugger(Serializable):
     def step_into(self, number=1):
         b = Breakpoint(self, 0)
         b.step_into(number)
+
+    def break_vbi_start(self, number=1):
+        b = Breakpoint(self, 0)
+        b.break_vbi_start(number)
 
     def count_frames(self, number=1):
         b = Breakpoint(self, 0)

@@ -155,6 +155,38 @@ int a8bridge_register_callback(uint16_t token, uint16_t addr) {
 		value = CPU_regPC;
 		break;
 
+		case EMU_SCANLINE:
+		value = ANTIC_ypos;
+		break;
+
+		case EMU_COLOR_CLOCK:
+		value = ANTIC_xpos;
+		break;
+
+		case EMU_VBI_START:
+		value = last_nmi_type == DISASM_ATARI800_VBI_END && nmi_changing == INTERRUPT_START;
+		break;
+
+		case EMU_IN_VBI:
+		value = last_nmi_type == DISASM_ATARI800_VBI_END && nmi_changing == INTERRUPT_PROCESSING;
+		break;
+
+		case EMU_VBI_END:
+		value = last_nmi_type == DISASM_ATARI800_VBI_END && nmi_changing == INTERRUPT_END;
+		break;
+
+		case EMU_DLI_START:
+		value = last_nmi_type == DISASM_ATARI800_DLI_END && nmi_changing == INTERRUPT_START;
+		break;
+
+		case EMU_IN_DLI:
+		value = last_nmi_type == DISASM_ATARI800_DLI_END && nmi_changing == INTERRUPT_PROCESSING;
+		break;
+
+		case EMU_DLI_END:
+		value = last_nmi_type == DISASM_ATARI800_DLI_END && nmi_changing == INTERRUPT_END;
+		break;
+
 		default:
 		value = 0;
 	}

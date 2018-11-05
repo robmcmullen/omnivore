@@ -136,6 +136,20 @@ class StepAction(EmulatorAction):
         self.enabled = self.active_editor.document.emulator_paused
 
 
+class BreakVBIStart(EmulatorAction):
+    """Break at the start of the next VBI
+    """
+    name = "Break at Next VBI Start"
+    tooltip = "Enter debugger at the beginning of the next VBI"
+    accelerator = 'shift-F9'
+
+    def perform(self, event=None):
+        self.active_editor.document.debugger_break_vbi_start()
+
+    def _update_enabled(self, ui_state):
+        self.enabled = self.active_editor.document.emulator_paused
+
+
 class StepIntoAction(StepAction):
     """Restart the emulation
     """
