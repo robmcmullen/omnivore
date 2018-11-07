@@ -272,13 +272,13 @@ class LineRenderer(object):
         self.col_widths = tuple(widths)  # copy to prevent possible weird errors if parent modifies list!
         self.pixel_widths = [self.w * i for i in self.col_widths]
         self.largest_label_width = 0
-        self.cell_to_col = []
-        self.col_to_cell = []
+        self._cell_to_col = []
+        self._col_to_cell = []
         pos = 0
         self.vw = 0
         for i, width in enumerate(widths):
-            self.col_to_cell.append(pos)
-            self.cell_to_col.extend([i] * width)
+            self._col_to_cell.append(pos)
+            self._cell_to_col.extend([i] * width)
             pos += width
             self.vw += self.pixel_widths[i]
         self.num_cells = pos
@@ -289,9 +289,9 @@ class LineRenderer(object):
         return labels
 
     def get_col_labels(self, parent, starting_cell, num_cells):
-        starting_col = self.cell_to_col[starting_cell]
+        starting_col = self._cell_to_col[starting_cell]
         last_cell = min(starting_cell + num_cells, self.num_cells) - 1
-        last_col = self.cell_to_col[last_cell]
+        last_col = self._cell_to_col[last_cell]
         for col in range(starting_col, last_col + 1):
             rect, offset, text = self.col_label_drawing_info[col]
             if rect is None:
@@ -301,6 +301,8 @@ class LineRenderer(object):
     def calc_col_label_drawing_info(self, parent, labels):
         labels = self.calc_col_labels(labels)
         info = []
+        if labels is None:
+            return
         extra_width = 0
         self.largest_label_width = 0
         for col in range(self.num_cols):
@@ -345,11 +347,19 @@ class LineRenderer(object):
         return rect
 
     def col_to_rect(self, line_num, col):
-        cell = self.col_to_cell[col]
+        cell = self._col_to_cell[col]
         x, y = self.cell_to_pixel(line_num, cell)
         w = self.pixel_widths[col]
         rect = wx.Rect(x, y, w, self.h)
         return rect
+
+    def calc_caret_cells_from_row_col(self, caret_row, caret_col):
+        caret_start_cell = self._col_to_cell[caret_col]
+        caret_width = self.col_widths[caret_col]
+        return caret_start_cell, caret_width
+
+    def cell_to_col(self, row, cell):
+        return self._cell_to_col[cell]
 
     def calc_column_range(self, parent, line_num, col, last_col):
         raise NotImplementedError("override to produce column number and start and end indexes")
@@ -362,9 +372,9 @@ class LineRenderer(object):
         self.image_cache.draw_item(parent, dc, rect, data, style, self.pixel_widths, col)
 
     def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
-        first_col = self.cell_to_col[start_cell]
+        first_col = self._cell_to_col[start_cell]
         last_cell = min(start_cell + visible_cells, self.num_cells)
-        last_col = self.cell_to_col[last_cell - 1] + 1
+        last_col = self._cell_to_col[last_cell - 1] + 1
 
         for row in range(start_row, min(start_row + visible_rows, parent.table.num_rows)):
             try:
@@ -472,16 +482,16 @@ class VirtualTableLineRenderer(TableLineRenderer):
     default_image_cache = VirtualTableImageCache
 
     def draw(self, parent, dc, line_num, start_cell, num_cells):
-        col = self.cell_to_col[start_cell]
+        col = self._cell_to_col[start_cell]
         last_cell = min(start_cell + num_cells, self.num_cells)
-        last_col = self.cell_to_col[last_cell - 1] + 1
+        last_col = self._cell_to_col[last_cell - 1] + 1
         rect = self.col_to_rect(line_num, col)
         self.image_cache.draw_item_at(parent, dc, rect, line_num, col, last_col, self.pixel_widths)
 
     def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
-        first_col = self.cell_to_col[start_cell]
+        first_col = self._cell_to_col[start_cell]
         last_cell = min(start_cell + visible_cells, self.num_cells)
-        last_col = self.cell_to_col[last_cell - 1] + 1
+        last_col = self._cell_to_col[last_cell - 1] + 1
 
         for row in range(start_row, min(start_row + visible_rows, parent.table.num_rows)):
             rect = self.col_to_rect(row, first_col)
@@ -490,6 +500,111 @@ class VirtualTableLineRenderer(TableLineRenderer):
     def calc_column_range(self, parent,line_num, col, last_col):
         index, last_index = parent.table.get_index_range(line_num, col)
         return col, index, last_index
+
+
+class ConstantWidthImageCache(VirtualTableImageCache):
+    def draw_item_at(self, parent, dc, rect, row, col, last_col, width):
+        rect.width = width
+        for c in range(col, last_col):
+            text, style = parent.table.get_value_style(row, col)
+            self.draw_text_to_dc(parent, dc, rect, rect, text, style)
+            rect.x += width
+            col += 1
+
+
+class VariableWidthLineRenderer(VirtualTableLineRenderer):
+    """Table where each row can have a different number of cells
+    
+    The constraint is that every column in a given row is always the same size;
+    that is, each column is the same multiple of cells. Other rows may have
+    their own cell width per column, only within a row is every column the same
+    width.
+    """
+    default_image_cache = ConstantWidthImageCache
+
+    def __init__(self, parent, chars_per_cell, col_sizes, cells_per_col, image_cache=None):
+        """
+        Constructs a table; each entry in col_sizes is the number of columns in
+        each row. The number of rows is determined from the size of this array.
+
+        Args:
+            parent (CompactGrid): CompactGrid instance
+            w (int): pixel width of one cell
+            h (int): pixel height of one cell
+            col_sizes (list): number of columns in each row
+            image_cache (DrawTextImageCache, optional): image cache if
+                something other than default is desired
+            widths (list, optional): number of cells in a column, one entry
+                per row
+            col_labels (None, optional): Description
+        """
+        self.w, self.h = parent.view_params.calc_cell_size_in_pixels(chars_per_cell)
+        self.num_cols = -1
+        self.col_widths = tuple(col_sizes)
+        self.num_rows = len(col_sizes)
+        if image_cache is None:
+            image_cache = parent.view_params.calc_image_cache(self.default_image_cache)
+        self.image_cache = image_cache
+        self.set_cell_metadata(cells_per_col)
+        self.col_label_drawing_info = self.calc_col_label_drawing_info(parent, None)
+
+    def set_cell_metadata(self, widths):
+        """
+        :param items_per_row: number of entries in each line of the array
+        :param col_widths: array, entry containing the number of cells (width)
+            required to display that items in that column
+        
+        Args:
+            widths (list): one entry per row, number of cells in a column
+        """
+        self.cell_widths = tuple(widths)  # copy to prevent possible weird errors if parent modifies list!
+        self.pixel_widths = [self.w * i for i in self.cell_widths]
+        self.largest_label_width = 0
+        pos = 0
+        self.vw = max([c * p for c, p in zip(self.cell_widths, self.pixel_widths)])
+        self.num_cells = self.vw // self.w
+
+    def calc_col_labels(self, labels):
+        return None
+
+    def calc_caret_cells_from_row_col(self, row, col):
+        if row > self.num_rows:
+            row = -1
+        cell = col * self.cell_widths[row]
+        cell_width = self.cell_widths[row]
+        return cell, cell_width
+
+    def col_to_rect(self, line_num, col):
+        cell, _ = self.calc_caret_cells_from_row_col(line_num, col)
+        x, y = self.cell_to_pixel(line_num, cell)
+        w = self.pixel_widths[line_num]
+        rect = wx.Rect(x, y, w, self.h)
+        return rect
+
+    def cell_to_col(self, row, cell):
+        if row >= self.num_rows:
+            row = -1
+        col = cell // self.cell_widths[row]
+        return col
+
+    def calc_column_range(self, parent, line_num, col, last_col):
+        t = parent.table
+        index, _ = t.get_index_range(line_num, col)
+        last_index, _ = t.get_index_range(line_num, last_col)
+        return col, index, last_index
+
+    def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
+        print(self.col_widths)
+        print(self.cell_widths)
+        print(self.pixel_widths)
+        for row in range(start_row, min(start_row + visible_rows, parent.table.num_rows)):
+            first_col = self.cell_to_col(row, start_cell)
+            last_cell = min(start_cell + visible_cells, self.num_cells)
+            last_col = min(self.col_widths[row], self.cell_to_col(row, last_cell - 1) + 1)
+            rect = self.col_to_rect(row, first_col)
+            print(f"row: {row}, cells:{start_cell}->{last_cell}, cols:{first_col}->{last_col}, {rect}, {self.cell_widths[row]}")
+            if first_col < last_col:
+                self.image_cache.draw_item_at(parent, dc, rect, row, first_col, last_col, self.pixel_widths[row])
 
 
 class BaseGridDrawControl(wx.ScrolledCanvas):
@@ -651,7 +766,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
                 self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
         else:
-            col = self.cell_to_col(input_cell)
+            col = self.cell_to_col(input_row, input_cell)
             self.parent.handle_motion_update_status(evt, input_row, col)
         self.last_mouse_event = (input_row, input_cell)
 
@@ -671,13 +786,13 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         cell = sx + int(x // self.cell_pixel_width)
         return row, cell
 
-    def cell_to_col(self, cell):
+    def cell_to_col(self, row, cell):
         cell = ForceBetween(0, cell, self.line_renderer.num_cells - 1)
-        return self.line_renderer.cell_to_col[cell]
+        return self.line_renderer.cell_to_col(row, cell)
 
     def pixel_pos_to_row_col(self, x, y):
         row, cell = self.pixel_pos_to_row_cell(x, y)
-        col = self.cell_to_col(cell)
+        col = self.cell_to_col(row, cell)
         return row, col
 
     def get_row_cell_from_event(self, evt):
@@ -692,8 +807,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         offscreen = False
         scroll_cell = 0
         scroll_row = 0
-        caret_start_cell = self.line_renderer.col_to_cell[self.current_caret_col]
-        caret_width = self.line_renderer.col_widths[self.current_caret_col]
+        caret_start_cell, caret_width = self.line_renderer.calc_caret_cells_from_row_col(self.current_caret_row, self.current_caret_col)
 
         if cell < left_cell:  # off left side
             if caret_start_cell > left_cell:
@@ -795,7 +909,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     def update_caret_from_mouse(self, row, cell, flags):
         self.ensure_visible(row, cell, flags)
-        col = self.cell_to_col(cell)
+        col = self.cell_to_col(row, cell)
         self.current_caret_row, self.current_caret_col = row, col
 
     def enforce_valid_caret(self, row, col):
@@ -858,7 +972,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     def process_motion_scroll(self, row, cell, flags):
         self.ensure_visible(row, cell, flags)
-        col = self.cell_to_col(cell)
+        col = self.cell_to_col(row, cell)
         try:
             index, _ = self.table.get_index_range(row, col)
         except IndexError:
@@ -981,13 +1095,78 @@ class HexTable(object):
 
 
 class VariableWidthHexTable(HexTable):
-    def get_index_range(self, row, cell):
+    """Table works in rows and columns, knows nothing about display cells.
+
+    Each row may contain any number of columns, but all columns in each row
+    must be the same data type (and therefore the same width in the display).
+    """
+    def __init__(self, data, style, table_description, start_addr=0, row_labels_in_multiples=False):
+        self.data = data
+        self.style = style
+        self.start_addr = start_addr
+        self.items_per_row = self.init_table_description(table_description)
+        self.start_offset = 0
+        self.init_boundaries()
+        # print(self.data, self.num_rows, self.start_offset, self.start_addr)
+        self.create_row_labels()
+
+    def calc_num_rows(self):
+        return len(self.items_per_row)
+
+    def init_table_description(self, desc):
+        items_per_row = []
+        index_of_row = []
+        row_of_index = []
+        index = 0
+        for d in desc:
+            s = self.size_of_entry(d)
+            items_per_row.append(s)
+            index_of_row.append(index)
+            row_of_index.extend([index] * s)
+            index += s
+        self.index_of_row = index_of_row
+        self.row_of_index = row_of_index
+        return items_per_row
+
+    def size_of_entry(self, d):
+        return d
+
+    def create_row_labels(self):
+        pass
+
+    def get_value_style(self, row, col):
+        index, _ = self.get_index_range(row, col)
+        return str(self.data[index]), self.style[index]
+
+    def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.
         """
-        index = row * self.items_per_row
-        index += self.cell_to_col[cell]
+        try:
+            index = self.index_of_row[row]
+        except IndexError:
+            if row < 0:
+                row = 0
+            elif row > self.num_rows:
+                row = -1
+            index = self.index_of_row[row]
+        index = min(index + col, index + self.items_per_row[row])
         return index, index + 1
+
+    def get_index_of_row(self, line):
+        return self.items_per_row[line]
+
+    def index_to_row_col(self, index):
+        row = self.row_of_index[index]
+        start = self.index_of_row[row]
+        col = index - start
+        return row, col
+
+
+
+
+
+
 
 
 class VirtualTable(HexTable):
@@ -1604,9 +1783,11 @@ class DisassemblyTable(HexTable):
 
 class NonUniformGridWindow(CompactGrid):
     def calc_line_renderer(self):
-        image_cache = DrawTableCellImageCache(self)
-        return TableLineRenderer(self, 2, image_cache=image_cache, widths=[5,1,2,4,8])
+        return VariableWidthLineRenderer(self, 2, self.table.items_per_row, [1,2,1,2,1,1,2,3,5])
 
+    def set_view_param_defaults(self):
+        super().set_view_param_defaults()
+        self.want_col_header = False
 
        
 #For testing
@@ -1640,7 +1821,6 @@ if __name__ == '__main__':
             return len(self.window.table.data)
 
         def __getitem__(self, item):
-            index, last_index = item.start, item.stop
             try:
                 index, last_index = item.start, item.stop
             except:
@@ -1669,7 +1849,7 @@ if __name__ == '__main__':
     style1 = FakeStyle()
     table = DisassemblyTable(np.arange(1024, dtype=np.uint8), style1, 5)
     carets = MultiCaretHandler(table)
-    scroll1 = NonUniformGridWindow(table, view_params, carets, splitter)
+    scroll1 = CompactGrid(table, view_params, carets, splitter)
     style1.set_window(scroll1.main)
     # style1 = FakeStyle()
     # table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
@@ -1677,9 +1857,11 @@ if __name__ == '__main__':
     # scroll1 = CompactGrid(table, view_params, carets, splitter)
     # style1.set_window(scroll1.main)
     style2 = FakeStyle()
-    table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
+    #table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
+    table = VariableWidthHexTable(np.arange(48, dtype=np.uint8), style2, [1,2,3,4,32,2,1,1,2], 0x602)
+
     carets = MultiCaretHandler(table)
-    scroll2 = CompactGrid(table, view_params, carets, splitter)
+    scroll2 = NonUniformGridWindow(table, view_params, carets, splitter)
     style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)
