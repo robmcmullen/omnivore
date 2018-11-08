@@ -6,7 +6,7 @@ from .segments import SegmentData, DefaultSegment
 from .kboot import KBootImage
 from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, AtariDiskImage
 from .spartados import SpartaDosDiskImage
-from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage
+from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage, Atari2600CartImage
 from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
@@ -159,6 +159,11 @@ class Atari8bitCartParser(AtariCartSegmentParser):
 class Atari5200CartParser(AtariCartSegmentParser):
     menu_name = "Atari 5200 Cartridge"
     image_type = Atari5200CartImage
+
+
+class Atari2600CartParser(SegmentParser):
+    menu_name = "Atari 2600 Cartridge"
+    image_type = Atari2600CartImage
 
 
 class RomParser(SegmentParser):
@@ -314,6 +319,9 @@ mime_parsers = {
     "application/vnd.atari5200.cart": [
         Atari5200CartParser,
         ],
+    "application/vnd.atari2600.cart": [
+        Atari2600CartParser,
+        ],
     "application/vnd.mame_rom": [
         MameZipParser,
         ],
@@ -334,6 +342,7 @@ mime_parse_order = [
     "application/vnd.atari8bit.xex",
     "application/vnd.atari8bit.cart",
     "application/vnd.atari5200.cart",
+    "application/vnd.atari2600.cart",
     "application/vnd.mame_rom",
     "application/vnd.apple2.dsk",
     "application/vnd.apple2.bin",
@@ -345,6 +354,7 @@ pretty_mime = {
     "application/vnd.atari8bit.xex": "Atari 8-bit Executable",
     "application/vnd.atari8bit.cart": "Atari 8-bit Cartridge",
     "application/vnd.atari5200.cart": "Atari 5200 Cartridge",
+    "application/vnd.atari2600.cart": "Atari 2600 Cartridge",
     "application/vnd.mame_rom": "MAME",
     "application/vnd.rom": "ROM Image",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",

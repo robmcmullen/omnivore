@@ -340,3 +340,8 @@ class RomImage(DiskImageBase):
         if s.origin == 0:
             return None
         return s
+
+
+class Atari2600CartImage(RomImage):
+    def __str__(self):
+        return f"{len(self.rawdata) // 1024}k Atari 2600 Cartridge"
