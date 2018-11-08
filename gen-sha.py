@@ -7,7 +7,7 @@ import pprint
 
 def parse(filename, mime):
     data = open(filename, 'rb').read()
-    h = hashlib.sha1(data).hexdigest()
+    h = hashlib.sha1(data).digest()
     name = os.path.basename(os.path.splitext(filename)[0])
     return len(data), h, name
 
@@ -38,9 +38,9 @@ if __name__ == '__main__':
     for k,v in sorted(new_signatures.items()):
         lines.append(f"{k}: {{")
         for h,n in sorted(v.items(), key=lambda a:(a[1], a[0])):
-            lines.append(f"  '{h}': {n},")
+            lines.append(f"  {h}: {n},")
         lines.append("},")
-    lines.append("}  # end sha1_signatures")
+    lines.append("}  # end sha1_signatures\n")
 
     print("\n".join(lines))
     with open(source, 'w') as fh:

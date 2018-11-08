@@ -6,7 +6,7 @@ from .segments import SegmentData, DefaultSegment
 from .kboot import KBootImage
 from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, AtariDiskImage
 from .spartados import SpartaDosDiskImage
-from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage, Atari2600CartImage
+from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage, Atari2600CartImage, Atari2600StarpathImage
 from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
@@ -166,6 +166,11 @@ class Atari2600CartParser(SegmentParser):
     image_type = Atari2600CartImage
 
 
+class Atari2600StarpathParser(SegmentParser):
+    menu_name = "Atari 2600 Starpath Cassette"
+    image_type = Atari2600StarpathImage
+
+
 class RomParser(SegmentParser):
     menu_name = "ROM Image"
     image_type = RomImage
@@ -220,7 +225,7 @@ def guess_parser_by_size(r, verbose=False):
     size = len(r)
     if size in sha1_signatures:
         print(r)
-        sha_hash = hashlib.sha1(r.data).hexdigest()
+        sha_hash = hashlib.sha1(r.data).digest()
         log.info(f"{size} in signature database, attempting to match {sha_hash}")
         try:
             match = sha1_signatures[size][sha_hash]
@@ -322,6 +327,9 @@ mime_parsers = {
     "application/vnd.atari2600.cart": [
         Atari2600CartParser,
         ],
+    "application/vnd.atari2600.starpath": [
+        Atari2600StarpathParser,
+        ],
     "application/vnd.mame_rom": [
         MameZipParser,
         ],
@@ -337,12 +345,12 @@ mime_parsers = {
         ],
     }
 
+# Note: Atari 2600 scanning not performed here because it will match everything
 mime_parse_order = [
     "application/vnd.atari8bit.atr",
     "application/vnd.atari8bit.xex",
     "application/vnd.atari8bit.cart",
     "application/vnd.atari5200.cart",
-    "application/vnd.atari2600.cart",
     "application/vnd.mame_rom",
     "application/vnd.apple2.dsk",
     "application/vnd.apple2.bin",
@@ -355,6 +363,7 @@ pretty_mime = {
     "application/vnd.atari8bit.cart": "Atari 8-bit Cartridge",
     "application/vnd.atari5200.cart": "Atari 5200 Cartridge",
     "application/vnd.atari2600.cart": "Atari 2600 Cartridge",
+    "application/vnd.atari2600.starpath": "Atari 2600 Starpath Cassette",
     "application/vnd.mame_rom": "MAME",
     "application/vnd.rom": "ROM Image",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",
