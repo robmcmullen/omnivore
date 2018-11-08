@@ -223,6 +223,7 @@ class BaseAtariCartImage(DiskImageBase):
             # force the header to be the specified cart type
             self.header = A8CartHeader()
             self.header.set_type(self.cart_type)
+            self.check_size()
 
     def check_size(self):
         if not self.header.valid:
@@ -289,14 +290,14 @@ class AtariCartImage(BaseAtariCartImage):
             raise errors.InvalidDiskImage("Cart type doesn't match type defined in header")
 
 
-class Atari8bitCartImage(BaseAtariCartImage):
+class Atari8bitCartImage(AtariCartImage):
     def strict_check(self):
         if "5200" in self.header.cart_name:
             raise errors.InvalidDiskImage("5200 Carts don't work in the home computers.")
         AtariCartImage.strict_check(self)
 
 
-class Atari5200CartImage(BaseAtariCartImage):
+class Atari5200CartImage(AtariCartImage):
     def strict_check(self):
         if "5200" not in self.header.cart_name:
             raise errors.InvalidDiskImage("Home computer carts don't work in the 5200.")

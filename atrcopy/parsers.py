@@ -1,3 +1,5 @@
+import hashlib
+
 import numpy as np
 
 from .segments import SegmentData, DefaultSegment
@@ -12,6 +14,7 @@ from . import errors
 from .magic import guess_detail_for_mime
 from . import container
 from .dcm import DCMContainer
+from .signatures import sha1_signatures
 
 import logging
 log = logging.getLogger(__name__)
@@ -69,6 +72,7 @@ class SegmentParser:
         self.segments.append(self.container_segment(r, 0, name=self.menu_name))
         try:
             log.debug("Trying %s" % self.image_type)
+            log.debug(self.image_type.__mro__)
             self.image = self.get_image(r)
             self.check_image()
             self.image.parse_segments()
@@ -85,6 +89,7 @@ class SegmentParser:
             s.reconstruct_raw(new_rawdata)
 
     def get_image(self, r):
+        log.info(f"checking image type {self.image_type}")
         return self.image_type(r)
 
     def check_image(self):
@@ -142,15 +147,16 @@ class AtariCartSegmentParser(SegmentParser):
     cart_info = None
 
     def get_image(self, r):
+        log.info(f"checking cart type {self.cart_type}: {self.image_type}")
         return self.image_type(r, self.cart_type)
 
 
-class Atari8bitCartParser(SegmentParser):
+class Atari8bitCartParser(AtariCartSegmentParser):
     menu_name = "Atari Home Computer Cartridge"
     image_type = Atari8bitCartImage
 
 
-class Atari5200CartParser(SegmentParser):
+class Atari5200CartParser(AtariCartSegmentParser):
     menu_name = "Atari 5200 Cartridge"
     image_type = Atari5200CartImage
 
@@ -203,6 +209,34 @@ def guess_container(r, verbose=False):
     return None
 
 
+def guess_parser_by_size(r, verbose=False):
+    found = None
+    mime = None
+    size = len(r)
+    if size in sha1_signatures:
+        print(r)
+        sha_hash = hashlib.sha1(r.data).hexdigest()
+        log.info(f"{size} in signature database, attempting to match {sha_hash}")
+        try:
+            match = sha1_signatures[size][sha_hash]
+        except KeyError:
+            pass
+        else:
+            mime = match[0]
+            log.info(f"found match: {match}")
+            parsers = mime_parsers[mime]
+            for parser in parsers:
+                try:
+                    found = parser(r, False)
+                    break
+                except errors.InvalidSegmentParser as e:
+                    if verbose:
+                        log.info("parser isn't %s: %s" % (parser.__name__, str(e)))
+                    pass
+    if found is None:
+        log.info(f"no matching signature")
+    return mime, found
+
 def guess_parser_for_mime(mime, r, verbose=False):
     parsers = mime_parsers[mime]
     found = None
@@ -231,12 +265,15 @@ def iter_parsers(r):
     container = guess_container(r.data)
     if container is not None:
         r = SegmentData(container.unpacked)
-    for mime in mime_parse_order:
-        p = guess_parser_for_mime(mime, r)
-        if p is not None:
-            mime = guess_detail_for_mime(mime, r, p)
-            return mime, p
-    return None, None
+    mime, parser = guess_parser_by_size(r)
+    if parser is None:
+        for mime in mime_parse_order:
+            p = guess_parser_for_mime(mime, r)
+            if p is not None:
+                parser = p
+                mime = guess_detail_for_mime(mime, r, p)
+                break
+    return mime, parser
 
 
 def parsers_for_filename(name):
@@ -274,7 +311,7 @@ mime_parsers = {
     "application/vnd.atari8bit.cart": [
         Atari8bitCartParser,
         ],
-    "application/vnd.atari8bit.5200_cart": [
+    "application/vnd.atari5200.cart": [
         Atari5200CartParser,
         ],
     "application/vnd.mame_rom": [
@@ -296,7 +333,7 @@ mime_parse_order = [
     "application/vnd.atari8bit.atr",
     "application/vnd.atari8bit.xex",
     "application/vnd.atari8bit.cart",
-    "application/vnd.atari8bit.5200_cart",
+    "application/vnd.atari5200.cart",
     "application/vnd.mame_rom",
     "application/vnd.apple2.dsk",
     "application/vnd.apple2.bin",
@@ -307,7 +344,7 @@ pretty_mime = {
     "application/vnd.atari8bit.atr": "Atari 8-bit Disk Image",
     "application/vnd.atari8bit.xex": "Atari 8-bit Executable",
     "application/vnd.atari8bit.cart": "Atari 8-bit Cartridge",
-    "application/vnd.atari8bit.5200_cart":"Atari 5200 Cartridge",
+    "application/vnd.atari5200.cart": "Atari 5200 Cartridge",
     "application/vnd.mame_rom": "MAME",
     "application/vnd.rom": "ROM Image",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",
@@ -320,11 +357,12 @@ for k in sizes:
     for c in grouped_carts[k]:
         t = c[0]
         name = c[1]
-        kclass = type("AtariCartSegmentParser%d" % t, (AtariCartSegmentParser,), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % name})
         if "5200" in name:
-            key = "application/vnd.atari8bit.5200_cart"
+            key = "application/vnd.atari5200.cart"
+            kclass = type("Atari5200CartSegmentParser%d" % t, (Atari5200CartParser, AtariCartSegmentParser), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % name})
         else:
             key = "application/vnd.atari8bit.cart"
+            kclass = type("Atari8bitCartSegmentParser%d" % t, (Atari8bitCartParser, AtariCartSegmentParser), {'cart_type': t, 'cart_info': c, 'menu_name': "%s Cartridge" % name})
         mime_parsers[key].append(kclass)
 
 
