@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 caret_log = logging.getLogger("caret")
-caret_log.setLevel(logging.DEBUG)
+# caret_log.setLevel(logging.DEBUG)
 debug_refresh = False
 
 
@@ -1153,8 +1153,8 @@ class VariableWidthHexTable(HexTable):
             items_per_row.append(s)
             index_of_row.append(index)
             row_of_index.extend([row] * s)
-            print(f"row_of_index: index={index}, s={s}: {row_of_index}")
-            print(f"index_of_row: {index_of_row}")
+            # print(f"row_of_index: index={index}, s={s}: {row_of_index}")
+            # print(f"index_of_row: {index_of_row}")
             index += s
             row += 1
         self.index_of_row = index_of_row
@@ -1190,17 +1190,20 @@ class VariableWidthHexTable(HexTable):
         return self.items_per_row[line]
 
     def index_to_row_col(self, index):
-        row = self.row_of_index[index]
-        start = self.index_of_row[row]
-        col = index - start
-        print(f"index_to_row_col: index={index} row={row}, start={start} col={col}")
+        try:
+            row = self.row_of_index[index]
+        except IndexError:
+            if index < 0:
+                row = 0
+                col = 0
+            else:
+                row = self.num_rows - 1
+                col = self.items_per_row[row] - 1
+        else:
+            start = self.index_of_row[row]
+            col = index - start
+        # print(f"index_to_row_col: index={index} row={row} col={col}")
         return row, col
-
-
-
-
-
-
 
 
 class VirtualTable(HexTable):
