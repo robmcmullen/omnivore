@@ -43,7 +43,7 @@ class NormalSelectMode(MouseMode):
 
     def calc_mouse_motion_up_command(self, evt, row, cell):
         cg = self.control
-        col = cg.main.cell_to_col(cell)
+        col = cg.main.cell_to_col(row, cell)
         cg.handle_motion_update_status(evt, row, col)
 
     def process_left_down(self, evt):

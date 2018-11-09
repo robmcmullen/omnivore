@@ -70,10 +70,10 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
 class JumpmanFrameRenderer(BitmapLineRenderer):
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         model = grid_control.model
-        first_col = self.cell_to_col[first_cell]
+        first_col = self.cell_to_col(first_row, first_cell)
         last_cell = min(first_cell + visible_cells, self.num_cells)
-        last_col = self.cell_to_col[last_cell - 1] + 1
         last_row = min(first_row + visible_rows, model.antic_lines)
+        last_col = self.cell_to_col(last_row, last_cell - 1) + 1
         drawlog.debug("draw_grid: rows:%d,%d, cols:%d,%d" % (first_row, last_row, first_col, last_col))
 
         ul_rect = self.col_to_rect(first_row, first_col)

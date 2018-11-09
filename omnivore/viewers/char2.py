@@ -58,10 +58,10 @@ class AnticCharRenderer(cg.TableLineRenderer):
 
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         t = grid_control.table
-        first_col = self.cell_to_col[first_cell]
+        first_col = self.cell_to_col(first_row, first_cell)
         last_cell = min(first_cell + visible_cells, self.num_cells)
-        last_col = self.cell_to_col[last_cell - 1] + 1
         last_row = min(first_row + visible_rows, t.num_rows)
+        last_col = self.cell_to_col(last_row, last_cell - 1) + 1
         log.debug("draw_grid: rows:%d,%d (vis %d, num %d) cols:%d,%d" % (first_row, last_row, visible_rows, t.num_rows, first_col, last_col))
 
         ul_rect = self.col_to_rect(first_row, first_col)
