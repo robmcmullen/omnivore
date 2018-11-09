@@ -19,7 +19,8 @@ logger = logging.getLogger()
 log = logging.getLogger(__name__)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
-# draw_log.setLevel(logging.DEBUG)
+caret_log = logging.getLogger("caret")
+caret_log.setLevel(logging.DEBUG)
 debug_refresh = False
 
 
@@ -594,15 +595,12 @@ class VariableWidthLineRenderer(VirtualTableLineRenderer):
         return col, index, last_index
 
     def draw_grid(self, parent, dc, start_row, visible_rows, start_cell, visible_cells):
-        print(self.col_widths)
-        print(self.cell_widths)
-        print(self.pixel_widths)
         for row in range(start_row, min(start_row + visible_rows, parent.table.num_rows)):
             first_col = self.cell_to_col(row, start_cell)
             last_cell = min(start_cell + visible_cells, self.num_cells)
             last_col = min(self.col_widths[row], self.cell_to_col(row, last_cell - 1) + 1)
             rect = self.col_to_rect(row, first_col)
-            print(f"row: {row}, cells:{start_cell}->{last_cell}, cols:{first_col}->{last_col}, {rect}, {self.cell_widths[row]}")
+            # print(f"row: {row}, cells:{start_cell}->{last_cell}, cols:{first_col}->{last_col}, {rect}, {self.cell_widths[row]}")
             if first_col < last_col:
                 self.image_cache.draw_item_at(parent, dc, rect, row, first_col, last_col, self.pixel_widths[row])
 
@@ -976,8 +974,9 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         try:
             index, _ = self.table.get_index_range(row, col)
         except IndexError:
-            log.debug("process_motion_scroll: ignoring over hidden cell")
+            caret_log.debug("process_motion_scroll: ignoring over hidden cell")
         else:
+            caret_log.debug(f"process_motion_scroll: row={row} col={col} index={index}")
             self.parent.caret_handler.move_current_caret_to(index)
             if self.parent.automatic_refresh:
                 self.parent.Refresh()
@@ -1118,12 +1117,16 @@ class VariableWidthHexTable(HexTable):
         index_of_row = []
         row_of_index = []
         index = 0
+        row = 0
         for d in desc:
             s = self.size_of_entry(d)
             items_per_row.append(s)
             index_of_row.append(index)
-            row_of_index.extend([index] * s)
+            row_of_index.extend([row] * s)
+            print(f"row_of_index: index={index}, s={s}: {row_of_index}")
+            print(f"index_of_row: {index_of_row}")
             index += s
+            row += 1
         self.index_of_row = index_of_row
         self.row_of_index = row_of_index
         return items_per_row
@@ -1160,6 +1163,7 @@ class VariableWidthHexTable(HexTable):
         row = self.row_of_index[index]
         start = self.index_of_row[row]
         col = index - start
+        print(f"index_to_row_col: index={index} row={row}, start={start} col={col}")
         return row, col
 
 
@@ -1704,17 +1708,17 @@ class CompactGrid(wx.ScrolledWindow):
             try:
                 r, c = self.table.index_to_row_col(index)
             except IndexError:
-                log.debug("index %d not visible in this view" % index)
+                caret_log.debug("index %d not visible in this view" % index)
             else:
                 if r >= start_row and r < start_row + visible_rows:
                     if self.edit_source is not None:
-                        log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
+                        caret_log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
                         self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
                     else:
-                        log.debug("drawing caret at r,c=%d,%d" % (r, c))
+                        caret_log.debug("drawing caret at r,c=%d,%d" % (r, c))
                         self.line_renderer.draw_caret(self, dc, r, c)
                 else:
-                    log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
+                    caret_log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
 
     def calc_primary_caret_visible_info(self):
         start_row = self.main.first_visible_row
