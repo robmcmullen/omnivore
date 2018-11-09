@@ -365,6 +365,25 @@ mime_parse_order = [
     "application/vnd.rom",
     ]
 
+# different than the above mime_parse_order, this list is the order in which
+# the mime parsers will appear in a UI. Some, like the vectrex and atari2600
+# parsers, aren't included in the parse order because they will identify
+# many things incorrectly. They are used only when parsing by size and
+# signature.
+mime_display_order = [
+    "application/vnd.atari8bit.atr",
+    "application/vnd.atari8bit.xex",
+    "application/vnd.atari8bit.cart",
+    "application/vnd.atari5200.cart",
+    "application/vnd.atari2600.cart",
+    "application/vnd.atari2600.starpath",
+    "application/vnd.vectrex",
+    "application/vnd.mame_rom",
+    "application/vnd.apple2.dsk",
+    "application/vnd.apple2.bin",
+    "application/vnd.rom",
+    ]
+
 pretty_mime = {
     "application/vnd.atari8bit.atr": "Atari 8-bit Disk Image",
     "application/vnd.atari8bit.xex": "Atari 8-bit Executable",
@@ -372,6 +391,7 @@ pretty_mime = {
     "application/vnd.atari5200.cart": "Atari 5200 Cartridge",
     "application/vnd.atari2600.cart": "Atari 2600 Cartridge",
     "application/vnd.atari2600.starpath": "Atari 2600 Starpath Cassette",
+    "application/vnd.vectrex": "GCE Vectrex Cartridge",
     "application/vnd.mame_rom": "MAME",
     "application/vnd.rom": "ROM Image",
     "application/vnd.apple2.dsk": "Apple ][ Disk Image",
@@ -394,11 +414,11 @@ for k in sizes:
 
 
 known_segment_parsers = [DefaultSegmentParser]
-for mime in mime_parse_order:
+for mime in mime_display_order:
     known_segment_parsers.extend(mime_parsers[mime])
 
 
 def iter_known_segment_parsers():
     yield "application/octet-stream", "", [DefaultSegmentParser]
-    for mime in mime_parse_order:
+    for mime in mime_display_order:
         yield mime, pretty_mime[mime], mime_parsers[mime]
