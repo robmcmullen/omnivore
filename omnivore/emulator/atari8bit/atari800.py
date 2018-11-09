@@ -304,6 +304,8 @@ class Atari5200(Atari800):
     name = "atari5200"
     pretty_name = "Atari 5200"
 
+    mime_types = set(["application/vnd.atari5200.cart",])
+
     def process_args(self, emu_args):
         if not emu_args:
             emu_args = [
