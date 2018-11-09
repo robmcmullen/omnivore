@@ -6,7 +6,7 @@ from .segments import SegmentData, DefaultSegment
 from .kboot import KBootImage
 from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, AtariDiskImage
 from .spartados import SpartaDosDiskImage
-from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage, Atari2600CartImage, Atari2600StarpathImage
+from .cartridge import AtariCartImage, Atari8bitCartImage, Atari5200CartImage, get_known_carts, RomImage, Atari2600CartImage, Atari2600StarpathImage, VectrexCartImage
 from .mame import MameZipImage
 from .dos33 import Dos33DiskImage, ProdosDiskImage, Dos33BinFile
 from .standard_delivery import StandardDeliveryImage
@@ -171,6 +171,11 @@ class Atari2600StarpathParser(SegmentParser):
     image_type = Atari2600StarpathImage
 
 
+class VectrexParser(SegmentParser):
+    menu_name = "Vectrex Cartridge"
+    image_type = VectrexCartImage
+
+
 class RomParser(SegmentParser):
     menu_name = "ROM Image"
     image_type = RomImage
@@ -329,6 +334,9 @@ mime_parsers = {
         ],
     "application/vnd.atari2600.starpath": [
         Atari2600StarpathParser,
+        ],
+    "application/vnd.vectrex": [
+        VectrexParser,
         ],
     "application/vnd.mame_rom": [
         MameZipParser,

@@ -350,3 +350,8 @@ class Atari2600CartImage(RomImage):
 class Atari2600StarpathImage(RomImage):
     def __str__(self):
         return f"{len(self.rawdata) // 1024}k Atari 2600 Starpath Cassette"
+
+
+class VectrexCartImage(RomImage):
+    def __str__(self):
+        return f"{len(self.rawdata) // 1024}k Vectrex Cartridge"
