@@ -362,6 +362,9 @@ class LineRenderer(object):
     def cell_to_col(self, row, cell):
         return self._cell_to_col[cell]
 
+    def col_to_cell(self, row, col):
+        return self._col_to_cell[col]
+
     def calc_column_range(self, parent, line_num, col, last_col):
         raise NotImplementedError("override to produce column number and start and end indexes")
 
@@ -587,6 +590,11 @@ class VariableWidthLineRenderer(VirtualTableLineRenderer):
             row = -1
         col = cell // self.cell_widths[row]
         return col
+
+    def col_to_cell(self, row, col):
+        if row >= self.num_rows:
+            row = -1
+        return col * self.cell_widths[row]
 
     def calc_column_range(self, parent, line_num, col, last_col):
         t = parent.table
@@ -955,8 +963,19 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     def ensure_visible(self, row, cell, flags):
         sx, sy = self.parent.GetViewStart()
-        sy2 = ForceBetween(max(0, row - self.fully_visible_rows + 1), sy, row)
-        sx2 = ForceBetween(max(0, cell - self.fully_visible_cells + 1), sx, cell)
+        if row < sy:
+            sy2 = row
+        elif row >= sy + self.fully_visible_rows - 1:
+            sy2 = max(0, row - (self.fully_visible_rows - 1))
+        else:
+            sy2 = sy
+        if cell < sx:
+            sx2 = cell
+        elif cell >= sx + self.fully_visible_cells - 1:
+            sx2 = max(0, cell - (self.fully_visible_cells - 1))
+        else:
+            sx2 = sx
+        caret_log.debug(f"ensure_visible: row={row}, cell={cell} sx={sx} sy={sy} sx2={sx2} sy2={sy2} fully_vis: {self.fully_visible_rows}, {self.fully_visible_cells}")
         if sx == sx2 and sy == sy2:
             # print("Already visible! Not moving")
             return
@@ -973,7 +992,6 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             row = 0
         elif row >= self.table.num_rows:
             row = self.table.num_rows - 1
-        self.ensure_visible(row, cell, flags)
         col = self.cell_to_col(row, cell)
         try:
             index, _ = self.table.get_index_range(row, col)
@@ -986,6 +1004,9 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
                 # computed index points to next row, meaning the caret is
                 # really to the right of any columns in this row
                 index -= 1
+                row_at_index, col_at_index = self.table.index_to_row_col(index)
+            cell_at_index = self.line_renderer.col_to_cell(row_at_index, col_at_index)
+            self.ensure_visible(row_at_index, cell_at_index, flags)
             self.parent.caret_handler.move_current_caret_to(index)
             if self.parent.automatic_refresh:
                 self.parent.Refresh()
