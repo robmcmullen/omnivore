@@ -969,6 +969,10 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             # print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
 
     def process_motion_scroll(self, row, cell, flags):
+        if row < 0:
+            row = 0
+        elif row >= self.table.num_rows:
+            row = self.table.num_rows - 1
         self.ensure_visible(row, cell, flags)
         col = self.cell_to_col(row, cell)
         try:
@@ -977,6 +981,11 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             caret_log.debug("process_motion_scroll: ignoring over hidden cell")
         else:
             caret_log.debug(f"process_motion_scroll: row={row} col={col} index={index}")
+            row_at_index, col_at_index = self.table.index_to_row_col(index)
+            if row_at_index > row:
+                # computed index points to next row, meaning the caret is
+                # really to the right of any columns in this row
+                index -= 1
             self.parent.caret_handler.move_current_caret_to(index)
             if self.parent.automatic_refresh:
                 self.parent.Refresh()
