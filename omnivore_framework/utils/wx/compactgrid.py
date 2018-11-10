@@ -565,11 +565,14 @@ class VariableWidthLineRenderer(VirtualTableLineRenderer):
         self.pixel_widths = [self.w * i for i in self.cell_widths]
         self.largest_label_width = 0
         pos = 0
-        self.vw = max([c * p for c, p in zip(self.cell_widths, self.pixel_widths)])
+        self.vw = max([c * p for c, p in zip(self.col_widths, self.pixel_widths)])
         self.num_cells = self.vw // self.w
 
     def calc_col_labels(self, labels):
         return None
+
+    def get_col_labels(self, parent, starting_cell, num_cells):
+        return []
 
     def calc_caret_cells_from_row_col(self, row, col):
         if row > self.num_rows:
@@ -1133,16 +1136,23 @@ class VariableWidthHexTable(HexTable):
         self.data = data
         self.style = style
         self.start_addr = start_addr
-        self.items_per_row = self.init_table_description(table_description)
         self.start_offset = 0
-        self.init_boundaries()
-        # print(self.data, self.num_rows, self.start_offset, self.start_addr)
-        self.create_row_labels()
+        self.init_table_description(table_description)
+
+    def init_boundaries(self):
+        self.num_rows = self.calc_num_rows()
+        # last_valid_index calculated in init_table_description
 
     def calc_num_rows(self):
         return len(self.items_per_row)
 
     def init_table_description(self, desc):
+        self.parse_table_description(desc)
+        self.init_boundaries()
+        # print(self.data, self.num_rows, self.start_offset, self.start_addr)
+        self.create_row_labels()
+
+    def parse_table_description(self, desc):
         items_per_row = []
         index_of_row = []
         row_of_index = []
@@ -1150,16 +1160,18 @@ class VariableWidthHexTable(HexTable):
         row = 0
         for d in desc:
             s = self.size_of_entry(d)
-            items_per_row.append(s)
-            index_of_row.append(index)
-            row_of_index.extend([row] * s)
-            # print(f"row_of_index: index={index}, s={s}: {row_of_index}")
-            # print(f"index_of_row: {index_of_row}")
-            index += s
-            row += 1
+            if s > 0:
+                items_per_row.append(s)
+                index_of_row.append(index)
+                row_of_index.extend([row] * s)
+                # print(f"row_of_index: index={index}, s={s}: {row_of_index}")
+                # print(f"index_of_row: {index_of_row}")
+                index += s
+                row += 1
         self.index_of_row = index_of_row
         self.row_of_index = row_of_index
-        return items_per_row
+        self.items_per_row = items_per_row
+        self.last_valid_index = index
 
     def size_of_entry(self, d):
         return d
@@ -1188,6 +1200,11 @@ class VariableWidthHexTable(HexTable):
 
     def get_index_of_row(self, line):
         return self.items_per_row[line]
+
+    def get_start_end_index_of_row(self, row):
+        index1, _ = self.get_index_range(row, 0)
+        index2 = index1 + self.items_per_row[row] - 1
+        return index1, index2
 
     def index_to_row_col(self, index):
         try:
@@ -1820,7 +1837,7 @@ class DisassemblyTable(HexTable):
 
 class NonUniformGridWindow(CompactGrid):
     def calc_line_renderer(self):
-        return VariableWidthLineRenderer(self, 2, self.table.items_per_row, [1,2,1,2,1,1,2,3,5])
+        return VariableWidthLineRenderer(self, 2, self.table.items_per_row, [1,2,1,2,1,1,2,3,5]*10)
 
     def set_view_param_defaults(self):
         super().set_view_param_defaults()
@@ -1895,7 +1912,7 @@ if __name__ == '__main__':
     # style1.set_window(scroll1.main)
     style2 = FakeStyle()
     #table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
-    table = VariableWidthHexTable(np.arange(48, dtype=np.uint8), style2, [1,2,3,4,32,2,1,1,2], 0x602)
+    table = VariableWidthHexTable(np.arange(480, dtype=np.uint8), style2, [1,2,3,4,32,2,1,1,2]*10, 0x602)
 
     carets = MultiCaretHandler(table)
     scroll2 = NonUniformGridWindow(table, view_params, carets, splitter)
