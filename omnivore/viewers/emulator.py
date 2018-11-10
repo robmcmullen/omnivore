@@ -12,7 +12,7 @@ from ..ui.screen import BitmapScreen
 from omnivore_framework.utils.wx import compactgrid as cg
 from omnivore_framework.utils.command import DisplayFlags
 from ..byte_edit.segments import SegmentList
-from ..ui.segment_grid import SegmentVirtualGridControl, SegmentVirtualTable, SegmentGridTextCtrl
+from ..ui import segment_grid as sg
 from . import SegmentViewer
 from .info import VirtualTableInfoViewer
 from ..byte_edit.linked_base import VirtualTableLinkedBase
@@ -96,7 +96,7 @@ class VideoViewer(EmulatorViewer):
         return 0
 
 
-class CPU6502Table(SegmentVirtualTable):
+class CPU6502Table(sg.SegmentVirtualTable):
     want_col_header = True
     want_row_header = False
 
@@ -150,7 +150,7 @@ class CPUParamTableViewer(VirtualTableInfoViewer):
 
     pretty_name = "<pretty name>"
 
-    control_cls = SegmentVirtualGridControl
+    control_cls = sg.SegmentVirtualGridControl
 
     @property
     def linked_base_segment_identifier(self):
@@ -165,7 +165,7 @@ class CPU6502Viewer(CPUParamTableViewer):
     override_table_cls = CPU6502Table
 
 
-class DtypeTable(SegmentVirtualTable):
+class DtypeTable(sg.SegmentVirtualTable):
     emulator_dtype_name = "<from subclass>"
     col_labels = ["hex", "dec", "bin"]
     col_sizes = [4, 4, 8]
@@ -281,7 +281,7 @@ class LabelTable(cg.VariableWidthHexTable):
             items_per_row.append(s)
             index_of_row.append(index)
             row_of_index.extend([row] * s)
-            # print(f"row_of_index: index={index}, s={s}: {row_of_index}")
+            print(f"row_of_index: {d[0]} index={index}, s={s} {d}") #: {row_of_index}")
             # print(f"index_of_row: {index_of_row}")
             index += s
             row += 1
@@ -304,14 +304,23 @@ class LabelTable(cg.VariableWidthHexTable):
     def calc_cell_widths(self):
         cell_widths = [1] * self.num_rows
         for row in range(self.num_rows):
-            type_code = self.labels[self.row_to_label_number[row]][3]
+            label_num = self.row_to_label_number[row]
+            item_count = self.labels[label_num][2]
+            type_code = self.labels[label_num][3]
+            # print(f"cell width: {row}: {item_count} {type_code}")
             cell_widths[row] = (type_code & 0x03) + 1
+        print(cell_widths)
         return cell_widths
 
     def get_value_style(self, row, col):
-        index, _ = self.get_index_range(row, col)
-        text = "%02x" % index
-        return text, 0
+        index = self.row_to_label_number[row]
+        try:
+            text = "%x" % self.data[index + col]
+            style = self.style[index + col]
+        except IndexError:
+            text = ""
+            style = 0
+        return text, style
 
     def get_label_at_index(self, index):
         row = self.row_of_index[index]
@@ -329,16 +338,30 @@ class LabelTable(cg.VariableWidthHexTable):
         print(f"new num_rows: {self.num_rows}")
 
 
-class LabelGridControl(SegmentVirtualGridControl):
+class LabelGridControl(sg.SegmentGridControl):
     default_table_cls = LabelTable
  
+    def calc_default_table(self):
+        linked_base = self.caret_handler
+        table = self.default_table_cls(linked_base)
+        self.items_per_row = table.items_per_row
+        self.want_row_header = table.want_row_header
+        self.want_col_header = table.want_col_header
+        return table
+
     def calc_line_renderer(self):
+        print(self.table.items_per_row)
         return cg.VariableWidthLineRenderer(self, 2, self.table.items_per_row, self.table.calc_cell_widths())
 
+    def recalc_view(self):
+        log.debug(f"recalc_view: {self}")
+        self.table.rebuild()
+        self.line_renderer = self.calc_line_renderer()
+        super().recalc_view()
 
 
 
-class LabelViewer(CPUParamTableViewer):
+class LabelViewer(SegmentViewer):
     name = "labels"
 
     viewer_category = "Emulator"
