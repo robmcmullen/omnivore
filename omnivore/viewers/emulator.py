@@ -244,3 +244,109 @@ for dtype_name in ['ANTIC', 'GTIA', 'POKEY', 'PIA']:
         'override_table_cls': type('%sTable' % dtype_name, (DtypeTable,), {'emulator_dtype_name': dtype_name}),
         })
     globals()[clsname] = cls
+
+
+from .disasm import labels1
+
+class LabelTable(cg.VariableWidthHexTable):
+    want_col_header = False
+    want_row_header = True
+
+    def __init__(self, linked_base):
+        self.linked_base = linked_base
+
+        s = linked_base.segment
+        super().__init__(s.data, s.style, [], s.origin)
+        self.rebuild()
+
+    def size_of_entry(self, d):
+        return d[2]
+
+    def parse_table_description(self, desc):
+        row_to_label_number = []
+        items_per_row = []
+        index_of_row = []
+        row_of_index = []
+        index = 0
+        row = 0
+        i = 0
+        print(desc)
+        try:
+            self.row_to_label_number = desc.keys()
+        except AttributeError:
+            self.row_to_label_number = []
+        for i in self.row_to_label_number:
+            d = desc[i]
+            s = self.size_of_entry(d)
+            items_per_row.append(s)
+            index_of_row.append(index)
+            row_of_index.extend([row] * s)
+            # print(f"row_of_index: index={index}, s={s}: {row_of_index}")
+            # print(f"index_of_row: {index_of_row}")
+            index += s
+            row += 1
+        self.index_of_row = index_of_row
+        self.row_of_index = row_of_index
+        self.items_per_row = items_per_row
+        self.last_valid_index = index
+
+    def get_row_label_text(self, start_line, num_lines, step=1):
+        last_line = min(start_line + num_lines, self.num_rows)
+        for line in range(start_line, last_line, step):
+            yield self.labels[self.row_to_label_number[line]][0]
+
+    def calc_row_label_width(self, view_params):
+        return max([view_params.calc_text_width(r) for r in self.get_row_label_text(0, self.num_rows)])
+
+    def calc_last_valid_index(self):
+        pass  # calculated in init_table_description
+
+    def calc_cell_widths(self):
+        cell_widths = [1] * self.num_rows
+        for row in range(self.num_rows):
+            type_code = self.labels[self.row_to_label_number[row]][3]
+            cell_widths[row] = (type_code & 0x03) + 1
+        return cell_widths
+
+    def get_value_style(self, row, col):
+        index, _ = self.get_index_range(row, col)
+        text = "%02x" % index
+        return text, 0
+
+    def get_label_at_index(self, index):
+        row = self.row_of_index[index]
+        return self.labels[self.row_to_label_number[row]][0]
+
+    def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
+        # for i, item in enumerate(self.labels):
+        #     print(i, item)
+        pass
+
+    def rebuild(self):
+        self.labels = labels1.labels
+        self.init_table_description(self.labels)
+        self.init_boundaries()
+        print(f"new num_rows: {self.num_rows}")
+
+
+class LabelGridControl(SegmentVirtualGridControl):
+    default_table_cls = LabelTable
+ 
+    def calc_line_renderer(self):
+        return cg.VariableWidthLineRenderer(self, 2, self.table.items_per_row, self.table.calc_cell_widths())
+
+
+
+
+class LabelViewer(CPUParamTableViewer):
+    name = "labels"
+
+    viewer_category = "Emulator"
+
+    pretty_name = "Labels"
+
+    control_cls = LabelGridControl
+
+    @property
+    def linked_base_segment_identifier(self):
+        return ""

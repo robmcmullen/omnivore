@@ -131,6 +131,15 @@ cdef class LabelStorage(TextStorage):
         else:
             raise TypeError(f"index must be int or slice, not {type(index)}")
 
+    def __iter__(self):
+        cdef int i
+        cdef label_info_t *info
+        info = &self.label_info_data[0]
+        for i in range(self.max_lines):
+            if info.text_start_index > 0:
+                yield self[i]
+            info += 1
+
     def __setitem__(self, index, value):
         cdef label_info_t *info
         cdef int i, start, count
@@ -140,21 +149,28 @@ cdef class LabelStorage(TextStorage):
             i = index
             start = self.text_index
             try:
-                value, num_bytes, item_count, type_code = value
+                if isinstance(value, bytes):
+                    raise ValueError
+                try:
+                    value, num_bytes, item_count, type_code, desc_code = value
+                except ValueError:
+                    value, num_bytes, item_count, type_code = value
+                    desc_code = type_code
             except ValueError:
                 num_bytes = 1
                 item_count = 1
-                type_code = ord(b'b')
+                type_code = 0
+                desc_code = 0
             count = len(value)
             info = &self.label_info_data[i]
             info.line_length = count
             info.text_start_index = self.text_index
             info.num_bytes = num_bytes
             info.item_count = item_count
-            info.type_code = type_code
+            info.type_code = (type_code & 0x03) | desc_code
             self.text_index += count
             self.num_lines += 1
-            # print("assigning value", value, type(value), hex(<long>info))
+            print("assigning value", value, type(value), hex(<long>info))
             for i in range(count):
                 self.text_buffer[start] = value[i]
                 start += 1

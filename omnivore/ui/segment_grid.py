@@ -193,7 +193,7 @@ class SegmentGridControl(MouseEventMixin, CharEventMixin, cg.CompactGrid):
 
     def recalc_line_renderer(self):
         self.line_renderer = self.calc_line_renderer()
-        log.debug("recalculating %s; items_per_row=%d" % (self, self.items_per_row))
+        log.debug("recalculating %s; items_per_row=%s" % (self, self.items_per_row))
         self.recalc_view_extra_setup()
         cg.CompactGrid.recalc_view(self)
 

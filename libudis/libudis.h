@@ -115,7 +115,7 @@ typedef struct {
     int8_t line_length;
     int8_t num_bytes;
     int8_t item_count;
-    int8_t type_code;
+    int8_t type_code;  /* xxxxxxyy; display code = x, bytes_per_item = y + 1 */
 } label_info_t;
 
 typedef struct {

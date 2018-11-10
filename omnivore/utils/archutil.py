@@ -14,18 +14,28 @@ log = logging.getLogger(__name__)
 
 line_re = re.compile("^([a-fA-F0-9]+)\s*([a-zA-Z][a-zA-Z0-9_]*)*\s*([a-zA-Z][a-zA-Z0-9_]*)?\s*(\S*)^")
 
-size_of_type_codes = {
-    ord('b'): 1, # "byte",
-    ord('w'): 2, # "word",
-    ord('l'): 4, # "long",
+type_codes = {
+    'b': 0, # "byte",
+    'w': 1, # "word",
+    'l': 3, # "long",
     }
 
 desc_codes = {
-    'c': 1, # "char",
+    'h': 0, # "hex",
+    'hex': 0,
+    'c': 1, # "char", "ascii",
+    'char': 1,
+    'ascii': 1,
     'a': 2, # "atascii",
+    'atascii': 2,
+    'd': 3, # "decimal",
+    'decimal': 3,
+    'b': 4, # "binary",
+    'bin': 4,
+    'binary': 4,
 }
 
-SourceLabel = collections.namedtuple('SourceLabel', 'label byte_count item_count type_code')
+SourceLabel = collections.namedtuple('SourceLabel', 'label byte_count item_count type_code desc_code')
 
 
 class Labels:
@@ -49,7 +59,7 @@ class Labels:
             if not line or line.startswith("#") or line.startswith(";"):
                 continue
             line = line.split("#")[0]
-            tokens = line.encode('utf-8').split()
+            tokens = line.split()
             count = len(tokens)
             if count < 2:
                 log.warning(f"Missing label on line {line_num}")
@@ -59,17 +69,21 @@ class Labels:
             except ValueError:
                 log.warning(f"Invalid hex digits on line {line_num}: '{tokens[0]}'")
                 continue
-            if b"/" in tokens[1]:
-                read_val, write_val = tokens[1].split(b"/")
+            if "/" in tokens[1]:
+                read_val, write_val = tokens[1].split("/")
             else:
                 read_val = tokens[1]
                 write_val = None
             try:
                 type_description = tokens[2]
             except IndexError:
-                type_description = b'b'
+                type_description = 'b'
             try:
-                m.add(addr, read_val, write_val, type_description)
+                desc_code = desc_codes[tokens[3]]
+            except IndexError:
+                desc_code = desc_codes['hex']
+            try:
+                m.add(addr, read_val, write_val, type_description, desc_code)
             except RuntimeError:
                 log.warning("Invalid type code on line {line_num}: `'{type_code}'")
         return m
@@ -78,19 +92,19 @@ class Labels:
         self.labels = LabelStorage()
         self.write_labels = LabelStorage()
 
-    def add(self, addr, r, w, type_description):
-        # print(type_description, type(type_description))
-        type_code = int(type_description[-1])
+    def add(self, addr, r, w, type_description, desc_code):
+        print(type_description, type(type_description))
+        type_code = type_codes[type_description[-1]]
         try:
             item_count = int(type_description[:-1])
         except ValueError:
             item_count = 1
-        num_bytes = item_count * size_of_type_codes[type_code]
-        label = SourceLabel(r, num_bytes, item_count, type_code)
+        num_bytes = item_count * (type_code + 1)
+        label = SourceLabel(r.encode('utf-8'), num_bytes, item_count, type_code, desc_code)
         self.labels[addr] = label
         if w:
             # print(f"found write label {w} at {addr}")
-            self.write_labels[addr] = w
+            self.write_labels[addr] = w.encode('utf-8')
             # print(f"stored as: {self.get_name(addr, True)}")
 
     def get_name(cls, addr, write=False):
