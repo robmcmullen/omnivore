@@ -41,9 +41,9 @@ class BaseCreateTest:
         try:
             _ = issubclass(errors.AtrError, expected)
             with pytest.raises(errors.InvalidBinaryFile) as e:
-                file_data, filetype = image.create_executable_file_image(segments, run_addr)
+                file_data, filetype = image.create_executable_file_image(sample_file, segments, run_addr)
         except TypeError:
-            file_data, filetype = image.create_executable_file_image(segments, run_addr)
+            file_data, filetype = image.create_executable_file_image(sample_file, segments, run_addr)
             print(image)
             print(file_data, filetype)
             assert len(file_data) == expected
