@@ -21,18 +21,18 @@ type_codes = {
     }
 
 desc_codes = {
-    'h': 0, # "hex",
-    'hex': 0,
-    'c': 1, # "char", "ascii",
-    'char': 1,
-    'ascii': 1,
-    'a': 2, # "atascii",
-    'atascii': 2,
-    'd': 3, # "decimal",
-    'decimal': 3,
-    'b': 4, # "binary",
-    'bin': 4,
-    'binary': 4,
+    'h': 0x00, # "hex",
+    'hex': 0x00,
+    'c': 0x10, # "char", "ascii",
+    'char': 0x10,
+    'ascii': 0x10,
+    'a': 0x20, # "atascii",
+    'atascii': 0x20,
+    'd': 0x30, # "decimal",
+    'decimal': 0x30,
+    'b': 0x40, # "binary",
+    'bin': 0x40,
+    'binary': 0x40,
 }
 
 SourceLabel = collections.namedtuple('SourceLabel', 'label byte_count item_count type_code desc_code')

@@ -301,25 +301,49 @@ class LabelTable(cg.VariableWidthHexTable):
     def calc_last_valid_index(self):
         pass  # calculated in init_table_description
 
+    type_code_fmt = {
+        0x00: "02x",  # hex byte
+        0x01: "04x",  # hex word
+        0x03: "08x",  # hex long
+        0x30: "03d",  # dec byte
+        0x31: "05d",  # dec word
+        0x33: "010d",  # dec long
+        0x40: "08b",  # bin byte
+        0x41: "016b",  # bin word
+        0x43: "032b",  # bin long
+    }
+
+    dtype_fmt = [
+        None,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint32,
+    ]
+
     def calc_cell_widths(self):
         cell_widths = [1] * self.num_rows
         for row in range(self.num_rows):
             label_num = self.row_to_label_number[row]
-            item_count = self.labels[label_num][2]
             type_code = self.labels[label_num][3]
-            # print(f"cell width: {row}: {item_count} {type_code}")
-            cell_widths[row] = (type_code & 0x03) + 1
-        print(cell_widths)
+            cell_widths[row] = len(format(0, self.type_code_fmt[type_code])) // 2  # each cell is 2 chars wide
+        # print(cell_widths)
         return cell_widths
 
     def get_value_style(self, row, col):
-        index = self.row_to_label_number[row]
+        label_num = self.row_to_label_number[row]
+        type_code = self.labels[label_num][3]
+        bytes_per_col = (type_code & 0x03) + 1
+        index = label_num + (col * bytes_per_col)
+        dtype = self.dtype_fmt[bytes_per_col]
         try:
-            text = "%x" % self.data[index + col]
-            style = self.style[index + col]
+            value = int(self.data[index:index + bytes_per_col].view(dtype))
         except IndexError:
             text = ""
             style = 0
+        else:
+            style = self.style[index]
+            text = format(value, self.type_code_fmt[type_code])
         return text, style
 
     def get_label_at_index(self, index):
