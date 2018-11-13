@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 caret_log = logging.getLogger("caret")
-# caret_log.setLevel(logging.DEBUG)
+caret_log.setLevel(logging.DEBUG)
 debug_refresh = False
 
 
@@ -751,42 +751,6 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
                 self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
 
-    def on_left_down(self, evt):
-        if not self.HasFocus():
-            self.SetFocus()
-        flags = self.parent.create_mouse_event_flags()
-        row, cell = self.get_row_cell_from_event(evt)
-        self.event_modifiers = evt.GetModifiers()
-        self.process_motion_scroll(row, cell, flags)
-        self.last_mouse_event = (row, cell)
-        self.CaptureMouse()
-        self.parent.handle_select_start(evt, self.current_caret_row, self.current_caret_col, flags)
-
-    def on_motion(self, evt, x=None, y=None):
-        input_row, input_cell = self.get_row_cell_from_event(evt)
-        if (input_row, input_cell) == self.last_mouse_event:
-            # only process if mouse has moved to a new cell; no sub-cell
-            # events!
-            return
-        flags = self.parent.create_mouse_event_flags()
-        if evt.LeftIsDown() and self.HasCapture():
-            last_row, last_col = self.current_caret_row, self.current_caret_col
-            self.handle_user_caret(input_row, input_cell, flags)
-            if last_row != self.current_caret_row or last_col != self.current_caret_col:
-                self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
-        else:
-            col = self.cell_to_col(input_row, input_cell)
-            self.parent.handle_motion_update_status(evt, input_row, col)
-        self.last_mouse_event = (input_row, input_cell)
-
-    def on_left_up(self, evt):
-        self.scroll_timer.Stop()
-        if not self.HasCapture():
-            return
-        self.ReleaseMouse()
-        self.event_row = self.event_col = self.event_modifiers = None
-        self.parent.handle_select_end(evt, self.current_caret_row, self.current_caret_col)
-
     ##### row/cell/col info
 
     def pixel_pos_to_row_cell(self, x, y):
@@ -804,9 +768,10 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         col = self.cell_to_col(row, cell)
         return row, col
 
-    def get_row_cell_from_event(self, evt):
-        row, cell = self.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
-        return row, cell
+    def get_location_from_col(self, row, col):
+        r2, c2, index, index2 = self.main.enforce_valid_caret(row, col)
+        inside = col == c2 and row == r2
+        return r2, c2, index, index2, inside
 
     def is_inside(self, row, col):
         return row >= 0 and row < self.table.num_rows and col >= 0 and col < self.line_renderer.num_cols
@@ -927,28 +892,22 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         """
         # restrict row, col to grid boundaries first so we don't get e.g. cells
         # from previous line if cell number is negative
-        if col >= self.line_renderer.num_cols:
-            col = self.line_renderer.num_cols - 1
-        elif col < 0:
-            col = 0
-        if row >= self.table.num_rows:
-            row = self.table.num_rows - 1
-        elif row < 0:
-            row = 0
+        row, col = self.table.enforce_valid_row_col(row, col)
 
-        # now make sure we have a valid index to handle partial lines at the
-        # first or last row
-        index, index2 = self.table.get_index_range(row, col)
-        if index < 0:
-            row = 0
-            if col < self.table.start_offset:
-                col = self.table.start_offset
-        elif index >= self.table.last_valid_index:
-            row = self.table.num_rows - 1
-            _, c2 = self.table.index_to_row_col(self.table.last_valid_index)
-            if col > c2:
-                col = c2 - 1
-        return row, col, index, index2
+        # # now make sure we have a valid index to handle partial lines at the
+        # # first or last row
+        # index, index2 = self.table.get_index_range(row, col)
+        # if index < 0:
+        #     row = 0
+        #     if col < self.table.start_offset:
+        #         col = self.table.start_offset
+        # elif index >= self.table.last_valid_index:
+        #     row = self.table.num_rows - 1
+        #     _, c2 = self.table.index_to_row_col(self.table.last_valid_index)
+        #     if col > c2:
+        #         col = c2 - 1
+        # return row, col, index, index2
+        return row, col
 
     ##### scrolling
 
@@ -996,24 +955,14 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         elif row >= self.table.num_rows:
             row = self.table.num_rows - 1
         col = self.cell_to_col(row, cell)
-        try:
-            index, _ = self.table.get_index_range(row, col)
-        except IndexError:
-            caret_log.debug("process_motion_scroll: ignoring over hidden cell")
-        else:
-            caret_log.debug(f"process_motion_scroll: row={row} col={col} index={index}")
-            row_at_index, col_at_index = self.table.index_to_row_col(index)
-            if row_at_index > row:
-                # computed index points to next row, meaning the caret is
-                # really to the right of any columns in this row
-                index -= 1
-                row_at_index, col_at_index = self.table.index_to_row_col(index)
-            cell_at_index = self.line_renderer.col_to_cell(row_at_index, col_at_index)
-            self.ensure_visible(row_at_index, cell_at_index, flags)
-            self.parent.caret_handler.move_current_caret_to(index)
-            if self.parent.automatic_refresh:
-                self.parent.Refresh()
-            self.current_caret_row, self.current_caret_col = row, col
+        row, col = self.table.enforce_valid_row_col(row, col)
+        cell = self.line_renderer.col_to_cell(row, col)
+        self.ensure_visible(row, cell, flags)
+        self.parent.caret_handler.move_current_caret_to(row, col)
+        self.parent.handle_select_motion(None, row, col, flags)
+        if self.parent.automatic_refresh:
+            self.parent.Refresh()
+        self.current_caret_row, self.current_caret_col = row, col
 
 
 class NumpyGridDrawControl(BaseGridDrawControl):
@@ -1059,6 +1008,20 @@ class HexTable(object):
 
     def enforce_valid_index(self, index):
         return ForceBetween(0, index, self.last_valid_index)
+
+    def is_row_col_inside(self, row, col):
+        return row >= 0 and row < self.num_rows and col >=0 and col < self.items_per_row
+
+    def enforce_valid_row_col(self, row, col):
+        if row < 0:
+            row = 0
+        elif row >= self.num_rows:
+            row = self.num_rows - 1
+        if col < 0:
+            col = 0
+        elif col >= self.items_per_row:
+            col = self.items_per_row - 1
+        return row, col
 
     def get_row_label_text(self, start_line, num_lines, step=1):
         last_line = min(start_line + num_lines, self.num_rows)
@@ -1107,17 +1070,13 @@ class HexTable(object):
     def index_to_row_col(self, index):
         return divmod(index + self.start_offset, self.items_per_row)
 
-    def clamp_left_column(self, index):
-        r, c = self.index_to_row_col(index)
+    def clamp_left_column(self, r, c):
         c = 0
-        index = max(0, self.get_index_range(r, c)[0])
-        return index
+        return r, c
 
-    def clamp_right_column(self, index):
-        r, c = self.index_to_row_col(index)
+    def clamp_right_column(self, r, c):
         c = self.items_per_row - 1
-        index = min(self.last_valid_index, self.get_index_range(r, c)[0])
-        return index
+        return r, c
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         """Called immediately before the line renderer, this is used to
@@ -1183,6 +1142,22 @@ class VariableWidthHexTable(HexTable):
         index, _ = self.get_index_range(row, col)
         return str(self.data[index]), self.style[index]
 
+    def is_row_col_inside(self, row, col):
+        if row >= 0 and row < self.num_rows:
+            return col >=0 and col < self.items_per_row[row]
+        return False
+
+    def enforce_valid_row_col(self, row, col):
+        if row < 0:
+            row = 0
+        elif row >= self.num_rows:
+            row = self.num_rows - 1
+        if col < 0:
+            col = 0
+        elif col >= self.items_per_row[row]:
+            col = self.items_per_row[row] - 1
+        return row, col
+
     def get_index_range(self, row, col):
         """Get the byte offset from start of file given row, col
         position.
@@ -1221,6 +1196,10 @@ class VariableWidthHexTable(HexTable):
             col = index - start
         # print(f"index_to_row_col: index={index} row={row} col={col}")
         return row, col
+
+    def clamp_right_column(self, r, c):
+        c = self.items_per_row[r] - 1
+        return r, c
 
 
 class VirtualTable(HexTable):
@@ -1377,46 +1356,18 @@ class ColLabelWindow(AuxWindow):
                 self.refresh_count += 1
 
 
-class MultiCaretHandler(object):
-    def __init__(self, table):
-        self.carets = []
-        self.table = table
+##### Main grid
 
-    def move_carets(self, delta):
-        self.carets = [i + delta for i in self.carets]
+from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler
 
-    def move_carets_to(self, index):
-        self.carets = [index]
-
-    def move_current_caret_to(self, index):
-        self.carets = [index]
-
-    def move_carets_process_function(self, func):
-        self.move_carets_to(func(self.caret_handler.caret_index))
-
-    def validate_carets(self):
-        new_carets = []
-        for index in self.carets:
-            index = self.validate_caret_position(index)
-            new_carets.append(index)
-        self.carets = new_carets
-
-    def validate_caret_position(self, index):
-        return self.table.enforce_valid_index(index)
-
-    def iter_caret_indexes(self):
-        for index in self.carets:
-            yield index
-
-
-class CompactGrid(wx.ScrolledWindow):
+class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     initial_zoom = 1
 
     def __init__(self, table, view_params, caret_handler, *args, **kwargs):
         wx.ScrolledWindow.__init__ (self, *args, style=wx.WANTS_CHARS, **kwargs)
         self.SetAutoLayout(True)
         self.view_params = view_params
-        self.caret_handler = caret_handler
+        MouseEventMixin.__init__(self, caret_handler)
         self.want_col_header = True
         self.want_row_header = True
 
@@ -1523,12 +1474,15 @@ class CompactGrid(wx.ScrolledWindow):
         #self.corner.SetMinSize(left_width, top_height)
         self.SetScrollRate(lr.w, lr.h)
 
+    #### events
+
     def map_events(self):
         self.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
         self.main.Bind(wx.EVT_SCROLLWIN, self.on_scroll_window)
 
         self.map_char_events()
-        self.map_mouse_events()
+        self.map_mouse_events(self.main)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
 
         # These events aren't part of the mouse movement so are kept separate.
         self.main.Bind(wx.EVT_PAINT, self.main.on_paint)
@@ -1538,15 +1492,13 @@ class CompactGrid(wx.ScrolledWindow):
     def map_char_events(self):
         self.main.Bind(wx.EVT_CHAR, self.on_char)
 
-    def map_mouse_events(self):
-        # mouse movement event bindings are here so subclasses don't also have
-        # to subclass the NumpyGridDrawControl
-        self.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
-        self.main.Bind(wx.EVT_MOUSEWHEEL, self.on_mouse_wheel)
-        self.main.Bind(wx.EVT_LEFT_DOWN, self.main.on_left_down)
-        self.main.Bind(wx.EVT_MOTION, self.main.on_motion)
-        self.main.Bind(wx.EVT_LEFT_UP, self.main.on_left_up)
-        self.main.Bind(wx.EVT_RIGHT_DOWN, self.on_popup)
+    def get_row_cell_from_event(self, evt):
+        row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
+        return row, cell
+
+    def get_row_col_from_event(self, evt):
+        row, col = self.main.pixel_pos_to_row_col(evt.GetX(), evt.GetY())
+        return row, col, self.main.table.is_row_col_inside(row, col)
 
     ##### serialization
 
@@ -1562,6 +1514,14 @@ class CompactGrid(wx.ScrolledWindow):
     def use_default_view_params(self):
         self.move_viewport_origin((0, 0))
         log.debug("restored viewport to default: %s" % str(self.GetViewStart()))
+
+    ##### command processing
+
+    def process_command(self, cmd):
+        log.error(f"No command processor defined for {cmd}")
+
+    def show_popup(self, actions, popup_data):
+        log.error("no popup handler defined")
 
     ##### event handlers
 
@@ -1604,19 +1564,6 @@ class CompactGrid(wx.ScrolledWindow):
         self.Refresh()
         evt.Skip()
 
-    def on_mouse_wheel(self, evt):
-        w = evt.GetWheelRotation()
-        print(("on_mouse_wheel rotation=%d, lines_per_action %s" % (w, evt.GetLinesPerAction())))
-        if evt.ControlDown():
-            if w < 0:
-                self.zoom_out()
-            elif w > 0:
-                self.zoom_in()
-        elif not evt.ShiftDown() and not evt.AltDown():
-            self.pan_mouse_wheel(evt)
-        else:
-            evt.Skip()
-
     def pan_mouse_wheel(self, evt):
         w = evt.GetWheelRotation()
         dx = self.GetScrollPos(wx.HORIZONTAL)
@@ -1649,6 +1596,11 @@ class CompactGrid(wx.ScrolledWindow):
         try:
             action[key](evt, None)
             self.caret_handler.validate_carets()
+            caret = self.caret_handler.current_caret
+            cell = self.line_renderer.col_to_cell(*caret.rc)
+            self.main.ensure_visible(caret.rc[0], cell, None)
+            if self.automatic_refresh:
+                self.Refresh()
             #self.UpdateView()
         except KeyError:
             print(("Error! %d not recognized" % key))
@@ -1705,24 +1657,6 @@ class CompactGrid(wx.ScrolledWindow):
         #     self.Refresh()
 
     ##### places for subclasses to process stuff (should really use events)
-
-    def create_mouse_event_flags(self):
-        return None
-
-    def handle_on_motion(self, evt, row, col):
-        pass
-
-    def handle_motion_update_status(self, evt, row, col):
-        pass
-
-    def handle_select_start(self, evt, row, col, flags):
-        pass
-
-    def handle_select_motion(self, evt, row, col, flags):
-        pass
-
-    def handle_select_end(self, evt, row, col):
-        pass
 
     def zoom_in(self, zoom=1):
         self.set_zoom(self.zoom + zoom)
@@ -1800,28 +1734,28 @@ class CompactGrid(wx.ScrolledWindow):
         self.process_visibility_change()
 
     def handle_char_move_down(self, evt, flags):
-        self.caret_handler.move_carets(self.table.items_per_row)
+        self.caret_handler.move_carets_vertically(1)
 
     def handle_char_move_up(self, evt, flags):
-        self.caret_handler.move_carets(-self.table.items_per_row)
+        self.caret_handler.move_carets_vertically(-1)
 
     def handle_char_move_left(self, evt, flags):
-        self.caret_handler.move_carets(-1)
+        self.caret_handler.move_carets_horizontally(-1)
 
     def handle_char_move_right(self, evt, flags):
-        self.caret_handler.move_carets(1)
+        self.caret_handler.move_carets_horizontally(1)
 
     def handle_char_move_page_down(self, evt, flags):
-        self.caret_handler.move_carets(self.page_size)
+        self.caret_handler.move_carets_vertically(self.page_size)
 
     def handle_char_move_page_up(self, evt, flags):
-        self.caret_handler.move_carets(-self.page_size)
+        self.caret_handler.move_carets_vertically(-self.page_size)
 
     def handle_char_move_start_of_file(self, evt, flags):
-        self.caret_handler.move_carets_to(0)
+        self.caret_handler.move_carets_to(0, 0)
 
     def handle_char_move_end_of_file(self, evt, flags):
-        self.caret_handler.move_carets_to(self.table.last_valid_index)
+        self.caret_handler.move_carets_to_index(self.table.last_valid_index)
 
     def handle_char_move_start_of_line(self, evt, flags):
         self.caret_handler.move_carets_process_function(self.table.clamp_left_column)
@@ -1829,6 +1763,15 @@ class CompactGrid(wx.ScrolledWindow):
     def handle_char_move_end_of_line(self, evt, flags):
         self.caret_handler.move_carets_process_function(self.table.clamp_right_column)
 
+    #### info
+
+    def get_status_message_at_row_col(self, row, col):
+        return ""
+
+    #### UI stuff
+
+    def update_ui_for_selection_change(self):
+        pass
 
 class DisassemblyTable(HexTable):
     def calc_display_text(self, col, item):
@@ -1868,8 +1811,6 @@ if __name__ == '__main__':
 
         def set_window(self, window):
             self.window = window
-            self.window.SelectBegin = 20
-            self.window.SelectEnd = 100
 
         def __len__(self):
             return len(self.window.table.data)
@@ -1880,16 +1821,10 @@ if __name__ == '__main__':
             except:
                 index, last_index = item, item + 1
             count = last_index - index
-            style = np.zeros(count, dtype=np.uint8)
-            if self.window is None:
-                return style
-            if last_index < self.window.SelectBegin or index >= self.window.SelectEnd:
-                pass
-            else:
-                for i in range(index, last_index):
-                    if i >= self.window.SelectBegin and i < self.window.SelectEnd:
-                        style[i - index] = selected_bit_mask
-            return style
+            style = np.zeros(len(self), dtype=np.uint8)
+            if self.window is not None:
+                self.window.parent.caret_handler.add_selection_to_style(style)
+            return style[index:last_index]
 
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(400,400))
