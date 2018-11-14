@@ -846,7 +846,9 @@ class GridCellTextCtrl(wx.TextCtrl):
 
 
 class MouseEventMixin:
-    def __init__(self, caret_handler, default_mouse_mode_cls=NormalSelectMode):
+    default_mouse_mode_cls = NormalSelectMode
+
+    def __init__(self, caret_handler, mouse_mode_cls=None):
         self.caret_handler = caret_handler
         self.multi_select_mode = False
         self.select_extend_mode = False
@@ -859,7 +861,9 @@ class MouseEventMixin:
         self.forced_cursor = None
         self.batch = None
 
-        self.default_mouse_mode_cls = default_mouse_mode_cls
+        if mouse_mode_cls is None:
+            mouse_mode_cls = self.default_mouse_mode_cls
+        self.default_mouse_mode_cls = mouse_mode_cls  # override class attr
         self.default_mouse_mode = self.default_mouse_mode_cls(self)
         self.mouse_mode = self.default_mouse_mode  # can't call set_mouse_mode yet because control hasn't been initialized
 

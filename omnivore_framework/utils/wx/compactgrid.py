@@ -1366,11 +1366,11 @@ except ModuleNotFoundError:
 class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     initial_zoom = 1
 
-    def __init__(self, table, view_params, caret_handler, *args, **kwargs):
+    def __init__(self, table, view_params, caret_handler, mouse_mode_cls, *args, **kwargs):
         wx.ScrolledWindow.__init__ (self, *args, style=wx.WANTS_CHARS, **kwargs)
         self.SetAutoLayout(True)
         self.view_params = view_params
-        MouseEventMixin.__init__(self, caret_handler)
+        MouseEventMixin.__init__(self, caret_handler, mouse_mode_cls)
         self.want_col_header = True
         self.want_row_header = True
 
@@ -1841,7 +1841,7 @@ if __name__ == '__main__':
     style1 = FakeStyle()
     table = DisassemblyTable(np.arange(1024, dtype=np.uint8), style1, 5)
     carets = MultiCaretHandler(table)
-    scroll1 = CompactGrid(table, view_params, carets, splitter)
+    scroll1 = CompactGrid(table, view_params, carets, None, splitter)
     style1.set_window(scroll1.main)
     # style1 = FakeStyle()
     # table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
@@ -1853,7 +1853,7 @@ if __name__ == '__main__':
     table = VariableWidthHexTable(np.arange(480, dtype=np.uint8), style2, [1,2,3,4,32,2,1,1,2]*10, 0x602)
 
     carets = MultiCaretHandler(table)
-    scroll2 = NonUniformGridWindow(table, view_params, carets, splitter)
+    scroll2 = NonUniformGridWindow(table, view_params, carets, None, splitter)
     style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)
