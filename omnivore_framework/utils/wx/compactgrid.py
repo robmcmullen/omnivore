@@ -1358,7 +1358,10 @@ class ColLabelWindow(AuxWindow):
 
 ##### Main grid
 
-from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler
+try:
+    from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler
+except ModuleNotFoundError:
+    from compactgrid_mouse import MouseEventMixin, MultiCaretHandler
 
 class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     initial_zoom = 1
