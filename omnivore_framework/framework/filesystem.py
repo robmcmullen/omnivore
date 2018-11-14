@@ -195,7 +195,7 @@ class TemplateFS(FS):
 
     def _make_url(self, path):
         path = normpath(path)
-        url = '%s/%s' % (self.root_url.rstrip('/'), path.lstrip('/'))
+        url = os.path.join(self.root_url.rstrip('/'), path.lstrip('/'))
         return url
 
     def open(self, path, mode='r', buffering=-1, encoding=None, errors=None, newline=None, line_buffering=False, **kwargs):
@@ -204,7 +204,7 @@ class TemplateFS(FS):
             raise UnsupportedError('write')
 
         url = self._make_url(path)
-        log.debug("TemplateFS: loading %s" % url)
+        log.debug(f"TemplateFS: loading {url} from {path}")
         try:
             fh = get_template_fh(url)
         except OSError as e:

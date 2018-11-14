@@ -24,7 +24,9 @@ def construct_path(template_dir, name):
 
 
 def find_template_path(name):
+    log.debug(f"searching subdirs {template_subdirs}")
     if name.startswith("/"):
+        log.debug(f"found absolute path to template: {name}")
         return name
     checked = []
     for toplevel in template_subdirs:
