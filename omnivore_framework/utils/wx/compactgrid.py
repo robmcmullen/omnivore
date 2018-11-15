@@ -1084,6 +1084,9 @@ class HexTable(object):
         """
         pass
 
+    def clear_selected_style(self):
+        self.style[:] &= (0xff ^ selected_bit_mask)
+
 
 class VariableWidthHexTable(HexTable):
     """Table works in rows and columns, knows nothing about display cells.
@@ -1359,9 +1362,9 @@ class ColLabelWindow(AuxWindow):
 ##### Main grid
 
 try:
-    from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler
+    from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl
 except ModuleNotFoundError:
-    from compactgrid_mouse import MouseEventMixin, MultiCaretHandler
+    from compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl
 
 class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     initial_zoom = 1
@@ -1370,7 +1373,6 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         wx.ScrolledWindow.__init__ (self, *args, style=wx.WANTS_CHARS, **kwargs)
         self.SetAutoLayout(True)
         self.view_params = view_params
-        MouseEventMixin.__init__(self, caret_handler, mouse_mode_cls)
         self.want_col_header = True
         self.want_row_header = True
 
@@ -1385,6 +1387,10 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         if table is None:
             table = self.calc_default_table()
         self.table = table
+        if caret_handler is None:
+            caret_handler = self.calc_caret_handler()
+        MouseEventMixin.__init__(self, caret_handler, mouse_mode_cls)
+
         self.line_renderer = self.calc_line_renderer()
         self.col_label_renderer = self.line_renderer
         self.row_label_renderer = self.line_renderer
@@ -1448,6 +1454,9 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         # generate a table! Subclasses might, though, so allow them the
         # opportunity.
         raise NotImplementedError("no default table implementation defined")
+
+    def calc_caret_handler(self):
+        return MultiCaretHandler(self.table)
 
     def calc_line_renderer(self):
         return HexLineRenderer(self, 2)
@@ -1808,53 +1817,24 @@ if __name__ == '__main__':
             except:
                 return "slice"
 
-    class FakeStyle(object):
-        def __init__(self):
-            self.window = None
-
-        def set_window(self, window):
-            self.window = window
-
-        def __len__(self):
-            return len(self.window.table.data)
-
-        def __getitem__(self, item):
-            try:
-                index, last_index = item.start, item.stop
-            except:
-                index, last_index = item, item + 1
-            count = last_index - index
-            style = np.zeros(len(self), dtype=np.uint8)
-            if self.window is not None:
-                self.window.parent.caret_handler.add_selection_to_style(style)
-            return style[index:last_index]
-
     app = wx.App()
     frame = wx.Frame(None, -1, "Test", size=(400,400))
     splitter = wx.SplitterWindow(frame, -1, style = wx.SP_LIVE_UPDATE)
     splitter.SetMinimumPaneSize(20)
     view_params = TableViewParams()
-    # style1 = FakeStyle()
-    # table = VariableWidthHexTable(np.arange(1024, dtype=np.uint8), style1, 4, 0x602, [1, 2, 3, 4])
-    # scroll1 = NonUniformGridWindow(table, view_params, splitter)
-    # style1.set_window(scroll1.main)
-    style1 = FakeStyle()
-    table = DisassemblyTable(np.arange(1024, dtype=np.uint8), style1, 5)
-    carets = MultiCaretHandler(table)
-    scroll1 = CompactGrid(table, view_params, carets, None, splitter)
-    style1.set_window(scroll1.main)
-    # style1 = FakeStyle()
-    # table = HexTable(np.arange(1024, dtype=np.uint8), style1, 16, 0x600, 0xf)
-    # carets = MultiCaretHandler(table)
-    # scroll1 = CompactGrid(table, view_params, carets, splitter)
-    # style1.set_window(scroll1.main)
-    style2 = FakeStyle()
-    #table = HexTable(np.arange(1024, dtype=np.uint8), style2, 16, 0x602, 0xf)
-    table = VariableWidthHexTable(np.arange(480, dtype=np.uint8), style2, [1,2,3,4,32,2,1,1,2]*10, 0x602)
 
-    carets = MultiCaretHandler(table)
-    scroll2 = NonUniformGridWindow(table, view_params, carets, None, splitter)
-    style2.set_window(scroll2.main)
+    len1 = 1024
+    data1 = np.arange(len1, dtype=np.uint8)
+    style1 = np.zeros(len1, dtype=np.uint8)
+    table1 = DisassemblyTable(data1, style1, 5)
+    scroll1 = CompactGrid(table1, view_params, None, None, splitter)
+
+    len2 = 1024
+    data2 = np.arange(len2, dtype=np.uint8)
+    style2 = np.zeros(len2, dtype=np.uint8)
+    table2 = VariableWidthHexTable(data2, style2, [1,2,3,4,32,2,1,1,2]*10, 0x602)
+    scroll2 = NonUniformGridWindow(table2, view_params, None, None, splitter)
+    # style2.set_window(scroll2.main)
 
     splitter.SplitVertically(scroll1, scroll2)
     frame.Show(True)
