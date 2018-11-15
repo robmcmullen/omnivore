@@ -137,7 +137,7 @@ class Caret(object):
             if other.rc > self.rc:
                 self.rc = other.rc
 
-    def add_selection_to_style(self, style, table):
+    def add_selection_to_style(self, table):
         if self.has_selection:
             if self.rectangular:
                 pass
@@ -147,7 +147,7 @@ class Caret(object):
                     start, end = end, start
                 index1, _ = table.get_index_range(*start)
                 _, index2 = table.get_index_range(*end)
-                style[index1:index2] |= selected_bit_mask
+                table.style[index1:index2] |= selected_bit_mask
 
 
 class MultiCaretHandler(object):
@@ -216,9 +216,10 @@ class MultiCaretHandler(object):
         for caret in self.carets:
             yield self.table.get_index_range(*caret.rc)[0]
 
-    def add_selection_to_style(self, style):
+    def refresh_style_from_selection(self):
+        self.table.clear_selected_style()
         for caret in self.carets:
-            caret.add_selection_to_style(style, self.table)
+            caret.add_selection_to_style(self.table)
 
     def collapse_overlapping(self):
         """Check if the current caret selection overlaps any existing caret and
@@ -482,7 +483,8 @@ class MouseMode(object):
         self.control.update_ui_for_selection_change()
 
     def highlight_selected_ranges(self, caret_handler):
-        log.error("highlight_selected_ranges not defined in mouse mode")
+        # log.error("highlight_selected_ranges not defined in mouse mode")
+        caret_handler.refresh_style_from_selection()
 
 
 class NormalSelectMode(MouseMode):
@@ -1083,7 +1085,7 @@ class MouseEventMixin:
             self.select_extend_mode = True
         mode_log.debug(("start before:", ch.carets, "multi", self.multi_select_mode, "extend", self.select_extend_mode))
         if self.select_extend_mode:
-            caret = ch.carets.current
+            caret = ch.current_caret
             if mouse_at < caret.anchor_start:
                 self.select_extend_mode = "bottom anchor"
                 if not caret.has_selection:
