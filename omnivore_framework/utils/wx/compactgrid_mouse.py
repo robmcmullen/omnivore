@@ -162,7 +162,7 @@ class MultiCaretHandler(object):
     def new_carets(self, caret_state):
         self.carets = [Caret(state=s) for s in caret_state]
 
-    def get_state(self):
+    def calc_state(self):
         return [caret.serialize() for caret in self.carets]
 
     def add_caret(self, caret):
@@ -1048,7 +1048,7 @@ class MouseEventMixin:
     def create_mouse_event_flags(self):
         flags = DisplayFlags(self)
         flags.selecting_rows = False
-        flags.old_carets = self.caret_handler.get_state()
+        flags.old_carets = self.caret_handler.calc_state()
         return flags
 
     def handle_motion_update_status(self, evt, row, col):
