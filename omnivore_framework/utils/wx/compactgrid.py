@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 draw_log = logging.getLogger("draw")
 scroll_log = logging.getLogger("scroll")
 caret_log = logging.getLogger("caret")
-caret_log.setLevel(logging.DEBUG)
+# caret_log.setLevel(logging.DEBUG)
 debug_refresh = False
 
 

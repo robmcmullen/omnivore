@@ -132,10 +132,14 @@ class CharEventMixin(object):
                     log.debug(f"using handler {handler}: function={func}")
                     flags = self.create_char_event_flags()
                     func(evt, flags)
-                    self.caret_handler.process_flags(flags)
+                    self.process_flags(flags)
 
     def handle_char_ordinary(self, evt):
         key = evt.GetKeyCode()
         mods = evt.GetModifiers()
         log.debug("No handler for keyboard event: key=%d mods=%d" % (key, mods))
         evt.Skip()
+
+    def process_flags(self, flags):
+        log.error("The process_flag method must be defined in subclass")
+        pass

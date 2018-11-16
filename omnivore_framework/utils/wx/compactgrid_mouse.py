@@ -18,9 +18,9 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 # log.setLevel(logging.DEBUG)
 caret_log = logging.getLogger("caret")
-caret_log.setLevel(logging.DEBUG)
+# caret_log.setLevel(logging.DEBUG)
 mode_log = logging.getLogger("mouse_mode")
-mode_log.setLevel(logging.DEBUG)
+# mode_log.setLevel(logging.DEBUG)
 
 ##### Carets
 
