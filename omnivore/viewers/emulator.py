@@ -365,8 +365,7 @@ class LabelTable(cg.VariableWidthHexTable):
 class LabelGridControl(sg.SegmentGridControl):
     default_table_cls = LabelTable
  
-    def calc_default_table(self):
-        linked_base = self.caret_handler
+    def calc_default_table(self, linked_base):
         table = self.default_table_cls(linked_base)
         self.items_per_row = table.items_per_row
         self.want_row_header = table.want_row_header

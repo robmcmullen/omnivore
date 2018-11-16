@@ -345,14 +345,18 @@ class SegmentViewer(HasTraits):
     def sync_caret_event_handler(self, flags):
         log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
-            log.debug("sync_caret_event: syncing %s" % self.control)
-            self.sync_caret(flags)
+            if self.control == flags.source_control:
+                log.debug("sync_caret_event: skipping %s because it has already been refreshed" % self.control)
+            else:
+                log.debug("sync_caret_event: syncing %s" % self.control)
+                self.sync_caret(flags)
 
     def sync_caret(self, flags):
-        log.debug("sync_caret: syncing %s" % self.pretty_name)
         if self.has_caret:
-            self.control.set_caret_index(self.linked_base.carets.current.index, flags)
+            log.debug(f"sync_caret: {self.pretty_name} has caret; syncing to {index}")
+            self.control.set_caret_index(index, flags)
         else:
+            log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
 
     def sync_caret_to_index(self, index, refresh=True):

@@ -117,8 +117,8 @@ class InstructionHistoryTable(cg.VirtualTable):
 class InstructionHistoryGridControl(SegmentGridControl):
     default_table_cls = InstructionHistoryTable
 
-    def calc_default_table(self):
-        table = self.default_table_cls(self.caret_handler)
+    def calc_default_table(self, linked_base):
+        table = self.default_table_cls(linked_base)
         table.rebuild()  # find number of rows so scrollbars can be set properly
         return table
 

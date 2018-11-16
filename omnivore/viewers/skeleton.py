@@ -62,8 +62,8 @@ class SampleVirtualTable(cg.VirtualTable):
 class SampleGridControl(SegmentGridControl):
     default_table_cls = SampleVirtualTable
 
-    def calc_default_table(self):
-        return self.default_table_cls(self.caret_handler)
+    def calc_default_table(self, linked_base):
+        return self.default_table_cls(linked_base)
 
     def calc_line_renderer(self):
         return cg.VirtualTableLineRenderer(self, 2, widths=self.default_table_cls.column_sizes, col_labels=self.default_table_cls.column_labels)

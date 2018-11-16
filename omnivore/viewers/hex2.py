@@ -7,7 +7,7 @@ from traits.api import on_trait_change, Bool
 
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
-from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextCtrl
+from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from omnivore_framework.utils.wx import compactgrid as cg
 from ..arch.disasm import get_style_name
 
@@ -39,7 +39,7 @@ def get_valid_hex_digit(key):
         return None
 
 
-class HexTextCtrl(SegmentGridTextCtrl):
+class HexTextCtrl(cg.GridCellTextCtrl):
     def __init__(self, parent, id, *args, **kwargs):
         # Don't use the validator here, because apparently we can't
         # reset the validator based on the columns.  We have to do the

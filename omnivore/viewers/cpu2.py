@@ -199,8 +199,7 @@ class UdisFastTable(cg.HexTable):
 
 
 class DisassemblyGridControl(SegmentGridControl):
-    def calc_default_table(self):
-        linked_base = self.caret_handler
+    def calc_default_table(self, linked_base):
         return UdisFastTable(linked_base)
 
     def calc_line_renderer(self):
