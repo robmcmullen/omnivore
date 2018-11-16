@@ -159,6 +159,8 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         log.debug(f"commit before: {self.caret_handler.carets} {flags}")
         linked_base = self.segment_viewer.linked_base
         self.mouse_mode.refresh_ranges(self.caret_handler)
+        if flags.viewport_origin is not None:
+            self.move_viewport_origin(flags.viewport_origin)
         linked_base.sync_caret_event = flags
         linked_base.ensure_visible_event = flags
         linked_base.refresh_event = flags
