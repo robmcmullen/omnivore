@@ -621,8 +621,6 @@ class RectangularSelectMode(NormalSelectMode):
 
 class DisplayFlags:
     def __init__(self, source_control=None, args=[]):
-        self.source_control = source_control
-
         # True if command successfully completes, must set to False on failure
         self.success = True
 
@@ -671,7 +669,7 @@ class DisplayFlags:
 
         # the source control on which the event happened, if this is the
         # result of a user interface change
-        self.source_control = None
+        self.source_control = source_control
 
         # if the source control is refreshed as a side-effect of some action,
         # set this flag so that the event manager can skip that control when
