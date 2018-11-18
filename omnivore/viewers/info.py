@@ -31,6 +31,9 @@ class BaseInfoViewer(SegmentViewer):
     def sync_caret(self, flags):
         pass
 
+    def ensure_visible(self, flags):
+        pass
+
     def recalc_data_model(self):
         self.control.recalc_view()
         self.control.refresh_view()

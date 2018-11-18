@@ -389,7 +389,7 @@ class MouseEventMixin(SelectionHandler):
     def commit_change(self, flags):
         log.debug(("commit before:", self.caret_handler.carets))
         self.refresh_ranges(self.caret_handler)
-        self.caret_handler.sync_caret_event = flags
+        self.caret_handler.sync_caret_to_index_event = flags
         self.caret_handler.ensure_visible_event = flags
         self.caret_handler.refresh_event = flags
         log.debug(("commit after:", self.caret_handler.carets))

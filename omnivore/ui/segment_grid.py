@@ -1,6 +1,5 @@
 import wx
 
-from omnivore_framework.utils.command import DisplayFlags
 from omnivore_framework.utils.wx import compactgrid as cg
 from omnivore_framework.utils.wx.char_event_mixin import CharEventMixin
 from omnivore_framework.framework.mouse_mode import MouseMode
@@ -73,7 +72,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         table = self.calc_default_table(linked_base)
 
         cg.CompactGrid.__init__(self, table, linked_base.cached_preferences, None, viewer_cls.default_mouse_mode_cls, parent)
-        self.automatic_refresh = False
+        # self.automatic_refresh = False
 
     def map_char_events(self):
         CharEventMixin.map_char_events(self, self.main)
@@ -146,25 +145,23 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
     def stop_scroll_timer(self):
         self.main.scroll_timer.Stop()
 
-    def keep_index_on_screen(self, index):
-        row, col = self.table.index_to_row_col(index)
-        self.main.ensure_visible(row, col)
-
     # FIXME: temporary hack until compactgrid uses indexes directly
     def caret_indexes_to_display_coords(self):
         row, col = self.table.index_to_row_col(self.caret_handler.caret_index)
         self.main.show_caret(col, row)
 
     def commit_change(self, flags):
-        log.debug(f"commit before: {self.caret_handler.carets} {flags}")
+        flags.carets_to_indexes = self.caret_handler.convert_to_indexes(self.table.get_index_range)
+
+        log.debug(f"\n\ncommit before: {self.caret_handler.carets} flags={flags}")
         linked_base = self.segment_viewer.linked_base
         self.mouse_mode.refresh_ranges(self.caret_handler)
         if flags.viewport_origin is not None:
             self.move_viewport_origin(flags.viewport_origin)
-        linked_base.sync_caret_event = flags
+        linked_base.sync_caret_to_index_event = flags
         linked_base.ensure_visible_event = flags
         linked_base.refresh_event = flags
-        log.debug(f"commit after: {self.caret_handler.carets} {flags}")
+        log.debug(f"commit after: {self.caret_handler.carets} flags={flags}\n\n")
 
     def process_flags(self, flags):
         self.segment_viewer.editor.process_flags(flags)

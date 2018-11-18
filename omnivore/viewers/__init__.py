@@ -14,7 +14,6 @@ from ..clipboard_commands import PasteCommand
 from ..arch import fonts
 
 from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
-from omnivore_framework.utils.command import DisplayFlags
 
 from ..arch.machine import Machine, Atari800
 from ..utils import searchutil
@@ -24,6 +23,8 @@ from . import actions as va
 
 import logging
 log = logging.getLogger(__name__)
+caret_log = logging.getLogger("caret")
+caret_log.setLevel(logging.DEBUG)
 
 
 class SegmentViewer(HasTraits):
@@ -332,38 +333,43 @@ class SegmentViewer(HasTraits):
         if evt is not Undefined:
             self.recalc_view()
 
-    @on_trait_change('linked_base.ensure_visible_index')
+    @on_trait_change('linked_base.ensure_visible_event')
     def process_ensure_visible(self, flags):
         log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
             self.ensure_visible(flags)
 
     def ensure_visible(self, flags):
-        self.control.keep_index_on_screen(flags.index_visible)
+        if flags.index_visible is not None:
+            self.control.keep_index_on_screen(flags.index_visible, flags)
 
-    @on_trait_change('linked_base.sync_caret_event')
-    def sync_caret_event_handler(self, flags):
-        log.debug("process_update_caret for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+    @on_trait_change('linked_base.sync_caret_to_index_event')
+    def sync_caret_to_index_event_handler(self, flags):
+        caret_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if flags is not Undefined:
             if self.control == flags.source_control:
-                log.debug("sync_caret_event: skipping %s because it has already been refreshed" % self.control)
+                caret_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
             else:
-                log.debug("sync_caret_event: syncing %s" % self.control)
+                caret_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
                 self.sync_caret(flags)
 
     def sync_caret(self, flags):
         if self.has_caret:
-            log.debug(f"sync_caret: {self.pretty_name} has caret; syncing to {index}")
-            self.control.set_caret_index(index, flags)
+            if flags.carets_to_indexes:
+                caret_log.debug(f"sync_caret: {self.pretty_name} has carets; syncing from {flags.carets_to_indexes}")
+                self.control.caret_handler.convert_from_indexes(flags.carets_to_indexes)
+                self.control.keep_current_caret_on_screen(flags)
+            else:
+                caret_log.debug(f"sync_caret: caret position/selection unchanged")
         else:
-            log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
+            caret_log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
 
     def sync_caret_to_index(self, index, refresh=True):
-        log.debug("sync_caret_to_index: syncing %s" % self.pretty_name)
+        caret_log.debug("sync_caret_to_index: syncing %s" % self.pretty_name)
         self.linked_base.carets.force_single_caret(index)
-        flags = self.create_mouse_event_flags()
-        self.linked_base.sync_caret_event = flags
+        flags = self.control.create_mouse_event_flags()
+        self.linked_base.sync_caret_to_index_event = flags
         if refresh:
             self.linked_base.refresh_event = flags
 
@@ -398,7 +404,7 @@ class SegmentViewer(HasTraits):
         self.control.recalc_view()
 
     def show_caret(self, control, index, bit):
-        log.debug("show_caret: %s, index=%d" % (self.pretty_name, index))
+        caret_log.debug("show_caret: %s, index=%d" % (self.pretty_name, index))
         self.control.set_caret_index(control, index, bit)
 
     @on_trait_change('linked_base.editor.document.priority_level_refresh_event')
@@ -504,14 +510,6 @@ class SegmentViewer(HasTraits):
     def set_zoom(self, zoom):
         self.control.zoom = zoom
         wx.CallAfter(self.control.recalc_view)
-
-    ##### Caret
-
-    def create_mouse_event_flags(self):
-        flags = DisplayFlags(self.control)
-        flags.selecting_rows = False
-        flags.old_carets = self.linked_base.carets.get_state()
-        return flags
 
     ##### Selections
 

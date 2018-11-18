@@ -67,7 +67,7 @@ class LinkedBase(CaretHandler):
 
     ensure_visible_event = Event
 
-    sync_caret_event = Event
+    sync_caret_to_index_event = Event
 
     refresh_event = Event
 
