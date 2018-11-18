@@ -165,6 +165,36 @@ class MultiCaretHandler(object):
     def calc_state(self):
         return [caret.serialize() for caret in self.carets]
 
+    def has_changed_state(self, other_state):
+        current = self.calc_state()
+        return current == other_state
+
+    def convert_to_indexes(self, row_col_to_index_func):
+        index_list = []
+        for caret in self.carets:
+            index, _ = row_col_to_index_func(*caret.rc)
+            if caret.anchor_start[0] < 0:
+                anchor_start = -1
+            else:
+                anchor_start, _ = row_col_to_index_func(*caret.anchor_start)
+            if caret.anchor_end[0] < 0:
+                anchor_end = -1
+            else:
+                anchor_end, _ = row_col_to_index_func(*caret.anchor_end)
+            index_list.append((index, anchor_start, anchor_end))
+        return index_list
+
+    def convert_from_indexes(self, indexes):
+        self.carets = []
+        for index, anchor_start, anchor_end in indexes:
+            r, c = self.table.index_to_row_col(index)
+            caret = Caret(r, c)
+            r, c = self.table.index_to_row_col(anchor_start)
+            caret.anchor_start = self.anchor_initial_start = (r, c)
+            r, c = self.table.index_to_row_col(anchor_end)
+            caret.anchor_end = self.anchor_initial_end = (r, c)
+            self.carets.append(caret)
+
     def add_caret(self, caret):
         self.carets.append(caret)
 
@@ -211,10 +241,6 @@ class MultiCaretHandler(object):
 
     def validate_caret_position(self, index):
         return self.table.enforce_valid_index(index)
-
-    def iter_caret_indexes(self):
-        for caret in self.carets:
-            yield self.table.get_index_range(*caret.rc)[0]
 
     def refresh_style_from_selection(self):
         self.table.clear_selected_style()
@@ -691,6 +717,9 @@ class DisplayFlags:
         # moved and need to be updated.
         self.old_carets = None
 
+        # list of caret position & selection converted to indexes from row/col
+        self.carets_to_indexes = []
+
         # if True will add the old carets to the current caret to increase the
         # number of carets by one
         self.add_caret = False
@@ -703,11 +732,13 @@ class DisplayFlags:
         # to get to the next column.
         self.advance_caret_position_in_control = None
 
-        for flags in args:
-            self.add_flags(flags)
+        if args:
+            for flags in args:
+                self.add_flags(flags)
 
     def __str__(self):
         flags = []
+        flags.append(f"source_control={self.source_control}")
         for name in dir(self):
             if name.startswith("_"):
                 continue
@@ -1128,12 +1159,12 @@ class MouseEventMixin:
         if flags is None:
             flags = self.create_mouse_event_flags()
         ch = self.caret_handler
-        update = False
+        update = flags.refresh_needed
         inside = True ## FIXME
         r = row
         c = col
         mouse_at = (r, c)
-        mode_log.debug("handle_select_motion: r=%d c=%d pending: %s, sel rows: %s" % (r, c, str(self.pending_select_awaiting_drag), flags.selecting_rows))
+        mode_log.debug("handle_select_motion: r=%d c=%d pending: %s, flags: %s" % (r, c, str(self.pending_select_awaiting_drag), flags))
         # mode_log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s anchors: initial=%s current=%s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index)), str((caret.anchor_start_index, caret.anchor_end_index))))
         mode_log.debug(("motion before:", ch.carets))
         caret = ch.current_caret

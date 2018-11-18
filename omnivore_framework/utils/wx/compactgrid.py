@@ -745,10 +745,12 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         scroll_log.debug("on_timer: time=%f pos=%d,%d" % (time.time(), row, cell))
         # self.handle_on_motion(row, col, offscreen)
         flags = self.parent.create_mouse_event_flags()
+        flags.refresh_needed = True
         last_row, last_col = self.current_caret_row, self.current_caret_col
         self.handle_user_caret(row, cell, flags)
         if not self.parent.automatic_refresh:
             if last_row != self.current_caret_row or last_col != self.current_caret_col:
+                scroll_log.debug(f"on_timer: update to {self.current_caret_row},{self.current_caret_col}")
                 self.parent.handle_select_motion(evt, self.current_caret_row, self.current_caret_col, flags)
 
     ##### row/cell/col info
@@ -878,6 +880,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     def handle_user_caret(self, input_row, input_cell, flags):
         row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
+        print(f"handle_user_caret: input={input_row},{input_cell}, desired={row},{cell} offscreen={offscreen} flags={flags}")
         if not offscreen or self.can_scroll():
             self.process_motion_scroll(row, cell, flags)
 
@@ -941,13 +944,13 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         if sx == sx2 and sy == sy2:
             # print("Already visible! Not moving")
             return
-        # print("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
+        caret_log.debug("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         if self.parent.automatic_refresh:
             self.parent.move_viewport_origin((sy2, sx2))
         else:
             flags.source_control = self.parent
             flags.viewport_origin = (sy2, sx2)
-            # print("Moving viewport origin to %d,%d from %s" % (sy2, sx2, flags.source_control))
+            caret_log.debug("Moving viewport origin to %d,%d; flags=%s" % (sy2, sx2, flags))
 
     def process_motion_scroll(self, row, cell, flags):
         if row < 0:
@@ -1362,9 +1365,9 @@ class ColLabelWindow(AuxWindow):
 ##### Main grid
 
 try:
-    from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl
+    from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl, DisplayFlags
 except ModuleNotFoundError:
-    from compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl
+    from compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl, DisplayFlags
 
 class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     initial_zoom = 1
@@ -1685,49 +1688,41 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
             zoom = self.min_zoom
         self.zoom = zoom
 
-    def set_caret_index(self, rel_pos, flags, refresh=True):
-        try:
-            r, c = self.table.index_to_row_col(rel_pos)
-        except IndexError:
-            log.debug("index %d not visible in this view" % rel_pos)
-        else:
-            dummy_flags = self.create_mouse_event_flags()
-            self.main.ensure_visible(r, c, dummy_flags)
-            if self.automatic_refresh or refresh:
-                if dummy_flags.viewport_origin is not None:
-                    self.move_viewport_origin(dummy_flags.viewport_origin)
-                    flags.refreshed_as_side_effect.add(self)
-                    self.refresh_view()
+    #### carets
+
+    def keep_index_on_screen(self, index, flags):
+        row, col = self.table.index_to_row_col(index)
+        self.main.ensure_visible(row, col, flags)
+
+    def keep_caret_on_screen(self, caret, flags):
+        cell = self.line_renderer.col_to_cell(*caret.rc)
+        self.main.ensure_visible(caret.rc[0], cell, flags)
+
+    def keep_current_caret_on_screen(self, flags):
+        caret = self.caret_handler.current_caret
+        self.keep_caret_on_screen(caret, flags)
 
     def draw_carets(self, dc, start_row, visible_rows):
-        for index in self.caret_handler.iter_caret_indexes():
-            try:
-                r, c = self.table.index_to_row_col(index)
-            except IndexError:
-                caret_log.debug("index %d not visible in this view" % index)
-            else:
-                if r >= start_row and r < start_row + visible_rows:
-                    if self.edit_source is not None:
-                        caret_log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
-                        self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
-                    else:
-                        caret_log.debug("drawing caret at r,c=%d,%d" % (r, c))
-                        self.line_renderer.draw_caret(self, dc, r, c)
+        for caret in self.caret_handler.carets:
+            r, c = caret.rc
+            if r >= start_row and r < start_row + visible_rows:
+                if self.edit_source is not None:
+                    caret_log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
+                    self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
                 else:
-                    caret_log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
+                    caret_log.debug(f"drawing caret at r,c={r}{c} for {self}")
+                    self.line_renderer.draw_caret(self, dc, r, c)
+            else:
+                caret_log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
 
     def calc_primary_caret_visible_info(self):
         start_row = self.main.first_visible_row
         last_row = start_row + self.main.visible_rows
-        for index in self.caret_handler.iter_caret_indexes():
-            try:
-                r, c = self.table.index_to_row_col(index)
-            except IndexError:
-                pass
-            else:
-                if r >= start_row and r < last_row:
-                    row_info = index, r, r - start_row, c
-                    break
+        for caret in self.caret_handler.carets:
+            r, c = caret.rc
+            if r >= start_row and r < last_row:
+                row_info = index, r, r - start_row, c
+                break
         else:
             row_info = index, start_row, 0, 0
         return row_info
