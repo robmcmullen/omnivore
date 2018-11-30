@@ -278,7 +278,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         ranges = []
         # for c in self.caret_handler.carets:
         #     ranges.append((c.index, c.index + 1))
-        ranges = self.get_selected_ranges_including_carets(self.caret_handler)
+        ranges = self.caret_handler.get_selected_ranges_including_carets(self.table.get_index_range)
         cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
         self.segment_viewer.editor.process_command(cmd)
 
@@ -290,7 +290,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
             self.SetFocus()
 
     def create_hidden_text_ctrl(self):
-        c = SegmentGridTextCtrl(self, -1, 0, pos=(600,100), size=(400,24))
+        c = cg.GridCellTextCtrl(self, -1, 0, pos=(600,100), size=(400,24))
         return c
 
 

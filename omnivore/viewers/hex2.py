@@ -44,7 +44,7 @@ class HexTextCtrl(cg.GridCellTextCtrl):
         # Don't use the validator here, because apparently we can't
         # reset the validator based on the columns.  We have to do the
         # validation ourselves using EVT_KEY_DOWN.
-        SegmentGridTextCtrl.__init__(self, parent, id, 2, *args, **kwargs)
+        super().__init__(parent, id, 2, *args, **kwargs)
 
     def is_valid_keycode(self, keycode):
         return is_valid_hex_digit(keycode)

@@ -745,6 +745,7 @@ class ByteViewersPlugin(FrameworkPlugin):
     def _viewers_default(self):
         # from ..viewers.bitmap import MemoryMapViewer
         from ..viewers.bitmap2 import BitmapViewer
+        from ..viewers.pixelmap import PixelViewer
         from ..viewers.char2 import CharViewer
         # from ..viewers.cpu2 import DisassemblyViewer as OldDisassemblyViewer
         from ..viewers.hex2 import HexEditViewer
@@ -759,6 +760,6 @@ class ByteViewersPlugin(FrameworkPlugin):
         from ..viewers.disasm import DisassemblyViewer
         from ..viewers.history import InstructionHistoryViewer
 
-        return [BitmapViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, VideoViewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer, VirtualTestViewer, InstructionHistoryViewer, LabelViewer]
+        return [BitmapViewer, PixelViewer, CharViewer, DisassemblyViewer, HexEditViewer, CommentsViewer, UndoViewer, SegmentListViewer, MapViewer, JumpmanViewer, TriggerPaintingViewer, LevelSummaryViewer, VideoViewer, CPU6502Viewer, ANTICViewer, POKEYViewer, GTIAViewer, PIAViewer, HiresPage1Viewer, HiresPage2Viewer, TextPage1Viewer, TextPage2Viewer, MemoryAccessViewer, VirtualTestViewer, InstructionHistoryViewer, LabelViewer]
 
 plugins = [ByteViewersPlugin()]

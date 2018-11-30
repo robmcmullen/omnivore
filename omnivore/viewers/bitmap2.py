@@ -39,9 +39,13 @@ class BitmapLineRenderer(cg.TableLineRenderer):
 
     def __init__(self, grid_control, image_cache=None):
         image_cache = BitmapImageCache()
+        w, h = self.calc_cell_size_in_pixels(grid_control)
+        cg.LineRenderer.__init__(self, grid_control, w, h, grid_control.items_per_row, image_cache)
+
+    def calc_cell_size_in_pixels(self, grid_control):
         w = grid_control.zoom_w * grid_control.scale_width * grid_control.pixels_per_byte
         h = grid_control.zoom_h * grid_control.scale_height
-        cg.LineRenderer.__init__(self, grid_control, w, h, grid_control.items_per_row, image_cache)
+        return w, h
 
     # BaseLineRenderer interface
 
@@ -53,6 +57,9 @@ class BitmapLineRenderer(cg.TableLineRenderer):
         self.image_cache.draw_item(grid_control, dc, rect, data, style)
 
     # fast BaseLineRenderer interface drawing entire grid at once
+
+    def calc_bytes_per_row(self, table):
+        return table.items_per_row
 
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         t = grid_control.table
@@ -98,7 +105,7 @@ class BitmapLineRenderer(cg.TableLineRenderer):
         # i.e. the data is in a rectangular grid
         nr = last_row - first_row
         if nr > 0:
-            bytes_per_row = t.items_per_row
+            bytes_per_row = self.calc_bytes_per_row(t)
             nc = last_col - first_col
             offset = t.start_offset % bytes_per_row
             first_index = (first_row * bytes_per_row) - offset
