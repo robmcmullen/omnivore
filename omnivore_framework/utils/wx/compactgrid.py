@@ -1459,7 +1459,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         raise NotImplementedError("no default table implementation defined")
 
     def calc_caret_handler(self):
-        return MultiCaretHandler(self.table)
+        return MultiCaretHandler()
 
     def calc_line_renderer(self):
         return HexLineRenderer(self, 2)
@@ -1741,22 +1741,22 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         self.process_visibility_change()
 
     def handle_char_move_down(self, evt, flags):
-        self.caret_handler.move_carets_vertically(1)
+        self.caret_handler.move_carets_vertically(self.table, 1)
 
     def handle_char_move_up(self, evt, flags):
-        self.caret_handler.move_carets_vertically(-1)
+        self.caret_handler.move_carets_vertically(self.table, -1)
 
     def handle_char_move_left(self, evt, flags):
-        self.caret_handler.move_carets_horizontally(-1)
+        self.caret_handler.move_carets_horizontally(self.table, -1)
 
     def handle_char_move_right(self, evt, flags):
-        self.caret_handler.move_carets_horizontally(1)
+        self.caret_handler.move_carets_horizontally(self.table, 1)
 
     def handle_char_move_page_down(self, evt, flags):
-        self.caret_handler.move_carets_vertically(self.page_size)
+        self.caret_handler.move_carets_vertically(self.table, self.page_size)
 
     def handle_char_move_page_up(self, evt, flags):
-        self.caret_handler.move_carets_vertically(-self.page_size)
+        self.caret_handler.move_carets_vertically(self.table, -self.page_size)
 
     def handle_char_move_start_of_file(self, evt, flags):
         self.caret_handler.move_carets_to(0, 0)

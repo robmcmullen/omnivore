@@ -82,9 +82,21 @@ class Caret(object):
 
     @property
     def range(self):
+        if not self.has_selection:
+            raise ValueError("No selection")
         s = self.anchor_start
         e = self.anchor_end
         return (s, e) if e > s else (e, s)
+
+    @property
+    def range_including_caret(self):
+        if self.has_selection:
+            s = self.anchor_start
+            e = self.anchor_end
+            if e > s: s, e = e, s
+        else:
+            s = e = self.rc
+        return (s, e)
 
     def set(self, r, c):
         self.rc = (r, c)
@@ -151,9 +163,8 @@ class Caret(object):
 
 
 class MultiCaretHandler(object):
-    def __init__(self, table):
+    def __init__(self):
         self.carets = []
-        self.table = table
 
     @property
     def current_caret(self):
@@ -184,31 +195,31 @@ class MultiCaretHandler(object):
             index_list.append((index, anchor_start, anchor_end))
         return index_list
 
-    def convert_from_indexes(self, indexes):
+    def convert_from_indexes(self, table, indexes):
         self.carets = []
         for index, anchor_start, anchor_end in indexes:
-            r, c = self.table.index_to_row_col(index)
+            r, c = table.index_to_row_col(index)
             caret = Caret(r, c)
-            r, c = self.table.index_to_row_col(anchor_start)
+            r, c = table.index_to_row_col(anchor_start)
             caret.anchor_start = self.anchor_initial_start = (r, c)
-            r, c = self.table.index_to_row_col(anchor_end)
+            r, c = table.index_to_row_col(anchor_end)
             caret.anchor_end = self.anchor_initial_end = (r, c)
             self.carets.append(caret)
 
     def add_caret(self, caret):
         self.carets.append(caret)
 
-    def move_carets_vertically(self, delta_r):
+    def move_carets_vertically(self, table, delta_r):
         caret_log.debug(f"moving vertically: {delta_r}")
         for caret in self.carets:
-            caret.rc = self.table.enforce_valid_row_col(caret.rc[0] + delta_r, caret.rc[1])
+            caret.rc = table.enforce_valid_row_col(caret.rc[0] + delta_r, caret.rc[1])
             caret.clear_selection()
         self.validate_carets()
 
-    def move_carets_horizontally(self, delta_c):
+    def move_carets_horizontally(self, table, delta_c):
         caret_log.debug(f"moving horizontally: {delta_c}")
         for caret in self.carets:
-            caret.rc = self.table.enforce_valid_row_col(caret.rc[0], caret.rc[1] + delta_c)
+            caret.rc = table.enforce_valid_row_col(caret.rc[0], caret.rc[1] + delta_c)
             caret.clear_selection()
         self.validate_carets()
 
@@ -222,8 +233,8 @@ class MultiCaretHandler(object):
         except IndexError:
             self.move_carets_to(r, c)
 
-    def move_current_caret_to_index(self, index):
-        r, c = self.table.index_to_row_col(index)
+    def move_current_caret_to_index(self, table, index):
+        r, c = table.index_to_row_col(index)
         self.carets = [Caret(r, c)]
 
     def move_carets_process_function(self, func):
@@ -239,13 +250,13 @@ class MultiCaretHandler(object):
         # self.carets = new_carets
         pass
 
-    def validate_caret_position(self, index):
-        return self.table.enforce_valid_index(index)
+    def validate_caret_position(self, table, index):
+        return table.enforce_valid_index(index)
 
-    def refresh_style_from_selection(self):
-        self.table.clear_selected_style()
+    def refresh_style_from_selection(self, table):
+        table.clear_selected_style()
         for caret in self.carets:
-            caret.add_selection_to_style(self.table)
+            caret.add_selection_to_style(table)
 
     def collapse_overlapping(self):
         """Check if the current caret selection overlaps any existing caret and
@@ -292,6 +303,29 @@ class MultiCaretHandler(object):
                 self.carets = collapsed
         self.carets.append(current)
         print(("collapsed carets: %s" % str(self.carets)))
+
+    def get_selected_ranges(self, row_col_to_index_func):
+        ranges = []
+        for r in [c.range for c in self.carets]:
+            start, _ = row_col_to_index_func(*r[0])
+            _, end = row_col_to_index_func(*r[1])
+            ranges.append((start, end))
+        return ranges
+
+    def get_selected_ranges_including_carets(self, row_col_to_index_func):
+        ranges = []
+        for r in [c.range_including_caret for c in self.carets]:
+            start, _ = row_col_to_index_func(*r[0])
+            _, end = row_col_to_index_func(*r[1])
+            ranges.append((start, end))
+        return ranges
+
+    def get_selected_ranges_and_indexes(self, row_col_to_index_func):
+        opt = self.get_selected_ranges(row_col_to_index_func)
+        return opt, ranges_to_indexes(opt)
+
+    def invert_selection_ranges(self, row_col_to_index_func, ranges):
+        return invert_ranges(ranges, caret_handler.document_length)
 
 
 ##### Mouse modes
@@ -510,7 +544,7 @@ class MouseMode(object):
 
     def highlight_selected_ranges(self, caret_handler):
         # log.error("highlight_selected_ranges not defined in mouse mode")
-        caret_handler.refresh_style_from_selection()
+        caret_handler.refresh_style_from_selection(self.control.table)
 
 
 class NormalSelectMode(MouseMode):
