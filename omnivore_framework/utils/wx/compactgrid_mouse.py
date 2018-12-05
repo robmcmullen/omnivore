@@ -170,6 +170,19 @@ class MultiCaretHandler(object):
     def current_caret(self):
         return self.carets[-1]  # last one is the most recent
 
+    @property
+    def has_selection(self):
+        for caret in self.carets:
+            if caret.has_selection:
+                return True
+        return False
+
+    @property
+    def carets_with_selection(self):
+        for caret in self.carets:
+            if caret.has_selection:
+                yield caret
+
     def new_carets(self, caret_state):
         self.carets = [Caret(state=s) for s in caret_state]
 
