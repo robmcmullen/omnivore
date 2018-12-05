@@ -57,7 +57,43 @@ class BaseRenderer(object):
         log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d, output=%s" % (h, w, colors, self.pixels_per_byte * self.scale_width, bytes_per_row, str(output.shape)))
         return output
 
-    def get_2bpp(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, colors):
+    def calc_style_per_pixel_1bpp(self, style):
+        stack = np.empty((len(style), 8), dtype=style.dtype)
+        stack[:,0] = style
+        stack[:,1] = style
+        stack[:,2] = style
+        stack[:,3] = style
+        stack[:,4] = style
+        stack[:,5] = style
+        stack[:,6] = style
+        stack[:,7] = style
+        return stack
+
+    def calc_style_per_pixel_2bpp(self, style):
+        stack = np.empty((len(style), 4), dtype=style.dtype)
+        stack[:,0] = style
+        stack[:,1] = style
+        stack[:,2] = style
+        stack[:,3] = style
+        return stack
+
+    def calc_style_per_pixel_4bpp(self, style):
+        stack = np.empty((len(style), 2), dtype=style.dtype)
+        stack[:,0] = style
+        stack[:,1] = style
+        return stack
+
+    def calc_style_per_pixel(self, style):
+        if self.pixels_per_byte == 1:
+            return style
+        elif self.pixels_per_byte == 2:
+            return self.calc_style_per_pixel_4bpp(style)
+        elif self.pixels_per_byte == 4:
+            return self.calc_style_per_pixel_2bpp(style)
+        elif self.pixels_per_byte == 8:
+            return self.calc_style_per_pixel_1bpp(style)
+
+    def get_2bpp(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, colors, style_per_pixel=None):
         bits = np.unpackbits(byte_values)
         bits = bits.reshape((-1, 8))
         pixels = np.empty((nr * bytes_per_row, 4), dtype=np.uint8)
@@ -66,7 +102,8 @@ class BaseRenderer(object):
         pixels[:,2] = bits[:,4] * 2 + bits[:,5]
         pixels[:,3] = bits[:,6] * 2 + bits[:,7]
 
-        style_per_pixel = np.vstack((style, style, style, style)).T
+        if style_per_pixel is None:
+            style_per_pixel = self.calc_style_per_pixel_2bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & user_bit_mask) > 0
@@ -85,14 +122,15 @@ class BaseRenderer(object):
         bitimage[count:,:,:] = segment_viewer.preferences.empty_background_color.Get(False)
         return bitimage
 
-    def get_4bpp(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, colors):
+    def get_4bpp(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, colors, style_per_pixel=None):
         bits = np.unpackbits(byte_values)
         bits = bits.reshape((-1, 8))
         pixels = np.empty((nr * bytes_per_row, 2), dtype=np.uint8)
         pixels[:,0] = bits[:,0] * 8 + bits[:,1] * 4 + bits[:,2] * 2 + bits[:,3]
         pixels[:,1] = bits[:,4] * 8 + bits[:,5] * 4 + bits[:,6] * 2 + bits[:,7]
 
-        style_per_pixel = np.vstack((style, style)).T
+        if style_per_pixel is None:
+            style_per_pixel = self.calc_style_per_pixel_4bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & user_bit_mask) > 0
@@ -160,7 +198,7 @@ class OneBitPerPixelB(BaseRenderer):
     def get_bw_colors(self, segment_viewer):
         return ((255, 255, 255), (0, 0, 0))
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         bits = np.unpackbits(byte_values)
         pixels = bits.reshape((-1, 8))
 
@@ -173,7 +211,8 @@ class OneBitPerPixelB(BaseRenderer):
         c_colors = colors.get_blended_color_registers(bw_colors, segment_viewer.preferences.comment_background_color)
         d_colors = colors.get_dimmed_color_registers(bw_colors, segment_viewer.preferences.background_color, segment_viewer.preferences.data_background_color)
 
-        style_per_pixel = np.vstack((style, style, style, style, style, style, style, style)).T
+        if style_per_pixel is None:
+            style_per_pixel = self.calc_style_per_pixel_1bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & user_bit_mask) > 0
@@ -240,7 +279,10 @@ class OneBitPerPixelApple2Linear(BaseRenderer):
     def get_bw_colors(self, segment_viewer):
         return ((0, 0, 0), (255, 255, 255))
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def calc_style_per_pixel(self, style):
+        return np.vstack((style, style, style, style, style, style, style)).T
+
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         bits = np.unpackbits(bit_reverse_table[byte_values])
         pixels = bits.reshape((-1, 8))
 
@@ -253,7 +295,8 @@ class OneBitPerPixelApple2Linear(BaseRenderer):
         c_colors = colors.get_blended_color_registers(bw_colors, segment_viewer.preferences.comment_background_color)
         d_colors = colors.get_dimmed_color_registers(bw_colors, segment_viewer.preferences.background_color, segment_viewer.preferences.data_background_color)
 
-        style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
+        if style_per_pixel is None:
+            style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & user_bit_mask) > 0
@@ -292,13 +335,10 @@ def generate_apple2_index():
     bytepos = np.empty((192, 280), dtype=np.int32)
     bytepos[:,0] = offsets * 7
 
-class OneBitPerPixelApple2FullScreen(BaseRenderer):
+class OneBitPerPixelApple2FullScreen(OneBitPerPixelApple2Linear):
     name = "B/W, Apple 2, Screen Order"
 
-    def get_bw_colors(self, segment_viewer):
-        return ((0, 0, 0), (255, 255, 255))
-
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         screen = np.zeros((8192,), dtype=np.uint8)
         byte_values = byte_values[0:8192]
         num_valid = len(byte_values)  # might be smaller than 8192
@@ -315,7 +355,8 @@ class OneBitPerPixelApple2FullScreen(BaseRenderer):
         c_colors = colors.get_blended_color_registers(bw_colors, segment_viewer.preferences.comment_background_color)
         d_colors = colors.get_dimmed_color_registers(bw_colors, segment_viewer.preferences.background_color, segment_viewer.preferences.data_background_color)
 
-        style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
+        if style_per_pixel is None:
+            style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & user_bit_mask) > 0
@@ -338,7 +379,7 @@ class OneBitPerPixelApple2FullScreen(BaseRenderer):
         return bitimage.reshape((nr, bytes_per_row * 7, 3))
 
 
-class OneBitPerPixelApple2Artifacting(BaseRenderer):
+class OneBitPerPixelApple2Artifacting(OneBitPerPixelApple2Linear):
     name = "Apple 2 (artifacting colors)"
 
     def get_bw_colors(self, segment_viewer):
@@ -384,7 +425,7 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
     # 01 - orange
     # 11 - white
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         bits = np.unpackbits(bit_reverse_table[byte_values])
         pixels = bits.reshape((-1, 8))
 
@@ -397,7 +438,8 @@ class OneBitPerPixelApple2Artifacting(BaseRenderer):
         c_colors = colors.get_blended_color_registers(bw_colors, segment_viewer.preferences.comment_background_color)
         d_colors = colors.get_dimmed_color_registers(bw_colors, segment_viewer.preferences.background_color, segment_viewer.preferences.data_background_color)
 
-        style_per_pixel = np.vstack((style, style, style, style, style, style, style)).T
+        if style_per_pixel is None:
+            style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
         data = (style_per_pixel & user_bit_mask) > 0
@@ -424,9 +466,9 @@ class TwoBitsPerPixel(BaseRenderer):
     name = "2bpp"
     pixels_per_byte = 4
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         colors = self.get_colors(segment_viewer, [0, 1, 2, 3])
-        bitimage = self.get_2bpp(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors)
+        bitimage = self.get_2bpp(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors, style_per_pixel)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
@@ -436,9 +478,9 @@ class ModeD(TwoBitsPerPixel):
     scale_height = 2
     pixels_per_byte = 4
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         colors = self.get_colors(segment_viewer, [8, 4, 5, 6])
-        bitimage = self.get_2bpp(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors)
+        bitimage = self.get_2bpp(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors, style_per_pixel)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
@@ -453,9 +495,9 @@ class FourBitsPerPixel(BaseRenderer):
     name = "4bpp"
     pixels_per_byte = 2
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         colors = self.get_colors(segment_viewer, list(range(16)))
-        bitimage = self.get_4bpp(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors)
+        bitimage = self.get_4bpp(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors, style_per_pixel)
         return self.reshape(bitimage, bytes_per_row, nr)
 
 
@@ -477,9 +519,9 @@ class TwoBitPlanesLE(BaseRenderer):
             bytes_per_row = (scale + 1) * self.bitplanes
         return bytes_per_row
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         colors = self.get_colors(segment_viewer, list(range(2**self.bitplanes)))
-        bitimage = self.get_bitplanes(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors)
+        bitimage = self.get_bitplanes(segment_viewer, bytes_per_row, nr, count, byte_values, style, colors, style_per_pixel)
         return bitimage
 
 
@@ -669,7 +711,7 @@ class BaseBytePerPixelRenderer(BaseRenderer):
         style_per_pixel = np.vstack((style, style, style, style)).T
         return pixels, style_per_pixel
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         normal = style == 0
         highlight = (style & selected_bit_mask) == selected_bit_mask
         comment = (style & comment_bit_mask) == comment_bit_mask
@@ -1097,7 +1139,7 @@ class BytePerPixelMemoryMap(BaseRenderer):
             array = get_numpy_memory_map_image(segment_viewer, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols)
         return array
 
-    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style):
+    def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         array = get_numpy_memory_map_image(segment_viewer, bytes_per_row, nr, count, byte_values, style)
         return array
 
