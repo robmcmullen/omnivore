@@ -4,6 +4,7 @@ import sys
 import wx
 
 from traits.api import on_trait_change, Bool, Undefined
+from atrcopy import selected_bit_mask
 
 from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
@@ -77,49 +78,60 @@ class PixelLineRenderer(b.BitmapLineRenderer):
         frame_rect = wx.Rect(ul_rect.x, ul_rect.y, lr_rect.x - ul_rect.x + lr_rect.width, lr_rect.y - ul_rect.y + lr_rect.height)
         dc.SetClippingRegion(frame_rect)
 
-        # First and last rows may not span entire width. Process those
-        # separately
-        #
-        # First row may not have bytes at the beginning of the row if the start
-        # offset is not zero
-        if first_row == 0:
-            try:
-                first_byte, index, last_index = self.calc_column_range(grid_control, first_row, first_byte, last_byte)
-            except IndexError:
-                pass  # skip lines with no visible cells
-            else:
-                self.draw_line(grid_control, dc, first_row, first_byte, index, last_index)
-            first_row += 1
-            if first_row == last_row:
-                return
-            frame_rect.y += ul_rect.height
-
-        # Last row may not have bytes at the end of the row
-        if last_row == t.num_rows:
-            try:
-                first_byte, index, last_index = self.calc_column_range(grid_control, last_row - 1, first_byte, last_byte)
-            except IndexError:
-                pass  # skip lines with no visible cells
-            else:
-                self.draw_line(grid_control, dc, last_row - 1, first_byte, index, last_index)
-            last_row -= 1
-
-        # If there are any more rows to display, they will be full-width rows;
-        # i.e. the data is in a rectangular grid
+        # only display complete rows
         nr = last_row - first_row
         if nr > 0:
             bytes_per_row = t.bytes_per_row
             nc = last_byte - first_byte
-            offset = t.start_offset % bytes_per_row
-            first_index = (first_row * bytes_per_row) - offset
-            last_index = (last_row * bytes_per_row) - offset
-            log.debug(f"drawing rectangular grid: bpr={bytes_per_row}, first,last={first_index},{last_index}, nr={nr}, start_offset={offset}")
+            first_index = first_row * bytes_per_row
+            last_index = first_index + nr * bytes_per_row
+            if last_index > t.last_valid_index:
+                nr -= 1
+                last_index = first_index + nr * bytes_per_row
+
+            log.debug(f"drawing rectangular grid: control={grid_control} bpr={bytes_per_row}, first,last={first_index},{last_index}, nr={nr}")
             data = t.data[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_byte:last_byte].flatten()
             style = t.style[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_byte:last_byte].flatten()
+            if grid_control.segment_viewer.is_focused_viewer and grid_control.caret_handler.has_selection:
+                style_per_pixel = (grid_control.bitmap_renderer.calc_style_per_pixel(style))
+                s1d = style_per_pixel.reshape(-1)
+                s1d &= 0xff ^ selected_bit_mask
+                byte_width = last_byte - first_byte
+                for caret in grid_control.caret_handler.carets_with_selection:
+                    print("TOSHNUTHOETNUHO caret", caret, first_row, last_row, s1d.shape)
+                    if caret.anchor_start[0] >= last_row or caret.anchor_end[0] < first_row:
+                        continue
+                    else:
+                        # some part of selection is visible
+                        start_row = caret.anchor_start[0] - first_row
+                        first_col = first_byte * t.pixels_per_byte
+                        last_col = last_byte * t.pixels_per_byte
+                        width = last_col - first_col
+                        if start_row < 0:
+                            start_row = 0
+                            start_col = 0
+                        else:
+                            start_col = max(caret.anchor_start[1] - first_col, 0)
+                        end_row = caret.anchor_end[0] - first_row
+                        if end_row >= last_row:
+                            end_row = last_row
+                            end_col = width
+                        else:
+                            end_col = min(caret.anchor_end[1] - first_col, width)
+
+                        start_index = start_row * width + start_col
+                        end_index = end_row * width + end_col + 1
+                        print("OETUSHNTOEHUSROEHU selection", start_row, start_col, start_index, end_row, end_col, end_index, style_per_pixel.shape, s1d.shape)
+                        s1d[start_index:end_index] |= selected_bit_mask
+
+                style = None
+            else:
+                style_per_pixel = None
+            print("OETHUSNOEUNOEU style", style.shape if style is not None else None, "style_per_pixel", style_per_pixel.shape if style_per_pixel is not None else None)
 
             # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
 
-            array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, nc, nr, nc * nr, data, style)
+            array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, nc, nr, nc * nr, data, style, style_per_pixel=style_per_pixel)
             width = array.shape[1]
             height = array.shape[0]
             if width > 0 and height > 0:
@@ -171,7 +183,7 @@ class PixelGridControl(b.BitmapGridControl):
     default_table_cls = PixelTable
 
     def set_viewer_defaults(self):
-        self.pixels_per_row = 8
+        self.bytes_per_row = 7
         self.items_per_row = 8  # 1 byte per pixel fallback
         self.zoom = 2
 
@@ -185,7 +197,7 @@ class PixelGridControl(b.BitmapGridControl):
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
-            self.items_per_row = self.pixels_per_row * self.pixels_per_byte
+            self.items_per_row = self.bytes_per_row * self.pixels_per_byte
             return PixelLineRenderer(self)
         return SegmentGridControl.calc_line_renderer(self)
 
