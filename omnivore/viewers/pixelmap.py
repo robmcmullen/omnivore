@@ -65,6 +65,42 @@ class PixelLineRenderer(b.BitmapLineRenderer):
 
     # fast BaseLineRenderer interface drawing entire grid at once
 
+    def add_regular_selection(self, caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte):
+        # some part of selection is visible
+        start_row = caret.anchor_start[0] - first_row
+        first_col = first_byte * t.pixels_per_byte
+        last_col = last_byte * t.pixels_per_byte
+        width = last_col - first_col
+        if start_row < 0:
+            start_row = 0
+            start_col = 0
+        else:
+            start_col = max(caret.anchor_start[1] - first_col, 0)
+        end_row = caret.anchor_end[0] - first_row
+        if end_row >= last_row:
+            end_row = last_row
+            end_col = width
+        else:
+            end_col = min(caret.anchor_end[1] - first_col, width)
+
+        start_index = start_row * width + start_col
+        end_index = end_row * width + end_col + 1
+        s1d = style_per_pixel.reshape(-1)
+        print("OETUSHNTOEHUSROEHU selection", start_row, start_col, start_index, end_row, end_col, end_index, style_per_pixel.shape, s1d.shape)
+        s1d[start_index:end_index] |= selected_bit_mask
+
+    def add_rectangular_selection(self, caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte):
+        # some part of selection is visible
+        start_row = max(caret.anchor_start[0] - first_row, 0)
+        first_col = first_byte * t.pixels_per_byte
+        left_col = max(caret.anchor_start[1] - first_col, 0)
+        last_col = last_byte * t.pixels_per_byte
+        right_col = min(caret.anchor_end[1] - first_col + 1, last_col - first_col + 1)
+        end_row = min(caret.anchor_end[0] - first_row + 1, last_row - first_row + 1)
+        s2d = style_per_pixel.reshape((-1, (last_byte - first_byte) * style_per_pixel.shape[-1]))
+        print("OETUSHNTOEHUSROEHU rectangular selection", start_row, left_col, end_row, right_col, style_per_pixel.shape, s2d.shape)
+        s2d[start_row:end_row, left_col:right_col] |= selected_bit_mask
+
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         t = grid_control.table
         first_byte = first_cell // t.pixels_per_byte
@@ -89,40 +125,22 @@ class PixelLineRenderer(b.BitmapLineRenderer):
                 nr -= 1
                 last_index = first_index + nr * bytes_per_row
 
+        if nr > 0:
             log.debug(f"drawing rectangular grid: control={grid_control} bpr={bytes_per_row}, first,last={first_index},{last_index}, nr={nr}")
             data = t.data[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_byte:last_byte].flatten()
             style = t.style[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_byte:last_byte].flatten()
             if grid_control.segment_viewer.is_focused_viewer and grid_control.caret_handler.has_selection:
                 style_per_pixel = (grid_control.bitmap_renderer.calc_style_per_pixel(style))
-                s1d = style_per_pixel.reshape(-1)
-                s1d &= 0xff ^ selected_bit_mask
+                style_per_pixel &= 0xff ^ selected_bit_mask
                 byte_width = last_byte - first_byte
                 for caret in grid_control.caret_handler.carets_with_selection:
-                    print("TOSHNUTHOETNUHO caret", caret, first_row, last_row, s1d.shape)
                     if caret.anchor_start[0] >= last_row or caret.anchor_end[0] < first_row:
                         continue
                     else:
-                        # some part of selection is visible
-                        start_row = caret.anchor_start[0] - first_row
-                        first_col = first_byte * t.pixels_per_byte
-                        last_col = last_byte * t.pixels_per_byte
-                        width = last_col - first_col
-                        if start_row < 0:
-                            start_row = 0
-                            start_col = 0
+                        if caret.rectangular or True:
+                            self.add_rectangular_selection(caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte)
                         else:
-                            start_col = max(caret.anchor_start[1] - first_col, 0)
-                        end_row = caret.anchor_end[0] - first_row
-                        if end_row >= last_row:
-                            end_row = last_row
-                            end_col = width
-                        else:
-                            end_col = min(caret.anchor_end[1] - first_col, width)
-
-                        start_index = start_row * width + start_col
-                        end_index = end_row * width + end_col + 1
-                        print("OETUSHNTOEHUSROEHU selection", start_row, start_col, start_index, end_row, end_col, end_index, style_per_pixel.shape, s1d.shape)
-                        s1d[start_index:end_index] |= selected_bit_mask
+                            self.add_regular_selection(caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte)
 
                 style = None
             else:

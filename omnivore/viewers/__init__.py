@@ -146,6 +146,10 @@ class SegmentViewer(HasTraits):
     def preferences(self):
         return self.linked_base.cached_preferences
 
+    @property
+    def is_focused_viewer(self):
+        return self.linked_base.editor.focused_viewer == self
+
     ##### Class methods
 
     @classmethod
@@ -357,7 +361,7 @@ class SegmentViewer(HasTraits):
         if self.has_caret:
             if flags.carets_to_indexes:
                 caret_log.debug(f"sync_caret: {self.pretty_name} has carets; syncing from {flags.carets_to_indexes}")
-                self.control.caret_handler.convert_from_indexes(flags.carets_to_indexes)
+                self.control.caret_handler.convert_from_indexes(self.control.table, flags.carets_to_indexes)
                 self.control.keep_current_caret_on_screen(flags)
             else:
                 caret_log.debug(f"sync_caret: caret position/selection unchanged")
