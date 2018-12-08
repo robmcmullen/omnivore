@@ -545,8 +545,8 @@ class SegmentViewer(HasTraits):
     def clipboard_data_format(self):
         return "numpy"
 
-    def get_paste_command(self, serialized_data):
-        return PasteCommand
+    def get_paste_command(self, serialized_data, *args, **kwargs):
+        return PasteCommand(self.segment, serialized_data, *args, **kwargs)
 
     @classmethod
     def all_known_copy_special_actions(cls, task):

@@ -290,8 +290,9 @@ class ByteEditor(FrameworkEditor):
 
     def process_paste_data(self, serialized_data, cmd_cls=None, *args, **kwargs):
         if cmd_cls is None:
-            cmd_cls = self.focused_viewer.get_paste_command(serialized_data)
-        cmd = cmd_cls(self.segment, serialized_data, *args, **kwargs)
+            cmd = self.focused_viewer.get_paste_command(serialized_data, *args, **kwargs)
+        else:
+            cmd = cmd_cls(self.segment, serialized_data, *args, **kwargs)
         log.debug("processing paste object %s" % cmd)
         self.process_command(cmd)
         return cmd

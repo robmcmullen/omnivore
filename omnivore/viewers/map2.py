@@ -55,12 +55,13 @@ class MapViewer(CharViewer):
     def clipboard_data_format(self):
         return "numpy,columns"
 
-    def get_paste_command(self, serialized_data):
+    def get_paste_command(self, serialized_data, *args, **kwargs):
         print(serialized_data)
         print((serialized_data.source_data_format_name))
         if serialized_data.source_data_format_name == "numpy,columns":
-            return PasteRectCommand
-        return PasteCommand
+            cmd_cls = PasteRectCommand
+        cmd_cls = PasteCommand
+        return cmd_cls(self.segment, serialized_data, *args, **kwargs)
 
     ##### Drawing pattern
 
