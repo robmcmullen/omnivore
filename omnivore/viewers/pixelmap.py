@@ -3,7 +3,7 @@ import sys
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined
+from traits.api import on_trait_change, Bool, Undefined, Any
 from atrcopy import selected_bit_mask
 
 from omnivore_framework.utils.nputil import intscale
@@ -14,6 +14,7 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from . import SegmentViewer
 from . import bitmap2 as b
 from . import actions as va
+from ..arch import pixel_converters as px
 
 import logging
 log = logging.getLogger(__name__)
@@ -161,43 +162,71 @@ class PixelLineRenderer(b.BitmapLineRenderer):
                 dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
 
 
-class PixelTable(SegmentTable):
-    def __init__(self, linked_base, bytes_per_row, pixels_per_byte):
-        self.pixels_per_byte = pixels_per_byte
-        self.bytes_per_row = bytes_per_row
-        SegmentTable.__init__(self, linked_base, bytes_per_row * pixels_per_byte)
+# class PixelTable(SegmentTable):
+#     def __init__(self, linked_base, bytes_per_row, pixels_per_byte):
+#         self.pixels_per_byte = pixels_per_byte
+#         self.bytes_per_row = bytes_per_row
+#         SegmentTable.__init__(self, linked_base, bytes_per_row * pixels_per_byte)
+
+#     def calc_num_rows(self):
+#         return ((self.start_offset + len(self.data) - 1) // self.bytes_per_row) + 1
+
+#     def get_label_at_index(self, index):
+#         # Can't just return hex value of index because some segments (like the
+#         # raw sector segment) use different labels
+#         return self.segment.label(index // self.bytes_per_row, True)
+
+#     def get_index_range(self, row, col):
+#         """ Get the byte offset from start of file given row, col
+#         position.
+#         """
+#         byte_index = col // self.pixels_per_byte
+#         index = self.clamp_index(row * self.bytes_per_row + byte_index - self.start_offset)
+#         if index >= self.last_valid_index:
+#             index = self.last_valid_index - 1
+#         if index < 0:
+#             index = 0
+#         return index, index + 1
+
+#     def get_index_of_row(self, line):
+#         return (line * self.bytes_per_row) - self.start_offset
+
+#     def index_to_row_col(self, index):
+#         r, byte_index = divmod(index + self.start_offset, self.bytes_per_row)
+#         c = byte_index * self.pixels_per_byte
+#         print("OEHURSOEHURSOHEUSR", index, r, byte_index, c)
+#         return r, c
+
+
+class PixelTable(cg.HexTable):
+    def __init__(self, control):
+        self.control = control
+        s = linked_base.segment
+        self.num_rows = self.converter.calc_grid_height(s.data, self.control.items_per_row)
+        cg.HexTable.__init__(self, None, None, self.control.items_per_row, self.segment.origin)
+
+    @property
+    def converter(self):
+        return self.control.pixel_converter    
 
     def calc_num_rows(self):
-        return ((self.start_offset + len(self.data) - 1) // self.bytes_per_row) + 1
+        return self.num_rows
 
-    def get_label_at_index(self, index):
-        # Can't just return hex value of index because some segments (like the
-        # raw sector segment) use different labels
-        return self.segment.label(index // self.bytes_per_row, True)
+    def calc_last_valid_index(self):
+        return self.items_per_row * self.num_rows
 
-    def get_index_range(self, row, col):
-        """Get the byte offset from start of file given row, col
-        position.
-        """
-        byte_index = col // self.pixels_per_byte
-        index = self.clamp_index(row * self.bytes_per_row + byte_index - self.start_offset)
-        if index >= self.last_valid_index:
-            index = self.last_valid_index - 1
-        if index < 0:
-            index = 0
-        return index, index + 1
+    def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
+        self.current_rectangle = self.converter.calc_color_index_grid(start_row, visible_rows, start_cell, visible_cells)
 
-    def get_index_of_row(self, line):
-        return (line * self.bytes_per_row) - self.start_offset
-
-    def index_to_row_col(self, index):
-        r, byte_index = divmod(index + self.start_offset, self.bytes_per_row)
-        c = byte_index * self.pixels_per_byte
-        print("OEHURSOEHURSOHEUSR", index, r, byte_index, c)
-        return r, c
+    def rebuild(self):
+        segment = self.linked_base.segment
+        self.current = self.driver.parse(segment, self.max_num_entries)
+        self.parsed = None
+        self.init_boundaries()
+        print(f"new num_rows: {self.num_rows}")
 
 
-class PixelGridControl(b.BitmapGridControl):
+class PixelGridControl(SegmentGridControl):
     default_table_cls = PixelTable
 
     def set_viewer_defaults(self):
@@ -205,19 +234,52 @@ class PixelGridControl(b.BitmapGridControl):
         self.items_per_row = 8  # 1 byte per pixel fallback
         self.zoom = 2
 
+    @property
+    def pixel_converter(self):
+        return self.segment_viewer.pixel_converter
+
+    @property
+    def zoom_w(self):
+        return self.zoom  # * self.bitmap_renderer.scale_width
+
+    @property
+    def zoom_h(self):
+        return self.zoom  # * self.bitmap_renderer.scale_height
+
+    @property
+    def pixels_per_byte(self):
+        return self.pixel_converter.pixels_per_byte
+
+    @property
+    def scale_width(self):
+        return self.pixel_converter.scale_width
+
+    @property
+    def scale_height(self):
+        return self.pixel_converter.scale_height
+
     def calc_default_table(self, linked_base):
         if hasattr(self, 'segment_viewer'):
             p = self.pixels_per_byte
         else:
             p = 1
         print("OTNEUHSNTOEHSUOEHU", self.items_per_row, p)
-        return self.default_table_cls(linked_base, self.items_per_row // p, p)
+        self.items_per_row = self.pixel_converter.validate_items_per_row(self.items_per_row)
+        self.bytes_per_row = self.pixel_converter.calc_bytes_per_row(self.items_per_row)
+        return self.default_table_cls(self)
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
             self.items_per_row = self.bytes_per_row * self.pixels_per_byte
             return PixelLineRenderer(self)
         return SegmentGridControl.calc_line_renderer(self)
+
+    def verify_line_renderer(self):
+        self.recalc_line_renderer()
+
+    def get_extra_actions(self):
+        actions = [None, va.BitmapWidthAction, va.BitmapZoomAction]
+        return actions
 
 
 class PixelViewer(SegmentViewer):
@@ -226,6 +288,8 @@ class PixelViewer(SegmentViewer):
     pretty_name = "Pixel Array"
 
     control_cls = PixelGridControl
+
+    pixel_converter = Any
 
     has_bitmap = True
 
@@ -239,9 +303,14 @@ class PixelViewer(SegmentViewer):
 
     zoom_text = "bitmap zoom factor"
 
+    #### traits defaults
+
+    def pixel_converter_default(self):
+        return px.AnticE
+
     @property
     def window_title(self):
-        return "Pixels: " + self.control.bitmap_renderer.name
+        return "Pixels: " + self.pixel_converter.name
 
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
@@ -251,7 +320,7 @@ class PixelViewer(SegmentViewer):
             self.linked_base.editor.update_pane_names()
 
     def validate_width(self, width):
-        return self.machine.bitmap_renderer.validate_bytes_per_row(width)
+        return width
 
     def recalc_data_model(self):
         self.control.recalc_view()
