@@ -6,8 +6,8 @@ import pytest
 
 from mock import MockHexEditor
 
-from omnivore.utils.file_guess import FileGuess
-from omnivore8bit.document import SegmentedDocument
+from omnivore_framework.utils.file_guess import FileGuess
+from omnivore.document import SegmentedDocument
 
 from atrcopy import SegmentData, DefaultSegment, get_xex
 

@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 
 from pyface.tasks.topological_sort import before_after_sort
-from omnivore.utils.sortutil import *
+from omnivore_framework.utils.sortutil import *
 
 class SortItem(object):
     def __init__(self, id, before="", after=""):

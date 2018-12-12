@@ -6,8 +6,8 @@ import pytest
 
 from mock import MockHexEditor
 
-from omnivore.utils.file_guess import FileGuess
-from omnivore8bit.arch.disasm import Basic6502Disassembler
+from omnivore_framework.utils.file_guess import FileGuess
+from omnivore.arch.disasm import Basic6502Disassembler
 
 from atrcopy import SegmentData, DefaultSegment, user_bit_mask
 
@@ -23,16 +23,16 @@ class TestSegment1(object):
     def test_simple(self):
         s = self.editor.segment
         r = s.get_style_ranges()
-        assert r == [(0,16)]
-        s.set_style_ranges([(0,10),], data=True)
+        assert r == [(0,32)]
+        s.set_style_ranges([(0,10),], user=2)
         s.set_style_ranges([(12,15),], user=1)
-        r = s.get_style_ranges(data=True)
+        r = s.get_style_ranges(user=2)
         print(r)
         print(s.data)
         print(s.style)
         assert r == [(0,10)]
-        r = s.get_entire_style_ranges(data=True, user=1)
-        assert r == [((0,10), 64), ((10, 12), 0), ((12, 15), 1), ((15, 32), 0)]
+        r = s.get_entire_style_ranges(user=user_bit_mask)
+        assert r == [((0,10), 2), ((10, 12), 0), ((12, 15), 1), ((15, 32), 0)]
 
 
     def test_comments(self):

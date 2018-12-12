@@ -6,7 +6,7 @@ import pytest
 
 from mock import MockHexEditor
 
-from omnivore.utils.file_guess import FileGuess
+from omnivore_framework.utils.file_guess import FileGuess
 
 from pyatasm import Assemble
 from atrcopy import SegmentData, DefaultSegment

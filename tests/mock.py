@@ -31,8 +31,8 @@ from traits.api import HasTraits, Str, Event
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from omnivore.framework.persistence import FilePersistenceMixin
-from omnivore8bit.document import SegmentedDocument
+from omnivore_framework.framework.persistence import FilePersistenceMixin
+from omnivore.document import SegmentedDocument
 
 def null(self, *args, **kwargs):
     pass
@@ -68,6 +68,7 @@ class MockEditor(object):
 
 class MockHexEditor(MockEditor):
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.editor_area = MockEditorArea(self)
         self.font_map = MockWindowSink()
         self.bitmap = MockWindowSink()

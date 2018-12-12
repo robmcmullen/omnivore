@@ -6,7 +6,7 @@ import pytest
 
 from atrcopy import DefaultSegment
 
-from omnivore8bit.utils.searchalgorithm import *
+from omnivore.utils.searchalgorithm import *
 
 
 class MockEditor(object):

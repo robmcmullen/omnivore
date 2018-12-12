@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 import mock
-from omnivore.utils import textutil
+from omnivore_framework.utils import textutil
 
 
 class TestIntLabelDict(object):

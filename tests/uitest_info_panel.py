@@ -7,7 +7,7 @@ import wx
 
 import  wx.lib.buttons  as  buttons
 
-from omnivore8bit.ui.info_panels import InfoPanel
+from omnivore.ui.info_panels import InfoPanel
 
 #----------------------------------------------------------------------
 

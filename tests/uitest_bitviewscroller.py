@@ -5,7 +5,7 @@ import numpy as np
 
 import wx
 
-from omnivore8bit.ui.bitviewscroller import BitviewScroller
+from omnivore.ui.bitviewscroller import BitviewScroller
 
 if __name__ == '__main__':
     app   = wx.PySimpleApp()
