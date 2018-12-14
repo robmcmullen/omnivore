@@ -51,6 +51,12 @@ def enable_loggers(text):
                 break
         log = logging.getLogger(logger_name)
         log.setLevel(level)
+
+    for match in match_strings:
+        debug_log.debug(f"setting {match} to DEBUG")
+        log = logging.getLogger(match)
+        log.setLevel(logging.DEBUG)
+
     return count
 
 def get_default_levels():
