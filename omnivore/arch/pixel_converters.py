@@ -30,6 +30,7 @@ import numpy as np
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
+invalid_style = 0xff
 
 from omnivore_framework.utils.permute import bit_reverse_table
 
@@ -54,7 +55,7 @@ class ConverterBase:
         nr = len(byte_values) // bytes_per_row
         pixels = self.calc_pixels(byte_values, bytes_per_row)
         style_per_pixel = self.calc_style_per_pixel(pixels, style)
-        return pixels.reshape((bytes_per_row * self.pixels_per_byte, -1)), style_per_pixel.reshape((bytes_per_row * self.pixels_per_byte, -1))
+        return pixels.reshape((-1, bytes_per_row * self.pixels_per_byte)), style_per_pixel.reshape((-1, bytes_per_row * self.pixels_per_byte))
 
 
 class Converter1bpp(ConverterBase):
@@ -155,23 +156,36 @@ class Converter8bpp(ConverterBase):
 
 
 class PixelRenderer:
-    def to_rgb(self, pixels, style_per_pixel, colors):
-        normal = (style_per_pixel & ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
-
+    def to_rgb(self, color_indexes, style_per_pixel, colors, empty_color):
+        h, w = color_indexes.shape
+        color_indexes = color_indexes.reshape(-1)
+        style_per_pixel = style_per_pixel.reshape(-1)
+        flat_image = np.empty((h * w, 3), dtype=np.uint8)
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
-        h = pixels.shape[0]
-        w = pixels.shape[1]
-        bitimage = np.empty((h, w, 4, 3), dtype=np.uint8)
-        for i in range(4):
-            color_is_set = (pixels == i)
-            bitimage[color_is_set & normal] = color_registers[i]
-            bitimage[color_is_set & data] = d_colors[i]
-            bitimage[color_is_set & comment] = c_colors[i]
-            bitimage[color_is_set & match] = m_colors[i]
-            bitimage[color_is_set & highlight] = h_colors[i]
-        bitimage[count:,:,:] = segment_viewer.preferences.empty_background_color.Get(False)
-        return bitimage
+        for i in range(len(color_indexes)):
+            color_index = color_indexes[i]
+            style = style_per_pixel[i]
+            if style == invalid_style:
+                flat_image[i] = empty_color
+            elif style & ignore_mask:
+                flat_image[i] = color_registers[color_index]
+            elif style & selected_bit_mask:
+                flat_image[i] = h_colors[color_index]
+            elif (style & user_bit_mask) > 0:
+                flat_image[i] = d_colors[color_index]
+            elif style & comment_bit_mask:
+                flat_image[i] = h_colors[color_index]
+            elif style & match_bit_mask:
+                flat_image[i] = h_colors[color_index]
+            else:
+                flat_image[i] = (0xff, 0, 0xff)  # not any of the above?
+        return flat_image.reshape((h, w, 3))
+
+    def reshape(self, bitimage, bytes_per_row, nr):
+        # source array 'bitimage' in the shape of (size, w, 3)
+        h, w, colors = bitimage.shape
+        # create a new image with pixels in the correct aspect ratio
+        output = bitimage.reshape((nr, self.pixels_per_byte * bytes_per_row, 3))
+        output = intscale(output, self.scale_height, self.scale_width)
+        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d, output=%s" % (h, w, colors, self.pixels_per_byte * self.scale_width, bytes_per_row, str(output.shape)))
+        return output

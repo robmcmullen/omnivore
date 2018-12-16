@@ -18,6 +18,7 @@ class TestBasicConverter(object):
         raw = SegmentData(data, style)
         segment = DefaultSegment(raw, 0)
         self.editor = MockEditor(segment=segment)
+        self.renderer = pc.PixelRenderer()
 
     @pytest.mark.parametrize("bits_per_pixel,pixels_per_row", [
         (1,128),
@@ -51,7 +52,17 @@ class TestBasicConverter(object):
 
         grid_color_indexes, grid_style = c.calc_color_index_grid(s.data, s.style, bytes_per_row)
         assert grid_color_indexes.shape == grid_style.shape
-        assert grid_color_indexes.shape == (pixels_per_row, grid_height)
+        assert grid_color_indexes.shape == (grid_height, pixels_per_row)
+
+        normal = np.zeros((256, 3), dtype=np.uint8)
+        highlight = np.zeros((256, 3), dtype=np.uint8)
+        match = np.zeros((256, 3), dtype=np.uint8)
+        comment = np.zeros((256, 3), dtype=np.uint8)
+        data = np.zeros((256, 3), dtype=np.uint8)
+        colors = (normal, highlight, match, comment, data)
+        empty_color = (128, 128, 128)
+        rgb_image = self.renderer.to_rgb(grid_color_indexes, grid_style, colors, empty_color)
+        assert rgb_image.shape == (grid_height, pixels_per_row, 3)
 
 
 if __name__ == "__main__":
