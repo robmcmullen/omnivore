@@ -9,6 +9,7 @@ from mock import MockEditor
 from atrcopy import SegmentData, DefaultSegment, user_bit_mask
 
 import omnivore.arch.pixel_converters as pc
+import omnivore.arch.colors as colors
 
 
 class TestBasicConverter(object):
@@ -66,6 +67,47 @@ class TestBasicConverter(object):
 
 
 if __name__ == "__main__":
-    t = TestBasicConverter()
-    t.setup()
-    t.test_simple()
+    data = np.arange(64, dtype=np.uint8)
+    style = np.zeros(64, dtype=np.uint8)
+    raw = SegmentData(data, style)
+    segment = DefaultSegment(raw, 0)
+    renderer = pc.PixelRenderer()
+    print(data)
+
+    ppb = 8
+    pixels_per_row = 16
+    bytes_per_row = pixels_per_row // ppb
+    c = pc.Converter1bpp()
+    grid_color_indexes, grid_style = c.calc_color_index_grid(data, style, bytes_per_row)
+    print(grid_color_indexes)
+
+    ppb = 4
+    pixels_per_row = 16
+    bytes_per_row = pixels_per_row // ppb
+    c = pc.Converter2bpp()
+    grid_color_indexes, grid_style = c.calc_color_index_grid(data, style, bytes_per_row)
+    print(grid_color_indexes)
+
+    # ppb = 2
+    # pixels_per_row = 16
+    # bytes_per_row = pixels_per_row // ppb
+    # c = pc.Converter4bpp()
+    # grid_color_indexes, grid_style = c.calc_color_index_grid(data, style, bytes_per_row)
+    # print(grid_color_indexes)
+
+    # ppb = 1
+    # pixels_per_row = 16
+    # bytes_per_row = pixels_per_row // ppb
+    # c = pc.Converter8bpp()
+    # grid_color_indexes, grid_style = c.calc_color_index_grid(data, style, bytes_per_row)
+    # print(grid_color_indexes)
+
+    antic_colors = colors.powerup_colors()
+    rgb = colors.calc_playfield_rgb(antic_colors)
+    highlight_rgb = colors.get_blended_color_registers(rgb, colors.highlight_background_rgb)
+    match_rgb = colors.get_blended_color_registers(rgb, colors.match_background_rgb)
+    comment_rgb = colors.get_blended_color_registers(rgb, colors.comment_background_rgb)
+    data_rgb = colors.get_dimmed_color_registers(rgb, colors.background_rgb, colors.data_background_rgb)
+    color_list = (rgb, highlight_rgb, match_rgb, comment_rgb, data_rgb)
+    rgb_image = renderer.to_rgb(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    print(rgb_image)

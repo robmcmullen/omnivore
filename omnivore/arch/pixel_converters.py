@@ -167,7 +167,7 @@ class PixelRenderer:
             style = style_per_pixel[i]
             if style == invalid_style:
                 flat_image[i] = empty_color
-            elif style & ignore_mask:
+            elif style & ignore_mask == 0:
                 flat_image[i] = color_registers[color_index]
             elif style & selected_bit_mask:
                 flat_image[i] = h_colors[color_index]
@@ -178,7 +178,7 @@ class PixelRenderer:
             elif style & match_bit_mask:
                 flat_image[i] = h_colors[color_index]
             else:
-                flat_image[i] = (0xff, 0, 0xff)  # not any of the above?
+                flat_image[i] = (0xff, 0, 0xee)  # not any of the above?
         return flat_image.reshape((h, w, 3))
 
     def reshape(self, bitimage, bytes_per_row, nr):

@@ -1,5 +1,28 @@
-# Atari 8-bit utilities
+# Atari 8-bit color utilities
+
 import math
+
+import numpy as np
+
+
+# default style colors in grid controls
+
+background_rgb = (255, 255, 255)
+
+highlight_background_rgb = (100, 200, 230)
+
+data_background_rgb = (224, 224, 224)
+
+empty_background_rgb = (160, 160, 160)
+
+match_background_rgb = (255, 255, 180)
+
+comment_background_rgb = (255, 180, 200)
+
+error_background_rgb = (255, 128, 128)
+
+diff_text_rgb = (255, 0, 0)
+
 
 # Color references:
 #
@@ -128,6 +151,36 @@ def get_dimmed_color_registers(colors, background_color, dimmed_color):
     dimmed_difference = [b - d for b, d in zip(background_color, dimmed_color)]
     for c in colors:
         r = [max(0, c[i]- dimmed_difference[i]) for i in range(3)]
+        registers.append(r)
+    return registers
+
+
+def calc_playfield_rgb(antic_color_registers, color_converter=None):
+    if color_converter is None:
+        color_converter = gtia_ntsc_to_rgb
+    registers = np.zeros((256, 3), dtype=np.uint8)
+    registers[0] = color_converter(antic_color_registers[8])  # COLBG
+    registers[1] = color_converter(antic_color_registers[4])  # COLPF0
+    registers[2] = color_converter(antic_color_registers[5])  # COLPF1
+    registers[3] = color_converter(antic_color_registers[6])  # COLPF2
+    registers[4] = color_converter(antic_color_registers[7])  # COLPF3
+
+    # make sure there are 16 registers for 4bpp modes
+    for i in range(5, 16):
+        registers[i] = (i*16, i*16, i*16)
+
+    # Extend to 32 for dimmed copies of the 16 colors
+    for i in range(16, 32):
+        r = registers[i - 16]
+        registers[i] = (r[0]/4 + 64, r[1]/4 + 64, r[2]/4 + 64)
+    return registers
+
+
+def calc_blended_rgb(rgb_colors, blend_color):
+    registers = np.zeros((256, 3), dtype=np.uint8)
+    base_blend = [(r * 7)/8 for r in blend_color]
+    for c in colors:
+        r = [c[i]/8 + base_blend[i] for i in range(3)]
         registers.append(r)
     return registers
 
