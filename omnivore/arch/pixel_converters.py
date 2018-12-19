@@ -2,11 +2,11 @@
 
 ByteValidator: change byte index list into rectangular grid
 ColorIndexGenerator: bytes to pixel color indexes
-PixelRenderer: pixel color indexes
+
+calc_rgb_from_color_indexes: create RGB array given pixels, styles, and RGB colro mappings
 
 
-
-Utility classes to convert byte representations of pixel data into
+Utility classes/functions to convert byte representations of pixel data into
 grids of color register indexes.
 
 Color register indexes are byte values, each byte calculated from the integer
@@ -36,8 +36,14 @@ from omnivore_framework.utils.permute import bit_reverse_table
 
 
 class ConverterBase:
+    name = "base"
+    pretty_name = "Base"
+
     pixels_per_byte = 8
     bitplanes = 1
+
+    scale_width = 1
+    scale_height = 1
 
     @classmethod
     def validate_pixels_per_row(cls, pixels_per_row):
@@ -59,6 +65,9 @@ class ConverterBase:
 
 
 class Converter1bpp(ConverterBase):
+    name = "1bpp"
+    pretty_name = "1 bit per pixel"
+    
     pixels_per_byte = 8
 
     def calc_pixels(self, byte_values, bytes_per_row):
@@ -81,6 +90,9 @@ class Converter1bpp(ConverterBase):
 
 
 class Converter2bpp(ConverterBase):
+    name = "2bpp"
+    pretty_name = "2 bits per pixel"
+    
     pixels_per_byte = 4
 
     def calc_pixels(self, byte_values, bytes_per_row):
@@ -104,6 +116,9 @@ class Converter2bpp(ConverterBase):
 
 
 class Converter4bpp(ConverterBase):
+    name = "4bpp"
+    pretty_name = "4 bits per pixel"
+    
     pixels_per_byte = 2
 
     def calc_pixels(self, byte_values, bytes_per_row):
@@ -123,6 +138,9 @@ class Converter4bpp(ConverterBase):
 
 
 class Converter8bpp(ConverterBase):
+    name = "8bpp"
+    pretty_name = "8 bits per pixel"
+    
     pixels_per_byte = 1
 
     def calc_pixels(self, byte_values, bytes_per_row):
@@ -155,37 +173,74 @@ class Converter8bpp(ConverterBase):
         return b.reshape((-1, byte_width), s.reshape((-1, byte_width)))
 
 
-class PixelRenderer:
-    def to_rgb(self, color_indexes, style_per_pixel, colors, empty_color):
-        h, w = color_indexes.shape
-        color_indexes = color_indexes.reshape(-1)
-        style_per_pixel = style_per_pixel.reshape(-1)
-        flat_image = np.empty((h * w, 3), dtype=np.uint8)
-        color_registers, h_colors, m_colors, c_colors, d_colors = colors
-        for i in range(len(color_indexes)):
-            color_index = color_indexes[i]
-            style = style_per_pixel[i]
-            if style == invalid_style:
-                flat_image[i] = empty_color
-            elif style & ignore_mask == 0:
-                flat_image[i] = color_registers[color_index]
-            elif style & selected_bit_mask:
-                flat_image[i] = h_colors[color_index]
-            elif (style & user_bit_mask) > 0:
-                flat_image[i] = d_colors[color_index]
-            elif style & comment_bit_mask:
-                flat_image[i] = h_colors[color_index]
-            elif style & match_bit_mask:
-                flat_image[i] = h_colors[color_index]
-            else:
-                flat_image[i] = (0xff, 0, 0xee)  # not any of the above?
-        return flat_image.reshape((h, w, 3))
+class AnticB(Converter1bpp):
+    name = "antic_b"
+    pretty_name = "ANTIC Mode B (Gr 6, 1bpp)"
 
-    def reshape(self, bitimage, bytes_per_row, nr):
-        # source array 'bitimage' in the shape of (size, w, 3)
-        h, w, colors = bitimage.shape
-        # create a new image with pixels in the correct aspect ratio
-        output = bitimage.reshape((nr, self.pixels_per_byte * bytes_per_row, 3))
-        output = intscale(output, self.scale_height, self.scale_width)
-        log.debug("bitimage: %d,%d,%d; ppb=%d bpr=%d, output=%s" % (h, w, colors, self.pixels_per_byte * self.scale_width, bytes_per_row, str(output.shape)))
-        return output
+    scale_width = 2
+    scale_height = 2
+
+
+class AnticC(AnticB):
+    name = "antic_c"
+    pretty_name = "ANTIC Mode C (Gr 6+, 1bpp)"
+
+    scale_width = 2
+    scale_height = 1
+
+
+class AnticD(Converter2bpp):
+    name = "antic_d"
+    pretty_name = "ANTIC Mode D (Gr 7, 2bpp)"
+
+    scale_width = 2
+    scale_height = 2
+
+
+class AnticE(AnticD):
+    name = "antic_e"
+    pretty_name = "ANTIC Mode E (Gr 7+, 2bpp)"
+
+    scale_width = 2
+    scale_height = 1
+
+
+class AnticNormalPlayer(AnticC):
+    name = "Player/Missile, normal width"
+    scale_width = 2
+
+
+class AnticDoublePlayer(AnticNormalPlayer):
+    name = "Player/Missile, double width"
+    scale_width = 4
+
+
+class AnticQuadPlayer(AnticNormalPlayer):
+    name = "Player/Missile, quad width"
+    scale_width = 8
+
+
+def calc_rgb_from_color_indexes(color_indexes, style_per_pixel, colors, empty_color):
+    h, w = color_indexes.shape
+    color_indexes = color_indexes.reshape(-1)
+    style_per_pixel = style_per_pixel.reshape(-1)
+    flat_image = np.empty((h * w, 3), dtype=np.uint8)
+    color_registers, h_colors, m_colors, c_colors, d_colors = colors
+    for i in range(len(color_indexes)):
+        color_index = color_indexes[i]
+        style = style_per_pixel[i]
+        if style == invalid_style:
+            flat_image[i] = empty_color
+        elif style & ignore_mask == 0:
+            flat_image[i] = color_registers[color_index]
+        elif style & selected_bit_mask:
+            flat_image[i] = h_colors[color_index]
+        elif (style & user_bit_mask) > 0:
+            flat_image[i] = d_colors[color_index]
+        elif style & comment_bit_mask:
+            flat_image[i] = h_colors[color_index]
+        elif style & match_bit_mask:
+            flat_image[i] = h_colors[color_index]
+        else:
+            flat_image[i] = (0xff, 0, 0xee)  # not any of the above?
+    return flat_image.reshape((h, w, 3))

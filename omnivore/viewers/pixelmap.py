@@ -1,6 +1,8 @@
 import os
 import sys
 
+import numpy as np
+
 import wx
 
 from traits.api import on_trait_change, Bool, Undefined, Any
@@ -15,6 +17,7 @@ from . import SegmentViewer
 from . import bitmap2 as b
 from . import actions as va
 from ..arch import pixel_converters as px
+from ..arch import colors
 
 import logging
 log = logging.getLogger(__name__)
@@ -30,8 +33,8 @@ class PixelLineRenderer(b.BitmapLineRenderer):
     boundaries.
     """
     def calc_cell_size_in_pixels(self, grid_control):
-        w = grid_control.zoom_w * grid_control.scale_width
-        h = grid_control.zoom_h * grid_control.scale_height
+        w = grid_control.zoom_w
+        h = grid_control.zoom_h
         return w, h
 
     def col_to_rect(self, line_num, col):
@@ -104,106 +107,42 @@ class PixelLineRenderer(b.BitmapLineRenderer):
 
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         t = grid_control.table
-        first_byte = first_cell // t.pixels_per_byte
-        last_cell = min(first_cell + visible_cells + t.pixels_per_byte - 1, self.num_cells)
-        last_byte = last_cell // t.pixels_per_byte
+        t.prepare_for_drawing(first_row, visible_rows, first_cell, visible_cells)
+        last_cell = min(first_cell + visible_cells, self.num_cells)
         last_row = min(first_row + visible_rows, t.num_rows)
-        log.debug("draw_grid: rows:%d,%d (vis %d, num %d) cols:%d,%d" % (first_row, last_row, visible_rows, t.num_rows, first_byte, last_byte))
+        log.debug("draw_grid: rows:%d,%d (vis %d, num %d) cols:%d,%d" % (first_row, last_row, visible_rows, t.num_rows, first_cell, last_cell))
 
-        ul_rect = self.col_to_rect(first_row, first_byte * t.pixels_per_byte)
-        lr_rect = self.col_to_rect(last_row - 1, (last_byte * t.pixels_per_byte) - 1)
+        ul_rect = self.col_to_rect(first_row, first_cell)
+        lr_rect = self.col_to_rect(last_row - 1, last_cell - 1)
         frame_rect = wx.Rect(ul_rect.x, ul_rect.y, lr_rect.x - ul_rect.x + lr_rect.width, lr_rect.y - ul_rect.y + lr_rect.height)
         dc.SetClippingRegion(frame_rect)
-
-        # only display complete rows
-        nr = last_row - first_row
-        if nr > 0:
-            bytes_per_row = t.bytes_per_row
-            nc = last_byte - first_byte
-            first_index = first_row * bytes_per_row
-            last_index = first_index + nr * bytes_per_row
-            if last_index > t.last_valid_index:
-                nr -= 1
-                last_index = first_index + nr * bytes_per_row
-
-        if nr > 0:
-            log.debug(f"drawing rectangular grid: control={grid_control} bpr={bytes_per_row}, first,last={first_index},{last_index}, nr={nr}")
-            data = t.data[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_byte:last_byte].flatten()
-            style = t.style[first_index:last_index].reshape((nr, bytes_per_row))[0:nr,first_byte:last_byte].flatten()
-            if grid_control.segment_viewer.is_focused_viewer and grid_control.caret_handler.has_selection:
-                style_per_pixel = (grid_control.bitmap_renderer.calc_style_per_pixel(style))
-                style_per_pixel &= 0xff ^ selected_bit_mask
-                byte_width = last_byte - first_byte
-                for caret in grid_control.caret_handler.carets_with_selection:
-                    if caret.anchor_start[0] >= last_row or caret.anchor_end[0] < first_row:
-                        continue
-                    else:
-                        if caret.rectangular or True:
-                            self.add_rectangular_selection(caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte)
-                        else:
-                            self.add_regular_selection(caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte)
-
-                style = None
-            else:
-                style_per_pixel = None
-            print("OETHUSNOEUNOEU style", style.shape if style is not None else None, "style_per_pixel", style_per_pixel.shape if style_per_pixel is not None else None)
-
-            # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
-
-            array = grid_control.bitmap_renderer.get_image(grid_control.segment_viewer, nc, nr, nc * nr, data, style, style_per_pixel=style_per_pixel)
-            width = array.shape[1]
-            height = array.shape[0]
-            if width > 0 and height > 0:
-                array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
+ 
+        pixels, style = t.current_rectangle
+        pixels = pixels[:,first_cell:last_cell]
+        style = style[:,first_cell:last_cell]
+        array = px.calc_rgb_from_color_indexes(pixels, style, grid_control.color_list_rgb, grid_control.empty_color_rgb)
+        width = array.shape[1]
+        height = array.shape[0]
+        print(f"array: {array.shape}")
+        if width > 0 and height > 0:
+            array = intscale(array, grid_control.zoom_h, grid_control.zoom_w)
                 #print("bitmap: %d,%d,3 after scaling: %s" % (height, width, str(array.shape)))
-                image = wx.Image(array.shape[1], array.shape[0])
-                image.SetData(array.tobytes())
-                bmp = wx.Bitmap(image)
-                dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
-
-
-# class PixelTable(SegmentTable):
-#     def __init__(self, linked_base, bytes_per_row, pixels_per_byte):
-#         self.pixels_per_byte = pixels_per_byte
-#         self.bytes_per_row = bytes_per_row
-#         SegmentTable.__init__(self, linked_base, bytes_per_row * pixels_per_byte)
-
-#     def calc_num_rows(self):
-#         return ((self.start_offset + len(self.data) - 1) // self.bytes_per_row) + 1
-
-#     def get_label_at_index(self, index):
-#         # Can't just return hex value of index because some segments (like the
-#         # raw sector segment) use different labels
-#         return self.segment.label(index // self.bytes_per_row, True)
-
-#     def get_index_range(self, row, col):
-#         """ Get the byte offset from start of file given row, col
-#         position.
-#         """
-#         byte_index = col // self.pixels_per_byte
-#         index = self.clamp_index(row * self.bytes_per_row + byte_index - self.start_offset)
-#         if index >= self.last_valid_index:
-#             index = self.last_valid_index - 1
-#         if index < 0:
-#             index = 0
-#         return index, index + 1
-
-#     def get_index_of_row(self, line):
-#         return (line * self.bytes_per_row) - self.start_offset
-
-#     def index_to_row_col(self, index):
-#         r, byte_index = divmod(index + self.start_offset, self.bytes_per_row)
-#         c = byte_index * self.pixels_per_byte
-#         print("OEHURSOEHURSOHEUSR", index, r, byte_index, c)
-#         return r, c
+            image = wx.Image(array.shape[1], array.shape[0])
+            image.SetData(array.tobytes())
+            bmp = wx.Bitmap(image)
+            dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
 
 
 class PixelTable(cg.HexTable):
-    def __init__(self, control):
+    def __init__(self, control, linked_base):
         self.control = control
-        s = linked_base.segment
-        self.num_rows = self.converter.calc_grid_height(s.data, self.control.items_per_row)
+        s = self.segment
+        self.num_rows = self.converter.calc_grid_height(len(s.data), self.control.bytes_per_row)
         cg.HexTable.__init__(self, None, None, self.control.items_per_row, self.segment.origin)
+
+    @property
+    def segment(self):
+        return self.control.segment_viewer.linked_base.segment
 
     @property
     def converter(self):
@@ -216,13 +155,34 @@ class PixelTable(cg.HexTable):
         return self.items_per_row * self.num_rows
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
-        self.current_rectangle = self.converter.calc_color_index_grid(start_row, visible_rows, start_cell, visible_cells)
+        """Create an array of color index values that contains the visible
+        portion of the pixel array
+
+        The array created here is actually bigger than the visible array, as
+        wide as the entire set of data, but only as tall as the visible area.
+        """
+        # cells and columns are equivalent in pixel grids
+        s = self.segment
+        bytes_per_row = self.control.bytes_per_row
+        start_index = start_row * bytes_per_row
+        last_index = (start_row + visible_rows) * bytes_per_row
+        if last_index > len(s.data):
+            count = last_index - start_index
+            byte_values = np.empty(count, dtype=np.uint8)
+            byte_values[:count] = s.data
+            byte_values[count:] = 0
+            style_values = np.empty(count, dtype=np.uint8)
+            style_values[:count] = s.style
+            style_values[count:] = px.invalid_style
+        else:
+            byte_values = s.data[start_index:last_index]
+            style_values = s.style[start_index:last_index]
+        self.current_rectangle = self.converter.calc_color_index_grid(byte_values, style_values, bytes_per_row)
 
     def rebuild(self):
-        segment = self.linked_base.segment
-        self.current = self.driver.parse(segment, self.max_num_entries)
-        self.parsed = None
-        self.init_boundaries()
+        segment = self.control.segment_viewer.segment
+        self.current_rectangle = None
+        self.num_rows = self.converter.calc_grid_height(len(s.data), self.control.bytes_per_row)
         print(f"new num_rows: {self.num_rows}")
 
 
@@ -230,9 +190,18 @@ class PixelGridControl(SegmentGridControl):
     default_table_cls = PixelTable
 
     def set_viewer_defaults(self):
-        self.bytes_per_row = 7
+        self.bytes_per_row = 16
         self.items_per_row = 8  # 1 byte per pixel fallback
         self.zoom = 2
+
+        self.antic_colors = colors.powerup_colors()
+        rgb = colors.calc_playfield_rgb(self.antic_colors)
+        highlight_rgb = colors.get_blended_color_registers(rgb, colors.highlight_background_rgb)
+        match_rgb = colors.get_blended_color_registers(rgb, colors.match_background_rgb)
+        comment_rgb = colors.get_blended_color_registers(rgb, colors.comment_background_rgb)
+        data_rgb = colors.get_dimmed_color_registers(rgb, colors.background_rgb, colors.data_background_rgb)
+        self.color_list_rgb = (rgb, highlight_rgb, match_rgb, comment_rgb, data_rgb)
+        self.empty_color_rgb = colors.empty_background_rgb
 
     @property
     def pixel_converter(self):
@@ -240,11 +209,11 @@ class PixelGridControl(SegmentGridControl):
 
     @property
     def zoom_w(self):
-        return self.zoom  # * self.bitmap_renderer.scale_width
+        return self.zoom * self.pixel_converter.scale_width
 
     @property
     def zoom_h(self):
-        return self.zoom  # * self.bitmap_renderer.scale_height
+        return self.zoom * self.pixel_converter.scale_height
 
     @property
     def pixels_per_byte(self):
@@ -260,13 +229,10 @@ class PixelGridControl(SegmentGridControl):
 
     def calc_default_table(self, linked_base):
         if hasattr(self, 'segment_viewer'):
-            p = self.pixels_per_byte
-        else:
-            p = 1
-        print("OTNEUHSNTOEHSUOEHU", self.items_per_row, p)
-        self.items_per_row = self.pixel_converter.validate_items_per_row(self.items_per_row)
-        self.bytes_per_row = self.pixel_converter.calc_bytes_per_row(self.items_per_row)
-        return self.default_table_cls(self)
+            self.items_per_row = self.pixel_converter.validate_pixels_per_row(self.items_per_row)
+            self.bytes_per_row = self.pixel_converter.calc_bytes_per_row(self.items_per_row)
+            return self.default_table_cls(self, linked_base)
+        return SegmentTable(linked_base, self.bytes_per_row)
 
     def calc_line_renderer(self):
         if hasattr(self, 'segment_viewer'):
@@ -305,12 +271,12 @@ class PixelViewer(SegmentViewer):
 
     #### traits defaults
 
-    def pixel_converter_default(self):
-        return px.AnticE
+    def _pixel_converter_default(self):
+        return px.AnticE()
 
     @property
     def window_title(self):
-        return "Pixels: " + self.pixel_converter.name
+        return "Pixels: " + self.pixel_converter.pretty_name
 
     @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):

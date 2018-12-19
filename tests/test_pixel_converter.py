@@ -62,7 +62,7 @@ class TestBasicConverter(object):
         data = np.zeros((256, 3), dtype=np.uint8)
         colors = (normal, highlight, match, comment, data)
         empty_color = (128, 128, 128)
-        rgb_image = self.renderer.to_rgb(grid_color_indexes, grid_style, colors, empty_color)
+        rgb_image = self.px.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, colors, empty_color)
         assert rgb_image.shape == (grid_height, pixels_per_row, 3)
 
 
@@ -71,7 +71,6 @@ if __name__ == "__main__":
     style = np.zeros(64, dtype=np.uint8)
     raw = SegmentData(data, style)
     segment = DefaultSegment(raw, 0)
-    renderer = pc.PixelRenderer()
     print(data)
 
     ppb = 8
@@ -109,5 +108,5 @@ if __name__ == "__main__":
     comment_rgb = colors.get_blended_color_registers(rgb, colors.comment_background_rgb)
     data_rgb = colors.get_dimmed_color_registers(rgb, colors.background_rgb, colors.data_background_rgb)
     color_list = (rgb, highlight_rgb, match_rgb, comment_rgb, data_rgb)
-    rgb_image = renderer.to_rgb(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    rgb_image = px.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
     print(rgb_image)
