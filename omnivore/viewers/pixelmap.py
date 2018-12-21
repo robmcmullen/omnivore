@@ -146,13 +146,17 @@ class PixelTable(cg.HexTable):
 
     @property
     def converter(self):
-        return self.control.pixel_converter    
+        return self.control.pixel_converter
+
+    @property
+    def indexes_per_row(self):
+        return self.control.bytes_per_row
 
     def calc_num_rows(self):
         return self.num_rows
 
     def calc_last_valid_index(self):
-        return self.items_per_row * self.num_rows
+        return self.indexes_per_row * self.num_rows
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         """Create an array of color index values that contains the visible
