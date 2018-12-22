@@ -995,18 +995,26 @@ class HexTable(object):
         # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.create_row_labels()
 
+    @property
+    def indexes_per_row(self):
+        return self.items_per_row
+
+    @property
+    def items_per_index(self):
+        return self.items_per_row // self.indexes_per_row
+
     def init_boundaries(self):
         self.num_rows = self.calc_num_rows()
         self.last_valid_index = self.calc_last_valid_index()
 
     def calc_num_rows(self):
-        return ((self.start_offset + len(self.data) - 1) // self.items_per_row) + 1
+        return ((self.start_offset + len(self.data) - 1) // self.indexes_per_row) + 1
 
     def calc_last_valid_index(self):
         return len(self.data)
 
     def create_row_labels(self):
-        self.label_start_addr = int(self.start_addr // self.items_per_row) * self.items_per_row
+        self.label_start_addr = int(self.start_addr // self.indexes_per_row) * self.indexes_per_row
         self.label_char_width = 4
 
     def enforce_valid_index(self, index):
@@ -1063,15 +1071,17 @@ class HexTable(object):
         return index, index + 1
 
     def get_index_of_row(self, line):
-        return (line * self.items_per_row) - self.start_offset
+        return (line * self.indexes_per_row) - self.start_offset
 
     def get_start_end_index_of_row(self, row):
         index1, _ = self.get_index_range(row, 0)
-        _, index2 = self.get_index_range(row, self.items_per_row - 1)
+        _, index2 = self.get_index_range(row, self.indexes_per_row - 1)
         return index1, index2
 
     def index_to_row_col(self, index):
-        return divmod(index + self.start_offset, self.items_per_row)
+        row, index_of_col = divmod(index + self.start_offset, self.indexes_per_row)
+        col = index_of_col * self.items_per_index
+        return row, col
 
     def clamp_left_column(self, r, c):
         c = 0
