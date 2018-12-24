@@ -200,10 +200,10 @@ class PixelGridControl(SegmentGridControl):
 
         self.antic_colors = colors.powerup_colors()
         rgb = colors.calc_playfield_rgb(self.antic_colors)
-        highlight_rgb = colors.get_blended_color_registers(rgb, colors.highlight_background_rgb)
-        match_rgb = colors.get_blended_color_registers(rgb, colors.match_background_rgb)
-        comment_rgb = colors.get_blended_color_registers(rgb, colors.comment_background_rgb)
-        data_rgb = colors.get_dimmed_color_registers(rgb, colors.background_rgb, colors.data_background_rgb)
+        highlight_rgb = colors.calc_blended_rgb(rgb, colors.highlight_background_rgb)
+        match_rgb = colors.calc_blended_rgb(rgb, colors.match_background_rgb)
+        comment_rgb = colors.calc_blended_rgb(rgb, colors.comment_background_rgb)
+        data_rgb = colors.calc_dimmed_rgb(rgb, colors.background_rgb, colors.data_background_rgb)
         self.color_list_rgb = (rgb, highlight_rgb, match_rgb, comment_rgb, data_rgb)
         self.empty_color_rgb = colors.empty_background_rgb
 

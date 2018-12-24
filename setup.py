@@ -84,6 +84,11 @@ else:
                   extra_compile_args = extra_compile_args,
                   extra_link_args = extra_link_args,
                   ),
+        Extension("omnivore.arch.pixel_speedups",
+                  sources=["omnivore/arch/pixel_speedups.pyx"],
+                  extra_compile_args = extra_compile_args,
+                  extra_link_args = extra_link_args,
+                  ),
         Extension("omnivore.emulator.atari8bit.libatari800",
             sources = [
                 "libatari800/atari800_bridge.c",

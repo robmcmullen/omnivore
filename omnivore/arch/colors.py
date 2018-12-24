@@ -179,9 +179,16 @@ def calc_playfield_rgb(antic_color_registers, color_converter=None):
 def calc_blended_rgb(rgb_colors, blend_color):
     registers = np.zeros((256, 3), dtype=np.uint8)
     base_blend = [(r * 7)/8 for r in blend_color]
-    for c in colors:
-        r = [c[i]/8 + base_blend[i] for i in range(3)]
-        registers.append(r)
+    for i in range(len(registers)):
+        registers[i] = [registers[i][j]/8 + base_blend[j] for j in range(3)]
+    return registers
+
+
+def calc_dimmed_rgb(colors, background_color, dimmed_color):
+    registers = np.zeros((256, 3), dtype=np.uint8)
+    dimmed_difference = [b - d for b, d in zip(background_color, dimmed_color)]
+    for i in range(len(registers)):
+        registers[i] = [max(0, registers[i][j]/8 - dimmed_difference[j]) for j in range(3)]
     return registers
 
 

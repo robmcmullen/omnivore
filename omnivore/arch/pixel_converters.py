@@ -220,7 +220,7 @@ class AnticQuadPlayer(AnticNormalPlayer):
     scale_width = 8
 
 
-def calc_rgb_from_color_indexes(color_indexes, style_per_pixel, colors, empty_color):
+def calc_rgb_from_color_indexes_python(color_indexes, style_per_pixel, colors, empty_color):
     h, w = color_indexes.shape
     color_indexes = color_indexes.reshape(-1)
     style_per_pixel = style_per_pixel.reshape(-1)
@@ -244,3 +244,9 @@ def calc_rgb_from_color_indexes(color_indexes, style_per_pixel, colors, empty_co
         else:
             flat_image[i] = (0xff, 0, 0xee)  # not any of the above?
     return flat_image.reshape((h, w, 3))
+
+try:
+    from . import pixel_speedups
+    calc_rgb_from_color_indexes = pixel_speedups.calc_rgb_from_color_indexes
+except ImportError:
+    calc_rgb_from_color_indexes = calc_rgb_from_color_indexes_python

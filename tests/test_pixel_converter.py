@@ -9,8 +9,17 @@ from mock import MockEditor
 from atrcopy import SegmentData, DefaultSegment, user_bit_mask
 
 import omnivore.arch.pixel_converters as pc
+import omnivore.arch.pixel_speedups as fast_pc
 import omnivore.arch.colors as colors
 
+antic_colors = colors.powerup_colors()
+rgb = colors.calc_playfield_rgb(antic_colors)
+highlight_rgb = colors.calc_blended_rgb(rgb, colors.highlight_background_rgb)
+match_rgb = colors.calc_blended_rgb(rgb, colors.match_background_rgb)
+comment_rgb = colors.calc_blended_rgb(rgb, colors.comment_background_rgb)
+data_rgb = colors.calc_dimmed_rgb(rgb, colors.background_rgb, colors.data_background_rgb)
+color_list = (rgb, highlight_rgb, match_rgb, comment_rgb, data_rgb)
+empty_rgb = colors.empty_background_rgb
 
 class TestBasicConverter(object):
     def setup(self):
@@ -19,7 +28,6 @@ class TestBasicConverter(object):
         raw = SegmentData(data, style)
         segment = DefaultSegment(raw, 0)
         self.editor = MockEditor(segment=segment)
-        self.renderer = pc.PixelRenderer()
 
     @pytest.mark.parametrize("bits_per_pixel,pixels_per_row", [
         (1,128),
@@ -55,15 +63,11 @@ class TestBasicConverter(object):
         assert grid_color_indexes.shape == grid_style.shape
         assert grid_color_indexes.shape == (grid_height, pixels_per_row)
 
-        normal = np.zeros((256, 3), dtype=np.uint8)
-        highlight = np.zeros((256, 3), dtype=np.uint8)
-        match = np.zeros((256, 3), dtype=np.uint8)
-        comment = np.zeros((256, 3), dtype=np.uint8)
-        data = np.zeros((256, 3), dtype=np.uint8)
-        colors = (normal, highlight, match, comment, data)
-        empty_color = (128, 128, 128)
-        rgb_image = self.px.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, colors, empty_color)
+        rgb_image = pc.calc_rgb_from_color_indexes_python(grid_color_indexes, grid_style, color_list, empty_rgb)
         assert rgb_image.shape == (grid_height, pixels_per_row, 3)
+
+        fast_rgb_image = fast_pc.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, color_list, empty_rgb)
+        assert(np.array_equal(rgb_image, fast_rgb_image))
 
 
 if __name__ == "__main__":
@@ -101,12 +105,42 @@ if __name__ == "__main__":
     # grid_color_indexes, grid_style = c.calc_color_index_grid(data, style, bytes_per_row)
     # print(grid_color_indexes)
 
-    antic_colors = colors.powerup_colors()
-    rgb = colors.calc_playfield_rgb(antic_colors)
-    highlight_rgb = colors.get_blended_color_registers(rgb, colors.highlight_background_rgb)
-    match_rgb = colors.get_blended_color_registers(rgb, colors.match_background_rgb)
-    comment_rgb = colors.get_blended_color_registers(rgb, colors.comment_background_rgb)
-    data_rgb = colors.get_dimmed_color_registers(rgb, colors.background_rgb, colors.data_background_rgb)
-    color_list = (rgb, highlight_rgb, match_rgb, comment_rgb, data_rgb)
-    rgb_image = px.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    rgb_image = pc.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
     print(rgb_image)
+
+    print(color_list)
+    fast_rgb_image = fast_pc.calc_rgb_from_color_indexes(grid_color_indexes, grid_style, color_list, empty_rgb)
+    print(fast_rgb_image)
+
+    assert(np.array_equal(rgb_image, fast_rgb_image))
+
+    import timeit
+    def call_pure_python():
+        pc.calc_rgb_from_color_indexes_python(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    duration = timeit.timeit(call_pure_python, number=1000)
+    print(duration)
+
+    def call_naive_cython():
+        fast_pc.calc_rgb_from_color_indexes_naive(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    duration = timeit.timeit(call_naive_cython, number=1000)
+    print(duration)
+
+    def call_better_cython():
+        fast_pc.calc_rgb_from_color_indexes_better(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    duration = timeit.timeit(call_better_cython, number=1000)
+    print(duration)
+
+    def call_fast():
+        fast_pc.calc_rgb_from_color_indexes_fast(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    duration = timeit.timeit(call_fast, number=1000)
+    print(duration)
+
+    def call_fast_optimize():
+        fast_pc.calc_rgb_from_color_indexes_fast_optimize(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    duration = timeit.timeit(call_fast, number=1000)
+    print(duration)
+
+    def call_fast_final():
+        fast_pc.calc_rgb_from_color_indexes_fast(grid_color_indexes, grid_style, color_list, colors.empty_background_rgb)
+    duration = timeit.timeit(call_fast_final, number=1000)
+    print(duration)
