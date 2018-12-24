@@ -1063,7 +1063,7 @@ class HexTable(object):
         """Get the byte offset from start of file given row, col
         position.
         """
-        index = self.clamp_index(row * self.items_per_row + col - self.start_offset)
+        index = self.clamp_index(row * self.indexes_per_row + (col // self.items_per_index) - self.start_offset)
         if index >= self.last_valid_index:
             index = self.last_valid_index - 1
         if index < 0:
@@ -1723,7 +1723,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
                     caret_log.debug("drawing edit cell at r,c=%d,%d" % (r, c))
                     self.line_renderer.draw_edit_cell(self, dc, r, c, self.edit_source)
                 else:
-                    caret_log.debug(f"drawing caret at r,c={r}{c} for {self}")
+                    caret_log.debug(f"drawing caret at r,c={r},{c} for {self}")
                     self.line_renderer.draw_caret(self, dc, r, c)
             else:
                 caret_log.debug("skipping offscreen caret at r,c=%d,%d" % (r, c))
