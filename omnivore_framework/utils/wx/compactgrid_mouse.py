@@ -159,7 +159,7 @@ class Caret(object):
                     start, end = end, start
                 index1, _ = table.get_index_range(*start)
                 _, index2 = table.get_index_range(*end)
-                table.style[index1:index2] |= selected_bit_mask
+                table.set_selected_index_range(index1, index2)
 
 
 class MultiCaretHandler(object):

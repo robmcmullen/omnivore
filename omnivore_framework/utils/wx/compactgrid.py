@@ -1100,6 +1100,9 @@ class HexTable(object):
     def clear_selected_style(self):
         self.style[:] &= (0xff ^ selected_bit_mask)
 
+    def set_selected_index_range(self, index1, index2):
+        self.style[index1:index2] |= selected_bit_mask
+
 
 class VariableWidthHexTable(HexTable):
     """Table works in rows and columns, knows nothing about display cells.
