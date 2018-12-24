@@ -170,14 +170,16 @@ class PixelTable(cg.HexTable):
         bytes_per_row = self.control.bytes_per_row
         start_index = start_row * bytes_per_row
         last_index = (start_row + visible_rows) * bytes_per_row
-        if last_index > len(s.data):
-            count = last_index - start_index
-            byte_values = np.empty(count, dtype=np.uint8)
-            byte_values[:count] = s.data
-            byte_values[count:] = 0
-            style_values = np.empty(count, dtype=np.uint8)
-            style_values[:count] = s.style
-            style_values[count:] = px.invalid_style
+        last_valid = len(s.data)
+        if last_index > last_valid:
+            total_count = last_index - start_index
+            valid_count = last_valid - start_index
+            byte_values = np.empty(total_count, dtype=np.uint8)
+            byte_values[:valid_count] = s.data[start_index:last_valid]
+            byte_values[valid_count:] = 0
+            style_values = np.empty(total_count, dtype=np.uint8)
+            style_values[:valid_count] = s.style[start_index:last_index]
+            style_values[valid_count:] = px.invalid_style
         else:
             byte_values = s.data[start_index:last_index]
             style_values = s.style[start_index:last_index]
