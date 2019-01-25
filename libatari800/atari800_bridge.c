@@ -97,7 +97,7 @@ int a8bridge_init(int argc, char **argv) {
 
 	err = threading_status;
 	if (err == thrd_success) {
-		if (!Atari800_Initialise(&argc, argv))
+		if (!libatari800_init(&argc, argv))
 			err = 3;
 	}
 	else {
@@ -128,7 +128,7 @@ void a8bridge_configure_state_arrays(input_template_t *input, output_template_t 
 	INPUT_key_code = AKEY_NONE;
 	LIBATARI800_Mouse();
 	LIBATARI800_Frame();
-	LIBATARI800_StateSave(output->state, &output->tags);
+	LIBATARI800_StateSave(output->current.state, &output->current.tags);
 	Atari800_Coldstart();  /* reset so a8bridge_next_frame will start correctly */
 }
 
@@ -393,7 +393,7 @@ int a8bridge_next_frame(input_template_t *input, output_template_t *output, brea
 
 	bpid = libdebugger_calc_frame(&a8bridge_calc_frame, MEMORY_mem, &output->status, breakpoints, history);
 
-	LIBATARI800_StateSave(output->state, &output->tags);
+	LIBATARI800_StateSave(output->current.state, &output->current.tags);
 	if (output->status.frame_status == FRAME_FINISHED) {
 		copy_screen(output->video);
 	}
@@ -442,32 +442,13 @@ int a8bridge_show_next_instruction(emulator_history_t *history)
 
 void a8bridge_get_current_state(output_template_t *output)
 {
-	LIBATARI800_StateSave(output->state, &output->tags);
+	LIBATARI800_StateSave(output->current.state, &output->current.tags);
 }
 
 void a8bridge_restore_state(output_template_t *output)
 {
-	LIBATARI800_StateLoad(output->state);
+	LIBATARI800_StateLoad(output->current.state);
 }
-
-
-/* Stub routines */
-
-int UI_SelectCartType(int k) {
-	return CARTRIDGE_NONE;
-}
-
-void UI_Run(void) {
-	;
-}
-
-int UI_is_active;
-int UI_alt_function;
-int UI_current_function;
-char UI_atari_files_dir[UI_MAX_DIRECTORIES][FILENAME_MAX];
-char UI_saved_files_dir[UI_MAX_DIRECTORIES][FILENAME_MAX];
-int UI_n_atari_files_dir;
-int UI_n_saved_files_dir;
 
 
 /*

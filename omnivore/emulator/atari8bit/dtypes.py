@@ -35,6 +35,7 @@ INPUT_DTYPE = np.dtype([
 OUTPUT_DTYPE = np.dtype([
     ("video", np.uint8, VIDEO_SIZE),
     ("audio", np.uint8, AUDIO_SIZE),
+    ("tag_size", np.uint32),
     ("tag_cpu", np.uint32),
     ("tag_pc", np.uint32),
     ("tag_base_ram", np.uint32),
@@ -43,6 +44,9 @@ OUTPUT_DTYPE = np.dtype([
     ("tag_gtia", np.uint32),
     ("tag_pia", np.uint32),
     ("tag_pokey", np.uint32),
+    ("tag_filler", np.uint32, 32 - 9),
+    ("flag_selftest_enabled", np.uint8),
+    ("flag_filler", np.uint8, 127),
     ("state", np.uint8, STATESAV_MAX_SIZE),
 ])
 

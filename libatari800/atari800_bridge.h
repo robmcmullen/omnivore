@@ -12,7 +12,7 @@
 #ifdef SOUND
 #include "sound.h"
 #endif
-#include "libatari800/statesav.h"
+#include "libatari800/libatari800.h"
 
 
 #define Screen_USABLE_WIDTH 336
@@ -25,8 +25,7 @@ typedef struct {
     frame_status_t status;
     uint8_t video[LIBATARI800_VIDEO_SIZE];
     uint8_t audio[LIBATARI800_SOUND_SIZE];
-    statesav_tags_t tags;
-    uint8_t state[STATESAV_MAX_SIZE];
+    emulator_state_t current;
 } output_template_t;
 
 extern long cycles_per_frame;
@@ -42,7 +41,7 @@ void ANTIC_Frame2(frame_status_t *status);
 int a8bridge_register_callback(uint16_t token, uint16_t addr);
 
 /*
-vim:ts=4:sw=4:
+vim:ts=4:sw=4: 
 */
 
 #endif /* _ATARI800_BRIDGE_H_ */
