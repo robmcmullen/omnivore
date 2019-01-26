@@ -120,7 +120,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	count = lengths[inst.mode];
 	if (entry) lib6502_show_current_instruction(entry);
 
-	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback);
+	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback, opcode == 0x4c);
 	if (bpid >= 0) {
 		status->frame_status = FRAME_BREAKPOINT;
 		status->breakpoint_id = bpid;

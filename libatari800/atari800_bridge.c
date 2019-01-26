@@ -203,7 +203,7 @@ int LIBATARI800_CheckBreakpoints() {
 	int bpid;
 	int cycles = 0; /*fixme*/
 
-	bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, cycles, &a8bridge_register_callback);
+	bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, cycles, &a8bridge_register_callback, 0);
 	if (bpid >= 0) {
 		LIBATARI800_Status->frame_status = FRAME_BREAKPOINT;
 		LIBATARI800_Status->breakpoint_id = bpid;

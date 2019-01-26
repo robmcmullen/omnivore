@@ -166,7 +166,7 @@ typedef int (*emu_frame_callback_ptr)(frame_status_t *output, breakpoints_t *bre
 
 int libdebugger_brk_instruction(breakpoints_t *breakpoints);
 
-int libdebugger_check_breakpoints(breakpoints_t *, frame_status_t *, cpu_state_callback_ptr);
+int libdebugger_check_breakpoints(breakpoints_t *, frame_status_t *, cpu_state_callback_ptr, int);
 
 int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *history);
 

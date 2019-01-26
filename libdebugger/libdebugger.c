@@ -107,7 +107,7 @@ int libdebugger_brk_instruction(breakpoints_t *breakpoints) {
 }
 
 /* returns: index number of breakpoint or -1 if no breakpoint condition met. */
-int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *run, cpu_state_callback_ptr get_emulator_value) {
+int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *run, cpu_state_callback_ptr get_emulator_value, int is_unconditional_jmp) {
 	uint16_t token, op, addr, value;
 	int64_t ref_val;
 	int i, num_entries, index, status, btype, final_value, count, current_pc;
@@ -115,7 +115,7 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 
 	current_pc = get_emulator_value(REG_PC, 0);
 	// printf("in libdebugger_check_breakpoints: PC=%04x breakpoint->last_pc=%04x\n", current_pc, breakpoints->last_pc);
-	if (breakpoints->last_pc == current_pc) {
+	if ((breakpoints->last_pc == current_pc) && is_unconditional_jmp) {
 		/* found infinite loop when same instruction calls itself */
 		breakpoints->breakpoint_status[0] = BREAKPOINT_ENABLED;
 		breakpoints->breakpoint_type[0] = BREAKPOINT_INFINITE_LOOP;

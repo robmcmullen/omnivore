@@ -774,7 +774,7 @@ recreate_history_entry:
 
 		if (LIBATARI800_Breakpoints && check_breakpoints) {
 			// printf("before checking breakpoint; CPU_regPC=%04x PC=%04x last_pc=%04x\n", CPU_regPC, PC, last_pc);
-			int bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, LIBATARI800_Status, &a8bridge_register_callback);
+			int bpid = libdebugger_check_breakpoints(LIBATARI800_Breakpoints, LIBATARI800_Status, &a8bridge_register_callback, insn == 0x4c);
 			if (bpid >= 0) {
 				LIBATARI800_Status->frame_status = FRAME_BREAKPOINT;
 				LIBATARI800_Status->breakpoint_id = bpid;
