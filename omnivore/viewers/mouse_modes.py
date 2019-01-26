@@ -37,7 +37,7 @@ class EyedropperMode(RectangularSelectMode):
             # events!
             return
         self.last_mouse_event = (input_row, input_cell)
-        row, col = cg.get_row_col_from_event(evt)
+        row, col, _ = cg.get_row_col_from_event(evt)
         index, _ = cg.table.get_index_range(row, col)
         value = cg.segment_viewer.segment[index]
         cg.segment_viewer.set_draw_pattern(value)
@@ -63,7 +63,7 @@ class DrawMode(RectangularSelectMode):
         print(("drawing with!", pattern, type(pattern)))
         if start:
             self.batch = DrawBatchCommand()
-        row, col = cg.get_row_col_from_event(evt)
+        row, col, _ = cg.get_row_col_from_event(evt)
         if cg.main.is_inside(row, col):
             index, _ = cg.table.get_index_range(row, col)
             cmd = ChangeByteCommand(v.segment, index, index+len(pattern), pattern, False, True)
@@ -105,7 +105,7 @@ class OverlayMode(RectangularSelectMode):
         cg = self.control
         v = cg.segment_viewer
         pattern = v.draw_pattern
-        row, col = cg.get_row_col_from_event(evt)
+        row, col, _ = cg.get_row_col_from_event(evt)
         if cg.main.is_inside(row, col):
             index, _ = cg.table.get_index_range(row, col)
             if start:

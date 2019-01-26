@@ -87,7 +87,7 @@ class JumpmanSelectMode(NormalSelectMode):
 
     def get_xy(self, evt):
         c = self.control
-        y, x = c.get_row_col_from_event(evt)
+        y, x, _ = c.get_row_col_from_event(evt)
         if y < c.model.antic_lines:
             index, _ = c.table.get_index_range(y, x)
             pick = c.model.pick_buffer[index]
@@ -125,7 +125,7 @@ class JumpmanSelectMode(NormalSelectMode):
 
     def calc_popup_data(self, evt):
         cg = self.control
-        row, col = cg.get_row_col_from_event(evt)
+        row, col, _ = cg.get_row_col_from_event(evt)
         inside = True  # fixme
         style = 0
         obj = self.objects

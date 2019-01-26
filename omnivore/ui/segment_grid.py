@@ -243,7 +243,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         return True
 
     def mouse_event_in_edit_cell(self, evt):
-        r, c = self.get_row_col_from_event(evt)
+        r, c, _ = self.get_row_col_from_event(evt)
         index, _ = self.table.get_index_range(r, c)
         print(("mouse edit cell check: r,c=%d,%d, index=%d" % (r, c, index)))
         return self.caret_handler.is_index_of_caret(index)
