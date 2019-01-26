@@ -67,32 +67,6 @@ class PixelLineRenderer(b.BitmapLineRenderer):
         style = t.style[index:last_index]
         self.image_cache.draw_item(grid_control, dc, rect, data, style)
 
-    # fast BaseLineRenderer interface drawing entire grid at once
-
-    def add_regular_selection(self, caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte):
-        # some part of selection is visible
-        start_row = caret.anchor_start[0] - first_row
-        first_col = first_byte * t.pixels_per_byte
-        last_col = last_byte * t.pixels_per_byte
-        width = last_col - first_col
-        if start_row < 0:
-            start_row = 0
-            start_col = 0
-        else:
-            start_col = max(caret.anchor_start[1] - first_col, 0)
-        end_row = caret.anchor_end[0] - first_row
-        if end_row >= last_row:
-            end_row = last_row
-            end_col = width
-        else:
-            end_col = min(caret.anchor_end[1] - first_col, width)
-
-        start_index = start_row * width + start_col
-        end_index = end_row * width + end_col + 1
-        s1d = style_per_pixel.reshape(-1)
-        print("OETUSHNTOEHUSROEHU selection", start_row, start_col, start_index, end_row, end_col, end_index, style_per_pixel.shape, s1d.shape)
-        s1d[start_index:end_index] |= selected_bit_mask
-
     def add_rectangular_selection(self, caret, style_per_pixel, t, first_row, last_row, first_byte, last_byte):
         # some part of selection is visible
         start_row = max(caret.anchor_start[0] - first_row, 0)
@@ -138,7 +112,7 @@ class PixelTable(cg.HexTable):
         self.control = control
         s = self.segment
         self.num_rows = self.converter.calc_grid_height(len(s.data), self.control.bytes_per_row)
-        cg.HexTable.__init__(self, None, None, self.control.items_per_row, self.segment.origin)
+        cg.HexTable.__init__(self, s.data, s.style, self.control.items_per_row, self.segment.origin)
 
     @property
     def segment(self):
