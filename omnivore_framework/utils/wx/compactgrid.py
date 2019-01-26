@@ -1603,10 +1603,6 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         self.left.Scroll(0, dy)
         self.Refresh()
 
-    def on_popup(self, evt):
-        # for subclasses
-        evt.Skip()
-
     def on_char(self, evt):
         action = {}
         action[ord('c')] = self.handle_toggle_col_header

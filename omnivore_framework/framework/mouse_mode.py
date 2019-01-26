@@ -90,6 +90,7 @@ class MouseMode(object):
     def process_popup(self, evt):
         data = self.calc_popup_data(evt)
         actions = self.calc_popup_actions(evt, data)
+        log.debug(f"process_popup: found actions {actions}")
         if actions:
             self.show_popup(actions, data)
 

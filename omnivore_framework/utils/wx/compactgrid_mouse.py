@@ -420,6 +420,7 @@ class MouseMode(object):
     def process_popup(self, evt):
         data = self.calc_popup_data(evt)
         actions = self.calc_popup_actions(evt, data)
+        log.debug(f"process_popup: found actions {actions}")
         if actions:
             self.show_popup(actions, data)
 
@@ -637,15 +638,12 @@ class NormalSelectMode(MouseMode):
 
     def calc_popup_data(self, evt):
         cg = self.control
-        row, col = cg.get_row_col_from_event(evt)
-        try:
+        row, col, inside = cg.get_row_col_from_event(evt)
+        if inside:
             index, _ = cg.table.get_index_range(row, col)
-        except IndexError:
-            index = 0
-            inside = False
+            style = cg.table.segment.style[index]
         else:
-            inside = True
-        style = cg.table.segment.style[index] if inside else 0
+            style = 0
         popup_data = {
             'index': index,
             'in_selection': style&0x80,
@@ -680,7 +678,7 @@ class RectangularSelectMode(NormalSelectMode):
         mode_log.debug("display_coords")
         cg = self.control
         v = cg.segment_viewer
-        row, col = cg.get_row_col_from_event(evt)
+        row, col, inside = cg.get_row_col_from_event(evt)
         index, _ = cg.table.get_index_range(row, col)
         msg = "x=$%x y=$%x index=$%x" % (col, row, index)
         if extra:
@@ -1328,7 +1326,7 @@ class MouseEventMixin:
         return True
 
     def mouse_event_in_edit_cell(self, evt):
-        r, c = self.get_row_col_from_event(evt)
+        r, c, _ = self.get_row_col_from_event(evt)
         index, _ = self.table.get_index_range(r, c)
         print(("mouse edit cell check: r,c=%d,%d, index=%d" % (r, c, index)))
         return self.caret_handler.is_index_of_caret(index)
