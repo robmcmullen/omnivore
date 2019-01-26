@@ -210,6 +210,9 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
             pass
         return ""
 
+    def show_popup(self, actions, data):
+        self.segment_viewer.editor.popup_context_menu_from_actions(self, actions, data)
+
     def calc_control_popup_actions(self, popup_data):
         actions = self.calc_common_popup_actions(popup_data)
         last = self.segment_viewer.calc_viewer_popup_actions(popup_data)
