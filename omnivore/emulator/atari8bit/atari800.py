@@ -84,7 +84,9 @@ class Atari800(EmulatorBase):
 
     low_level_interface = liba8
 
-    mime_types = set(["application/vnd.atari8bit.atr", "application/vnd.atari8bit.xex", "application/vnd.atari8bit.cart",])
+    mime_types = set(["application/vnd.atari8bit.atr", "application/vnd.atari8bit.xex", "application/vnd.atari8bit.cart", "application/vnd.atari8bit.atr.jumpman_level_tester",])
+
+    # mime_prefix = "application/vnd.atari8bit"
 
     def serialize_to_dict(self):
         if not self.is_frame_finished:
@@ -455,9 +457,9 @@ try:
             left = 0b0100 if wx.GetKeyState(wx.WXK_LEFT) else 0
             right = 0b1000 if wx.GetKeyState(wx.WXK_RIGHT) else 0
             self.input['joy0'] = up | down | left | right
-            trig = 1 if wx.GetKeyState(wx.WXK_CONTROL) else 0
+            trig = 1 if wx.GetKeyState(wx.WXK_TAB) else 0
             self.input['trig0'] = trig
-            #print "joy", self.emulator.input['joy0'], "trig", trig
+            # print("joy", self.input['joy0'], "trig", self.input['trig0'])
 
             # console keys will reflect being pressed if at any time between frames
             # the key has been pressed
