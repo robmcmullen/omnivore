@@ -1,73 +1,10 @@
 import sys
 import argparse
 
-try:
-    # Force wx toolkit because pyface >= 5 and traitsui >= 5 both use entry
-    # points to determine toolkits and I can't figure out how to get that to
-    # work in executable bundlers. The following code has to be included before
-    # any calls to any pyface or traitsui modules so the monkey patch can
-    # intercept it before an import of pyface.toolkit.
-    from pyface.ui.wx.init import toolkit_object
-    class MonkeyPatchPyface(object):
-        toolkit_object = toolkit_object
-    sys.modules["pyface.toolkit"] = MonkeyPatchPyface()
-    import traitsui.toolkit
-    import traitsui.wx.toolkit
-    traitsui.toolkit._toolkit = traitsui.wx.toolkit
-except ImportError:
-    # An import error means this is an older version of pyface and
-    # does not need this hack.
-    pass
-
 import logging
 log = logging.getLogger(__name__)
 
-# Create the wx app here so we can capture the Mac specific stuff that
-# traitsui.wx.toolkit's wx creation routines don't handle.  Also, monkey
-# patching wx.GetApp() to add MacOpenFile (etc) doesn't seem to work, so we
-# have to have these routines at app creation time.
 import wx
-
-
-class EnthoughtWxApp(wx.App):
-    mac_menubar_app_name = "Omnivore"
-
-    def OnInit(self):
-        # Set application name before anything else
-        self.SetAppName(self.mac_menubar_app_name)
-        return True
-
-    def MacOpenFiles(self, filenames):
-        """OSX specific routine to handle files that are dropped on the icon
-        
-        """
-        if hasattr(self, 'tasks_application'):
-            # The tasks_application attribute is added to this wx.App instance
-            # when the application has been initialized.  This is used as a
-            # flag to indicate that the subsequent calls to MacOpenFile are
-            # real drops of files onto the dock icon.  Prior to that, this
-            # method gets called for all the command line arguments which would
-            # give us two copies of each file specified on the command line.
-            for filename in filenames:
-                log.debug("MacOpenFile: loading %s" % filename)
-                self.tasks_application.load_file(filename, None)
-        else:
-            log.debug("MacOpenFile: skipping %s because it's a command line argument" % str(filenames))
-
-    throw_out_next_wheel_rotation = False
-
-    def FilterEventMouseWheel(self, evt):
-        if hasattr(evt, "GetWheelRotation"):
-            print("FILTEREVENT!!!", evt.GetWheelRotation(), evt)
-            wheel = evt.GetWheelRotation()
-            if wheel != 0:
-                if self.throw_out_next_wheel_rotation:
-                    self.throw_out_next_wheel_rotation = False
-                    return 0
-                self.throw_out_next_wheel_rotation = True
-        if hasattr(evt, "GetKeyCode"):
-            print("FILTEREVENT!!! char=%s, key=%s, modifiers=%s" % (evt.GetUnicodeKey(), evt.GetKeyCode(), bin(evt.GetModifiers())))
-        return -1
 
 
 def setup_frozen_logging():
