@@ -82,7 +82,7 @@ class DemoEditor(OmnivoreEditor):
     menubar_desc = [
     ["File", ["New", "new_file"], "open_file", None, "save_file", "save_as", None, "quit"],
     ["Edit", "undo", "redo", None, "copy", "cut", "paste", "paste_rectangular", ["Paste Special", "paste_as_text", "paste_as_hex"], None, "prefs"],
-    ["Text", "text_counting", None, "text_last_digit", None, "text_size"],
+    ["Text", None, None, None, "text_counting", None, None, None, "text_last_digit", None, "text_size"],
     ["Dynamic", "text_last_digit_dyn"],
     ["Document", "document_list"],
     ["Help", "about"],

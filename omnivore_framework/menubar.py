@@ -13,12 +13,17 @@ class MenuDescription:
         self.menu = wx.Menu()
         log.debug(f"adding menu {desc}")
         self.name = desc[0]
+        allow_separator = False
         for action_key in desc[1:]:
             if action_key is None:
-                self.menu.AppendSeparator()
+                if allow_separator:
+                    self.menu.AppendSeparator()
+                    allow_separator = False
             elif str(action_key) == action_key:
                 if action_key.startswith("-"):
-                    self.menu.AppendSeparator()
+                    if allow_separator:
+                        self.menu.AppendSeparator()
+                        allow_separator = False
                 else:
                     # usable_actions limit the visible actions to what the current editor supports
                     try:
@@ -37,6 +42,7 @@ class MenuDescription:
                             id = get_action_id(action_key)
                             valid_id_map[id] = (action_key, action)
                             action.append_to_menu(self.menu, id, action_key)
+                            allow_separator = True
             else:
                 submenu = MenuDescription(action_key, editor, valid_id_map)
                 if submenu.count > 0:
