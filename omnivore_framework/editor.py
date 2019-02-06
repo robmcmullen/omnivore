@@ -31,7 +31,9 @@ def get_editors():
         else:
             log.debug(f"get_editors: Found module {name}")
             for name, obj in inspect.getmembers(mod):
-                if inspect.isclass(obj):
+                if inspect.isclass(obj) and OmnivoreEditor in obj.__mro__[1:]:
+                    # only use subclasses of OmnivoreEditor, not the
+                    # OmnivoreEditor base class itself
                     log.debug(f"get_editors: Found editor class {name}")
                     editors.append(obj)
     return editors
@@ -55,7 +57,8 @@ def find_editor_class_for_mime(mime_type):
 
 
 class OmnivoreEditor:
-    name = "simple_editor"
+    name = "omnivore_framework_base_editor"
+    pretty_name = "Omnivore Framework Base Editor"
 
     menubar_desc = [
     ["File", "new_file", "open_file", None, "save_file", "save_as", None, "quit"],
@@ -118,8 +121,14 @@ class OmnivoreEditor:
 
         return dirpath
 
+    @property
+    def title(self):
+        uri = self.last_saved_uri or self.last_loaded_uri
+        if uri:
+            return os.path.basename(uri)
+        return self.pretty_name
+
     def __init__(self, action_factory_lookup=None):
-        self.title = "Sample Editor"
         self.tab_name = "Text"
         self.frame = None
         if action_factory_lookup is None:
@@ -139,6 +148,9 @@ class OmnivoreEditor:
 
     def load(self, path, mime_info):
         pass
+
+    def load_success(self, path, mime_info):
+        self.last_loaded_uri = path
 
     @classmethod
     def can_edit_mime_exact(cls, mime_type):

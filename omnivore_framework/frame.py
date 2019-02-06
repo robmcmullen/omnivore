@@ -82,6 +82,9 @@ class OmnivoreFrame(wx.Frame):
             self.create_toolbar()
             self.toolbar.sync_with_editor(self.raw_toolbar)
 
+    def set_title(self):
+        self.SetTitle(f"{self.active_editor.title} - {wx.GetApp().app_name}")
+
     def add_editor(self, editor):
         editor.frame = self
         control = editor.create_control(self.notebook)
@@ -90,21 +93,25 @@ class OmnivoreFrame(wx.Frame):
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
 
-    def load_file(self, path, current_editor):
+    def load_file(self, path, current_editor=None):
         try:
             mime_info = loader.identify_file(path)
-            if current_editor.can_edit_mime(mime_info['mime']):
-                new_editor = current_editor.__class__()
+            if current_editor is not None and current_editor.can_edit_mime(mime_info['mime']):
+                editor_cls = current_editor
             else:
-                new_editor = editor.find_editor_class_for_mime(mime_info['mime'])
+                editor_cls = editor.find_editor_class_for_mime(mime_info['mime'])
+            new_editor = editor_cls()
+            # have to add before load so the control exists
             self.add_editor(new_editor)
             new_editor.load(path, mime_info)
-            index = self.find_index_of_editor(new_editor)
-            self.notebook.SetPageText(index, new_editor.tab_name)
         except Exception as e:
             import traceback
             traceback.print_exc()
             self.error(str(e))
+        else:
+            new_editor.load_success(path, mime_info)
+            index = self.find_index_of_editor(new_editor)
+            self.notebook.SetPageText(index, new_editor.tab_name)
 
     def make_active(self, editor, force=False):
         last = self.active_editor
@@ -118,6 +125,7 @@ class OmnivoreFrame(wx.Frame):
             log.debug(f"setting tab focus to {index}")
             self.notebook.SetSelection(index)
             editor.control.SetFocus()
+            self.set_title()
 
     def enumerate_tabs(self):
         for index in range(self.notebook.GetPageCount()):
@@ -142,6 +150,8 @@ class OmnivoreFrame(wx.Frame):
     def find_editor_from_index(self, index):
         control = self.notebook.GetPage(index)
         return self.find_editor_from_control(control)
+
+    #### Event callbacks
 
     def on_menu_open_win(self, evt):
         # windows only works when updating the menu during the event call
@@ -206,6 +216,8 @@ class OmnivoreFrame(wx.Frame):
             log.debug("halting toolbar timer")
             self.toolbar_timer.Stop()
         wx.CallAfter(self.sync_toolbar)
+
+    #### convenience functions for alerts and dialogs
 
     def prompt_local_file_dialog(self, title="", most_recent=True, save=False, default_filename="", wildcard="*"):
         """Display an "open file" dialog to load from the local filesystem,

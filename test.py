@@ -121,36 +121,45 @@ class DemoEditor(OmnivoreEditor):
 
 
 if __name__ == "__main__":
+    import sys
     app = OmnivoreApp(False)
-    editor = OmnivoreEditor()
-    frame = app.new_frame(editor)
 
-    action_factory_lookup = {
-         "text_counting": text_counting,
-         "text_last_digit": text_last_digit,
-         "text_last_digit_dyn": text_last_digit_dyn,
-         "text_size": text_size,
-    }
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
 
-    if False:
-        editor1 = DemoEditor()
-        editor2 = DemoEditor(action_factory_lookup=action_factory_lookup)
-        editor2.toolbar_desc = [
-        "new_file", "open_file", "save_file", None, "text_last_digit",
-        ]
-        editor2.tab_name = "Editor 2"
-        editor3 = DemoEditor(action_factory_lookup=action_factory_lookup)
-        editor3.tab_name = "Editor 3"
-        frame.add_editor(editor1)
-        frame.add_editor(editor2)
-        frame.add_editor(editor3)
+        editor = OmnivoreEditor()
+        frame = app.new_frame(editor)
+        frame.load_file(path)
     else:
-        import omnivore_framework.editor
-        editor_cls = omnivore_framework.editor.find_editor_class_for_mime("text/plain")
-        if editor_cls:
-            e = editor_cls(action_factory_lookup=action_factory_lookup)
-            e.toolbar_desc = ["text_last_digit"]
-            frame.add_editor(e)
+        editor = OmnivoreEditor()
+        frame = app.new_frame(editor)
+
+        action_factory_lookup = {
+             "text_counting": text_counting,
+             "text_last_digit": text_last_digit,
+             "text_last_digit_dyn": text_last_digit_dyn,
+             "text_size": text_size,
+        }
+
+        if False:
+            editor1 = DemoEditor()
+            editor2 = DemoEditor(action_factory_lookup=action_factory_lookup)
+            editor2.toolbar_desc = [
+            "new_file", "open_file", "save_file", None, "text_last_digit",
+            ]
+            editor2.tab_name = "Editor 2"
+            editor3 = DemoEditor(action_factory_lookup=action_factory_lookup)
+            editor3.tab_name = "Editor 3"
+            frame.add_editor(editor1)
+            frame.add_editor(editor2)
+            frame.add_editor(editor3)
+        else:
+            import omnivore_framework.editor
+            editor_cls = omnivore_framework.editor.find_editor_class_for_mime("text/plain")
+            if editor_cls:
+                e = editor_cls(action_factory_lookup=action_factory_lookup)
+                e.toolbar_desc = ["text_last_digit"]
+                frame.add_editor(e)
     frame.Show()
 
     app.MainLoop()
