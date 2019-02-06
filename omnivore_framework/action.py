@@ -65,6 +65,9 @@ class OmnivoreAction:
         self.editor = editor
         self.init_from_editor()
 
+    def execute(self):
+        raise AttributeError(f"no execute method defined for {self}")
+
     def calc_menu_sub_keys(self, action_key):
         """Return any dynamically created action_keys
 

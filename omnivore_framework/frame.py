@@ -6,6 +6,9 @@ import wx.aui as aui
 from . import menubar
 from . import toolbar
 from . import errors
+from . import editor
+from . import loader
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -80,12 +83,28 @@ class OmnivoreFrame(wx.Frame):
             self.toolbar.sync_with_editor(self.raw_toolbar)
 
     def add_editor(self, editor):
-        editor.attached_to_frame = self
+        editor.frame = self
         control = editor.create_control(self.notebook)
         editor.control = control
         control.editor = editor
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
+
+    def load_file(self, path, current_editor):
+        try:
+            mime_info = loader.identify_file(path)
+            if current_editor.can_edit_mime(mime_info['mime']):
+                new_editor = current_editor.__class__()
+            else:
+                new_editor = editor.find_editor_class_for_mime(mime_info['mime'])
+            self.add_editor(new_editor)
+            new_editor.load(path, mime_info)
+            index = self.find_index_of_editor(new_editor)
+            self.notebook.SetPageText(index, new_editor.tab_name)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.error(str(e))
 
     def make_active(self, editor, force=False):
         last = self.active_editor
@@ -95,13 +114,18 @@ class OmnivoreFrame(wx.Frame):
             self.sync_menubar()
             self.create_toolbar()
             self.sync_toolbar()
-            index = self.find_index_from_control(editor.control)
+            index = self.find_index_of_control(editor.control)
             log.debug(f"setting tab focus to {index}")
             self.notebook.SetSelection(index)
             editor.control.SetFocus()
 
-    def find_tab_number_of_editor(self, editor):
-        return self.notebook.FindPage(editor.control)
+    def enumerate_tabs(self):
+        for index in range(self.notebook.GetPageCount()):
+            control = self.notebook.GetPage(index)
+            yield index, control, control.editor
+
+    def find_index_of_editor(self, editor):
+        return self.find_index_of_control(editor.control)
 
     def find_editor_from_control(self, control):
         for index in range(self.notebook.GetPageCount()):
@@ -109,7 +133,7 @@ class OmnivoreFrame(wx.Frame):
                 return control.editor
         raise EditorNotFound
 
-    def find_index_from_control(self, control):
+    def find_index_of_control(self, control):
         for index in range(self.notebook.GetPageCount()):
             if control == self.notebook.GetPage(index):
                 return index
@@ -144,7 +168,7 @@ class OmnivoreFrame(wx.Frame):
         try:
             action_key, action = self.menubar.valid_id_map[action_id]
             try:
-                action.execute()
+                wx.CallAfter(action.execute)
             except AttributeError:
                 log.debug(f"no execute method for {action}")
         except KeyError as e:
@@ -182,3 +206,76 @@ class OmnivoreFrame(wx.Frame):
             log.debug("halting toolbar timer")
             self.toolbar_timer.Stop()
         wx.CallAfter(self.sync_toolbar)
+
+    def prompt_local_file_dialog(self, title="", most_recent=True, save=False, default_filename="", wildcard="*"):
+        """Display an "open file" dialog to load from the local filesystem,
+        defaulting to the most recently used directory.
+
+        If there is no previously used directory, default to the directory of
+        the current file.
+
+        Returns the directory path on the filesystem, or None if not found.
+        """
+        dirpath = ""
+        if save:
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+        else:
+            style=wx.FD_OPEN | wx.FD_CHANGE_DIR | wx.FD_FILE_MUST_EXIST | wx.FD_PREVIEW
+
+        action = "save as" if save else "open"
+        if not title:
+            title = "Save File" if save else "Open File"
+        if self.active_editor:
+            # will try path of current file
+            dirpath = self.active_editor.best_file_save_dir
+
+        dlg = wx.FileDialog(self, message=title, defaultFile=default_filename, wildcard=wildcard, style=style)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            return dlg.GetPath()
+        return None
+
+    def confirm(self, message, title="Confirm", cancel=False, yes_default=False):
+        """ Convenience method to show a confirmation dialog. """
+
+        style = wx.ICON_INFORMATION | wx.YES_NO
+        if cancel:
+            style |= wx.CANCEL
+        elif yes_default:
+            style |= wx.YES_DEFAULT
+        else:
+            style |= wx.NO_DEFAULT
+        dlg = wx.MessageDialog(self, message, title, style)
+        state = dlg.ShowModal()
+        dlg.Destroy()
+        return None if state == wx.CANCEL else state == wx.YES
+
+    def confirm_cancel(self, message, title="Confirm"):
+        """ Convenience method to show a confirmation dialog.
+
+        Returns None if Cancel was chosen in addition to the usual True/False.
+        """
+        return self.confirm(message, title, cancel=True)
+
+    def information(self, message, title='Information'):
+        """ Convenience method to show an information message dialog. """
+
+        current = self.FindFocus()
+        dlg = wx.MessageDialog(current, message, title, wx.ICON_INFORMATION | wx.OK)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def warning(self, message, title='Warning'):
+        """ Convenience method to show a warning message dialog. """
+        current = self.FindFocus()
+        dlg = wx.MessageDialog(current, message, title, wx.ICON_WARNING | wx.OK)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+
+    def error(self, message, title='Error'):
+        """ Convenience method to show an error message dialog. """
+        current = self.FindFocus()
+        dlg = wx.MessageDialog(current, message, title, wx.ICON_ERROR | wx.OK)
+        dlg.ShowModal()
+        dlg.Destroy()

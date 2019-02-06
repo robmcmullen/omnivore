@@ -10,3 +10,6 @@ class RecreateDynamicMenuBar(SimpleFrameworkError):
 
 class EditorNotFound(SimpleFrameworkError):
     pass
+
+class UnsupportedFileType(SimpleFrameworkError):
+    pass

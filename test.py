@@ -2,6 +2,10 @@
 """
 from omnivore_framework import OmnivoreApp, OmnivoreEditor, OmnivoreAction, OmnivoreActionRadioMixin, errors
 
+import logging
+logging.basicConfig(level=logging.WARNING)
+
+
 class paste_as_text(OmnivoreAction):
     def calc_name(self, action_key):
         return "Paste As Text"
@@ -92,18 +96,43 @@ class DemoEditor(OmnivoreEditor):
     "new_file", "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste", "paste_as_text", "paste_as_hex",
     ]
 
+    @property
+    def is_dirty(self):
+        return not self.control.IsEmpty()
+
+    @property
+    def can_copy(self):
+        return self.control.CanCopy()
+
+    @property
+    def can_paste(self):
+        return self.control.CanPaste()
+
+    @property
+    def can_undo(self):
+        return False
+
+    @property
+    def can_redo(self):
+        return False
+
+    def create_control(self, parent):
+        return wx.TextCtrl(parent, -1, style=wx.TE_MULTILINE)
+
 
 if __name__ == "__main__":
     app = OmnivoreApp(False)
     editor = OmnivoreEditor()
     frame = app.new_frame(editor)
-    if True:
-        action_factory_lookup = {
-             "text_counting": text_counting,
-             "text_last_digit": text_last_digit,
-             "text_last_digit_dyn": text_last_digit_dyn,
-             "text_size": text_size,
-        }
+
+    action_factory_lookup = {
+         "text_counting": text_counting,
+         "text_last_digit": text_last_digit,
+         "text_last_digit_dyn": text_last_digit_dyn,
+         "text_size": text_size,
+    }
+
+    if False:
         editor1 = DemoEditor()
         editor2 = DemoEditor(action_factory_lookup=action_factory_lookup)
         editor2.toolbar_desc = [
@@ -115,6 +144,13 @@ if __name__ == "__main__":
         frame.add_editor(editor1)
         frame.add_editor(editor2)
         frame.add_editor(editor3)
+    else:
+        import omnivore_framework.editor
+        editor_cls = omnivore_framework.editor.find_editor_class_for_mime("text/plain")
+        if editor_cls:
+            e = editor_cls(action_factory_lookup=action_factory_lookup)
+            e.toolbar_desc = ["text_last_digit"]
+            frame.add_editor(e)
     frame.Show()
 
     app.MainLoop()

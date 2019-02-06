@@ -12,11 +12,17 @@ class new_file(OmnivoreAction):
 
     def execute(self):
         new_editor = self.editor.__class__()
-        wx.CallAfter(self.editor.attached_to_frame.add_editor, new_editor)
+        self.editor.frame.add_editor(new_editor)
 
 class open_file(OmnivoreAction):
     def calc_name(self, action_key):
         return "&Open"
+
+    def execute(self):
+        frame = self.editor.frame
+        path = frame.prompt_local_file_dialog()
+        if path is not None:
+            frame.load_file(path, self.editor)
 
 class save_file(OmnivoreAction):
     def calc_name(self, action_key):
@@ -96,4 +102,4 @@ class about(OmnivoreAction):
         return "&About"
 
     def execute(self):
-        wx.CallAfter(wx.GetApp().show_about_dialog)
+        wx.GetApp().show_about_dialog()
