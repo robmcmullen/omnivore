@@ -4,6 +4,7 @@ import wx
 import wx.adv
 
 from .frame import OmnivoreFrame
+from .filesystem import init_filesystems
 
 import logging
 log = logging.getLogger(__name__)
@@ -18,7 +19,15 @@ class OmnivoreApp(wx.App):
 
     about_website = "http://playermissile.com/omnivore"
 
-    about_image = "image_base_name"
+    about_image = "icon://omnivore256.png"
+
+    about_html = f"""<html>
+<h2>{app_name} {about_version}</h2>
+
+<h3>{about_description}</h3>
+
+<p><img src="{about_image}">
+"""
 
     default_editor = "simple_editor"
 
@@ -47,6 +56,7 @@ class OmnivoreApp(wx.App):
     def OnInit(self):
         self.SetAppName(self.app_name)
         self.init_class_attrs()
+        init_filesystems(self)
         return True
 
     @classmethod

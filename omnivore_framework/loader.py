@@ -9,6 +9,7 @@ import fs
 import wx
 
 from .utils.sortutil import before_after_wildcard_sort
+from .filesystem import fsopen as open
 
 import logging
 log = logging.getLogger(__name__)

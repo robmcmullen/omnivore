@@ -3,6 +3,7 @@ import os
 import wx
 
 from omnivore_framework import OmnivoreEditor
+from omnivore_framework.filesystem import fsopen as open
 
 import logging
 log = logging.getLogger(__name__)
