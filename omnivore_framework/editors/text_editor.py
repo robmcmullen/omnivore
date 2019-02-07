@@ -45,12 +45,18 @@ class TextEditor(OmnivoreEditor):
     def create_control(self, parent):
         return wx.TextCtrl(parent, -1, style=wx.TE_MULTILINE)
 
-    def load(self, path, mime_info):
+    def load(self, path, mime_info, args=None):
         with open(path, 'r') as fh:
             text = fh.read()
 
         self.control.SetValue(text)
         self.tab_name = os.path.basename(path)
+        if args is not None:
+            size = int(args.get('size', -1))
+            if size > 0:
+                font = self.control.GetFont()
+                font.SetPointSize(size)
+                self.control.SetFont(font)
 
     @classmethod
     def can_edit_mime_exact(cls, mime_type):

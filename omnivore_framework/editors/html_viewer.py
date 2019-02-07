@@ -53,7 +53,7 @@ class HtmlViewer(OmnivoreEditor):
     def create_control(self, parent):
         return HtmlWindow(parent)
 
-    def load(self, path, mime_info):
+    def load(self, path, mime_info, args=None):
         with open(path, 'r') as fh:
             text = fh.read()
 

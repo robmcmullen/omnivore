@@ -170,7 +170,7 @@ class OmnivoreEditor:
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Omnivore editors")
 
-    def load(self, path, mime_info):
+    def load(self, path, mime_info, args=None):
         pass
 
     def load_success(self, path, mime_info):

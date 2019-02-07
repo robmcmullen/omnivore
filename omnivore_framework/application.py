@@ -1,6 +1,7 @@
 """ Simple menubar & tabbed window framework
 """
 import argparse
+import collections
 
 import wx
 import wx.adv
@@ -92,10 +93,16 @@ class OmnivoreFrameworkApp(wx.App):
             for logger_name in options.debug_loggers:
                 print(logger_name)
                 error_logger.enable_loggers(logger_name[0])
+        task_arguments = collections.OrderedDict()
         if ":" in options.task_id:
-            options.task_id, task_arguments = options.task_id.split(":", 1)
-        else:
-            task_arguments = ""
+            options.task_id, task_str = options.task_id.split(":", 1)
+            items = task_str.split(",")
+            for item in items:
+                if '=' in item:
+                    item, v = item.split('=', 1)
+                else:
+                    v = True
+                task_arguments[item] = v
         log.debug("task arguments: %s" % task_arguments)
         try:
             default_editor = find_editor_class_by_name(options.task_id)()
@@ -105,7 +112,7 @@ class OmnivoreFrameworkApp(wx.App):
         frame = self.new_frame()
         while len(extra_args) > 0:
             path = extra_args.pop(0)
-            frame.load_file(path, default_editor)
+            frame.load_file(path, default_editor, task_arguments)
         frame.Show()
 
     def MacOpenFiles(self, filenames):

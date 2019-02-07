@@ -103,7 +103,7 @@ class OmnivoreFrame(wx.Frame):
         self.notebook.RemovePage(index)
         del control
 
-    def load_file(self, path, current_editor=None):
+    def load_file(self, path, current_editor=None, args=None):
         try:
             mime_info = loader.identify_file(path)
             if current_editor is not None and current_editor.can_edit_mime(mime_info['mime']):
@@ -113,7 +113,7 @@ class OmnivoreFrame(wx.Frame):
             new_editor = editor_cls()
             # have to add before load so the control exists
             self.add_editor(new_editor)
-            new_editor.load(path, mime_info)
+            new_editor.load(path, mime_info, args)
         except Exception as e:
             import traceback
             traceback.print_exc()
