@@ -107,7 +107,7 @@ class OmnivoreFrame(wx.Frame):
         try:
             mime_info = loader.identify_file(path)
             if current_editor is not None and current_editor.can_edit_mime(mime_info['mime']):
-                editor_cls = current_editor
+                editor_cls = current_editor.__class__
             else:
                 editor_cls = editor_module.find_editor_class_for_mime(mime_info['mime'])
             new_editor = editor_cls()
