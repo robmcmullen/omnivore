@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 about = {
 }
 
+image_paths = []
+
 
 def open_about(path, mode):
     try:
@@ -51,8 +53,12 @@ def open_template(path, mode):
         return open(real_path, mode)
 
 def open_icon(path, mode):
-    real_path = os.path.join(get_image_path("icons"), path)
-    return open(real_path, mode)
+    try:
+        real_path = find_image_path(path)
+    except OSError as e:
+        raise FileNotFoundError(str(e))
+    else:
+        return open(real_path, mode)
 
 filesystems = {
     "about://": open_about,
@@ -99,8 +105,26 @@ def init_filesystems(app):
     wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
     global about
-
     about['app'] = app.about_html.encode('utf-8')
+
+    global image_paths
+    path = get_image_path("icons")
+    if path not in image_paths:
+        image_paths.append(path)
+
+
+def find_image_path(name):
+    log.debug(f"searching subdirs {image_paths}")
+    checked = []
+    for toplevel in image_paths:
+        path = os.path.join(toplevel, name)
+        log.debug("Checking for image at %s" % path)
+        if os.path.exists(path):
+            log.debug("Found image for %s: %s" % (name, path))
+            return path
+        checked.append(toplevel)
+    else:
+        raise OSError("No image found for %s in %s" % (name, str(checked)))
 
 
 def get_image_path(rel_path, module=None, file=None, up_one_level=False, excludes=[]):
