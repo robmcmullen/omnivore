@@ -7,6 +7,7 @@ import wx
 import numpy as np
 
 from .templates import find_template_path
+from .persistence import setup_file_persistence
 
 import logging
 log = logging.getLogger(__name__)
@@ -111,6 +112,8 @@ def init_filesystems(app):
     path = get_image_path("icons")
     if path not in image_paths:
         image_paths.append(path)
+
+    setup_file_persistence(app.app_name)
 
 
 def find_image_path(name):
