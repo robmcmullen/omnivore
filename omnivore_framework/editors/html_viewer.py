@@ -36,19 +36,13 @@ class HtmlWindow(wx.html.HtmlWindow):
 class HtmlViewer(OmnivoreEditor):
     name = "html_viewer"
 
-    menubar_desc = [
-    ["File", "new_file", "open_file", None, "save_file", "save_as", None, "quit"],
-    ["Edit", "copy", None, "prefs"],
-    ["Help", "about"],
-    ]
-
-    toolbar_desc = [
-        "new_file", "open_file", "save_file", None, "copy"
-    ]
-
     @property
     def can_copy(self):
         return bool(self.control.SelectionToText())
+
+    @property
+    def can_paste(self):
+        return False
 
     def create_control(self, parent):
         return HtmlWindow(parent)

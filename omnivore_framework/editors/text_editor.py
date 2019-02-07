@@ -12,16 +12,6 @@ log = logging.getLogger(__name__)
 class TextEditor(OmnivoreEditor):
     name = "text_editor"
 
-    menubar_desc = [
-    ["File", "new_file", "open_file", None, "save_file", "save_as", None, "quit"],
-    ["Edit", "undo", "redo", None, "copy", "cut", "paste", None, "prefs"],
-    ["Help", "about"],
-    ]
-
-    toolbar_desc = [
-        "new_file", "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste"
-    ]
-
     @property
     def is_dirty(self):
         return not self.control.IsEmpty()

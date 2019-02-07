@@ -35,7 +35,7 @@ class save_as(OmnivoreAction):
     def calc_name(self, action_key):
         return "Save &As"
 
-class application_quit(OmnivoreAction):
+class quit(OmnivoreAction):
     def calc_name(self, action_key):
         return "&Quit"
 
@@ -92,6 +92,11 @@ class paste(OmnivoreAction):
 
     def sync_menu_item_from_editor(self, action_key, menu_item):
         menu_item.Enable(self.editor.can_paste)
+
+    def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
+        state = self.editor.can_paste
+        log.debug(f"tool item {id}, {state}, {self.editor.tab_name}")
+        toolbar_control.EnableTool(id, state)
 
 class prefs(OmnivoreAction):
     def calc_name(self, action_key):
