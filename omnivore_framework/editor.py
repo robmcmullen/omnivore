@@ -56,6 +56,19 @@ def find_editor_class_for_mime(mime_type):
             return editor
     raise errors.UnsupportedFileType(f"No editor available for {mime_type}")
 
+def find_editor_class_by_name(name):
+    """Find the editor class given its class name
+
+    Returns the OmnivoreEditor subclass whose `name` class attribute matches
+    the given string.
+    """
+    editors = get_editors()
+    log.debug(f"finding editors using {editors}")
+    for editor in editors:
+        if editor.name == name:
+            return editor
+    raise errors.UnsupportedFileType(f"No editor named {name}")
+
 
 class OmnivoreEditor:
     name = "omnivore_framework_base_editor"
@@ -74,6 +87,10 @@ class OmnivoreEditor:
     module_search_order = ["omnivore_framework.actions"]
 
     tool_bitmap_size = (24, 24)
+
+    # if an editor is marked as transient, it will be replaced if it's the
+    # active frame when a new frame is added.
+    transient = False
 
     @property
     def is_dirty(self):
@@ -124,6 +141,10 @@ class OmnivoreEditor:
         if uri:
             return os.path.basename(uri)
         return self.pretty_name
+
+    @property
+    def is_transient(self):
+        return self.transient or self.__class__ == OmnivoreEditor
 
     def __init__(self, action_factory_lookup=None):
         self.tab_name = "Text"

@@ -63,3 +63,23 @@ class HtmlViewer(OmnivoreEditor):
     @classmethod
     def can_edit_mime_exact(cls, mime_type):
         return mime_type == "text/html"
+
+
+class TitleScreen(HtmlViewer):
+    name = "title_screen"
+
+    transient = True
+
+    def create_control(self, parent):
+        self.control = HtmlViewer.create_control(self, parent)
+        self.load("about://app", None)
+        self.tab_name = wx.GetApp().app_name
+        return self.control
+
+    @classmethod
+    def can_edit_mime_exact(cls, mime_type):
+        return False
+
+    @classmethod
+    def can_edit_mime_generic(cls, mime_type):
+        return False

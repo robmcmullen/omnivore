@@ -1,5 +1,7 @@
 """ Simple menubar & tabbed window framework
 """
+import wx
+
 from omnivore_framework import OmnivoreApp, OmnivoreEditor, OmnivoreAction, OmnivoreActionRadioMixin, errors
 
 import logging
@@ -122,26 +124,21 @@ class DemoEditor(OmnivoreEditor):
 
 if __name__ == "__main__":
     import sys
+    import omnivore_framework.editor
     app = OmnivoreApp(False)
+    frame = app.new_frame()
 
-    if len(sys.argv) > 1:
-        path = sys.argv[1]
+    action_factory_lookup = {
+         "text_counting": text_counting,
+         "text_last_digit": text_last_digit,
+         "text_last_digit_dyn": text_last_digit_dyn,
+         "text_size": text_size,
+    }
+    args = sys.argv[1:]
+    while len(args) > 0:
+        path = args.pop(0)
 
-        editor = OmnivoreEditor()
-        frame = app.new_frame(editor)
-        frame.load_file(path)
-    else:
-        editor = OmnivoreEditor()
-        frame = app.new_frame(editor)
-
-        action_factory_lookup = {
-             "text_counting": text_counting,
-             "text_last_digit": text_last_digit,
-             "text_last_digit_dyn": text_last_digit_dyn,
-             "text_size": text_size,
-        }
-
-        if False:
+        if path == "demo":
             editor1 = DemoEditor()
             editor2 = DemoEditor(action_factory_lookup=action_factory_lookup)
             editor2.toolbar_desc = [
@@ -153,13 +150,14 @@ if __name__ == "__main__":
             frame.add_editor(editor1)
             frame.add_editor(editor2)
             frame.add_editor(editor3)
-        else:
-            import omnivore_framework.editor
+        elif path == "text":
             editor_cls = omnivore_framework.editor.find_editor_class_for_mime("text/plain")
             if editor_cls:
                 e = editor_cls(action_factory_lookup=action_factory_lookup)
                 e.toolbar_desc = ["text_last_digit"]
                 frame.add_editor(e)
+        else:
+            frame.load_file(path)
     frame.Show()
 
     app.MainLoop()

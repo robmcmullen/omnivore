@@ -4,6 +4,7 @@ import wx
 import wx.adv
 
 from .frame import OmnivoreFrame
+from .editor import find_editor_class_by_name
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
 
@@ -130,7 +131,9 @@ class OmnivoreApp(wx.App):
 
     #### Convenience functions
 
-    def new_frame(self, editor):
+    def new_frame(self, editor=None):
+        if editor is None:
+            editor = find_editor_class_by_name("title_screen")()
         frame = OmnivoreFrame(editor)
         return frame
 
