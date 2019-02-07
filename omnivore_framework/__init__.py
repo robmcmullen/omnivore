@@ -16,7 +16,7 @@ try:
 except ImportError:
     __version__ = "dev"
 
-from .application import OmnivoreApp
+from .application import OmnivoreFrameworkApp
 from .frame import OmnivoreFrame
 from .editor import OmnivoreEditor
 from .action import OmnivoreAction, OmnivoreActionRadioMixin

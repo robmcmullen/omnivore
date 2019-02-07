@@ -1,18 +1,22 @@
 """ Simple menubar & tabbed window framework
 """
+import argparse
+
 import wx
 import wx.adv
 
 from .frame import OmnivoreFrame
-from .editor import find_editor_class_by_name
+from .editor import get_editors, find_editor_class_by_name
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
+from .utils.wx import error_logger
+from . import errors
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class OmnivoreApp(wx.App):
+class OmnivoreFrameworkApp(wx.App):
     app_name = "Omnivore Framework"  # user visible application name
 
     about_version = "1.0"
@@ -72,6 +76,51 @@ class OmnivoreApp(wx.App):
         if cls.last_window_size is None:
             cls.last_window_size = cls.default_window_size
 
+    def process_command_line_args(self, args):
+        parser = argparse.ArgumentParser(description="Application parser")
+        parser.add_argument("-t", "--task_id", "--task-id", "--edit_with","--edit-with", action="store", default="", help="Use the editing mode specified by this task id for all files listed on the command line")
+        parser.add_argument("-d", "--debug_loggers", action="append", nargs=1, help="Comma separated list of debug loggers to enable")
+        parser.add_argument("--show_editors", "--show-editors", action="store_true", default=False, help="List all task ids")
+        parser.add_argument("--show_focused", "--show-focused", action="store_true", default=False, help="Show the focused window at every idle processing ")
+        parser.add_argument("--build_docs", "--build-docs", action="store_true", default=False, help="Build documentation from the menubar")
+        options, extra_args = parser.parse_known_args(args)
+        if options.show_editors:
+            for e in get_editors:
+                print(f"{e.name}: {e.pretty_name}")
+        if options.debug_loggers:
+            print(options.debug_loggers)
+            for logger_name in options.debug_loggers:
+                print(logger_name)
+                error_logger.enable_loggers(logger_name[0])
+        if ":" in options.task_id:
+            options.task_id, task_arguments = options.task_id.split(":", 1)
+        else:
+            task_arguments = ""
+        log.debug("task arguments: %s" % task_arguments)
+        try:
+            default_editor = find_editor_class_by_name(options.task_id)()
+        except errors.EditorNotFound:
+            default_editor = None
+
+        frame = self.new_frame()
+        while len(extra_args) > 0:
+            path = extra_args.pop(0)
+            frame.load_file(path, default_editor)
+        frame.Show()
+
+    def MacOpenFiles(self, filenames):
+        """OSX specific routine to handle files that are dropped on the icon
+        
+        """
+        if self.command_line_args is not None:
+            # MacOpenFiles gets called for command line arguments, so this flag
+            # is used to detect real drops of files onto the dock icon.
+            for filename in filenames:
+                log.debug(f"MacOpenFiles: loading {filename}")
+                self.tasks_application.load_file(filename, None)
+        else:
+            log.debug(f"MacOpenFiles: skipping {filenames} because it's a command line argument")
+
     #### Shutdown
 
     def shutdown_subprocesses(self):
@@ -86,21 +135,6 @@ class OmnivoreApp(wx.App):
                 pass
         self.shutdown_subprocesses()
         self.ExitMainLoop()
-
-    #### Mac-specific hooks
-
-    def MacOpenFiles(self, filenames):
-        """OSX specific routine to handle files that are dropped on the icon
-        
-        """
-        if self.command_line_args is not None:
-            # MacOpenFiles gets called for command line arguments, so this flag
-            # is used to detect real drops of files onto the dock icon.
-            for filename in filenames:
-                log.debug(f"MacOpenFiles: loading {filename}")
-                self.tasks_application.load_file(filename, None)
-        else:
-            log.debug(f"MacOpenFiles: skipping {filenames} because it's a command line argument")
 
     #### Application information
 

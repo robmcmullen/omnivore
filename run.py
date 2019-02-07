@@ -5,11 +5,6 @@ import sys
 import logging
 
 
-# A list of the directories that contain the application's eggs (any directory
-# not specified as an absolute path is treated as being relative to the current
-# working directory).
-EGG_PATH = ['eggs']
-
 last_trace_was_system_call = False
 trace_after_funcname = None
 
@@ -63,18 +58,6 @@ def main(argv):
     """ Run the application.
     """
     logging.basicConfig(level=logging.WARNING)
-    for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
-        _ = logging.getLogger(toolkit)
-        _.setLevel(logging.WARNING)
-
-    # check for logging early so we can get logging output during application init
-    import omnivore_framework.utils.wx.error_logger as error_logger
-    if "-d" in argv:
-        i = argv.index("-d")
-        error_logger.enable_loggers(argv[i+1])
-    else:
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
 
     if "--trace" in argv:
         i = argv.index("--trace")
@@ -89,37 +72,16 @@ def main(argv):
         trace_after_funcname = funcname
         sys.settrace(trace_calls)
 
-    try:
-        from omnivore.plugin import OmnivoreEditorPlugin
-        plugins = [OmnivoreEditorPlugin()]
-
-        import omnivore.file_type
-        plugins.extend(omnivore.file_type.plugins)
-        
-        import omnivore.viewers
-        plugins.extend(omnivore.viewers.plugins)
-    except ImportError as e:
-        plugins = []
-        raise
-    except ModuleNotFoundError as e:
-        plugins = []
-        raise
-
-    # # Crypto is separated to make it easy to make it optional for those
-    # # framework users who don't want the extra dependencies
-    # import omnivore_extra.crypto.file_type
-    # plugins.extend(omnivore_extra.crypto.file_type.plugins)
-
-    from omnivore_framework.app_init import run
-    from omnivore.document import SegmentedDocument
-    run(plugins=plugins, use_eggs=False, document_class=SegmentedDocument)
+    from omnivore_framework.startup import run
+    from omnivore_framework.application import OmnivoreFrameworkApp
+    run(OmnivoreFrameworkApp)
 
     logging.shutdown()
 
 
 if __name__ == '__main__':
     import sys
-    from omnivore_framework.app_init import setup_frozen_logging
+    from omnivore_framework.startup import setup_frozen_logging
     
     setup_frozen_logging()
     main(sys.argv)

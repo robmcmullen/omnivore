@@ -67,12 +67,18 @@ def find_editor_class_by_name(name):
     for editor in editors:
         if editor.name == name:
             return editor
-    raise errors.UnsupportedFileType(f"No editor named {name}")
+        if name in editor.compatibility_names:
+            return editor
+    raise errors.EditorNotFound(f"No editor named {name}")
 
 
 class OmnivoreEditor:
     name = "omnivore_framework_base_editor"
     pretty_name = "Omnivore Framework Base Editor"
+
+    # list of alternate names for this editor, for compatibility with task_ids
+    # from Omnivore 1.0
+    compatibility_names = []
 
     menubar_desc = [
     ["File", "new_file", "open_file", None, "save_file", "save_as", None, "quit"],
