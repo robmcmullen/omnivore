@@ -1,3 +1,4 @@
+import os
 import sys
 import importlib
 import pkgutil
@@ -110,14 +111,10 @@ class OmnivoreEditor:
         print(("attempts for best_file_save_dir: %s" % str(attempts)))
         dirpath = ""
         for uri in attempts:
-            try:
-                uri_dir = os.path.dirname(uri)
-                fs_, relpath = fs.opener.opener.parse(uri_dir)
-                if fs_.hassyspath(relpath):
-                    dirpath = fs_.getsyspath(relpath)
-                    break
-            except fs.errors.FSError:
-                pass
+            uri_dir = os.path.dirname(uri)
+            if os.path.exists(uri_dir):
+                dirpath = uri_dir
+                break
 
         return dirpath
 
