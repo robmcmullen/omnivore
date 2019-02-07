@@ -6,7 +6,7 @@ import wx.aui as aui
 from . import menubar
 from . import toolbar
 from . import errors
-from . import editor
+from . import editor as editor_module
 from . import loader
 
 
@@ -90,8 +90,18 @@ class OmnivoreFrame(wx.Frame):
         control = editor.create_control(self.notebook)
         editor.control = control
         control.editor = editor
+        if self.active_editor.__class__ == editor_module.OmnivoreEditor:
+            self.close_editor(self.active_editor)
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
+
+    def close_editor(self, editor):
+        index = self.find_index_of_editor(editor)
+        control = editor.control
+        control.editor = None
+        editor.prepare_destroy()
+        self.notebook.RemovePage(index)
+        del control
 
     def load_file(self, path, current_editor=None):
         try:
@@ -99,7 +109,7 @@ class OmnivoreFrame(wx.Frame):
             if current_editor is not None and current_editor.can_edit_mime(mime_info['mime']):
                 editor_cls = current_editor
             else:
-                editor_cls = editor.find_editor_class_for_mime(mime_info['mime'])
+                editor_cls = editor_module.find_editor_class_for_mime(mime_info['mime'])
             new_editor = editor_cls()
             # have to add before load so the control exists
             self.add_editor(new_editor)
@@ -197,10 +207,7 @@ class OmnivoreFrame(wx.Frame):
         index = evt.GetSelection()
         log.debug(f"on_page_closed: page id: {index}")
         editor = self.find_editor_from_index(index)
-        control = editor.control
-        editor.prepare_destroy()
-        self.notebook.RemovePage(index)
-        del control
+        self.close_editor(editor)
         evt.Skip()
 
     def on_timer(self, evt):
