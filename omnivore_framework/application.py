@@ -5,6 +5,7 @@ import wx.adv
 
 from .frame import OmnivoreFrame
 from .filesystem import init_filesystems
+from .filesystem import fsopen as open
 
 import logging
 log = logging.getLogger(__name__)
@@ -104,7 +105,9 @@ class OmnivoreApp(wx.App):
 
     @property
     def about_image_bitmap(self):
-        return None
+        data = open(self.about_image, 'rb')
+        image = wx.Image(data)
+        return wx.Bitmap(image)
 
     def show_about_dialog(self):
         info = wx.adv.AboutDialogInfo()
