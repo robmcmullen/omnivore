@@ -97,7 +97,7 @@ int a8bridge_init(int argc, char **argv) {
 
 	err = threading_status;
 	if (err == thrd_success) {
-		if (!libatari800_init(&argc, argv))
+		if (!libatari800_init(argc, argv))
 			err = 3;
 	}
 	else {
