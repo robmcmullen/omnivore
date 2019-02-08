@@ -11,7 +11,6 @@ from . import errors
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def iter_namespace(ns_pkg):
@@ -81,7 +80,7 @@ class OmnivoreEditor:
     compatibility_names = []
 
     menubar_desc = [
-    ["File", "new_file", "open_file", None, "save_file", "save_as", None, "quit"],
+    ["File", "new_file", "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
     ["Edit", "undo", "redo", None, "copy", "cut", "paste", None, "prefs"],
     ["Help", "about"],
     ]
@@ -175,6 +174,8 @@ class OmnivoreEditor:
 
     def load_success(self, path, mime_info):
         self.last_loaded_uri = path
+        from omnivore_framework.actions import open_recent
+        open_recent.open_recent.append(path)
 
     @classmethod
     def can_edit_mime_exact(cls, mime_type):
