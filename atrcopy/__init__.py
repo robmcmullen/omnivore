@@ -54,6 +54,32 @@ def process(image, dirent, options):
         print(dirent)
 
 
+def find_diskimage_from_data(data, verbose=False):
+    data = to_numpy(data)
+    parser = None
+    container = guess_container(data, verbose)
+    if container is not None:
+        data = container.unpacked
+    rawdata = SegmentData(data)
+    mime, parser = guess_parser_by_size(rawdata)
+    if parser is None:
+        for mime in mime_parse_order:
+            if verbose:
+                print("Trying MIME type %s" % mime)
+            parser = guess_parser_for_mime(mime, rawdata, verbose)
+            if parser is None:
+                continue
+            if verbose:
+                print("Found parser %s" % parser.menu_name)
+            mime2 = guess_detail_for_mime(mime, rawdata, parser)
+            if mime != mime2 and verbose:
+                print("Signature match: %s" % mime2)
+            break
+    if parser is None:
+        raise errors.UnsupportedDiskImage("Unknown disk image type")
+    return parser, mime
+
+
 def find_diskimage(filename, verbose=False):
     if filename == ".":
         parser = LocalFilesystem()
@@ -62,31 +88,10 @@ def find_diskimage(filename, verbose=False):
             if verbose:
                 print("Loading file %s" % filename)
             data = to_numpy(fh.read())
-        parser = None
-        container = guess_container(data, verbose)
-        if container is not None:
-            data = container.unpacked
-        rawdata = SegmentData(data)
-        mime, parser = guess_parser_by_size(rawdata)
-        if parser is None:
-            for mime in mime_parse_order:
-                if verbose:
-                    print("Trying MIME type %s" % mime)
-                parser = guess_parser_for_mime(mime, rawdata, verbose)
-                if parser is None:
-                    continue
-                if verbose:
-                    print("Found parser %s" % parser.menu_name)
-                mime2 = guess_detail_for_mime(mime, rawdata, parser)
-                if mime != mime2 and verbose:
-                    print("Signature match: %s" % mime2)
-                break
-    if parser is None:
-        raise errors.UnsupportedDiskImage("Unknown disk image type")
-    else:
-        parser.image.filename = filename
-        parser.image.ext = ""
-        return parser
+        parser, mime = find_diskimage_from_data(data, verbose)
+    parser.image.filename = filename
+    parser.image.ext = ""
+    return parser
 
 
 def extract_files(image, files):
