@@ -11,7 +11,6 @@ from .filesystem import fsopen as open
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def get_loaders():

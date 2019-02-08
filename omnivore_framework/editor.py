@@ -193,12 +193,6 @@ class OmnivoreEditor:
         try:
             action_factory = self.action_factory_lookup[action_key]
         except KeyError:
-            action_factory = None
-            for mod in self.module_search_order:
-                action_factory = action.find_action_factory(mod, action_key)
-                if action_factory is not None:
-                    break
-            else:
-                raise KeyError(f"no action factory found for {action_key}")
+            action_factory = action.find_action_factory(self.module_search_order, action_key)
             self.action_factory_lookup[action_key] = action_factory
         return action_factory(self, action_key)

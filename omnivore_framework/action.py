@@ -34,8 +34,30 @@ def get_action_id(action_key):
         global_action_ids[action_key] = id
     return id
 
-def find_action_factory(mod_root, action_key):
-    for ext in [f".{action_key}", ""]:
+def find_action_factory_in_module(mod_root, action_key):
+    """Given a module name, search for the action using heuristics matching
+    based on the action name.
+
+    First, the module mod_root.action_key is searched for the class named
+    action_key. If not found, the action_key is shortened in successive steps,
+    breaking up the action name by underscores. If it is not found in any of
+    those steps, it is searched for in mod_root.__init__.
+
+    For example, if the module is "omnivore_framework.actions" and the action
+    key is "file_save_as", the lookup order will be:
+
+        omnivore_framework.actions.file_save_as.py
+        omnivore_framework.actions.file_save.py
+        omnivore_framework.actions.file.py
+        omnivore_framework.actions.__init__.py
+    """
+    action_key_parts = action_key.split("_")
+    modules = []
+    while bool(action_key_parts):
+        modules.append("." + "_".join(action_key_parts))
+        action_key_parts.pop()
+    modules.append("")
+    for ext in modules:
         mod_name = f"{mod_root}{ext}"
         log.debug(f"searching in {mod_name} for 'action_factory'")
         try:
@@ -58,7 +80,22 @@ def find_action_factory(mod_root, action_key):
             else:
                 log.debug(f"found callable {action_key} in {mod_name}")
                 return factory
-        
+
+def find_action_factory(module_search_order, action_key):
+    """Search for the action given its key.
+
+    The module search order is a list of module names. Within each of those
+    module names, the action is searched for using some heuristics based on the
+    action name. See `find_action_factory_in_module` for more details.
+
+    If no action is found, KeyError is raised.
+    """
+    for mod in module_search_order:
+        action_factory = find_action_factory_in_module(mod, action_key)
+        if action_factory is not None:
+            return action_factory
+    else:
+        raise KeyError(f"no action factory found for {action_key} in {module_search_order}")
 
 class OmnivoreAction:
     def __init__(self, editor, action_key):

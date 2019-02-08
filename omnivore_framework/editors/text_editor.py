@@ -55,3 +55,33 @@ class TextEditor(OmnivoreEditor):
     @classmethod
     def can_edit_mime_generic(cls, mime_type):
         return mime_type.startswith("text/")
+
+
+class DebugTextEditor(TextEditor):
+    name = "debug"
+
+    menubar_desc = [
+    ["File", ["New", "new_file"], "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
+    ["Edit", "undo", "redo", None, "copy", "cut", "paste", "paste_rectangular", ["Paste Special", "paste_as_text", "paste_as_hex"], None, "prefs"],
+    ["Debug", None, None, None, "debug_text_counting", None, None, None, "debug_text_last_digit", None, "debug_text_size"],
+    ["Dynamic", "debug_text_last_digit_dyn"],
+    ["Help", "about"],
+    ]
+
+    toolbar_desc = [
+    "new_file", "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste", "paste_as_text", "paste_as_hex",
+    ]
+
+    def load(self, *args, **kwargs):
+        TextEditor.load(self, *args, **kwargs)
+        self.tab_name = "DEBUG " + self.tab_name
+
+    # won't automatically match anything; must force this editor with the -t
+    # command line flag
+    @classmethod
+    def can_edit_mime_exact(cls, mime_type):
+        return False
+
+    @classmethod
+    def can_edit_mime_generic(cls, mime_type):
+        return mime_type.startswith("text/")
