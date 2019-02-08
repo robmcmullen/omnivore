@@ -1,8 +1,6 @@
 import os
 import sys
 import time
-import importlib
-import pkgutil
 
 from datetime import datetime
 import fs
@@ -16,24 +14,14 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def iter_namespace(ns_pkg):
-    # Specifying the second argument (prefix) to iter_modules makes the
-    # returned name an absolute name instead of a relative one. This allows
-    # import_module to work without having to do additional modification to
-    # the name.
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
-
 def get_loaders():
-    import omnivore_framework.loaders
+    import pkg_resources
+
     loaders = []
-    for finder, name, ispkg in iter_namespace(omnivore_framework.loaders):
-        try:
-            mod = importlib.import_module(name)
-        except ImportError as e:
-            log.error(f"Error importing loader {name}: {e}")
-        else:
-            log.debug(f"get_loaders: Found loader {name}")
-            loaders.append(mod)
+    for entry_point in pkg_resources.iter_entry_points('omnivore_framework.loaders'):
+        mod = entry_point.load()
+        log.debug(f"get_loaders: Found loader {entry_point.name}")
+        loaders.append(mod)
     return loaders
 
 def identify_file(uri):

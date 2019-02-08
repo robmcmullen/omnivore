@@ -76,7 +76,6 @@ package_data = {
 # Must explicitly add namespace packages
 packages = find_packages()
 packages.append("omnivore_framework.editors")
-packages.append("omnivore_framework.loaders")
 
 
 base_dist_dir = "dist-%s" % spaceless_version
@@ -121,6 +120,12 @@ setup(
     packages = packages,
     package_data = package_data,
     data_files=data_files,
+    entry_points={
+        "omnivore_framework.loaders": [
+            'fleep = omnivore_framework.loaders.fleep',
+            'text = omnivore_framework.loaders.text',
+        ],
+    },
     options=options,
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
     zip_safe = False,
