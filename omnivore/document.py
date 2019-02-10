@@ -5,7 +5,7 @@ import numpy as np
 import jsonpickle
 import fs
 
-from omnivore_framework.framework.document import BaseDocument, TraitNumpyConverter
+from omnivore_framework.document import BaseDocument, TraitNumpyConverter
 from omnivore_framework.utils.file_guess import FileGuess
 
 # Enthought library imports.
@@ -71,33 +71,36 @@ class SegmentedDocument(BaseDocument):
     def __str__(self):
         return f"SegmentedDocument: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}"
 
-    #### serialization methods
-
-    def load_extra_metadata_before_editor(self, guess):
-        log.debug("extra metadata_before_editor: parser=%s, mime=%s" % (guess.parser, guess.metadata.mime))
-        extra = self.calc_unserialized_template(guess.metadata.mime)
-        if extra:
-            log.debug("extra metadata: loaded template for %s" % guess.metadata.mime)
-        if 'machine mime' not in extra:
-            extra['machine mime'] = self.metadata.mime
-
-        file_extra = guess.json_metadata.get(self.metadata_extension, {})
-        if 'serialized user segments' in file_extra and 'user segments' in extra:
-            # Ignore the segments from the built-in data if serialized user
-            # segments exist in the .omnivore file. Any built-in segments will
-            # have already been saved in the .omnivore file, so this prevents
-            # duplication.
-            del extra['user segments']
-
+    #### loaders
+    def load_from_atrcopy_parser(self, file_metadata, editor_metadata):
         # make sure a parser exists; it probably does in most cases, but
         # emulators use a source document to create the EmulationDocument, and
         # the EmulationDocument won't have a parser assigned if it isn't being
         # restored from a .omnivore file
         if self.segment_parser is None:
-            self.set_segments(guess.parser)
+            self.set_segments(file_metadata["atrcopy_parser"])
 
-        # Overwrite any builtin stuff with saved data from the user
-        extra.update(file_extra)
+    def load_from_raw_data(self, data, file_metadata, editor_metadata):
+        self.raw_bytes = data
+        self.parse_segments([])
+
+    #### serialization methods
+
+    def get_document_template_metadata(self, file_metadata):
+        mime = file_metadata["mime"]
+        log.debug("extra metadata_before_editor: parser=%s, mime=%s" % (file_metadata["atrcopy_parser"], mime))
+        extra = self.calc_unserialized_template(mime)
+        if extra:
+            log.debug("extra metadata: loaded template for %s" % mime)
+        if 'machine mime' not in extra:
+            extra['machine mime'] = mime
+
+        # if 'serialized user segments' in editor_metadata and 'user segments' in extra:
+        #     # Ignore the segments from the built-in data if serialized user
+        #     # segments exist in the .omnivore file. Any built-in segments will
+        #     # have already been saved in the .omnivore file, so this prevents
+        #     # duplication.
+        #     del extra['user segments']
         return extra
 
     def serialize_extra_to_dict(self, mdict):

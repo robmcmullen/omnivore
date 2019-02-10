@@ -314,6 +314,9 @@ setup(
     ext_modules = ext_modules,
     include_dirs = [np.get_include()],
     packages = find_packages(exclude=["libudis"]),
+    entry_points={
+        "omnivore_framework.editors": 'byte = omnivore.editors.byte_editor',
+        },
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
     zip_safe = False,
     install_requires = [
