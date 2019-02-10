@@ -1,8 +1,7 @@
 import os
 import sys
-import importlib
-import pkgutil
 import inspect
+import pkg_resources
 
 import wx
 
@@ -13,30 +12,19 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def iter_namespace(ns_pkg):
-    # Specifying the second argument (prefix) to iter_modules makes the
-    # returned name an absolute name instead of a relative one. This allows
-    # import_module to work without having to do additional modification to
-    # the name.
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
-
 def get_editors():
-    import omnivore_framework.editors
     editors = []
-    for finder, name, ispkg in iter_namespace(omnivore_framework.editors):
-        try:
-            mod = importlib.import_module(name)
-        except ImportError as e:
-            log.error(f"get_editors: Error importing moduole {name}: {e}")
-        else:
-            log.debug(f"get_editors: Found module {name}")
-            for name, obj in inspect.getmembers(mod):
-                if inspect.isclass(obj) and OmnivoreEditor in obj.__mro__[1:]:
-                    # only use subclasses of OmnivoreEditor, not the
-                    # OmnivoreEditor base class itself
-                    log.debug(f"get_editors: Found editor class {name}")
-                    editors.append(obj)
+    for entry_point in pkg_resources.iter_entry_points('omnivore_framework.editors'):
+        mod = entry_point.load()
+        log.debug(f"get_edtiors: Found module {entry_point.name}")
+        for name, obj in inspect.getmembers(mod):
+            if inspect.isclass(obj) and OmnivoreEditor in obj.__mro__[1:]:
+                # only use subclasses of OmnivoreEditor, not the
+                # OmnivoreEditor base class itself
+                log.debug(f"get_editors: Found editor class {name}")
+                editors.append(obj)
     return editors
+
 
 def find_editor_class_for_mime(mime_type):
     """Find the "best" editor for a given MIME type string.

@@ -125,6 +125,10 @@ setup(
             'fleep = omnivore_framework.loaders.fleep',
             'text = omnivore_framework.loaders.text',
         ],
+        "omnivore_framework.editors": [
+            'html = omnivore_framework.editors.html_viewer',
+            'text = omnivore_framework.editors.text_editor',
+        ],
     },
     options=options,
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
