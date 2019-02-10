@@ -47,7 +47,7 @@ class HtmlViewer(OmnivoreEditor):
     def create_control(self, parent):
         return HtmlWindow(parent)
 
-    def load(self, path, mime_info, args=None):
+    def load(self, path, file_metadata, args=None):
         with open(path, 'r') as fh:
             text = fh.read()
 
@@ -55,8 +55,8 @@ class HtmlViewer(OmnivoreEditor):
         self.tab_name = os.path.basename(path)
 
     @classmethod
-    def can_edit_mime_exact(cls, mime_type):
-        return mime_type == "text/html"
+    def can_edit_file_exact(cls, file_metadata):
+        return file_metadata['mime'] == "text/html"
 
 
 class TitleScreen(HtmlViewer):
@@ -71,9 +71,9 @@ class TitleScreen(HtmlViewer):
         return self.control
 
     @classmethod
-    def can_edit_mime_exact(cls, mime_type):
+    def can_edit_file_exact(cls, file_metadata):
         return False
 
     @classmethod
-    def can_edit_mime_generic(cls, mime_type):
+    def can_edit_file_generic(cls, file_metadata):
         return False

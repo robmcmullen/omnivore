@@ -4,7 +4,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def identify_mime(header):
+def identify_mime(header, fh):
     mime_type = None
     is_binary = guessBinary(header)
     if not is_binary:

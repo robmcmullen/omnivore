@@ -35,7 +35,7 @@ class TextEditor(OmnivoreEditor):
     def create_control(self, parent):
         return wx.TextCtrl(parent, -1, style=wx.TE_MULTILINE)
 
-    def load(self, path, mime_info, args=None):
+    def load(self, path, file_metadata, args=None):
         with open(path, 'r') as fh:
             text = fh.read()
 
@@ -49,12 +49,12 @@ class TextEditor(OmnivoreEditor):
                 self.control.SetFont(font)
 
     @classmethod
-    def can_edit_mime_exact(cls, mime_type):
-        return mime_type == "text/plain"
+    def can_edit_file_exact(cls, file_metadata):
+        return file_metadata['mime'] == "text/plain"
 
     @classmethod
-    def can_edit_mime_generic(cls, mime_type):
-        return mime_type.startswith("text/")
+    def can_edit_file_generic(cls, file_metadata):
+        return file_metadata['mime'].startswith("text/")
 
 
 class DebugTextEditor(TextEditor):
@@ -79,9 +79,9 @@ class DebugTextEditor(TextEditor):
     # won't automatically match anything; must force this editor with the -t
     # command line flag
     @classmethod
-    def can_edit_mime_exact(cls, mime_type):
+    def can_edit_file_exact(cls, file_metadata):
         return False
 
     @classmethod
-    def can_edit_mime_generic(cls, mime_type):
-        return mime_type.startswith("text/")
+    def can_edit_file_generic(cls, file_metadata):
+        return file_metadata['mime'].startswith("text/")

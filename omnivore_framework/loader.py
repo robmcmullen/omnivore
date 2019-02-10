@@ -31,26 +31,27 @@ def identify_file(uri):
     that may be used by specific loaders for specific types of data.
     """
     loaders = get_loaders()
-    log.debug(f"identifying files using {loaders}")
+    log.debug(f"identify_file: identifying files using {loaders}")
     hits = []
     fallback = None
     with open(uri, 'rb') as fh:
         data = fh.read(10240)
         for loader in loaders:
-            log.debug(f"trying loader {loader}")
-            mime_info = loader.identify_mime(data)
-            if mime_info:
-                mime_type = mime_info['mime']
+            log.debug(f"identify_file: trying loader {loader}")
+            file_metadata = loader.identify_mime(data, fh)
+            if file_metadata:
+                file_metadata['uri'] = uri
+                mime_type = file_metadata['mime']
                 if mime_type == "application/octet-stream" or mime_type == "text/plain":
                     if not fallback:
                         fallback = mime_type
                 else:
-                    log.debug(f"found mime: {mime_info}")
-                    hits.append(mime_info)
+                    log.debug(f"identify_file: identified: {file_metadata}")
+                    hits.append(file_metadata)
 
     # how to find best guess?
     if hits:
-        log.debug(f"identify_file: best guess = {mime_info}")
+        log.debug(f"identify_file: found {hits}")
         return hits[0]
     else:
         if not fallback:

@@ -26,7 +26,7 @@ def get_editors():
     return editors
 
 
-def find_editor_class_for_mime(mime_type):
+def find_editor_class_for_file(file_metadata):
     """Find the "best" editor for a given MIME type string.
 
     First attempts all editors with exact matches for the MIME string,
@@ -36,12 +36,12 @@ def find_editor_class_for_mime(mime_type):
     editors = get_editors()
     log.debug(f"finding editors using {editors}")
     for editor in editors:
-        if editor.can_edit_mime_exact(mime_type):
+        if editor.can_edit_file_exact(file_metadata):
             return editor
     for editor in editors:
-        if editor.can_edit_mime_generic(mime_type):
+        if editor.can_edit_file_generic(file_metadata):
             return editor
-    raise errors.UnsupportedFileType(f"No editor available for {mime_type}")
+    raise errors.UnsupportedFileType(f"No editor available for {file_metadata}")
 
 def find_editor_class_by_name(name):
     """Find the editor class given its class name
@@ -157,25 +157,25 @@ class OmnivoreEditor:
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Omnivore editors")
 
-    def load(self, path, mime_info, args=None):
+    def load(self, path, file_metadata, args=None):
         pass
 
-    def load_success(self, path, mime_info):
+    def load_success(self, path, file_metadata):
         self.last_loaded_uri = path
         from omnivore_framework.actions import open_recent
         open_recent.open_recent.append(path)
 
     @classmethod
-    def can_edit_mime_exact(cls, mime_type):
+    def can_edit_file_exact(cls, file_metadata):
         return False
 
     @classmethod
-    def can_edit_mime_generic(cls, mime_type):
+    def can_edit_file_generic(cls, file_metadata):
         return False
 
     @classmethod
-    def can_edit_mime(cls, mime_type):
-        return cls.can_edit_mime_exact(mime_type) or cls.can_edit_mime_generic(mime_type)
+    def can_edit_file(cls, file_metadata):
+        return cls.can_edit_file_exact(file_metadata) or cls.can_edit_file_generic(file_metadata)
 
     def calc_usable_action(self, action_key):
         try:

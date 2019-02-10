@@ -105,21 +105,21 @@ class OmnivoreFrame(wx.Frame):
 
     def load_file(self, path, current_editor=None, args=None):
         try:
-            mime_info = loader.identify_file(path)
-            if current_editor is not None and current_editor.can_edit_mime(mime_info['mime']):
+            file_metadata = loader.identify_file(path)
+            if current_editor is not None and current_editor.can_edit_file(file_metadata):
                 editor_cls = current_editor.__class__
             else:
-                editor_cls = editor_module.find_editor_class_for_mime(mime_info['mime'])
+                editor_cls = editor_module.find_editor_class_for_file(file_metadata)
             new_editor = editor_cls()
             # have to add before load so the control exists
             self.add_editor(new_editor)
-            new_editor.load(path, mime_info, args)
+            new_editor.load(path, file_metadata, args)
         except Exception as e:
             import traceback
             traceback.print_exc()
             self.error(str(e))
         else:
-            new_editor.load_success(path, mime_info)
+            new_editor.load_success(path, file_metadata)
             index = self.find_index_of_editor(new_editor)
             self.notebook.SetPageText(index, new_editor.tab_name)
 
