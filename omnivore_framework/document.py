@@ -11,10 +11,10 @@ import jsonpickle
 # Enthought library imports.
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
 
-from ..utils.command import UndoStack
-from ..utils.file_guess import FileGuess, FileMetadata
-from ..utils import jsonutil
-from ..templates import get_template
+from .utils.command import UndoStack
+from .utils.file_guess import FileGuess, FileMetadata
+from .utils import jsonutil
+from .templates import get_template
 
 import logging
 log = logging.getLogger(__name__)

@@ -2,11 +2,13 @@ import os
 import sys
 import inspect
 import pkg_resources
+import json
 
 import wx
 
 from . import action
 from . import errors
+from .utils import jsonutil
 
 import logging
 log = logging.getLogger(__name__)
@@ -79,6 +81,8 @@ class OmnivoreEditor:
 
     module_search_order = ["omnivore_framework.actions"]
 
+    extra_metadata_file_extensions = []
+
     tool_bitmap_size = (24, 24)
 
     # if an editor is marked as transient, it will be replaced if it's the
@@ -148,6 +152,7 @@ class OmnivoreEditor:
         self.last_loaded_uri = None
         self.last_saved_uri = None
         self.document = None
+        self.extra_metadata = {}
 
     def prepare_destroy(self):
         print(f"prepare_destroy: {self.tab_name}")
@@ -164,6 +169,52 @@ class OmnivoreEditor:
         self.last_loaded_uri = path
         from omnivore_framework.actions import open_recent
         open_recent.open_recent.append(path)
+
+    #### metadata
+
+    def load_extra_metadata(self, path, default_metadata):
+        self.extra_metadata.update(default_metadata)
+        for ext in self.extra_metadata_file_extensions:
+            mpath = path + "." + ext
+            try:
+                fh = open(mpath, 'r')
+                text = fh.read()
+            except IOError:
+                log.debug(f"load_extra_metadata: no metadata found at {mpath}")
+                pass
+            else:
+                try:
+                    metadata = jsonutil.unserialize(mpath, text)
+                except ValueError as e:
+                    log.error(f"invalid data in {mpath}: {e}")
+                    metadata = {}
+                self.extra_metadata.update(metadata)
+
+    @property
+    def editor_metadata(self):
+        m = self.extra_metadata.get(self.name, {})
+        return m
+
+    def get_editor_specific_metadata(self, keyword):
+        """Get the metadata for the keyword that is specific to this editor
+        class.
+
+        E.g. if there is a layout stored in the metadata, it will be in
+        metadata[self.name]['layout']:
+
+        {
+            "omnivore.byte_edit": {
+                "layout": {
+                    "sidebars": [ ... ],
+                    "tile_manager": { .... },
+                }
+        }
+        """
+        try:
+            layout_dict = metadata[self.name][keyword]
+        except KeyError:
+            layout_dict = {}
+        return layout_dict
 
     @classmethod
     def can_edit_file_exact(cls, file_metadata):
