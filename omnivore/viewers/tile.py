@@ -8,7 +8,7 @@ from traits.api import on_trait_change, Bool, Undefined, Any, List
 from ..ui.tilewrap import TileWrapControl
 from ..byte_edit.commands import ChangeByteCommand
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -88,14 +88,14 @@ class TileViewer(SegmentViewer):
 
     ##### SegmentViewer interface
 
-    @on_trait_change('machine.font_change_event')
+    # @on_trait_change('machine.font_change_event')
     def update_bitmap(self, evt):
         log.debug("TileViewer: machine font changed for %s" % self.control)
         if evt is not Undefined:
             self.control.set_font()
             self.control.recalc_view()
 
-    @on_trait_change('linked_base.editor.focused_viewer_changed_event')
+    # @on_trait_change('linked_base.editor.focused_viewer_changed_event')
     def update_bitmap(self, evt):
         log.debug("focused viewer changed to %s" % evt)
         v = evt

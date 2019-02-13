@@ -10,8 +10,9 @@ import wx.lib.dialogs
 # Enthought library imports.
 from traits.api import Any, Int
 
-from omnivore_framework.framework.enthought_api import ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
-import omnivore_framework.framework.clipboard as clipboard
+# from omnivore_framework.framework.enthought_api import ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+# import omnivore_framework.framework.clipboard as clipboard
+from omnivore_framework.action import OmnivoreAction
 
 from . import commands
 from ..arch.ui.antic_colors import AnticColorDialog
@@ -29,7 +30,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class ViewerAction(EditorAction):
+class ViewerAction(OmnivoreAction):
     @property
     def viewer(self):
         return self.task.active_editor.focused_viewer
@@ -51,7 +52,7 @@ class ViewerAction(EditorAction):
 
 
 
-class FontChoiceGroup(TaskDynamicSubmenuGroup):
+class FontChoiceGroup(ViewerAction):
     """Dynamic menu group to display the available fonts
     """
     #### 'DynamicSubmenuGroup' interface ######################################
@@ -93,7 +94,7 @@ class LoadFontAction(ViewerAction):
 
 # Assembler syntax section
 
-class AssemblerChoiceGroup(TaskDynamicSubmenuGroup):
+class AssemblerChoiceGroup(ViewerAction):
     """Dynamic menu group to display the available assemblers used to display
     the disassembly syntax
     """

@@ -9,11 +9,12 @@ import wx.lib.dialogs
 
 # Enthought library imports.
 from traits.api import on_trait_change, Any, Int, Bool
-from pyface.api import YES, NO
+# from pyface.api import YES, NO
 
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
-from omnivore_framework.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+# from omnivore_framework.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+from omnivore_framework.action import OmnivoreAction
 from omnivore_framework.utils.command import StatusFlags
 
 from .commands import *
@@ -23,7 +24,7 @@ from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, 
 from ..ui.dialogs import SegmentOrderDialog, SegmentInterleaveDialog
 from ..arch.machine import Machine
 from ..document import SegmentedDocument
-from omnivore_framework.framework.minibuffer import *
+from omnivore_framework.utils.wx.minibuffer import *
 from omnivore_framework.utils.textutil import parse_int_label_dict
 from omnivore_framework.utils.nputil import count_in_range
 from omnivore_framework.utils.jsonutil import dict_to_list
@@ -38,7 +39,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class GetFontFromSelectionAction(EditorAction):
+class GetFontFromSelectionAction(OmnivoreAction):
     name = 'Get Font From Selection'
     enabled_name = 'grid_range_selected'
 
@@ -46,7 +47,7 @@ class GetFontFromSelectionAction(EditorAction):
         self.active_editor.get_font_from_selection()
 
 
-class UseSegmentAction(EditorAction):
+class UseSegmentAction(OmnivoreAction):
     """This submenu contains a list of all segments in the disk image.
     Selecting one of these items will change the view to the selected segment.
     """
@@ -70,7 +71,7 @@ class UseSegmentAction(EditorAction):
             self.checked = state
 
 
-class AddViewerAction(EditorAction):
+class AddViewerAction(OmnivoreAction):
     """Add a new viewer to the user interface
     """
     # Traits
@@ -83,7 +84,7 @@ class AddViewerAction(EditorAction):
         self.active_editor.add_viewer(self.viewer)
 
 
-class CurrentSegmentParserAction(NameChangeAction):
+class CurrentSegmentParserAction(OmnivoreAction):
     default_name = 'Current Disk Image'
     name = default_name
     enabled = False
@@ -99,7 +100,7 @@ class CurrentSegmentParserAction(NameChangeAction):
         self.enabled = False
 
 
-class SegmentParserAction(EditorAction):
+class SegmentParserAction(OmnivoreAction):
     """Change the parser that generates segments from the disk image.
     """
     # Traits
@@ -122,7 +123,7 @@ class SegmentParserAction(EditorAction):
             self.checked = new_state
 
 
-class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
+class SegmentChoiceGroup(OmnivoreAction):
     """Menu containing list of segments
     """
     #### 'DynamicSubmenuGroup' interface ######################################
@@ -144,7 +145,7 @@ class SegmentChoiceGroup(TaskDynamicSubmenuGroup):
         return items
 
 
-class ParseSubSegmentsAction(EditorAction):
+class ParseSubSegmentsAction(OmnivoreAction):
     """Expand the segment into sub-segments using a parser.  The disk image
     parser only parses the first level of segments automatically, so if there
     are segments that can be further parsed, for instance an Atari DOS file
@@ -163,7 +164,7 @@ class ParseSubSegmentsAction(EditorAction):
             e.added_segment(s)
 
 
-class SelectSegmentInAllAction(EditorAction):
+class SelectSegmentInAllAction(OmnivoreAction):
     name = 'Select This Segment in All'
 
     segment_number = Int
@@ -178,7 +179,7 @@ class SelectSegmentInAllAction(EditorAction):
         e.index_clicked(e.anchor_start_index, 0, None)
 
 
-class GetSegmentFromSelectionAction(EditorAction):
+class GetSegmentFromSelectionAction(OmnivoreAction):
     """Create a new segment in the segment list using the current selection.
 
     All the bytes in the current selection will be shown in the new segment. If
@@ -201,7 +202,7 @@ class GetSegmentFromSelectionAction(EditorAction):
             e.linked_base.find_segment(segment=segment, refresh=True)
 
 
-class MultipleSegmentsFromSelectionAction(EditorAction):
+class MultipleSegmentsFromSelectionAction(OmnivoreAction):
     """Create a set of segments from the current selection, given the desired
     length of the resulting segments. If the number of bytes in the selection
     is not an exact multiple of the specified length, the last segment created
@@ -222,7 +223,7 @@ class MultipleSegmentsFromSelectionAction(EditorAction):
             e.linked_base.find_segment(segment=segments[0], refresh=True)
 
 
-class InterleaveSegmentsAction(EditorAction):
+class InterleaveSegmentsAction(OmnivoreAction):
     name = 'Interleave Segments'
     tooltip = 'Create new segment by interleaving segments'
 
@@ -241,7 +242,7 @@ class InterleaveSegmentsAction(EditorAction):
         dlg.Destroy()
 
 
-class ExpandDocumentAction(EditorAction):
+class ExpandDocumentAction(OmnivoreAction):
     name = 'Expand Disk Image'
     tooltip = 'Resize the document to add extra data at the end'
     enabled_name = 'can_resize_document'
@@ -255,7 +256,7 @@ class ExpandDocumentAction(EditorAction):
         e.find_segment(segment=s, refresh=True)
 
 
-class FindStyleBaseAction(EditorAction):
+class FindStyleBaseAction(OmnivoreAction):
     name = 'Select Style'
     tooltip = 'Select a particular style'
 
@@ -310,7 +311,7 @@ class FindUninitializedAction(FindDataAction):
     user_type = UNINITIALIZED_DATA
 
 
-class CustomDisassemblerAction(EditorAction):
+class CustomDisassemblerAction(OmnivoreAction):
     name = '<custom>'
     enabled_name = 'can_copy'
     disassembly_type = 0
@@ -379,7 +380,7 @@ class MarkSelectionAsUninitializedDataAction(CustomDisassemblerAction):
     disassembly_type = UNINITIALIZED_DATA
 
 
-class ImportSegmentLabelsAction(EditorAction):
+class ImportSegmentLabelsAction(OmnivoreAction):
     """Imports a text file that defines labels and addresses.
 
     The text file should contain the address and the label on a single line.
@@ -424,7 +425,7 @@ class ImportSegmentLabelsAction(EditorAction):
             e.process_command(cmd)
 
 
-class ExportSegmentLabelsAction(EditorAction):
+class ExportSegmentLabelsAction(OmnivoreAction):
     """Exports a text file containing label/address pairs.
 
     The text file will have a format that can be included in most assemblers::
@@ -459,7 +460,7 @@ class ExportSegmentLabelsAction(EditorAction):
         e.task.status_bar.error = "No labels in segment"
 
 
-class DeleteUserSegmentAction(EditorAction):
+class DeleteUserSegmentAction(OmnivoreAction):
     """Remove a segment from the list of segments
 
     Any segment except the root segment can be deleted. Recall that this
@@ -475,7 +476,7 @@ class DeleteUserSegmentAction(EditorAction):
             e.delete_user_segment(segment)
 
 
-class SetSegmentOriginAction(EditorAction):
+class SetSegmentOriginAction(OmnivoreAction):
     """Sets the origin of the current segment to an address, changing the
     starting point for all windows displaying this segment's data.
 
@@ -491,7 +492,7 @@ class SetSegmentOriginAction(EditorAction):
             e.process_command(cmd)
 
 
-class SaveAsXEXAction(EditorAction):
+class SaveAsXEXAction(OmnivoreAction):
     """Create an Atari 8-bit executable from a set of segments.
 
     Opens a dialog window providing a list of segments to be added to the new
@@ -552,7 +553,7 @@ class SaveAsXEXBootAction(SaveAsXEXAction):
         return SegmentOrderDialog(e.window.control, self.title, e.document.segments[1:], "Segment Order for Boot Disk", True)
 
 
-class SaveSegmentAsFormatAction(EditorAction):
+class SaveSegmentAsFormatAction(OmnivoreAction):
     saver = Any
 
     segment_number = Int
@@ -567,7 +568,7 @@ class SaveSegmentAsFormatAction(EditorAction):
             self.active_editor.save_segment(self.saver, path)
 
 
-class SaveSegmentGroup(TaskDynamicSubmenuGroup):
+class SaveSegmentGroup(OmnivoreAction):
     """ A menu for changing the active task in a task window.
     """
     id = 'SaveSegmentGroup'
@@ -591,7 +592,7 @@ class SaveSegmentGroup(TaskDynamicSubmenuGroup):
         return items
 
 
-class GotoIndexAction(Action):
+class GotoIndexAction(OmnivoreAction):
     addr_index = Int()
 
     segment_num = Int()
@@ -603,7 +604,7 @@ class GotoIndexAction(Action):
         e.index_clicked(self.addr_index, 0, None)
 
 
-class SegmentGotoAction(EditorAction):
+class SegmentGotoAction(OmnivoreAction):
     """Move the caret to an address. If the address is in this segment, moves
     there. If not, it searches through all the segments (in segment list order)
     to find one that does contain that address.
@@ -640,7 +641,7 @@ class SegmentGotoAction(EditorAction):
             e.task.status_bar.message = error
 
 
-class InsertFileAction(EditorAction):
+class InsertFileAction(OmnivoreAction):
     """Insert binary data at the caret
 
     The data from the loaded file will overwrite data starting at the caret,
@@ -657,7 +658,7 @@ class InsertFileAction(EditorAction):
             e.process_command(cmd)
 
 
-class PasteAndRepeatAction(EditorAction):
+class PasteAndRepeatAction(OmnivoreAction):
     name = 'Paste and Repeat'
     accelerator = 'Shift+Ctrl+V'
     tooltip = 'Paste and repeat clipboard data until current selection is filled'
@@ -667,7 +668,7 @@ class PasteAndRepeatAction(EditorAction):
         self.active_editor.paste(cc.PasteAndRepeatCommand)
 
 
-class PasteCommentsAction(EditorAction):
+class PasteCommentsAction(OmnivoreAction):
     name = 'Paste Comments'
     tooltip = 'Paste text as comment lines'
     enabled_name = 'can_paste'
@@ -677,7 +678,7 @@ class PasteCommentsAction(EditorAction):
         self.active_editor.paste(cc.PasteCommentsCommand)
 
 
-class FindAction(EditorAction):
+class FindAction(OmnivoreAction):
     name = 'Find'
     accelerator = 'Ctrl+F'
     tooltip = 'Find bytes or characters in the raw data or in disassembly comments'
@@ -687,7 +688,7 @@ class FindAction(EditorAction):
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, initial=e.last_search_settings["find"]))
 
 
-class FindNextAction(EditorAction):
+class FindNextAction(OmnivoreAction):
     name = 'Find Next'
     accelerator = 'Ctrl+G'
     tooltip = 'Find next match'
@@ -697,7 +698,7 @@ class FindNextAction(EditorAction):
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, next_match=True, initial=e.last_search_settings["find"]))
 
 
-class FindPrevAction(EditorAction):
+class FindPrevAction(OmnivoreAction):
     name = 'Find Previous'
     accelerator = 'Shift+Ctrl+G'
     tooltip = 'Find previous match'
@@ -707,7 +708,7 @@ class FindPrevAction(EditorAction):
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAllCommand, FindNextCommand, FindPrevCommand, prev_match=True, initial=e.last_search_settings["find"]))
 
 
-class FindAlgorithmAction(EditorAction):
+class FindAlgorithmAction(OmnivoreAction):
     name = 'Find Using Expression'
     accelerator = 'Alt+Ctrl+F'
     tooltip = 'Find bytes using logical and arithmetic comparisons'
@@ -717,7 +718,7 @@ class FindAlgorithmAction(EditorAction):
         event.task.show_minibuffer(NextPrevTextMinibuffer(e, FindAlgorithmCommand, FindNextCommand, FindPrevCommand, initial=e.last_search_settings["algorithm"], help_text=" Use variable 'a' for address, 'b' for byte values. (Mouse over for examples)", help_tip="Examples:\n\nAll bytes after the 10th byte: a > 10\n\nBytes with values > 128 but only after the 10th byte: (b > 128) and (a > 10)\n\n"))
 
 
-class FindToSelectionAction(EditorAction):
+class FindToSelectionAction(OmnivoreAction):
     name = 'Find to Selection'
     accelerator = 'Alt+Ctrl+A'
     tooltip = 'Convert all matched locations to multi-selection'
@@ -729,7 +730,7 @@ class FindToSelectionAction(EditorAction):
         event.task.on_hide_minibuffer_or_cancel(None)
 
 
-class CancelMinibufferAction(EditorAction):
+class CancelMinibufferAction(OmnivoreAction):
     name = 'Cancel Minibuffer or current edit'
     accelerator = 'ESC'
     tooltip = 'Remove minibuffer or cancel current edit'
@@ -738,7 +739,7 @@ class CancelMinibufferAction(EditorAction):
         event.task.on_hide_minibuffer_or_cancel(None)
 
 
-class ViewDiffHighlightAction(EditorAction):
+class ViewDiffHighlightAction(OmnivoreAction):
     """Toggle whether differences to the `Baseline Data`_ are highlighted
     or not.
 
@@ -762,7 +763,7 @@ class ViewDiffHighlightAction(EditorAction):
         self.checked = self.active_editor.diff_highlight
 
 
-class LoadBaselineVersionAction(EditorAction):
+class LoadBaselineVersionAction(OmnivoreAction):
     """Open a window to select a `Baseline Data`_ file.
 
     The absolute path to the baseline file is stored, so if the baseline file
@@ -781,7 +782,7 @@ class LoadBaselineVersionAction(EditorAction):
             e.refresh_panes()
 
 
-class RevertToBaselineAction(EditorAction):
+class RevertToBaselineAction(OmnivoreAction):
     """Restore the selection to the data contained in the `Baseline
     Data`_ file.
     """
@@ -795,7 +796,7 @@ class RevertToBaselineAction(EditorAction):
         self.active_editor.process_command(cmd)
 
 
-class FindNextBaselineDiffAction(EditorAction):
+class FindNextBaselineDiffAction(OmnivoreAction):
     """Move the caret to the next block of data that is different than
     the `Baseline Data`_ file.
 
@@ -815,7 +816,7 @@ class FindNextBaselineDiffAction(EditorAction):
             e.index_clicked(new_index, 0, None)
 
 
-class FindPrevBaselineDiffAction(EditorAction):
+class FindPrevBaselineDiffAction(OmnivoreAction):
     """Move the caret to the previous block of data that is different than
     the `Baseline Data`_ file.Data
 
@@ -835,7 +836,7 @@ class FindPrevBaselineDiffAction(EditorAction):
             e.index_clicked(new_index, 0, None)
 
 
-class ListDiffAction(EditorAction):
+class ListDiffAction(OmnivoreAction):
     name = 'List Differences'
     tooltip = 'Show a text representation of the differences'
     enabled_name = 'diff_highlight'
@@ -862,7 +863,7 @@ class ListDiffAction(EditorAction):
         dlg.ShowModal()
 
 
-class UndoCaretPositionAction(EditorAction):
+class UndoCaretPositionAction(OmnivoreAction):
     name = 'Previous Caret Position'
     accelerator = 'Ctrl+-'
     tooltip = 'Go to previous caret position in caret history'
@@ -872,7 +873,7 @@ class UndoCaretPositionAction(EditorAction):
         e.undo_caret_history()
 
 
-class RedoCaretPositionAction(EditorAction):
+class RedoCaretPositionAction(OmnivoreAction):
     name = 'Next Caret Position'
     accelerator = 'Shift+Ctrl+-'
     tooltip = 'Go to next caret position in caret history'

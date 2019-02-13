@@ -1,2 +1,2 @@
-from .task import ByteEditTask
-from .preferences import ByteEditPreferencesPane
+#from .task import ByteEditTask
+#from .preferences import ByteEditPreferencesPane

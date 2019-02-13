@@ -11,6 +11,8 @@ from omnivore_framework.editor import OmnivoreEditor
 from omnivore_framework.utils.wx.tilemanager import TileManager
 from omnivore_framework.templates import get_template
 
+from ..viewer import find_viewer_class_by_name
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -89,9 +91,15 @@ class TileManagerBase(OmnivoreEditor):
             if layout:
                 self.control.restore_layout(layout)
         else:
-            viewers = self.default_viewers
+            viewers = [{'name':name, 'uuid':name} for name in self.default_viewers.split(",")]
         log.critical(viewers)
 
+        viewer_metadata = {}
+        for v in viewers:
+            viewer_metadata[v['uuid']] = v
+            log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
+
+        self.create_viewers(viewer_metadata)
 
 
 
@@ -263,12 +271,12 @@ class TileManagerBase(OmnivoreEditor):
             state = v.linked_base == self.center_base
         return state
 
-    def create_viewers(self, viewer_metadata, default_viewer_metadata, linked_bases):
+    def create_viewers(self, viewer_metadata):
         # Create a set of viewers from a list
         import pprint
         log.debug("viewer_metadata: %s" % str(list(viewer_metadata.keys())))
 
-        self.document.find_initial_visible_segment(self.center_base)
+        #self.document.find_initial_visible_segment(self.center_base)
 
         layer = 0
         viewers = list(viewer_metadata.keys())
@@ -283,7 +291,7 @@ class TileManagerBase(OmnivoreEditor):
                 else:  # either not a uuid or an unknown uuid
                     viewer_type = uuid  # try the value of 'uuid' as a viewer name
                 try:
-                    viewer_cls = self.task.find_viewer_by_name(viewer_type)
+                    viewer_cls = find_viewer_class_by_name(viewer_type)
                 except ValueError:
                     log.error("unknown viewer %s, uuid=%s" % (viewer_type, uuid))
                     continue
@@ -291,7 +299,7 @@ class TileManagerBase(OmnivoreEditor):
 
                 if e:
                     try:
-                        linked_base = linked_bases[e['linked base']]
+                        linked_base = self.linked_bases[e['linked base']]
                     except KeyError:
                         linked_base = self.center_base
                     log.debug("recreating viewer %s: %s" % (viewer_type, uuid))

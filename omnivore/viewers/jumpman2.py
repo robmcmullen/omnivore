@@ -20,7 +20,7 @@ from ..jumpman import parser as ju
 from ..jumpman import playfield as jp
 from ..jumpman import savers as js
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 from . import actions as va
 from ..jumpman import mouse_modes as jm
 from ..jumpman import commands as jc
@@ -285,20 +285,20 @@ class JumpmanViewer(BitmapViewer):
         self.current_level.init_level_builder(self)
         self.machine.update_colors(self.current_level.level_colors)
 
-    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
+    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:
             self.control.recalc_view()
             self.linked_base.editor.update_pane_names()
 
-    @on_trait_change('linked_base.editor.document.byte_values_changed')
+    # @on_trait_change('linked_base.editor.document.byte_values_changed')
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.control.recalc_view()
 
-    @on_trait_change('linked_base.jumpman_trigger_selected_event')
+    # @on_trait_change('linked_base.jumpman_trigger_selected_event')
     def do_jumpman_trigger_selected_event(self, new_trigger_root):
         log.debug("jumpman_trigger_selected_changed: %s selected=%s" % (self, str(new_trigger_root)))
         if new_trigger_root is not Undefined:
@@ -458,7 +458,7 @@ class TriggerPaintingViewer(BaseInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    @on_trait_change('linked_base.segment_selected_event')
+    # @on_trait_change('linked_base.segment_selected_event')
     def process_segment_selected(self, evt):
         log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
@@ -512,7 +512,7 @@ class LevelSummaryViewer(BaseInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    @on_trait_change('linked_base.segment_selected_event')
+    # @on_trait_change('linked_base.segment_selected_event')
     def process_segment_selected(self, evt):
         log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:

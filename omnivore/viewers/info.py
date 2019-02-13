@@ -6,10 +6,10 @@ import wx
 
 from traits.api import on_trait_change, Bool, Undefined
 
-from omnivore_framework.framework.undo_panel import UndoHistoryPanel
-from ..byte_edit.linked_base import VirtualTableLinkedBase
+from omnivore_framework.utils.wx.undo_panel import UndoHistoryPanel
+from ..editors.linked_base import VirtualTableLinkedBase
 from ..byte_edit.segments import SegmentList
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -300,7 +300,7 @@ class UndoViewer(BaseInfoViewer):
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
-        return UndoHistoryPanel(parent, linked_base.editor.task, size=(100,500))
+        return UndoHistoryPanel(parent, linked_base.editor, size=(100,500))
 
     def show_caret(self, control, index, bit):
         self.control.recalc_view()
@@ -328,14 +328,14 @@ class SegmentListViewer(BaseInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    @on_trait_change('linked_base.editor.task.segments_changed')
+    # @on_trait_change('linked_base.editor.document.segments_changed')
     def process_segments_changed(self, evt):
         log.debug("process_segments_changed for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
             self.control.set_segments(self.linked_base.editor.document.segments, self.linked_base.segment_number)
             self.recalc_view()
 
-    # @on_trait_change('linked_base.editor.task.segment_selected')
+    # # @on_trait_change('linked_base.segment_selected')
     # def process_segment_selected(self, evt):
     #     log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
     #     if evt is not Undefined:

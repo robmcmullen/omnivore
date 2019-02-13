@@ -6,7 +6,7 @@ import numpy as np
 
 from atrcopy import not_user_bit_mask, data_style
 
-from omnivore_framework.framework.errors import ProgressCancelError
+from omnivore_framework.errors import ProgressCancelError
 from omnivore_framework.utils.command import Command, UndoInfo
 from ..commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetRangeCommand, SetRangeValueCommand
 from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges

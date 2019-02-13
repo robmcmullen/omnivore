@@ -13,9 +13,9 @@ from omnivore_framework.utils.wx import compactgrid as cg
 from omnivore_framework.utils.command import DisplayFlags
 from ..byte_edit.segments import SegmentList
 from ..ui import segment_grid as sg
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 from .info import VirtualTableInfoViewer
-from ..byte_edit.linked_base import VirtualTableLinkedBase
+from ..editors.linked_base import VirtualTableLinkedBase
 
 import logging
 log = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class EmulatorViewer(SegmentViewer):
     def update_window_title(self):
         pass
 
-    @on_trait_change('linked_base.editor.document.emulator_update_screen_event')
+    # @on_trait_change('linked_base.editor.document.emulator_update_screen_event')
     def process_emulator_update_screen(self, evt):
         log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:

@@ -2,11 +2,11 @@ import wx
 
 from omnivore_framework.utils.wx import compactgrid as cg
 from omnivore_framework.utils.wx.char_event_mixin import CharEventMixin
-from omnivore_framework.framework.mouse_mode import MouseMode
+from omnivore_framework.utils.wx.mouse_mode import MouseMode
 from ..arch.disasm import get_style_name
-from omnivore_framework.framework import actions as fa
-from ..byte_edit import actions as ba
-from ..viewers import actions as va
+# from omnivore_framework.framework import actions as fa
+# from ..byte_edit import actions as ba
+# from ..viewers import actions as va
 from ..commands import SetRangeValueCommand
 
 import logging
@@ -67,11 +67,11 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
             # instance attribute will override class attribute
             self.default_table_cls = viewer_cls.override_table_cls
 
-        self.view_params = linked_base.cached_preferences
+        self.view_params = linked_base.editor.preferences
         self.set_view_param_defaults()
         table = self.calc_default_table(linked_base)
 
-        cg.CompactGrid.__init__(self, table, linked_base.cached_preferences, None, viewer_cls.default_mouse_mode_cls, parent)
+        cg.CompactGrid.__init__(self, table, linked_base.editor.preferences, None, viewer_cls.default_mouse_mode_cls, parent)
         # self.automatic_refresh = False
 
     def map_char_events(self):
@@ -111,7 +111,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         # just recreate everything. If a subclass wants something different,
         # let it do it itself.
         try:
-            self.view_params = self.segment_viewer.linked_base.cached_preferences
+            self.view_params = self.segment_viewer.linked_base.editor.preferences
         except AttributeError:
             log.warning("segment_viewer not set in recalc_view (probably not a real problem; likely a trait event before setup has been completed)")
         else:
@@ -227,7 +227,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         paste_special = self.segment_viewer.all_known_paste_special_actions(self.segment_viewer.task)
         paste_special[0:0] = ["Paste Special"]  # sub-menu title
 
-        return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, va.AddCommentPopupAction, va.RemoveCommentPopupAction, va.AddLabelPopupAction,va.RemoveLabelPopupAction]
+        # return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, va.AddCommentPopupAction, va.RemoveCommentPopupAction, va.AddLabelPopupAction,va.RemoveLabelPopupAction]
 
     ##### editing
 

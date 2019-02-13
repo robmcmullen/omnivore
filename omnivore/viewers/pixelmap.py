@@ -13,7 +13,7 @@ from omnivore_framework.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 from . import bitmap2 as b
 from . import actions as va
 from ..arch import pixel_converters as px
@@ -258,7 +258,7 @@ class PixelViewer(SegmentViewer):
     def window_title(self):
         return "Pixels: " + self.pixel_converter.pretty_name
 
-    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
+    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:

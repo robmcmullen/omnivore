@@ -14,9 +14,9 @@ from omnivore_framework.utils.wx import compactgrid as cg
 from ..arch import colors
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from ..utils import apple2util as a2
-from ..byte_edit.linked_base import LinkedBase
+from ..editors.linked_base import LinkedBase
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 from . import actions as va
 from . import bitmap2 as b
 from . import char2 as c

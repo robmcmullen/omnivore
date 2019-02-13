@@ -10,7 +10,7 @@ from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 from . import actions as va
 from . import bitmap2 as b
 from ..arch.antic_renderers import MemoryAccessMap
@@ -86,7 +86,7 @@ class MemoryAccessViewer(SegmentViewer):
 
     priority_refresh_frame_count = 1
 
-    @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
+    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:

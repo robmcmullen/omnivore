@@ -316,7 +316,23 @@ setup(
     packages = find_packages(exclude=["libudis"]),
     entry_points={
         "omnivore_framework.editors": 'byte = omnivore.editors.byte_editor',
-        },
+
+        "omnivore.viewers": [
+            'bitmap2 = omnivore.viewers.bitmap2',
+            'pixelmap = omnivore.viewers.pixelmap',
+            'char2 = omnivore.viewers.char2',
+            'hex2 = omnivore.viewers.hex2',
+            'info = omnivore.viewers.info',
+            'map2 = omnivore.viewers.map2',
+            # 'jumpman2 = omnivore.viewers.jumpman2',
+            # 'emulator = omnivore.viewers.emulator',
+            'apple2 = omnivore.viewers.apple2',
+            'memory = omnivore.viewers.memory',
+            'skeleton = omnivore.viewers.skeleton',
+            'disasm = omnivore.viewers.disasm',
+            # 'history = omnivore.viewers.history',
+        ],
+    },
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
     zip_safe = False,
     install_requires = [

@@ -13,9 +13,8 @@ from ..document import SegmentedDocument
 
 from omnivore_framework.utils.processutil import run_detach
 
-#from .linked_base import LinkedBase
-class LinkedBase:
-    pass
+from .linked_base import LinkedBase
+from .byte_editor_preferences import ByteEditorPreferences
 
 import logging
 log = logging.getLogger(__name__)
@@ -40,6 +39,8 @@ class ByteEditor(TileManagerBase):
 
     default_viewers = "hex,bitmap,char,disasm"
 
+    preferences_module = "omnivore.editors.byte_editor_preferences"
+
     # Convenience functions
 
     @property
@@ -63,7 +64,7 @@ class ByteEditor(TileManagerBase):
     def __init__(self, action_factory_lookup=None):
         TileManagerBase.__init__(self, action_factory_lookup)
         self.center_base = None
-        self.linked_bases = []
+        self.linked_bases = {}
 
     @classmethod
     def can_edit_file_exact(cls, file_metadata):
@@ -88,12 +89,44 @@ class ByteEditor(TileManagerBase):
                 data = fh.read()
             doc.load_from_raw_data(data, file_metadata, self.extra_metadata)
 
-        self.restore_layout_and_viewers()
+        if self.args_have_viewer_override(args):
+            self.create_layout_from_args(args)
+        else:
+            self.restore_linked_bases()
+            self.restore_layout_and_viewers()
 
+        print(self.document)
+        print(self.document.segments)
+        self.document.recalc_event()
 
+    def args_have_viewer_override(self, args):
+        return args is not None
 
+    def create_layout_from_args(self, args):
+        self.center_base = LinkedBase(editor=self, document=self.document)
+        self.linked_bases = {self.center_base.uuid:self.center_base}
+        viewer_metadata = {}
+        for name, value in args.items():
+            viewer_metadata[name.strip()] = {}
+        self.create_viewers(viewer_metadata)
+        self.center_base.view_segment_number(0)
 
+    def restore_linked_bases(self):
+        linked_bases = {}
+        for b in self.editor_metadata.get("linked bases", []):
+            base = LinkedBase(editor=self)
+            base.from_metadata_dict(b)
+            linked_bases[base.uuid] = base
+            log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
+        uuid = self.editor_metadata.get("center_base", None)
+        try:
+            self.center_base = linked_bases[uuid]
+        except KeyError:
+            self.center_base = LinkedBase(editor=self)
+            linked_bases[self.center_base.uuid] = self.center_base
 
+        log.critical(f"linked_bases: {linked_bases}")
+        self.linked_bases = linked_bases
 
 
 

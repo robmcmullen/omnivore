@@ -3,8 +3,6 @@ import sys
 
 import wx
 
-from traits.api import on_trait_change, Bool
-
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
@@ -14,7 +12,7 @@ from ..arch.disasm import get_style_name
 from ..byte_edit.actions import GotoIndexAction
 from ..byte_edit.commands import ChangeByteCommand
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 from .actions import ViewerWidthAction
 
 import logging

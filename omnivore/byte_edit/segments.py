@@ -1,7 +1,7 @@
 import sys
 import wx
 
-from pyface.action.api import Action, ActionItem, Separator
+# from pyface.action.api import Action, ActionItem, Separator
 
 from .actions import *
 

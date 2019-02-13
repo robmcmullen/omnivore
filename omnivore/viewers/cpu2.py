@@ -23,7 +23,7 @@ from ..byte_edit.commands import SetCommentCommand
 from ..commands import SetIndexedDataCommand
 from .actions import ViewerAction
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -479,7 +479,7 @@ class DisassemblyViewer(SegmentViewer):
     def searchers(self):
         return [DisassemblySearcher(self, self.control)]
 
-    @on_trait_change('machine.disassembler_change_event')
+    # @on_trait_change('machine.disassembler_change_event')
     def do_disassembler_change(self, evt):
         log.debug("do_disassembler_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
         if evt is not Undefined:
@@ -487,13 +487,13 @@ class DisassemblyViewer(SegmentViewer):
             self.restart_disassembly()
             self.linked_base.editor.update_pane_names()
 
-    @on_trait_change('linked_base.editor.document.byte_values_changed')
+    # @on_trait_change('linked_base.editor.document.byte_values_changed')
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.restart_disassembly(index_range)
 
-    @on_trait_change('linked_base.editor.document.byte_style_changed')
+    # @on_trait_change('linked_base.editor.document.byte_style_changed')
     def byte_style_changed(self, index_range):
         log.debug("byte_style_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:

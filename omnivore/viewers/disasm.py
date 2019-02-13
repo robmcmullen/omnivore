@@ -11,19 +11,19 @@ from atrcopy import DefaultSegment, not_user_bit_mask
 from ..disassembler import DisassemblyConfig, flags
 
 from omnivore_framework.utils.wx import compactgrid as cg
-from ..byte_edit.linked_base import VirtualTableLinkedBase
+from ..editors.linked_base import VirtualTableLinkedBase
 
 from ..ui.segment_grid import SegmentGridControl
 
-from . import SegmentViewer
+from ..viewer import SegmentViewer
 
 import logging
 log = logging.getLogger(__name__)
 
 from ..utils.archutil import Labels
 filename = "./omnivore/templates/atari800.labels"
-labels1 = Labels.from_file(filename)
-print(labels1.labels)
+#labels1 = Labels.from_file(filename)
+#print(labels1.labels)
 
 class DisassemblyTable(cg.HexTable):
     column_labels = ["Label", "Disassembly", "Comment"]
