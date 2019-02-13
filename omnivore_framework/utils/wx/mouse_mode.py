@@ -5,9 +5,6 @@ import weakref
 # Major package imports.
 import wx
 
-# Local imports.
-from .. import get_image_path
-
 import logging
 log = logging.getLogger(__name__)
 

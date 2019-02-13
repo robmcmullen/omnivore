@@ -2,12 +2,14 @@ import os
 import sys
 import inspect
 import pkg_resources
+import importlib
 import json
 
 import wx
 
 from . import action
 from . import errors
+# from . import preferences
 from .utils import jsonutil
 
 import logging
@@ -85,6 +87,10 @@ class OmnivoreEditor:
 
     tool_bitmap_size = (24, 24)
 
+    preferences_module = "omnivore_framework.preferences"
+
+    preferences = None
+
     # if an editor is marked as transient, it will be replaced if it's the
     # active frame when a new frame is added.
     transient = False
@@ -153,6 +159,27 @@ class OmnivoreEditor:
         self.last_saved_uri = None
         self.document = None
         self.extra_metadata = {}
+        if self.__class__.preferences is None:
+            self.create_preferences()
+
+    @classmethod
+    def create_preferences(cls):
+        mod = importlib.import_module(cls.preferences_module)
+        fallback_cls = None
+        for name, obj in inspect.getmembers(mod):
+            if inspect.isclass(obj):
+                mro_names = [str(s) for s in obj.__mro__]
+                if "OmnivoreFrameworkPreferences" in mro_names[0]:
+                    fallback_cls = obj
+                for obj_name in mro_names[1:]:
+                    if "OmnivoreFrameworkPreferences" in obj_name:
+                        cls.preferences = obj()
+                        break
+        if cls.preferences is None:
+            if fallback_cls:
+                cls.preferences = fallback_cls()
+            else:
+                raise RuntimeError("No preference module {self.preferences_module}")
 
     def prepare_destroy(self):
         print(f"prepare_destroy: {self.tab_name}")

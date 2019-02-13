@@ -4,8 +4,8 @@ import re
 import wx
 import wx.lib.buttons as buttons
 
-from ..utils.wx.buttons import FlatBitmapToggleButton
-from ..utils.wx.zoomruler import ZoomRuler
+from .buttons import FlatBitmapToggleButton
+from .zoomruler import ZoomRuler
 
 import logging
 log = logging.getLogger(__name__)

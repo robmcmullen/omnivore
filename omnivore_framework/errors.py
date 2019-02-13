@@ -13,3 +13,6 @@ class EditorNotFound(SimpleFrameworkError):
 
 class UnsupportedFileType(SimpleFrameworkError):
     pass
+
+class ProgressCancelError(SimpleFrameworkError):
+    pass

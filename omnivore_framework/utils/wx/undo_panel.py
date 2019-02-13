@@ -9,8 +9,8 @@ log = logging.getLogger(__name__)
 
 
 class UndoHistoryPanel(wx.ListBox):
-    def __init__(self, parent, task, **kwargs):
-        self.task = task
+    def __init__(self, parent, editor, **kwargs):
+        self.editor = editor
         wx.ListBox.__init__(self, parent, wx.ID_ANY, **kwargs)
 
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
@@ -28,28 +28,17 @@ class UndoHistoryPanel(wx.ListBox):
 
         return best
 
-    def set_task(self, task):
-        self.task = task
-
     def recalc_view(self):
-        e = self.task.active_editor
-        self.editor = e
-        if e is not None:
-            self.update_history()
+        self.update_history()
 
     def refresh_view(self):
-        editor = self.task.active_editor
-        if editor is not None:
-            if self.editor != editor:
-                self.recalc_view()
-            else:
-                self.Refresh()
+        self.Refresh()
 
     def update_history(self):
-        project = self.task.active_editor
-        summary = project.document.undo_stack.history_list()
+        doc = self.editor.document
+        summary = document.undo_stack.history_list()
         self.Set(summary)
-        index = project.document.undo_stack.insert_index
+        index = document.undo_stack.insert_index
         if index > 0:
             self.SetSelection(index - 1)
 

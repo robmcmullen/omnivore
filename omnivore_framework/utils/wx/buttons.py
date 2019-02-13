@@ -1,7 +1,7 @@
 import wx
 import wx.lib.buttons as buttons
 
-from pyface.api import ImageResource
+# from pyface.api import ImageResource
 
 
 class GenToggleButtonEvent(wx.PyCommandEvent):

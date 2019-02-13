@@ -11,6 +11,7 @@ import jsonpickle
 # Enthought library imports.
 from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
 
+from .events import EventHandler
 from .utils.command import UndoStack
 from .utils.file_guess import FileGuess, FileMetadata
 from .utils import jsonutil
@@ -82,9 +83,11 @@ class BaseDocument(HasTraits):
 
     byte_style_changed = Event  # only styling info may have changed, not any of the data byte values
 
-    recalc_event = Event  # recalculate view due to metadata change
+    recalc_event = Any  # recalculate view due to metadata change
 
     refresh_event = Event  # update the view on screen
+
+    structure_changed_event = Any
 
     change_count = Int()
 
@@ -109,6 +112,12 @@ class BaseDocument(HasTraits):
 
     def _uuid_default(self):
         return str(uuid.uuid4())
+
+    def _recalc_event_default(self):
+        return EventHandler(self, True)
+
+    def _structure_changed_event_default(self):
+        return EventHandler(self, True)
 
     #### trait property getters
 

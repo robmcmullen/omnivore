@@ -6,6 +6,8 @@ log = logging.getLogger(__name__)
 
 import wx
 
+from traits.api import push_exception_handler
+push_exception_handler(reraise_exceptions=True)
 
 def setup_frozen_logging():
     # set up early py2exe logging redirection, saving any messages until the log
