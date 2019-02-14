@@ -126,11 +126,15 @@ class OmnivoreAction:
     def init_from_editor(self):
         pass
 
+    def calc_enabled(self, action_key):
+        return True
+
     def sync_menu_item_from_editor(self, action_key, menu_item):
-        pass
+        menu_item.Enable(self.calc_enabled(action_key))
 
     def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
-        pass
+        toolbar_control.EnableTool(id, self.calc_enabled(action_key))
+
 
 class OmnivoreActionRadioMixin:
     def append_to_menu(self, menu, id, action_key):

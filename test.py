@@ -2,7 +2,7 @@
 """
 import wx
 
-from omnivore_framework import OmnivoreApp, OmnivoreEditor, OmnivoreAction, OmnivoreActionRadioMixin, errors
+from omnivore_framework import OmnivoreFrameworkApp, OmnivoreEditor, OmnivoreAction, OmnivoreActionRadioMixin, errors
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -125,7 +125,7 @@ class DemoEditor(OmnivoreEditor):
 if __name__ == "__main__":
     import sys
     import omnivore_framework.editor
-    app = OmnivoreApp(False)
+    app = OmnivoreFrameworkApp(False)
     frame = app.new_frame()
 
     action_factory_lookup = {
