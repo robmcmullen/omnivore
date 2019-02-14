@@ -9,37 +9,17 @@ from fs.opener import opener
 import jsonpickle
 
 # Enthought library imports.
-from traits.api import HasTraits, Trait, TraitHandler, Int, Any, List, Set, Bool, Event, Dict, Set, Unicode, Property, Str
-
-from .events import EventHandler
+from .utils.events import EventHandler
 from .utils.command import UndoStack
-from .utils.file_guess import FileGuess, FileMetadata
 from .utils import jsonutil
+from .utils.nputil import to_numpy
 from .templates import get_template
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class DocumentError(RuntimeError):
-    pass
-
-
-class TraitNumpyConverter(TraitHandler):
-    """Trait validator to convert bytes to numpy array"""
-
-    def validate(self, object, name, value):
-        if type(value) is np.ndarray:
-            return value
-        elif type(value) is bytes:
-            return np.fromstring(value, dtype=np.uint8)
-        self.error(object, name, value)
-
-    def info(self):
-        return '**a string or numpy array**'
-
-
-class BaseDocument(HasTraits):
+class BaseDocument:
 
     # Class properties
 
@@ -47,97 +27,32 @@ class BaseDocument(HasTraits):
 
     metadata_extension = ".omnivore"
 
-    # Traits
+    def __init__(self, raw_bytes=b""):
+        self.uri = ""
+        self.mime = "application/octet-stream"
+        self.name = ""
+        self.undo_stack = UndoStack()
+        self.raw_bytes = to_numpy(raw_bytes)
+        self.uuid = str(uuid.uuid4())
+        self.document_id = -1
+        self.change_count = 0
+        self.global_resource_cleanup_functions = []
+        self.permute = None
+        self.segments = []
+        self.baseline_document = None
+        self.extra_metadata = {}
 
-    undo_stack = Any
+        # events
+        self.recalc_event = EventHandler(self, True)
+        self.structure_changed_event = EventHandler(self, True)
+        self.undo_stack_changed_event = EventHandler(self, True)
+        self.byte_values_changed_event = EventHandler(self, True)  # and possibly style, but size of array remains unchanged
 
-    metadata = Any
+        self.byte_style_changed_event = EventHandler(self, True)  # only styling info may have changed, not any of the data byte values
 
-    name = Property(Unicode, depends_on='metadata')
-
-    uri = Property(Unicode, depends_on='metadata')
-
-    read_only = Property(Bool, depends_on='metadata')
-
-    document_id = Int(-1)
-
-    uuid = Str
-
-    last_task_id = Str
-
-    baseline_document = Any(transient=True)
-
-    raw_bytes = Trait(b"", TraitNumpyConverter())
-
-    segments = List
-
-    extra_metadata = Dict
-
-    # Trait events to provide view updating
-
-    undo_stack_changed = Event
-
-    data_model_changed = Event  # update the data model because of a structural change to the data
-
-    byte_values_changed = Event  # but not the size of the bytes array. That's not handled yet
-
-    byte_style_changed = Event  # only styling info may have changed, not any of the data byte values
-
-    recalc_event = Any  # recalculate view due to metadata change
-
-    refresh_event = Event  # update the view on screen
-
-    structure_changed_event = Any
-
-    change_count = Int()
-
-    can_revert = Property(Bool, depends_on='metadata')
-
-    permute = Any
-
-    load_error = Str(transient=True)
-
-    global_resource_cleanup_functions = List([])
-
-    #### trait default values
-
-    def _metadata_default(self):
-        return FileMetadata(uri="")
-
-    def _undo_stack_default(self):
-        return UndoStack()
-
-    def _raw_bytes_default(self):
-        return b""
-
-    def _uuid_default(self):
-        return str(uuid.uuid4())
-
-    def _recalc_event_default(self):
-        return EventHandler(self, True)
-
-    def _structure_changed_event_default(self):
-        return EventHandler(self, True)
-
-    #### trait property getters
-
-    def _get_name(self):
-        return self.metadata.name or 'Untitled'
-
-    def _get_uri(self):
-        return self.metadata.uri
-
-    def _set_uri(self, uri):
-        self.metadata.uri = uri
-
-    def _get_read_only(self):
-        return self.metadata.read_only
-
-    def _set_read_only(self, read_only):
-        self.metadata.read_only = read_only
-
-    def _get_can_revert(self):
-        return self.metadata.uri != ""
+    @property
+    def can_revert(self):
+        return self.uri != ""
 
     @property
     def menu_name(self):

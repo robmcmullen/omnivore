@@ -16,3 +16,6 @@ class UnsupportedFileType(SimpleFrameworkError):
 
 class ProgressCancelError(SimpleFrameworkError):
     pass
+
+class DocumentError(SimpleFrameworkError):
+    pass

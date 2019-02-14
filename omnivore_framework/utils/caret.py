@@ -7,9 +7,7 @@ from fs.opener import opener
 import wx
 import fs
 
-# Enthought library imports.
-from traits.api import on_trait_change, HasTraits, Any, Bool, Int, Unicode, Property, Dict, List, Str, Undefined, Event
-
+from .events import EventHandler
 from .command import HistoryList
 from .sortutil import collapse_overlapping_ranges, invert_ranges, ranges_to_indexes
 
@@ -296,35 +294,18 @@ class CaretList(list):
         self.append(current)
         print(("collapsed carets: %s" % str(self)))
 
-class CaretHandler(HasTraits):
+class CaretHandler:
     """The pyface editor template for the omnivore framework
     
     The abstract methods 
     """
 
-    # Caret index points to positions between bytes, so zero is before the
-    # first byte and the max index is the number of bytes, which points to
-    # after the last byte
-
-    carets = Any
-
-    caret_history = Any
-
-    ensure_visible_event = Event
-
-    sync_caret_event = Event
-
-    refresh_event = Event
-
-    #### trait default values
-
-    def _carets_default(self):
-        return CaretList(0)
-
-    def _caret_history_default(self):
-        return HistoryList()
-
-    #### properties
+    def __init__(self):
+        self.carets = CaretList(0)
+        self.caret_history = HistoryList()
+        self.ensure_visible_event = EventHandler(self)
+        self.sync_caret_event = EventHandler(self)
+        self.refresh_event = EventHandler(self)
 
     @property
     def has_selection(self):

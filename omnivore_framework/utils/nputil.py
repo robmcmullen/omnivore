@@ -1,5 +1,16 @@
 import numpy as np
 
+
+def to_numpy(value):
+    if type(value) is np.ndarray:
+        return value
+    elif type(value) is bytes:
+        return np.fromstring(value, dtype=np.uint8)
+    elif type(value) is list:
+        return np.asarray(value, dtype=np.uint8)
+    raise TypeError("Can't convert to numpy data")
+
+
 def count_in_range(source_list, lowest_valid, highest_valid):
     """Count the number of items in the list between the lowest and highest
     values

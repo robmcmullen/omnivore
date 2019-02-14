@@ -3,7 +3,7 @@ import re
 import shlex
 
 from .runtime import get_all_subclasses
-from .file_guess import FileMetadata
+# from .file_guess import FileMetadata
 
 import logging
 log = logging.getLogger(__name__)
