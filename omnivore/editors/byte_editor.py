@@ -103,7 +103,7 @@ class ByteEditor(TileManagerBase):
         return args is not None
 
     def create_layout_from_args(self, args):
-        self.center_base = LinkedBase(editor=self, document=self.document)
+        self.center_base = LinkedBase(self)
         self.linked_bases = {self.center_base.uuid:self.center_base}
         viewer_metadata = {}
         for name, value in args.items():

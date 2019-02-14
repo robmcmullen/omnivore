@@ -5,71 +5,73 @@ import numpy as np
 import jsonpickle
 import fs
 
-from omnivore_framework.document import BaseDocument, TraitNumpyConverter
-from omnivore_framework.utils.file_guess import FileGuess
-
-# Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict, Property, Bool
-
 from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, errors, iter_parsers
+
+from omnivore_framework.document import BaseDocument
+from omnivore_framework.utils.nputil import to_numpy
+from omnivore_framework.utils.events import EventHandler
 
 import logging
 log = logging.getLogger(__name__)
 
 
 class SegmentedDocument(BaseDocument):
+    """Document for atrcopy-parsed segmented files
+
+    Events:
+
+    During high framerate operations, some panels may not need to be updated
+    very frequently so only those panels that absolutely need it will get a
+    high priority refresh event. Others will get lower priority. An integer
+    should be passed as this event's data; it is up to the viewers to decide
+    what the value means. Confusingly, high priority levels are lower
+    numbers! This could mean the number of frames to skip, but it's up to the
+    viewers, really.
+
+    """
     json_expand_keywords = {
         'linked bases': 2,
         'viewers': 2,
     }
 
-    style = Trait("", TraitNumpyConverter())
+    def __init__(self, raw_bytes=b"", style=b""):
+        BaseDocument.__init__(self, raw_bytes)
+        if not style:
+            style = np.zeros(len(self), dtype=np.uint8)
+        self.style = to_numpy(style)
+        self.segment_parser = None
 
-    segment_parser = Any
+        r = SegmentData(self.raw_bytes, self.style)
+        self.segments = list([DefaultSegment(r, 0)])
+        self.user_segments = []
+        self.document_memory_map = {}
 
-    user_segments = List
+        self.priority_level_refresh_event = EventHandler(self)
+        self.emulator_breakpoint_event = EventHandler(self)
 
-    can_resize = Property(Bool, depends_on='segments')
+        # default emulator class, if the user selects something different than
+        # the normal default. This is usually None, which means that omnivore
+        # will chose the best emulator based on the type of this segment
+        self.emulator_class_override = None
 
-    document_memory_map = Dict
-
-    # During high framerate operations, some panels may not need to be updated
-    # very frequently so only those panels that absolutely need it will get a
-    # high priority refresh event. Others will get lower priority. An integer
-    # should be passed as this event's data; it is up to the viewers to decide
-    # what the value means. Confusingly, high priority levels are lower
-    # numbers! This could mean the number of frames to skip, but it's up to the
-    # viewers, really.
-    priority_level_refresh_event = Event
-
-    emulator_breakpoint_event = Event
-
-    # default emulator class, if the user selects something different than the
-    # normal default. This is usually None, which means that omnivore will
-    # chose the best emulator based on the type of this segment
-    emulator_class_override = Any(None)
-
-    #### trait default values
-
-    def _style_default(self):
-        return np.zeros(len(self), dtype=np.uint8)
-
-    def _segments_default(self):
-        r = SegmentData(self.raw_bytes,self.style)
-        return list([DefaultSegment(r, 0)])
-
-    def _document_memory_map_default(self):
-        return dict()
-
-    #### trait property getters
-
-    def _get_can_resize(self):
+    @property
+    def can_resize(self):
         return self.segments and self.container_segment.can_resize
 
     #### object methods
 
     def __str__(self):
-        return f"SegmentedDocument: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}"
+        lines = []
+        lines.append(f"Document: id={self.document_id}, mime={self.mime}, {self.uri}")
+        if log.isEnabledFor(logging.DEBUG):
+            lines.append("parser: %s" % self.segment_parser)
+            lines.append("segments:")
+            for s in self.segment_parser.segments:
+                lines.append("  %s" % s)
+            lines.append("user segments:")
+            for s in self.user_segments:
+                lines.append("  %s" % s)
+        return "\n".join(lines)
 
     #### loaders
     def load_from_atrcopy_parser(self, file_metadata, editor_metadata):
@@ -136,19 +138,6 @@ class SegmentedDocument(BaseDocument):
         self.container_segment.fixup_comments()
 
     #### convenience methods
-
-    def __str__(self):
-        lines = []
-        lines.append(f"Document: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}")
-        if log.isEnabledFor(logging.DEBUG):
-            lines.append("parser: %s" % self.segment_parser)
-            lines.append("segments:")
-            for s in self.segment_parser.segments:
-                lines.append("  %s" % s)
-            lines.append("user segments:")
-            for s in self.user_segments:
-                lines.append("  %s" % s)
-        return "\n".join(lines)
 
     def calc_layout_template_name(self, task_id):
         return "%s.default_layout" % task_id

@@ -7,9 +7,6 @@ import functools
 import wx
 import numpy as np
 
-# Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, Undefined, CArray
-
 # Local imports.
 from omnivore_framework.utils.command import Overlay
 from ..utils.drawutil import get_bounds
@@ -35,7 +32,9 @@ class MapViewer(CharViewer):
 
     default_mouse_mode_cls = m.RectangularSelectMode
 
-    draw_pattern = CArray(dtype=np.uint8, value=(0,))
+    def __init__(self, *args, **kwargs):
+        CharViewer.__init__(self, *args, **kwargs)
+        self.draw_pattern = np.zeros((1,), dtype=np.uint8)
 
     @property
     def window_title(self):

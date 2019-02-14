@@ -5,8 +5,6 @@ from collections import namedtuple
 import numpy as np
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined
-
 from ..ui.screen import BitmapScreen
 
 from omnivore_framework.utils.wx import compactgrid as cg

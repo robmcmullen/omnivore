@@ -11,7 +11,6 @@ from omnivore_framework.utils.command import Command, UndoInfo
 from ..commands import SegmentCommand, ChangeMetadataCommand, SetContiguousDataCommand, SetRangeCommand, SetRangeValueCommand
 from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from ..utils.searchutil import AlgorithmSearcher
-from omnivore_framework.utils.file_guess import FileGuess
 from omnivore_framework.utils.permute import bit_reverse_table
 
 import logging

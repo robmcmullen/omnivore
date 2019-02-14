@@ -5,8 +5,6 @@ import numpy as np
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined, Any, Instance
-
 from atrcopy import DefaultSegment
 
 from ..disassembler import flags

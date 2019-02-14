@@ -5,8 +5,6 @@ import numpy as np
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined, Any, Instance
-
 from atrcopy import comment_bit_mask, user_bit_mask, diff_bit_mask, data_style
 from ..udis_fast import TraceInfo, flag_origin
 

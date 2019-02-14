@@ -4,8 +4,6 @@ from collections import namedtuple
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined
-
 from omnivore_framework.utils.wx.undo_panel import UndoHistoryPanel
 from ..editors.linked_base import VirtualTableLinkedBase
 from ..byte_edit.segments import SegmentList

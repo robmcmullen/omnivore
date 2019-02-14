@@ -3,8 +3,6 @@ import sys
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined
-
 from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 
@@ -193,7 +191,6 @@ class BitmapViewer(SegmentViewer):
     def window_title(self):
         return self.control.bitmap_renderer.name
 
-    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:

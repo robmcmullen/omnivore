@@ -4,8 +4,6 @@ import sys
 import numpy as np
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined
-
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 
 from omnivore_framework.utils.nputil import intscale

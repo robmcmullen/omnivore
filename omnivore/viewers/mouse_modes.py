@@ -7,9 +7,6 @@ import functools
 import wx
 import numpy as np
 
-# Enthought library imports.
-from traits.api import on_trait_change, Any, Bool, Int, Str, List, Event, Enum, Instance, File, Unicode, Property, provides, Undefined, CArray
-
 # Local imports.
 from omnivore_framework.utils.command import Overlay
 from ..utils.drawutil import get_bounds

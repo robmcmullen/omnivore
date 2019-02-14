@@ -7,8 +7,9 @@ import sys
 import wx
 import wx.lib.dialogs
 
-# Enthought library imports.
-from traits.api import Any, Int
+# traits standins till this whole action code stuff gets replaced
+Any = None
+Int = None
 
 # from omnivore_framework.framework.enthought_api import ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 # import omnivore_framework.framework.clipboard as clipboard

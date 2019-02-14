@@ -5,8 +5,6 @@ import wx
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
 
-from traits.api import on_trait_change, Bool, Undefined, Int, Str, Dict, Any
-
 from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 from omnivore_framework.templates import get_template
@@ -229,25 +227,16 @@ class JumpmanViewer(BitmapViewer):
 
     has_caret = False
 
-    ##### Traits
-
-    can_select_objects = Bool(False)
-
-    can_erase_objects = Bool(False)
-
     ##### class attributes
 
     valid_mouse_modes = [jm.AnticDSelectMode, jm.DrawGirderMode, jm.DrawLadderMode, jm.DrawUpRopeMode, jm.DrawDownRopeMode, jm.DrawPeanutMode, jm.EraseGirderMode, jm.EraseLadderMode, jm.EraseRopeMode, jm.JumpmanRespawnMode]
 
     default_mouse_mode_cls = jm.AnticDSelectMode
 
-    #### Default traits
 
-    def _machine_default(self):
-        return JumpmanMachine()
-
-    def _draw_pattern_default(self):
-        return [0]
+    def __init__(self, *args, **kwargs):
+        BitmapViewer.__init__(self, *args, **kwargs)
+        self.machine = JumpmanMachine()
 
     ##### Properties
 
@@ -279,26 +268,23 @@ class JumpmanViewer(BitmapViewer):
         """
         return [js.JumpmanSaveAsATR, js.JumpmanSaveAsXEX]
 
-    ##### Trait change handlers
+    #### update routines
 
     def recalc_data_model(self):
         self.current_level.init_level_builder(self)
         self.machine.update_colors(self.current_level.level_colors)
 
-    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:
             self.control.recalc_view()
             self.linked_base.editor.update_pane_names()
 
-    # @on_trait_change('linked_base.editor.document.byte_values_changed')
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.control.recalc_view()
 
-    # @on_trait_change('linked_base.jumpman_trigger_selected_event')
     def do_jumpman_trigger_selected_event(self, new_trigger_root):
         log.debug("jumpman_trigger_selected_changed: %s selected=%s" % (self, str(new_trigger_root)))
         if new_trigger_root is not Undefined:

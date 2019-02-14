@@ -5,8 +5,6 @@ import numpy as np
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined, Any, Instance
-
 from atrcopy import DefaultSegment
 
 from omnivore_framework.utils.wx import compactgrid as cg
@@ -87,8 +85,6 @@ class VirtualTestViewer(SegmentViewer):
 
     control_cls = SampleGridControl
 
-    # trait defaults
-
     # initialization
 
     @classmethod
@@ -106,13 +102,11 @@ class VirtualTestViewer(SegmentViewer):
     def table(self):
         return self.control.table
 
-    # @on_trait_change('linked_base.editor.document.byte_values_changed')
     def byte_values_changed(self, index_range):
         log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:
             self.table.rebuild()
 
-    # @on_trait_change('linked_base.editor.document.byte_style_changed')
     def byte_style_changed(self, index_range):
         log.debug("byte_style_changed: %s index_range=%s" % (self, str(index_range)))
         if index_range is not Undefined:

@@ -4,8 +4,6 @@ import sys
 import wx
 import numpy as np
 
-from traits.api import on_trait_change, Bool, Undefined
-
 from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 
@@ -86,7 +84,6 @@ class MemoryAccessViewer(SegmentViewer):
 
     priority_refresh_frame_count = 1
 
-    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:

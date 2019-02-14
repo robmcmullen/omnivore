@@ -5,7 +5,6 @@ import numpy as np
 
 import wx
 
-from traits.api import on_trait_change, Bool, Undefined, Any
 from atrcopy import selected_bit_mask
 
 from omnivore_framework.utils.nputil import intscale
@@ -235,8 +234,6 @@ class PixelViewer(SegmentViewer):
 
     control_cls = PixelGridControl
 
-    pixel_converter = Any
-
     has_bitmap = True
 
     has_colors = True
@@ -249,16 +246,15 @@ class PixelViewer(SegmentViewer):
 
     zoom_text = "bitmap zoom factor"
 
-    #### traits defaults
 
-    def _pixel_converter_default(self):
-        return px.AnticE()
+    def __init__(self, *args, **kwargs):
+        CharViewer.__init__(self, *args, **kwargs)
+        self.pixel_converter = px.AnticE()
 
     @property
     def window_title(self):
         return "Pixels: " + self.pixel_converter.pretty_name
 
-    # @on_trait_change('machine.bitmap_shape_change_event,machine.bitmap_color_change_event')
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
         if evt is not Undefined:

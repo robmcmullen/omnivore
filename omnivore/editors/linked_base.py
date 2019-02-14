@@ -8,12 +8,10 @@ import wx
 import numpy as np
 import json
 
-# Enthought library imports.
-from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, provides, on_trait_change, HasTraits, Undefined
-
-# Local imports.
 from omnivore_framework.utils.caret import CaretHandler
 from omnivore_framework.utils.command import DisplayFlags
+from omnivore_framework.utils.events import EventHandler
+
 from ..utils.segmentutil import SegmentData, DefaultSegment
 
 import logging
@@ -37,67 +35,30 @@ class LinkedBase(CaretHandler):
     in the Machine that could affect other viewers, so it should really be part
     of the view.
     """
-
-    #### Traits
-
-    # 
-
-    obj = Instance(File)
-
-    uuid = Str
-
-    editor = Any
-
-    document = Any
-
-    segment = Instance(DefaultSegment)
-
-    segment_number = Int(0)
-
-    has_origin = Bool(False)
-
-    segment_view_params = Dict
-
-    #### Events
-
-    ensure_visible_event = Event
-
-    sync_caret_to_index_event = Event
-
-    refresh_event = Event
-
-    recalc_event = Event
-
-    update_trace = Event
-
-    key_pressed = Event
-
-    segment_selected_event = Event
-
-    ##### Jumpman-specific traits
-
-    jumpman_trigger_selected_event = Event
-
-    jumpman_playfield_model = Any
-
-    #### Class attributes (not traits)
-
     rect_select = False
 
-    #### Default traits
+    def __init__(self, editor):
+        CaretHandler.__init__(self)
+        self.uuid = str(uuid.uuid4())
+        self.editor = editor
 
-    def _segment_default(self):
         rawdata = SegmentData([])
-        return DefaultSegment(rawdata)
+        self.segment = DefaultSegment(rawdata)
+        self.segment_number = 0
+        self.has_origin = False
+        self.segment_view_params = {}
 
-    def _document_default(self):
-        return self.editor.document
+        self.ensure_visible_event = EventHandler(self)
+        self.sync_caret_to_index_event = EventHandler(self)
+        self.refresh_event = EventHandler(self)
+        self.recalc_event = EventHandler(self)
+        self.update_trace = EventHandler(self)
+        self.key_pressed = EventHandler(self)
+        self.segment_selected_event = EventHandler(self)
 
-    def _uuid_default(self):
-        return str(uuid.uuid4())
-
-    def _segment_view_params_default(self):
-        return {}
+        ##### Jumpman-specific stuff
+        self.jumpman_trigger_selected_event = EventHandler(self)
+        self.jumpman_playfield_model = None
 
     #### Properties
 
@@ -108,6 +69,10 @@ class LinkedBase(CaretHandler):
     @property
     def window(self):
         return self.editor.window
+
+    @property
+    def document(self):
+        return self.editor.document
 
     @property
     def document_length(self):
@@ -389,7 +354,9 @@ class VirtualTableLinkedBase(LinkedBase):
     data. It is linked to a HexTable that provides the sizing information.
     """
 
-    table = Any
+    def __init__(self, *args, **kwargs):
+        LinkedBase.__init__(self, *args, **kwargs)
+        self.table = None
 
     @property
     def document_length(self):

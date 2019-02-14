@@ -5,8 +5,6 @@ import pkg_resources
 
 import wx
 
-from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, File, Unicode, Property, on_trait_change, HasTraits, Undefined
-
 from .editors.linked_base import LinkedBase
 from .arch import fonts
 
@@ -52,7 +50,7 @@ def find_viewer_class_by_name(name):
     raise errors.EditorNotFound(f"No editor named {name}")
 
 
-class SegmentViewer(HasTraits):
+class SegmentViewer:
     """Base class for any viewer window that can display (& optionally edit)
     the data in a segment
 
@@ -108,46 +106,23 @@ class SegmentViewer(HasTraits):
         searchutil.CommentSearcher,
     ]
 
-    ##### Traits
+    priority_refresh_frame_count = 10
 
-    uuid = Str
+    def __init__(self, control, linked_base, machine=None):
+        self.uuid = str(uuid.uuid4())
+        self.control = control
+        self.linked_base = linked_base
+        self.machine = machine
 
-    linked_base = Instance(LinkedBase)
+        self.range_processor = ranges_to_indexes
+        self.antic_font = None
+        self.blinking_antic_font = None
+        self.is_tracing = False
 
-    machine = Instance(Machine)
-
-    control = Any(None)
-
-    range_processor = Property(Any, depends_on='control')
-
-    supported_clipboard_data_objects = List
-
-    antic_font = Any(transient=True)
-
-    blinking_antic_font = Any(transient=True)
-
-    is_tracing = Bool(False)
-
-    frame_count = Int
-
-    priority_refresh_frame_count = Int(10)
-
-    #### Default traits
-
-    def _uuid_default(self):
-        return str(uuid.uuid4())
-
-    def _machine_default(self):
-        return None
-
-    def _supported_clipboard_data_objects_default(self):
-        return [a[0] for a in self.supported_clipboard_data_object_map.values()]
-
-    def _frame_count_default(self):
         # start the initial frame count on a random value so the frame refresh
         # load can be spread around instead of each with the same frame count
         # being refreshed at the same time.
-        return random.randint(0, self.priority_refresh_frame_count)
+        self.frame_count = random.randint(0, self.priority_refresh_frame_count)
 
     ##### Properties
 
@@ -219,14 +194,14 @@ class SegmentViewer(HasTraits):
         linked_base = cls.replace_linked_base(linked_base)
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         print("LINKEDBASE:", linked_base.__class__.__mro__)
-        v = cls(linked_base=linked_base, control=control)
+        v = cls(control, linked_base)
         if machine is not None:
             v.machine = machine
         v.from_metadata_dict(mdict)
 
         if v.machine is None:
-            print("LOOKING UP MACHINE BY MIME", linked_base.document.metadata.mime)
-            v.machine = Machine.find_machine_by_mime(linked_base.document.metadata.mime, default_if_not_matched=True)
+            print("LOOKING UP MACHINE BY MIME", linked_base.document.mime)
+            v.machine = Machine.find_machine_by_mime(linked_base.document.mime, default_if_not_matched=True)
 
         control.segment_viewer = v
         if uuid:
@@ -313,9 +288,6 @@ class SegmentViewer(HasTraits):
         return self.linked_base == self.editor.center_base
 
     ##### Range operations
-
-    def _get_range_processor(self):  # Trait property getter
-        return ranges_to_indexes
 
     def get_selected_ranges_and_indexes(self):
         return self.control.get_selected_ranges_and_indexes(self.linked_base)
