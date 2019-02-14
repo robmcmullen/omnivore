@@ -10,7 +10,7 @@ class new_file(OmnivoreAction):
     def calc_name(self, action_key):
         return "&New"
 
-    def execute(self, action_key):
+    def perform(self, action_key):
         new_editor = self.editor.__class__()
         self.editor.frame.add_editor(new_editor)
 
@@ -18,7 +18,7 @@ class open_file(OmnivoreAction):
     def calc_name(self, action_key):
         return "&Open"
 
-    def execute(self, action_key):
+    def perform(self, action_key):
         frame = self.editor.frame
         path = frame.prompt_local_file_dialog()
         if path is not None:
@@ -39,7 +39,7 @@ class quit(OmnivoreAction):
     def calc_name(self, action_key):
         return "&Quit"
 
-    def execute(self, action_key):
+    def perform(self, action_key):
         wx.GetApp().quit()
 
 class undo(OmnivoreAction):
@@ -82,5 +82,5 @@ class about(OmnivoreAction):
     def calc_name(self, action_key):
         return "&About"
 
-    def execute(self, action_key):
+    def perform(self, action_key):
         wx.GetApp().show_about_dialog()

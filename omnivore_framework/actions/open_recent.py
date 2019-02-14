@@ -55,6 +55,6 @@ class open_recent(OmnivoreAction):
         state = not len(self.current_list) == 0
         menu_item.Enable(state)
 
-    def execute(self, action_key):
+    def perform(self, action_key):
         path = self.get_path(action_key)
         self.editor.frame.load_file(path, self.editor)

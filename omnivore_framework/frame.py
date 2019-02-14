@@ -188,9 +188,9 @@ class OmnivoreFrame(wx.Frame):
         try:
             action_key, action = self.menubar.valid_id_map[action_id]
             try:
-                wx.CallAfter(action.execute, action_key)
+                wx.CallAfter(action.perform, action_key)
             except AttributeError:
-                log.debug(f"no execute method for {action}")
+                log.debug(f"no perform method for {action}")
         except KeyError as e:
             log.debug(f"menu id {action_id} not found: {e}")
         else:
