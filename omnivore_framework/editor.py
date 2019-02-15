@@ -77,6 +77,16 @@ class OmnivoreEditor:
     ["Help", "about"],
     ]
 
+    key_bindings = {
+        "new_file": "Ctrl+N",
+        "open_file": "Ctrl+O",
+        "save_file" : "Ctrl+S",
+        "save_as" : "Shift+Ctrl+S",
+        "cut": "Ctrl+X",
+        "copy": "Ctrl+C",
+        "paste": "Ctrl+V",
+    }
+
     toolbar_desc = [
         "new_file", "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste"
     ]
