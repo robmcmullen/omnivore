@@ -47,10 +47,14 @@ class MenuDescription:
                             except KeyError:
                                 pass
                             else:
-                                accel_entry = wx.AcceleratorEntry()
-                                accel_entry.FromString(accel_text)
-                                menu_item = self.menu.FindItemById(id)
-                                menu_item.SetAccel(accel_entry)
+                                if accel_text:
+                                    accel_entry = wx.AcceleratorEntry()
+                                    accel_entry.FromString(accel_text)
+                                    menu_item = self.menu.FindItemById(id)
+                                    try:
+                                        menu_item.SetAccel(accel_entry)
+                                    except Exception:
+                                        log.error(f"Invalid key binding {accel_text} for {action_key}")
                             allow_separator = True
             else:
                 submenu = MenuDescription(action_key, editor, valid_id_map, key_bindings)
