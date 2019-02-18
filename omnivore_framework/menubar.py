@@ -83,6 +83,6 @@ class MenubarDescription:
 
     def sync_with_editor(self, menubar_control):
         for id, (action_key, action) in self.valid_id_map.items():
-#            log.debug(f"syncing {id}: {action_key}, {action}")
+            log.debug(f"syncing {id}: {action_key}, {action}")
             menu_item = menubar_control.FindItemById(id)
             action.sync_menu_item_from_editor(action_key, menu_item)
