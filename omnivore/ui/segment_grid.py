@@ -151,7 +151,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         self.main.show_caret(col, row)
 
     def commit_change(self, flags):
-        flags.carets_to_indexes = self.caret_handler.convert_to_indexes(self.table.get_index_range)
+        flags.carets_to_indexes = self.caret_handler.convert_to_indexes(self.table)
 
         log.debug(f"\n\ncommit before: {self.caret_handler.carets} flags={flags}")
         linked_base = self.segment_viewer.linked_base
@@ -281,7 +281,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         ranges = []
         # for c in self.caret_handler.carets:
         #     ranges.append((c.index, c.index + 1))
-        ranges = self.caret_handler.get_selected_ranges_including_carets(self.table.get_index_range)
+        ranges = self.caret_handler.get_selected_ranges_including_carets(self.table)
         cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
         self.segment_viewer.editor.process_command(cmd)
 

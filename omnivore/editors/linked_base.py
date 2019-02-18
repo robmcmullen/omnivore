@@ -8,7 +8,6 @@ import wx
 import numpy as np
 import json
 
-from omnivore_framework.utils.caret import CaretHandler
 from omnivore_framework.utils.command import DisplayFlags
 from omnivore_framework.utils.events import EventHandler
 
@@ -18,7 +17,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class LinkedBase(CaretHandler):
+class LinkedBase:
     """Model for the state of a set of viewers. A ByteEditor can have an
     arbitrary number of LinkedBases, but all viewers that point to a common
     LinkedBase will all show the same data.
@@ -38,7 +37,6 @@ class LinkedBase(CaretHandler):
     rect_select = False
 
     def __init__(self, editor):
-        CaretHandler.__init__(self)
         self.uuid = str(uuid.uuid4())
         self.editor = editor
 
@@ -90,7 +88,7 @@ class LinkedBase(CaretHandler):
     #### Convenience functions
 
     def __str__(self):
-        return "LinkedBase: seg=%s" % self.segment
+        return f"LinkedBase {hex(id(self))}: seg={self.segment}"
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
@@ -116,9 +114,7 @@ class LinkedBase(CaretHandler):
         self.save_segment_view_params(self.segment)
 
     def save_segment_view_params(self, segment):
-        d = {
-            'carets': self.calc_caret_state(),
-        }
+        d = {}
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -133,11 +129,9 @@ class LinkedBase(CaretHandler):
             d = self.segment_view_params[segment.uuid]
         except KeyError:
             log.debug("no view params for %s" % segment.uuid)
-            self.clear_carets()
             d = {}
         else:
             log.debug("restoring view params for segment %s (%s): %s" % (segment.name, segment.uuid, str(d)))
-            self.restore_caret_state(d['carets'])
         for viewer in self.editor.viewers:
             if viewer.linked_base == self:
                 try:
@@ -182,7 +176,7 @@ class LinkedBase(CaretHandler):
             self.force_data_model_update()
             self.restore_segment_view_params(self.segment)
             self.task.segments_changed = self.document.segments
-            self.segment_selected_event = self.segment_number
+            self.segment_selected_event(self.segment_number)
 
     def set_segment_parser(self, parser):
         self.find_segment_parser([parser])
@@ -202,7 +196,7 @@ class LinkedBase(CaretHandler):
             self.adjust_selection(old_segment)
 
             #self.show_trace()
-            self.segment_selected_event = self.segment_number
+            self.segment_selected_event(self.segment_number)
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             #self.task.update_window_title()
 
@@ -227,35 +221,26 @@ class LinkedBase(CaretHandler):
         self.reconfigure_panes()
         self.update_segments_ui()
 
-    def calc_action_enabled_flags(self):
-        e = self.editor
-        e.can_copy = self.has_selection
-        self.calc_dependent_action_enabled_flags()
+    # #### CaretHandler overrides
 
-    def calc_dependent_action_enabled_flags(self):
-        e = self.editor
-        e.can_copy_baseline = e.can_copy and e.baseline_present
+    # def calc_caret_history(self):
+    #     return self.segment, CaretHandler.calc_caret_state(self)
 
-    #### CaretHandler overrides
+    # def restore_caret_history(self, state):
+    #     segment, carets = state
+    #     number = self.document.find_segment_index(segment)
+    #     if number < 0:
+    #         log.error("tried to restore caret to a deleted segment? %s" % segment)
+    #     else:
+    #         if number != self.segment_number:
+    #             self.view_segment_number(number)
+    #         CaretHandler.restore_caret_state(self, carets)
+    #     log.debug(self.caret_history)
 
-    def calc_caret_history(self):
-        return self.segment, CaretHandler.calc_caret_state(self)
-
-    def restore_caret_history(self, state):
-        segment, carets = state
-        number = self.document.find_segment_index(segment)
-        if number < 0:
-            log.error("tried to restore caret to a deleted segment? %s" % segment)
-        else:
-            if number != self.segment_number:
-                self.view_segment_number(number)
-            CaretHandler.restore_caret_state(self, carets)
-        log.debug(self.caret_history)
-
-    def collapse_selections_to_carets(self):
-        CaretHandler.collapse_selections_to_carets(self)
-        self.document.change_count += 1
-        self.segment.clear_style_bits(selected=True)
+    # def collapse_selections_to_carets(self):
+    #     CaretHandler.collapse_selections_to_carets(self)
+    #     self.document.change_count += 1
+    #     self.segment.clear_style_bits(selected=True)
 
     #### selection utilities
 
@@ -345,7 +330,6 @@ class LinkedBase(CaretHandler):
         if refresh_from:
             from_control = None
         self.update_caret = (from_control, index, bit)
-        self.calc_action_enabled_flags()
 
 
 class VirtualTableLinkedBase(LinkedBase):
