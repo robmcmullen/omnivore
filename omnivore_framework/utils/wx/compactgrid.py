@@ -1712,6 +1712,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         self.keep_caret_on_screen(caret, flags)
 
     def draw_carets(self, dc, start_row, visible_rows):
+        caret_log.debug(f"draw_carets: using caret_handler {self.caret_handler}")
         for caret in self.caret_handler.carets:
             r, c = caret.rc
             if r >= start_row and r < start_row + visible_rows:
@@ -1735,6 +1736,9 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         else:
             row_info = index, start_row, 0, 0
         return row_info
+
+    def get_selected_ranges(self):
+        return self.caret_handler.get_selected_ranges(self.table)
 
     ##### Keyboard movement implementations
 

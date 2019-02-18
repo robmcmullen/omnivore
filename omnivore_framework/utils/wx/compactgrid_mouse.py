@@ -25,7 +25,7 @@ mode_log = logging.getLogger("mouse_mode")
 ##### Carets
 
 @functools.total_ordering
-class Caret(object):
+class Caret:
     """Class representing both a caret's row/col position, and optionally a
     single selected range or rectangular region.
 
@@ -162,7 +162,7 @@ class Caret(object):
                 table.set_selected_index_range(index1, index2)
 
 
-class MultiCaretHandler(object):
+class MultiCaretHandler:
     def __init__(self):
         self.carets = []
 
@@ -183,6 +183,20 @@ class MultiCaretHandler(object):
             if caret.has_selection:
                 yield caret
 
+    @property
+    def selected_ranges(self):
+        return [c.range for c in self.carets if c.has_selection]
+
+    @property
+    def selected_ranges_including_carets(self):
+        ranges = []
+        for c in self.carets:
+            if c.has_selection:
+                ranges.append(c.range)
+            else:
+                ranges.append((c.index, c.index + 1))
+        return ranges
+
     def new_carets(self, caret_state):
         self.carets = [Caret(state=s) for s in caret_state]
 
@@ -193,18 +207,18 @@ class MultiCaretHandler(object):
         current = self.calc_state()
         return current == other_state
 
-    def convert_to_indexes(self, row_col_to_index_func):
+    def convert_to_indexes(self, table):
         index_list = []
         for caret in self.carets:
-            index, _ = row_col_to_index_func(*caret.rc)
+            index, _ = table.get_index_range(*caret.rc)
             if caret.anchor_start[0] < 0:
                 anchor_start = -1
             else:
-                anchor_start, _ = row_col_to_index_func(*caret.anchor_start)
+                anchor_start, _ = table.get_index_range(*caret.anchor_start)
             if caret.anchor_end[0] < 0:
                 anchor_end = -1
             else:
-                anchor_end, _ = row_col_to_index_func(*caret.anchor_end)
+                anchor_end, _ = table.get_index_range(*caret.anchor_end)
             index_list.append((index, anchor_start, anchor_end))
         return index_list
 
@@ -317,27 +331,27 @@ class MultiCaretHandler(object):
         self.carets.append(current)
         print(("collapsed carets: %s" % str(self.carets)))
 
-    def get_selected_ranges(self, row_col_to_index_func):
+    def get_selected_ranges(self, table):
         ranges = []
         for r in [c.range for c in self.carets]:
-            start, _ = row_col_to_index_func(*r[0])
-            _, end = row_col_to_index_func(*r[1])
+            start, _ = table.get_index_range(*r[0])
+            _, end = table.get_index_range(*r[1])
             ranges.append((start, end))
         return ranges
 
-    def get_selected_ranges_including_carets(self, row_col_to_index_func):
+    def get_selected_ranges_including_carets(self, table):
         ranges = []
         for r in [c.range_including_caret for c in self.carets]:
-            start, _ = row_col_to_index_func(*r[0])
-            _, end = row_col_to_index_func(*r[1])
+            start, _ = table.get_index_range(*r[0])
+            _, end = table.get_index_range(*r[1])
             ranges.append((start, end))
         return ranges
 
-    def get_selected_ranges_and_indexes(self, row_col_to_index_func):
-        opt = self.get_selected_ranges(row_col_to_index_func)
+    def get_selected_ranges_and_indexes(self, table):
+        opt = self.get_selected_ranges(table)
         return opt, ranges_to_indexes(opt)
 
-    def invert_selection_ranges(self, row_col_to_index_func, ranges):
+    def invert_selection_ranges(self, table, ranges):
         return invert_ranges(ranges, caret_handler.document_length)
 
 
