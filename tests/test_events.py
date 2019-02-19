@@ -85,14 +85,34 @@ class BasicEventHandlerTest(unittest.TestCase):
         ev = events.EventHandler("Test")
         testsum = []
 
-        def callback(sender, sumval):
-            self.assertEqual(sender, "Test")
+        def callback(evt):
+            self.assertEqual(evt.sender, "Test")
+            sumval = evt[0]
             sumval.append(1)
 
         for x in range(10):
             ev += callback
         self.assertEqual(len(ev), 10)
         results = ev(testsum)
+        self.assertEqual(len(testsum), 10)
+        for v in testsum:
+            self.assertEqual(v, 1)
+        self.assertEqual(len(results), 10)
+        for v in results:
+            self.assertIsNone(v)
+
+    def test_EventHandler__call__WithKeywords(self):
+        ev = events.EventHandler("Test")
+        testsum = []
+
+        def callback(evt):
+            self.assertEqual(evt.sender, "Test")
+            evt.testsum.append(1)
+
+        for x in range(10):
+            ev += callback
+        self.assertEqual(len(ev), 10)
+        results = ev(testsum=testsum)
         self.assertEqual(len(testsum), 10)
         for v in testsum:
             self.assertEqual(v, 1)
@@ -109,13 +129,15 @@ class TestWeakrefEventHandler:
         ev = events.EventHandler("weakref")
         testsum = []
 
-        def callback_function(sender, sumval):
-            assert sender == "weakref"
+        def callback_function(evt):
+            assert evt.sender == "weakref"
+            sumval = evt[0]
             sumval.append(1)
 
         class receiver_object:
-            def callback(self, sender, sumval):
-                assert sender == "weakref"
+            def callback(self, evt):
+                assert evt.sender == "weakref"
+                sumval = evt[0]
                 sumval.append(1)
 
         r = receiver_object()
@@ -130,6 +152,33 @@ class TestWeakrefEventHandler:
         testsum = []
 
         results = ev(testsum)
+        assert len(testsum) == 1
+
+    def test_weakref_removal_with_keywords(self):
+        ev = events.EventHandler("weakref")
+        testsum = []
+
+        def callback_function(evt):
+            assert evt.sender == "weakref"
+            evt.testsum.append(1)
+
+        class receiver_object:
+            def callback(self, evt):
+                assert evt.sender == "weakref"
+                evt.testsum.append(1)
+
+        r = receiver_object()
+
+        ev += r.callback
+        ev += callback_function
+
+        results = ev(testsum=testsum)
+        assert len(testsum) == 2
+
+        del r
+        testsum = []
+
+        results = ev(testsum=testsum)
         assert len(testsum) == 1
 
 

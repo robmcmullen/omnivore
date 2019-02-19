@@ -7,16 +7,31 @@ import weakref
 
 __all__ = ["EventHandler"]
 
-class EventHandler(object):
+
+class Event(list):
+    def __init__(self, sender, *args, **kwargs):
+        self._sender = sender
+        self[:] = args
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    @property
+    def sender(self):
+        return self._sender
+
+
+class EventHandler:
     """A simple event handling class, which manages callbacks to be
     executed.
     """
-    def __init__(self, sender, debug=False):
+    event_class = Event
+
+    def __init__(self, sender, event_class=None, debug=False):
         self.callbacks = []
         self.sender = sender
         self.debug = debug
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         """Executes all callbacks.
 
         Executes all connected callbacks in the order of addition,
@@ -25,6 +40,7 @@ class EventHandler(object):
         """
         results = []
         remove_indexes = []
+        evt = self.event_class(self.sender, *args, **kwargs)
         for i, ref in enumerate(self.callbacks):
             callback = ref()
             if callback is None:
@@ -34,7 +50,7 @@ class EventHandler(object):
             else:
                 if self.debug:
                     print(f"EventHandler {self.sender}: calling {callback}, args={args}")
-                result = callback(self.sender, *args)
+                result = callback(evt)
                 results.append(result)
         try:
             while True:
