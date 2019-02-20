@@ -1620,7 +1620,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         try:
             action[key](evt, None)
             self.caret_handler.validate_carets()
-            caret = self.caret_handler.current_caret
+            caret = self.caret_handler.current
             cell = self.line_renderer.col_to_cell(*caret.rc)
             self.main.ensure_visible(caret.rc[0], cell, None)
             if self.automatic_refresh:
@@ -1708,7 +1708,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         self.main.ensure_visible(caret.rc[0], cell, flags)
 
     def keep_current_caret_on_screen(self, flags):
-        caret = self.caret_handler.current_caret
+        caret = self.caret_handler.current
         self.keep_caret_on_screen(caret, flags)
 
     def draw_carets(self, dc, start_row, visible_rows):

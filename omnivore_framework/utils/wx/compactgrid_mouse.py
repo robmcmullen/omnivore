@@ -167,7 +167,7 @@ class MultiCaretHandler:
         self.carets = []
 
     @property
-    def current_caret(self):
+    def current(self):
         return self.carets[-1]  # last one is the most recent
 
     @property
@@ -354,6 +354,88 @@ class MultiCaretHandler:
     def invert_selection_ranges(self, table, ranges):
         return invert_ranges(ranges, caret_handler.document_length)
 
+    def process_char_flags(self, flags):
+        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        
+        """
+        visible_range = False
+        caret_moved = False
+        log.debug("processing caret flags: %s" % str(flags))
+
+        if flags.old_carets is not None:
+            log.debug(f"old_carets: {flags.old_carets}")
+            if flags.add_caret:
+                self.carets.add_old_carets(flags.old_carets)
+                caret_moved = True
+                log.debug("caret added! before: %s, after: %s" % (flags.old_carets, self.carets))
+            elif flags.force_single_caret:
+                if flags.caret_index is not None:
+                    self.carets.new_caret(flags.caret_index)
+                self.carets.remove_old_carets()
+                caret_moved = True
+                log.debug("force_single_caret")
+            else:
+                self.validate_carets()
+                caret_state = self.calc_state()
+                caret_moved = caret_state != flags.old_carets
+                log.debug("caret moved: %s old_carets: %s, new carets: %s" % (caret_moved, flags.old_carets, caret_state))
+            if caret_moved:
+                if not flags.keep_selection:
+                    index = self.current.index
+                    self.current.set_initial_selection(index, index)
+                visible_range = True
+                self.sync_caret_event = flags
+                log.debug("caret_moved")
+        elif flags.force_single_caret:
+            log.debug(f"force_single_caret: caret_index={flags.caret_index}")
+            if flags.caret_index is not None:
+                c = Caret(flags.caret_index)
+                self.carets.force_single_caret(c)
+                caret_moved = True
+                self.sync_caret_event = flags
+
+        if flags.index_range is not None:
+            log.debug(f"index_range: {flags.index_range}")
+            if flags.select_range:
+                log.debug(f"select_range")
+                self.current.set_anchors(flags.index_range[0], flags.index_range[1])
+                document.change_count += 1
+            visible_range = True
+
+        if visible_range:
+            # Only update the range on the current editor, not other views
+            # which are allowed to remain where they are
+            log.debug(f"visible_range: index_visible={flags.index_visible}")
+            if flags.index_visible is None:
+                flags.index_visible = self.current.index
+            self.ensure_visible_event = flags
+
+            flags.refresh_needed = True
+
+        if flags.viewport_origin is not None:
+            flags.source_control.move_viewport_origin(flags.viewport_origin)
+            flags.skip_source_control_refresh = True
+            flags.refresh_needed = True
+        log.debug(f"FINISHED process_caret_flags: refresh_needed={flags.refresh_needed}, skip_source_control_refresh={flags.skip_source_control_refresh}")
+
+    def post_process_caret_flags(self, flags, document):
+        """Perform any caret updates after the data model has been regenerated
+        (e.g. the disassembler where the number of bytes per row can change
+        after an edit)
+
+        """
+        log.debug("post processing caret flags: %s" % str(flags))
+
+        if flags.advance_caret_position_in_control:
+            log.debug("advancing each caret to next position")
+            selection_before = self.has_selection
+            flags.advance_caret_position_in_control.advance_caret_position()
+            self.validate_carets()
+            if selection_before:
+                self.collapse_selections_to_carets()
+                flags.refresh_needed = True
+            self.sync_caret_event = flags
+
 
 ##### Mouse modes
 
@@ -515,7 +597,7 @@ class MouseMode(object):
         """ Selects the entire document
         """
         caret_handler.clear_selection()
-        caret_handler.carets.current.set_initial_selection((0, 0), caret_handler.document_length)
+        caret_handler.current.set_initial_selection((0, 0), caret_handler.document_length)
         self.highlight_selected_ranges(caret_handler)
         self.control.update_ui_for_selection_change()
 
@@ -553,7 +635,7 @@ class MouseMode(object):
         """ Adjust the current selection to the new start and end indexes
         """
         if extend:
-            caret = caret_handler.carets.current
+            caret = caret_handler.current
             caret.set_selection(start, end)
         elif add:
             caret = Caret(end)
@@ -1173,7 +1255,7 @@ class MouseEventMixin:
             self.select_extend_mode = True
         mode_log.debug(("start before:", ch.carets, "multi", self.multi_select_mode, "extend", self.select_extend_mode))
         if self.select_extend_mode:
-            caret = ch.current_caret
+            caret = ch.current
             if mouse_at < caret.anchor_start:
                 self.select_extend_mode = "bottom anchor"
                 if not caret.has_selection:
@@ -1188,7 +1270,7 @@ class MouseEventMixin:
         else:
             if selecting_rows:
                 ch.move_carets_to(*mouse_at)
-                caret = ch.current_caret
+                caret = ch.current
                 caret.anchor_initial_start = caret.anchor_start = mouse_at
                 caret.anchor_initial_end = caret.anchor_end = (r, c_end_of_row)
                 flags.keep_selection = True
@@ -1203,7 +1285,7 @@ class MouseEventMixin:
                     mode_log.debug(("adding caret", caret))
                 else:
                     ch.move_carets_to(*mouse_at)
-                    caret = ch.current_caret
+                    caret = ch.current
                     mode_log.debug(("forced single caret", caret))
                 self.pending_select_awaiting_drag = mouse_at
                 mode_log.debug("handle_select_start placing cursor: flags: %s, rc=%s" % (flags, mouse_at))
@@ -1226,7 +1308,7 @@ class MouseEventMixin:
         mode_log.debug("handle_select_motion: r=%d c=%d pending: %s, flags: %s" % (r, c, str(self.pending_select_awaiting_drag), flags))
         # mode_log.debug("handle_select_motion: r=%d c=%d index1: %s, index2: %s pending: %s, sel rows: %s anchors: initial=%s current=%s" % (r, c, index1, index2, str(self.pending_select_awaiting_drag), flags.selecting_rows, str((caret.anchor_initial_start_index, caret.anchor_initial_end_index)), str((caret.anchor_start_index, caret.anchor_end_index))))
         mode_log.debug(("motion before:", ch.carets))
-        caret = ch.current_caret
+        caret = ch.current
         if c < 0 or flags.selecting_rows or not inside:
             selecting_rows = True
             c = 0
