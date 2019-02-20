@@ -107,7 +107,9 @@ class OmnivoreFrame(wx.Frame):
         control.editor = None
         editor.prepare_destroy()
         self.notebook.RemovePage(index)
-        del control
+        control.Destroy()
+        editor.control = None
+        del editor
 
     def load_file(self, path, current_editor=None, args=None):
         try:
