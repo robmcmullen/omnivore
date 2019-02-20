@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 class MenuDescription:
-    def __init__(self, desc, editor, valid_id_map, key_bindings):
+    def __init__(self, desc, editor, valid_id_map, keybinding_desc):
         self.menu = wx.Menu()
         log.debug(f"adding menu {desc}")
         self.name = desc[0]
@@ -43,7 +43,7 @@ class MenuDescription:
                             valid_id_map[id] = (action_key, action)
                             action.append_to_menu(self.menu, id, action_key)
                             try:
-                                accel_text = key_bindings[action_key]
+                                accel_text = keybinding_desc[action_key]
                             except KeyError:
                                 pass
                             else:
@@ -57,7 +57,7 @@ class MenuDescription:
                                         log.error(f"Invalid key binding {accel_text} for {action_key}")
                             allow_separator = True
             else:
-                submenu = MenuDescription(action_key, editor, valid_id_map, key_bindings)
+                submenu = MenuDescription(action_key, editor, valid_id_map, keybinding_desc)
                 if submenu.count > 0:
                     self.menu.AppendSubMenu(submenu.menu, submenu.name)
 
@@ -73,7 +73,7 @@ class MenubarDescription:
         num_old_menus = parent.raw_menubar.GetMenuCount()
         num_new_menus = 0
         for desc in editor.menubar_desc:
-            menu = MenuDescription(desc, editor, self.valid_id_map, editor.key_bindings)
+            menu = MenuDescription(desc, editor, self.valid_id_map, editor.keybinding_desc)
             if menu.count > 0:
                 if num_new_menus < num_old_menus:
                     parent.raw_menubar.Replace(num_new_menus, menu.menu, menu.name)

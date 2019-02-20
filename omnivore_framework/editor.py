@@ -77,7 +77,7 @@ class OmnivoreEditor:
     ["Help", "about"],
     ]
 
-    key_bindings = {
+    keybinding_desc = {
         "new_file": "Ctrl+N",
         "open_file": "Ctrl+O",
         "save_file" : "Ctrl+S",

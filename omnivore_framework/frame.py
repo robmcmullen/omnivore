@@ -5,6 +5,7 @@ import wx.aui as aui
 
 from . import menubar
 from . import toolbar
+from . import keybindings
 from . import errors
 from . import editor as editor_module
 from . import loader
@@ -27,6 +28,7 @@ class OmnivoreFrame(wx.Frame):
         self.toolbar_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer)
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
 
         if wx.Platform == "__WXMAC__":
             self.Bind(wx.EVT_MENU_OPEN, self.on_menu_open_mac)
@@ -82,6 +84,10 @@ class OmnivoreFrame(wx.Frame):
             self.create_toolbar()
             self.toolbar.sync_with_editor(self.raw_toolbar)
 
+    def create_keybindings(self):
+        log.debug(f"create_menubar: active editor={self.active_editor}")
+        self.keybindings = keybindings.KeyBindingDescription(self.active_editor)
+
     def set_title(self):
         self.SetTitle(f"{self.active_editor.title} - {wx.GetApp().app_name}")
 
@@ -131,6 +137,7 @@ class OmnivoreFrame(wx.Frame):
             self.sync_menubar()
             self.create_toolbar()
             self.sync_toolbar()
+            self.create_keybindings()
             index = self.find_index_of_control(editor.control)
             log.debug(f"setting tab focus to {index}")
             self.notebook.SetSelection(index)
@@ -223,6 +230,23 @@ class OmnivoreFrame(wx.Frame):
             log.debug("halting toolbar timer")
             self.toolbar_timer.Stop()
         wx.CallAfter(self.sync_toolbar)
+
+    def on_char_hook(self, evt):
+        key_id = (evt.GetModifiers(), evt.GetKeyCode())
+        print(f"on_char_hook: key: {key_id}")
+        try:
+            action_key, action = self.keybindings.valid_key_map[key_id]
+            try:
+                wx.CallAfter(action.perform, action_key)
+            except AttributeError:
+                print(f"no perform method for {action}")
+                evt.Skip()
+            else:
+                print(f"found action {action}")
+        except KeyError as e:
+            print(f"key id {key_id} not found in {self.keybindings.valid_key_map}")
+            evt.Skip()
+
 
     #### convenience functions for alerts and dialogs
 

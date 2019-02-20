@@ -84,3 +84,31 @@ class about(OmnivoreAction):
 
     def perform(self, action_key):
         wx.GetApp().show_about_dialog()
+
+class prev_line(OmnivoreAction):
+    def calc_name(self, action_key):
+        return "Previous Line"
+
+    def perform(self, action_key):
+        print("Up!")
+
+class next_line(OmnivoreAction):
+    def calc_name(self, action_key):
+        return "Next Line"
+
+    def perform(self, action_key):
+        print("Down!")
+
+class prev_char(OmnivoreAction):
+    def calc_name(self, action_key):
+        return "Previous Char"
+
+    def perform(self, action_key):
+        print("Left!")
+
+class next_char(OmnivoreAction):
+    def calc_name(self, action_key):
+        return "Next Char"
+
+    def perform(self, action_key):
+        print("Right!")

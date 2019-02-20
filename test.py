@@ -3,6 +3,7 @@
 import wx
 
 from omnivore_framework import OmnivoreFrameworkApp, OmnivoreEditor, OmnivoreAction, OmnivoreActionRadioMixin, errors
+from omnivore_framework.editor import find_editor_class_by_name
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -151,10 +152,15 @@ if __name__ == "__main__":
             frame.add_editor(editor2)
             frame.add_editor(editor3)
         elif path == "text":
-            editor_cls = omnivore_framework.editor.find_editor_class_for_mime("text/plain")
+            editor_cls = find_editor_class_by_name("text_editor")
             if editor_cls:
                 e = editor_cls(action_factory_lookup=action_factory_lookup)
                 e.toolbar_desc = ["text_last_digit"]
+                frame.add_editor(e)
+        elif path == "debug":
+            editor_cls = find_editor_class_by_name("debug")
+            if editor_cls:
+                e = editor_cls()
                 frame.add_editor(e)
         else:
             frame.load_file(path)
