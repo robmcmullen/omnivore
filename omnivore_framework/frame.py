@@ -5,6 +5,7 @@ import wx.aui as aui
 
 from . import menubar
 from . import toolbar
+from . import statusbar
 from . import keybindings
 from . import errors
 from . import editor as editor_module
@@ -24,6 +25,8 @@ class OmnivoreFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_menu)
 
         self.raw_toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
+
+        self.raw_statusbar = wx.StatusBar(self, -1)
 
         self.toolbar_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer)
@@ -84,6 +87,18 @@ class OmnivoreFrame(wx.Frame):
             self.create_toolbar()
             self.toolbar.sync_with_editor(self.raw_toolbar)
 
+    def create_statusbar(self):
+        log.debug(f"create_statusbar: active editor={self.active_editor}")
+        self.statusbar = statusbar.StatusbarDescription(self, self.active_editor)
+        self.SetStatusBar(self.raw_statusbar)
+
+    def sync_statusbar(self):
+        try:
+            self.statusbar.sync_with_editor(self.raw_statusbar)
+        except errors.RecreateDynamicMenuBar:
+            self.create_statusbar()
+            self.statusbar.sync_with_editor(self.raw_statusbar)
+
     def create_keybindings(self):
         log.debug(f"create_menubar: active editor={self.active_editor}")
         self.keybindings = keybindings.KeyBindingDescription(self.active_editor)
@@ -139,6 +154,8 @@ class OmnivoreFrame(wx.Frame):
             self.sync_menubar()
             self.create_toolbar()
             self.sync_toolbar()
+            self.create_statusbar()
+            self.sync_statusbar()
             self.create_keybindings()
             index = self.find_index_of_control(editor.control)
             log.debug(f"setting tab focus to {index}")

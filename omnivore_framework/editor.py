@@ -91,6 +91,11 @@ class OmnivoreEditor:
         "new_file", "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste"
     ]
 
+    statusbar_desc = [
+        ["main", -1],
+        ["debug", -1],
+    ]
+
     module_search_order = ["omnivore_framework.actions"]
 
     extra_metadata_file_extensions = []
