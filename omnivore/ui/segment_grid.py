@@ -59,7 +59,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
     default_table_cls = SegmentTable
 
     def __init__(self, parent, linked_base, mdict, viewer_cls):
-        CharEventMixin.__init__(self, linked_base)
+        CharEventMixin.__init__(self, None)
 
         self.original_metadata = mdict.copy()
 
@@ -158,13 +158,13 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         self.mouse_mode.refresh_ranges(self.caret_handler)
         if flags.viewport_origin is not None:
             self.move_viewport_origin(flags.viewport_origin)
-        linked_base.sync_caret_to_index_event = flags
-        linked_base.ensure_visible_event = flags
-        linked_base.refresh_event = flags
+        linked_base.sync_caret_to_index_event(flags=flags)
+        linked_base.ensure_visible_event(flags=flags)
+        linked_base.refresh_event(flags=flags)
         log.debug(f"commit after: {self.caret_handler.carets} flags={flags}\n\n")
 
     def process_flags(self, flags):
-        self.segment_viewer.editor.process_flags(flags)
+        self.caret_handler.process_char_flags(flags)
 
     ##### Rectangular regions
 

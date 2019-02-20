@@ -48,7 +48,7 @@ class ByteEditor(TileManagerBase):
     ["Help", "about"],
     ]
 
-    key_bindings = {
+    keybinding_desc = {
         "byte_set_to_zero": "Ctrl+0",
         "byte_set_to_ff": "Ctrl+9",
         "byte_nop": "Ctrl+3",
@@ -463,3 +463,44 @@ class ByteEditor(TileManagerBase):
             cmd.pretty_name = pretty
         self.process_command(cmd)
 
+    def process_flags(self, flags):
+        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        
+        """
+        log.debug("processing flags: %s" % str(flags))
+        d = self.document
+        visible_range = False
+
+        self.caret_handler.process_caret_flags(flags, d)
+
+        if flags.message:
+            self.task.status_bar.message = flags.message
+
+        if flags.metadata_dirty:
+            self.metadata_dirty = True
+
+        if flags.data_model_changed:
+            log.debug(f"process_flags: data_model_changed")
+            d.data_model_changed = True
+            d.change_count += 1
+            flags.rebuild_ui = True
+        elif flags.byte_values_changed:
+            log.debug(f"process_flags: byte_values_changed")
+            d.change_count += 1
+            d.byte_values_changed = flags
+            flags.refresh_needed = True
+        elif flags.byte_style_changed:
+            log.debug(f"process_flags: byte_style_changed")
+            d.change_count += 1
+            d.byte_style_changed = flags
+            flags.rebuild_ui = True
+            flags.refresh_needed = True
+
+        self.caret_handler.post_process_caret_flags(flags, d)
+
+        if flags.rebuild_ui:
+            log.debug(f"process_flags: rebuild_ui")
+            d.recalc_event = True
+        if flags.refresh_needed:
+            log.debug(f"process_flags: refresh_needed")
+            self.caret_handler.refresh_event = flags

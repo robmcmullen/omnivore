@@ -10,6 +10,7 @@ import json
 from omnivore_framework.editor import OmnivoreEditor
 from omnivore_framework.utils.wx.tilemanager import TileManager
 from omnivore_framework.templates import get_template
+from omnivore_framework.utils.events import EventHandler
 
 from ..viewer import find_viewer_class_by_name
 
@@ -37,6 +38,7 @@ class TileManagerBase(OmnivoreEditor):
     def __init__(self, action_factory_lookup=None):
         OmnivoreEditor.__init__(self, action_factory_lookup)
         self.focused_viewer = None
+        self.focused_viewer_changed_event = EventHandler(self)
         self.viewers = []
 
     def prepare_destroy(self):
@@ -344,10 +346,9 @@ class TileManagerBase(OmnivoreEditor):
 
     def set_focused_viewer(self, viewer):
         self.focused_viewer = viewer
-        self.focused_viewer_changed_event = viewer
+        self.focused_viewer_changed_event(viewer)
         self.caret_handler = viewer.linked_base
-        viewer.linked_base.calc_action_enabled_flags()
-        viewer.linked_base.segment_selected_event = viewer.linked_base.segment_number
+        viewer.linked_base.segment_selected_event(viewer.linked_base.segment_number)
 
     def on_viewer_active(self, evt):
         try:

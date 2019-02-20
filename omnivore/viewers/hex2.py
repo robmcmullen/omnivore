@@ -13,7 +13,7 @@ from ..byte_edit.actions import GotoIndexAction
 from ..byte_edit.commands import ChangeByteCommand
 
 from ..viewer import SegmentViewer
-from .actions import ViewerWidthAction
+# from .actions import ViewerWidthAction
 
 import logging
 log = logging.getLogger(__name__)

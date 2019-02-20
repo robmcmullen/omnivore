@@ -19,7 +19,7 @@ from .viewers.mouse_modes import NormalSelectMode
 import logging
 log = logging.getLogger(__name__)
 caret_log = logging.getLogger("caret")
-caret_log.setLevel(logging.DEBUG)
+# caret_log.setLevel(logging.DEBUG)
 
 
 def get_viewers():
@@ -229,7 +229,15 @@ class SegmentViewer:
         pass
 
     def set_event_handlers(self):
-        self.linked_base.document.recalc_event += self.on_recalc_view
+        self.document.byte_values_changed_event += self.on_refresh_view_for_value_change
+        self.document.byte_style_changed_event += self.on_refresh_view_for_style_change
+        self.document.structure_changed_event += self.on_recalc_data_model
+        self.document.recalc_event += self.on_recalc_view
+        self.document.priority_level_refresh_event += self.on_priority_level_refresh
+        self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
+        self.linked_base.ensure_visible_event += self.on_ensure_visible
+        self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
+        self.linked_base.refresh_event += self.on_refresh_view
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
@@ -304,59 +312,24 @@ class SegmentViewer:
         self.control.SetName(self.window_title + self.linked_base_segment_identifier)
         self.control.SetLabel(self.pretty_name)
 
-    ##### Trait change handlers
+    ##### non-wx event handlers
 
-    # Only the refresh event should actually update the screen! All other trait
+    # Only the refresh event should actually update the screen! All other event
     # handlers should just change the data model without any screen effects.
 
-    # Most trait change handlers are simply a trampoline to another method.
-    # Trait change events aren't easily overridden in subclasses, so this
-    # regular method is what subclasses should use for the desired changes. For
-    # example, process_ensure_visible is the trait change handler that calls
-    # ensure_visible to do the actual work of repositioning the viewer.
-
-    # @on_trait_change('linked_base.document.byte_values_changed')
-    def byte_values_changed(self, flags):
-        log.debug("byte_values_changed: %s flags=%s" % (self, str(flags)))
-        if flags is not Undefined:
-            self.refresh_view_for_value_change(flags)
-
-    # @on_trait_change('linked_base.document.byte_style_changed')
-    def byte_style_changed(self, flags):
-        log.debug("byte_style_changed: %s flags=%s" % (self, str(flags)))
-        if flags is not Undefined:
-            self.refresh_view_for_style_change(flags)
-
-    # @on_trait_change('linked_base.document.data_model_changed')
-    def process_data_model_change(self, evt):
-        log.debug("process_data_model_change for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.recalc_data_model()
-
-    # @on_trait_change('linked_base.document.recalc_event')
-    def on_recalc_view(self, evt):
-        log.debug("process_recalc_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.recalc_view()
-
-    # @on_trait_change('linked_base.ensure_visible_event')
-    def process_ensure_visible(self, flags):
-        log.debug("process_ensure_visible for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
-        if flags is not Undefined:
-            self.ensure_visible(flags)
-
-    def ensure_visible(self, flags):
+    def on_ensure_visible(self, evt):
+        flags = evt.flags
         if flags.index_visible is not None:
             self.control.keep_index_on_screen(flags.index_visible, flags)
 
-    # @on_trait_change('linked_base.sync_caret_to_index_event')
-    def sync_caret_to_index_event_handler(self, flags):
+    def on_sync_caret_to_index(self, evt):
+        flags = evt.flags
         caret_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
-        if flags is not Undefined:
-            if self.control == flags.source_control:
-                caret_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
-            else:
-                caret_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
-                self.sync_caret(flags)
+        if self.control == flags.source_control:
+            caret_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
+        else:
+            caret_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
+            self.sync_caret(flags)
 
     def sync_caret(self, flags):
         if self.has_caret:
@@ -396,11 +369,17 @@ class SegmentViewer:
         """
         return f" ({self.linked_base.segment.name})"
 
-    def recalc_data_model(self):
+    def on_recalc_data_model(self, evt):
         """Rebuild the data model after a document formatting (or other
         structural change) or loading a new document.
         """
+        self.recalc_data_model()
+
+    def recalc_data_model(self):
         pass
+
+    def on_recalc_view(self, evt):
+        self.recalc_view()
 
     def recalc_view(self):
         """Rebuild the entire UI after a document formatting (or other
@@ -412,43 +391,31 @@ class SegmentViewer:
         caret_log.debug("show_caret: %s, index=%d" % (self.pretty_name, index))
         self.control.set_caret_index(control, index, bit)
 
-    # @on_trait_change('linked_base.editor.document.priority_level_refresh_event')
-    def process_priority_level_refresh(self, evt):
+    def on_priority_level_refresh(self, evt):
         """Refresh based on frame count and priority. If the value passed
         through this event is an integer, all viewers with priority values less
         than the event priority value (i.e. the viewers with a higher priority)
         will be refreshed.
         """
         log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.frame_count += 1
-            p = self.priority_refresh_frame_count
-            if self.frame_count > p or p < evt:
-                self.do_priority_level_refresh()
-                self.frame_count = 0
+        self.frame_count += 1
+        p = self.priority_refresh_frame_count
+        if self.frame_count > p or p < evt:
+            self.do_priority_level_refresh()
+            self.frame_count = 0
 
     def do_priority_level_refresh(self):
         self.refresh_view(True)
 
-    # @on_trait_change('linked_base.editor.document.emulator_breakpoint_event')
-    def process_emulator_breakpoint(self, evt):
+    def on_emulator_breakpoint(self, evt):
         log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.do_emulator_breakpoint()
+        self.do_emulator_breakpoint()
 
-    def do_emulator_breakpoint(self):
+    def do_emulator_breakpoint(self, evt):
             self.task.status_bar.message = f"{self.document.emulator.cycles_since_power_on} cycles"
 
-    # @on_trait_change('linked_base.refresh_event')
-    def process_refresh_view(self, flags):
-        """Redraw the UI.
-
-        flags is either True for an unconditional refresh, or a DisplayFlags
-        instance that contains more info about what or how to refresh
-        """
-        log.debug("process_refresh_view for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
-        if flags is not Undefined:
-            self.refresh_view(flags)
+    def on_refresh_view(self, evt):
+        self.refresh_view(evt.flags)
 
     def refresh_view(self, flags):
         if flags == True:
@@ -468,11 +435,11 @@ class SegmentViewer:
             log.debug("refresh_event: refreshing %s" % self.control)
             self.control.refresh_view()
 
-    def refresh_view_for_value_change(self, flags):
-        self.refresh_view(flags)
+    def on_refresh_view_for_value_change(self, evt):
+        self.refresh_view(evt.flags)
 
-    def refresh_view_for_style_change(self, flags):
-        self.refresh_view(flags)
+    def on_refresh_view_for_style_change(self, evt):
+        self.refresh_view(evt.flags)
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
