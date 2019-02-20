@@ -18,9 +18,13 @@ def get_loaders():
 
     loaders = []
     for entry_point in pkg_resources.iter_entry_points('omnivore_framework.loaders'):
-        mod = entry_point.load()
-        log.debug(f"get_loaders: Found loader {entry_point.name}")
-        loaders.append(mod)
+        try:
+            mod = entry_point.load()
+        except (ModuleNotFoundError, ImportError) as e:
+            log.error(f"Failed using loader {entry_point.name}: {e}")
+        else:
+            log.debug(f"get_loaders: Found loader {entry_point.name}")
+            loaders.append(mod)
     return loaders
 
 def identify_file(uri):
