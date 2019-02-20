@@ -211,6 +211,7 @@ class OmnivoreEditor:
         self.last_loaded_uri = path
         from omnivore_framework.actions import open_recent
         open_recent.open_recent.append(path)
+        self.frame.status_message(f"loaded {path} {file_metadata}", True)
 
     #### metadata
 

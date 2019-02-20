@@ -26,7 +26,7 @@ class OmnivoreFrame(wx.Frame):
 
         self.raw_toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
 
-        self.raw_statusbar = wx.StatusBar(self, -1)
+        self.raw_statusbar = statusbar.RawStatusBar(self)
 
         self.toolbar_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer)
@@ -334,10 +334,15 @@ class OmnivoreFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
-
     def error(self, message, title='Error'):
         """ Convenience method to show an error message dialog. """
         current = self.FindFocus()
         dlg = wx.MessageDialog(current, message, title, wx.ICON_ERROR | wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
+
+    def status_message(self, message, debug=False):
+        if debug:
+            self.raw_statusbar.debug(message)
+        else:
+            self.raw_statusbar.message(message)
