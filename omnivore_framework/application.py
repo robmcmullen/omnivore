@@ -10,6 +10,7 @@ from .frame import OmnivoreFrame
 from .editor import get_editors, find_editor_class_by_name
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
+from .utils.events import EventHandler
 from .utils.wx import error_logger
 from . import errors
 
@@ -64,6 +65,7 @@ class OmnivoreFrameworkApp(wx.App):
         self.SetAppName(self.app_name)
         self.init_class_attrs()
         init_filesystems(self)
+        self.keybindings_changed_event = EventHandler(self)
         return True
 
     @classmethod

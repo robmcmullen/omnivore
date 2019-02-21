@@ -4,9 +4,36 @@ import wx
 
 from omnivore_framework import OmnivoreEditor
 from omnivore_framework.filesystem import fsopen as open
+from omnivore_framework.keybindings import KeyBindingControlMixin
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class TextEditorControl(KeyBindingControlMixin, wx.TextCtrl):
+    keybinding_desc = {
+        "prev_line": "Up",
+        "next_line": "Down",
+        "prev_char": "Left",
+        "next_char": "Right",
+    }
+
+    def __init__(self, *args, **kwargs):
+        wx.TextCtrl.__init__(self, *args, **kwargs)
+        KeyBindingControlMixin.__init__(self)
+
+    def prev_line(self, evt):
+        print("prev_line")
+
+    def next_line(self, evt):
+        print("next_line")
+
+    def prev_char(self, evt):
+        print("prev_char")
+
+    def next_char(self, evt):
+        print("next_char")
+
 
 
 class TextEditor(OmnivoreEditor):
@@ -33,7 +60,7 @@ class TextEditor(OmnivoreEditor):
         return self.control.CanRedo()
 
     def create_control(self, parent):
-        return wx.TextCtrl(parent, -1, style=wx.TE_MULTILINE)
+        return TextEditorControl(parent, -1, style=wx.TE_MULTILINE)
 
     def load(self, path, file_metadata, args=None):
         with open(path, 'r') as fh:
@@ -80,11 +107,6 @@ class DebugTextEditor(TextEditor):
         "cut": "Ctrl+X",
         "copy": "Ctrl+C",
         "paste": "Ctrl+V",
-
-        "prev_line": "Up",
-        "next_line": "Down",
-        "prev_char": "Left",
-        "next_char": "Right",
     }
 
     def load(self, *args, **kwargs):
