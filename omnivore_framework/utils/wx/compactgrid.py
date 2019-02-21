@@ -1003,6 +1003,9 @@ class HexTable(object):
     def items_per_index(self):
         return self.items_per_row // self.indexes_per_row
 
+    def get_items_in_row(self, line):
+        return self.items_per_row
+
     def init_boundaries(self):
         self.num_rows = self.calc_num_rows()
         self.last_valid_index = self.calc_last_valid_index()
@@ -1129,6 +1132,9 @@ class VariableWidthHexTable(HexTable):
         self.init_boundaries()
         # print(self.data, self.num_rows, self.start_offset, self.start_addr)
         self.create_row_labels()
+
+    def get_items_in_row(self, row):
+        return self.items_per_row[row]
 
     def parse_table_description(self, desc):
         items_per_row = []
@@ -1605,16 +1611,16 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
 
     def on_char(self, evt):
         action = {}
-        action[ord('c')] = self.handle_toggle_col_header
-        action[ord('r')] = self.handle_toggle_row_header
-        action[wx.WXK_DOWN]  = self.handle_char_move_down
-        action[wx.WXK_UP]    = self.handle_char_move_up
-        action[wx.WXK_LEFT]  = self.handle_char_move_left
-        action[wx.WXK_RIGHT] = self.handle_char_move_right
-        action[wx.WXK_PAGEDOWN]  = self.handle_char_move_page_down
-        action[wx.WXK_PAGEUP] = self.handle_char_move_page_up
-        action[wx.WXK_HOME]  = self.handle_char_move_start_of_line
-        action[wx.WXK_END]   = self.handle_char_move_end_of_line
+        action[ord('c')] = self.toggle_col_header
+        action[ord('r')] = self.toggle_row_header
+        action[wx.WXK_DOWN]  = self.caret_move_down
+        action[wx.WXK_UP]    = self.caret_move_up
+        action[wx.WXK_LEFT]  = self.caret_move_left
+        action[wx.WXK_RIGHT] = self.caret_move_right
+        action[wx.WXK_PAGEDOWN]  = self.caret_move_page_down
+        action[wx.WXK_PAGEUP] = self.caret_move_page_up
+        action[wx.WXK_HOME]  = self.caret_move_start_of_line
+        action[wx.WXK_END]   = self.caret_move_end_of_line
         key = evt.GetKeyCode()
         print(("Trying %d" % key))
         try:
@@ -1742,45 +1748,45 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
 
     ##### Keyboard movement implementations
 
-    def advance_caret_position(self):
-        self.handle_char_move_right(None, None)
+    def advance_caret_position(self, evt, flags):
+        self.caret_handler.move_carets_horizontally(self.table, 1, True)
 
-    def handle_toggle_col_header(self, evt, flags):
+    def toggle_col_header(self, evt, flags):
         self.want_col_header = not self.want_col_header
         self.process_visibility_change()
 
-    def handle_toggle_row_header(self, evt, flags):
+    def toggle_row_header(self, evt, flags):
         self.want_row_header = not self.want_row_header
         self.process_visibility_change()
 
-    def handle_char_move_down(self, evt, flags):
+    def caret_move_down(self, evt, flags):
         self.caret_handler.move_carets_vertically(self.table, 1)
 
-    def handle_char_move_up(self, evt, flags):
+    def caret_move_up(self, evt, flags):
         self.caret_handler.move_carets_vertically(self.table, -1)
 
-    def handle_char_move_left(self, evt, flags):
+    def caret_move_left(self, evt, flags):
         self.caret_handler.move_carets_horizontally(self.table, -1)
 
-    def handle_char_move_right(self, evt, flags):
+    def caret_move_right(self, evt, flags):
         self.caret_handler.move_carets_horizontally(self.table, 1)
 
-    def handle_char_move_page_down(self, evt, flags):
+    def caret_move_page_down(self, evt, flags):
         self.caret_handler.move_carets_vertically(self.table, self.page_size)
 
-    def handle_char_move_page_up(self, evt, flags):
+    def caret_move_page_up(self, evt, flags):
         self.caret_handler.move_carets_vertically(self.table, -self.page_size)
 
-    def handle_char_move_start_of_file(self, evt, flags):
+    def caret_move_start_of_file(self, evt, flags):
         self.caret_handler.move_carets_to(0, 0)
 
-    def handle_char_move_end_of_file(self, evt, flags):
+    def caret_move_end_of_file(self, evt, flags):
         self.caret_handler.move_carets_to_index(self.table.last_valid_index)
 
-    def handle_char_move_start_of_line(self, evt, flags):
+    def caret_move_start_of_line(self, evt, flags):
         self.caret_handler.move_carets_process_function(self.table.clamp_left_column)
 
-    def handle_char_move_end_of_line(self, evt, flags):
+    def caret_move_end_of_line(self, evt, flags):
         self.caret_handler.move_carets_process_function(self.table.clamp_right_column)
 
     #### info

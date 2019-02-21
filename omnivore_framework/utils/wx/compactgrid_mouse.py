@@ -243,10 +243,19 @@ class MultiCaretHandler:
             caret.clear_selection()
         self.validate_carets()
 
-    def move_carets_horizontally(self, table, delta_c):
+    def move_carets_horizontally(self, table, delta_c, wrap=False):
         caret_log.debug(f"moving horizontally: {delta_c}")
         for caret in self.carets:
-            caret.rc = table.enforce_valid_row_col(caret.rc[0], caret.rc[1] + delta_c)
+            r = caret.rc[0]
+            c = caret.rc[1] + delta_c
+            if wrap and not table.is_row_col_inside(r, c):
+                if c < 0:
+                    r -= 1
+                    c += table.get_items_in_row(r)
+                else:
+                    r += 1
+                    c -= table.get_items_in_row(r)
+            caret.rc = table.enforce_valid_row_col(r, c)
             caret.clear_selection()
         self.validate_carets()
 
