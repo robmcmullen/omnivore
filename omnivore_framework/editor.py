@@ -11,6 +11,7 @@ from . import action
 from . import errors
 # from . import preferences
 from .utils import jsonutil
+from .utils.command import StatusFlags
 
 import logging
 log = logging.getLogger(__name__)
@@ -124,11 +125,11 @@ class OmnivoreEditor:
 
     @property
     def can_undo(self):
-        return False
+        return self.document is not None and self.document.undo_stack.can_undo()
 
     @property
     def can_redo(self):
-        return False
+        return self.document is not None and self.document.undo_stack.can_redo()
 
     @property
     def best_file_save_dir(self):
@@ -212,6 +213,58 @@ class OmnivoreEditor:
         from omnivore_framework.actions import open_recent
         open_recent.open_recent.append(path)
         self.frame.status_message(f"loaded {path} {file_metadata}", True)
+
+    #### command processing
+
+    def undo(self):
+        undo = self.document.undo_stack.undo(self)
+        self.process_flags(undo.flags)
+
+    def redo(self):
+        undo = self.document.undo_stack.redo(self)
+        self.process_flags(undo.flags)
+
+    def end_batch(self):
+        self.document.undo_stack.end_batch()
+
+    def process_command(self, command, batch=None):
+        """Process a single command and immediately update the UI to reflect
+        the results of the command.
+        """
+        f = StatusFlags()
+        undo = self.process_batch_command(command, f, batch)
+        if undo.flags.success:
+            self.process_flags(f)
+        return undo
+
+    def process_batch_command(self, command, f, batch=None):
+        """Process a single command but don't update the UI immediately.
+        Instead, update the batch flags to reflect the changes needed to
+        the UI.
+        
+        """
+        undo = self.document.undo_stack.perform(command, self, batch)
+        f.add_flags(undo.flags, command)
+        return undo
+
+    def process_flags(self, flags):
+        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        
+        """
+        log.debug("processing flags: %s" % str(flags))
+        d = self.document
+        visible_range = False
+
+        if flags.message:
+            self.task.status_bar.message = flags.message
+
+        if flags.rebuild_ui:
+            log.debug(f"process_flags: rebuild_ui")
+            d.recalc_event(flags=flags)
+        if flags.refresh_needed:
+            log.debug(f"process_flags: refresh_needed")
+            d.recalc_event(flags=flags)
+
 
     #### metadata
 

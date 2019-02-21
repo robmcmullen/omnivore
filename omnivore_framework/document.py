@@ -45,7 +45,6 @@ class BaseDocument:
         # events
         self.recalc_event = EventHandler(self, True)
         self.structure_changed_event = EventHandler(self, True)
-        self.undo_stack_changed_event = EventHandler(self, True)
         self.byte_values_changed_event = EventHandler(self, True)  # and possibly style, but size of array remains unchanged
 
         self.byte_style_changed_event = EventHandler(self, True)  # only styling info may have changed, not any of the data byte values
