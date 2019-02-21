@@ -1193,7 +1193,7 @@ class VariableWidthHexTable(HexTable):
         return index, index + 1
 
     def get_index_of_row(self, line):
-        return self.items_per_row[line]
+        return self.index_of_row[line]
 
     def get_start_end_index_of_row(self, row):
         index1, _ = self.get_index_range(row, 0)
