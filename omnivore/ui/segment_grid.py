@@ -1,8 +1,9 @@
 import wx
 
 from omnivore_framework.utils.wx import compactgrid as cg
-from omnivore_framework.utils.wx.char_event_mixin import CharEventMixin
+from omnivore_framework.keybindings import KeyBindingControlMixin
 from omnivore_framework.utils.wx.mouse_mode import MouseMode
+from omnivore_framework.utils.command import DisplayFlags
 from ..arch.disasm import get_style_name
 # from omnivore_framework.framework import actions as fa
 # from ..byte_edit import actions as ba
@@ -55,12 +56,23 @@ class SegmentVirtualTable(cg.HexTable):
         raise NotImplementedError
 
 
-class SegmentGridControl(CharEventMixin, cg.CompactGrid):
+class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     default_table_cls = SegmentTable
 
-    def __init__(self, parent, linked_base, mdict, viewer_cls):
-        CharEventMixin.__init__(self, None)
+    keybinding_desc = {
+        "caret_move_up": "Up",
+        "caret_move_down": "Down",
+        "caret_move_left": "Left",
+        "caret_move_right": "Right",
+        "caret_move_page_down": "Pagedown",
+        "caret_move_page_up": "Pageup",
+        "caret_move_start_of_line": "Home",
+        "caret_move_end_of_line": "End",
+        "caret_move_next_line": "Tab",
+        "advance_caret_position": "Space",
+    }
 
+    def __init__(self, parent, linked_base, mdict, viewer_cls):
         self.original_metadata = mdict.copy()
 
         if viewer_cls.override_table_cls is not None:
@@ -72,10 +84,12 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         table = self.calc_default_table(linked_base)
 
         cg.CompactGrid.__init__(self, table, linked_base.editor.preferences, None, viewer_cls.default_mouse_mode_cls, parent)
+        KeyBindingControlMixin.__init__(self)
         # self.automatic_refresh = False
 
     def map_char_events(self):
-        CharEventMixin.map_char_events(self, self.main)
+        # force keys to be bound on main grid, not parent (which is a panel)
+        KeyBindingControlMixin.map_char_events(self, self.main)
 
     # def map_mouse_events(self):
     #     MouseEventMixin.map_mouse_events(self, self.main)
@@ -150,6 +164,31 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         row, col = self.table.index_to_row_col(self.caret_handler.caret_index)
         self.main.show_caret(col, row)
 
+    #### event handling
+
+    def create_char_event_flags(self):
+        flags = DisplayFlags(self)
+        flags.old_carets = set(self.caret_handler.calc_state())
+        return flags
+
+    def do_char_action(self, evt, action):
+        flags = self.create_char_event_flags()
+        flags.source_control = self
+        action(evt, flags)
+        self.keep_current_caret_on_screen(flags)
+        self.commit_change(flags)
+
+    def do_char_ordinary(self, evt):
+        c = evt.GetKeyCode()
+        print(("ordinary char: %s", c))
+        if not self.is_editing_in_cell:
+            if self.verify_keycode_can_start_edit(c):
+                self.start_editing(evt)
+            else:
+                evt.Skip()
+        else:
+            self.edit_source.EmulateKeyPress(evt)
+
     def commit_change(self, flags):
         flags.carets_to_indexes = self.caret_handler.convert_to_indexes(self.table)
 
@@ -165,6 +204,7 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
 
     def process_flags(self, flags):
         self.caret_handler.process_char_flags(flags)
+
 
     ##### Rectangular regions
 
@@ -230,17 +270,6 @@ class SegmentGridControl(CharEventMixin, cg.CompactGrid):
         # return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, va.AddCommentPopupAction, va.RemoveCommentPopupAction, va.AddLabelPopupAction,va.RemoveLabelPopupAction]
 
     ##### editing
-
-    def handle_char_ordinary(self, evt):
-        c = evt.GetKeyCode()
-        print(("ordinary char: %s", c))
-        if not self.is_editing_in_cell:
-            if self.verify_keycode_can_start_edit(c):
-                self.start_editing(evt)
-            else:
-                evt.Skip()
-        else:
-            self.edit_source.EmulateKeyPress(evt)
 
     def verify_keycode_can_start_edit(self, c):
         return True
