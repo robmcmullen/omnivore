@@ -101,7 +101,7 @@ class OmnivoreFrame(wx.Frame):
 
     def create_keybindings(self):
         log.debug(f"create_menubar: active editor={self.active_editor}")
-        self.keybindings = keybindings.KeyBindingDescription(self.active_editor)
+        self.keybindings = keybindings.KeyBindingDescription(self.active_editor, self.menubar.valid_id_map)
 
     def set_title(self):
         self.SetTitle(f"{self.active_editor.title} - {wx.GetApp().app_name}")
