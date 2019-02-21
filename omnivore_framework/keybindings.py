@@ -108,7 +108,10 @@ class KeyBindingControlMixin:
         exists
         """
         log.debug(f"looking for {action_key} in {self.keybinding_desc}")
-        return getattr(self, action_key)
+        try:
+            return getattr(self, action_key)
+        except AttributeError as e:
+            raise KeyError(e)
 
     def map_char_events(self, source=None):
         if source is None:
