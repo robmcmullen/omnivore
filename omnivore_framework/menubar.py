@@ -60,6 +60,7 @@ class MenuDescription:
                 submenu = MenuDescription(action_key, editor, valid_id_map, keybinding_desc)
                 if submenu.count > 0:
                     self.menu.AppendSubMenu(submenu.menu, submenu.name)
+                    allow_separator = True
 
     @property
     def count(self):
