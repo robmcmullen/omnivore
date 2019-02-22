@@ -165,7 +165,7 @@ class OmnivoreAction:
         try:
             state = self.calc_enabled(action_key)
         except AttributeError as e:
-            log.warning(f"Skipping sync of {action_key} from editor because of missing attribute; probably because the event happened while the editor was being constructed. Ignoring {e}")
+            log.warning(f"Skipping sync of {action_key} menu item from {self.editor}: {e}")
         else:
             menu_item.Enable(state)
 
@@ -173,7 +173,7 @@ class OmnivoreAction:
         try:
             state = self.calc_enabled(action_key)
         except AttributeError as e:
-            log.warning(f"Skipping sync of {action_key} from editor because of missing attribute; probably because the event happened while the editor was being constructed. Ignoring {e}")
+            log.warning(f"Skipping sync of {action_key} toolbar item from {self.editor}: {e}")
         else:
             toolbar_control.EnableTool(id, state)
 
