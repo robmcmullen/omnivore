@@ -8,6 +8,7 @@ import wx
 from .editors.linked_base import LinkedBase
 from .arch import fonts
 
+from omnivore_framework import errors
 from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
 from .arch.machine import Machine, Atari800
@@ -47,7 +48,7 @@ def find_viewer_class_by_name(name):
     for viewer in viewers:
         if viewer.name == name:
             return viewer
-    raise errors.EditorNotFound(f"No editor named {name}")
+    raise errors.EditorNotFound(f"No viewer named {name}")
 
 
 class SegmentViewer:

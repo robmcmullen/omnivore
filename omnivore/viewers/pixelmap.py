@@ -248,7 +248,7 @@ class PixelViewer(SegmentViewer):
 
 
     def __init__(self, *args, **kwargs):
-        CharViewer.__init__(self, *args, **kwargs)
+        SegmentViewer.__init__(self, *args, **kwargs)
         self.pixel_converter = px.AnticE()
 
     @property

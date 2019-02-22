@@ -471,7 +471,7 @@ class ByteEditor(TileManagerBase):
         d = self.document
         visible_range = False
 
-        self.caret_handler.process_caret_flags(flags, d)
+        #self.caret_handler.process_caret_flags(flags, d)
 
         if flags.message:
             self.task.status_bar.message = flags.message
@@ -481,26 +481,26 @@ class ByteEditor(TileManagerBase):
 
         if flags.data_model_changed:
             log.debug(f"process_flags: data_model_changed")
-            d.data_model_changed = True
+            d.data_model_changed_event(flags=flags)
             d.change_count += 1
             flags.rebuild_ui = True
         elif flags.byte_values_changed:
             log.debug(f"process_flags: byte_values_changed")
             d.change_count += 1
-            d.byte_values_changed = flags
+            d.byte_values_changed_event(flags=flags)
             flags.refresh_needed = True
         elif flags.byte_style_changed:
             log.debug(f"process_flags: byte_style_changed")
             d.change_count += 1
-            d.byte_style_changed = flags
+            d.byte_style_changed_event(flags=flags)
             flags.rebuild_ui = True
             flags.refresh_needed = True
 
-        self.caret_handler.post_process_caret_flags(flags, d)
+        # self.caret_handler.post_process_caret_flags(flags, d)
 
         if flags.rebuild_ui:
             log.debug(f"process_flags: rebuild_ui")
-            d.recalc_event = True
+            d.recalc_event(flags=flags)
         if flags.refresh_needed:
             log.debug(f"process_flags: refresh_needed")
-            self.caret_handler.refresh_event = flags
+            d.recalc_event(flags=flags)
