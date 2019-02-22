@@ -25,7 +25,6 @@ class IndexRangeAction(ViewerAction):
 
     def calc_enabled(self, action_key):
         state = self.viewer.control.caret_handler.has_selection
-        print(f"{action_key}: state={state}")
         return self.viewer.control.caret_handler.has_selection
 
     def get_cmd(self, editor, segment, ranges):

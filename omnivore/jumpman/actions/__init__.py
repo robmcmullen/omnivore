@@ -1,5 +1,6 @@
 from ...viewers.actions import ViewerAction
 from .. import commands as jc
+from ..parser import is_valid_level_segment
 
 class clear_trigger(ViewerAction):
     """Remove any trigger function from the selected peanut(s).
@@ -9,7 +10,9 @@ class clear_trigger(ViewerAction):
     enabled_name = 'can_copy'
     command = jc.ClearTriggerCommand
 
-    picked = None
+    def __init__(self, *args, **kwargs):
+        ViewerAction.__init__(self, *args, **kwargs)
+        self.picked = None
 
     def get_objects(self):
         if self.picked is not None:
@@ -180,8 +183,9 @@ class jumpman_level_list(ViewerAction):
 
     def init_from_editor(self):
         valid_segments = []
-        if self.editor.document is not None:
-            for i, segment in enumerate(self.editor.document.segments):
+        doc = self.editor.document
+        if doc is not None:
+            for i, segment in enumerate(doc.segments):
                 if is_valid_level_segment(segment):
                     valid_segments.append((i, segment))
         self.current_list = valid_segments
@@ -190,14 +194,14 @@ class jumpman_level_list(ViewerAction):
         return int(action_key[self.prefix_count:])
 
     def get_segment(self, action_key):
-        return self.current_list[self.get_index(action_key)][1]
+        return self.current_list[self.get_index(action_key)][1] if self.current_list else None
 
     def get_segment_number(self, action_key):
-        return self.current_list[self.get_index(action_key)][0]
+        return self.current_list[self.get_index(action_key)][0] if self.current_list else 0
 
     def calc_name(self, action_key):
         if len(self.current_list) == 0:
-            return "No recent files"
+            return "No Jumpman Levels Found"
         return str(self.get_segment(action_key))
 
     def calc_menu_sub_keys(self, action_key):
@@ -207,12 +211,21 @@ class jumpman_level_list(ViewerAction):
 
     def sync_menu_item_from_editor(self, action_key, menu_item):
         doc = self.editor.document
-        segment_number, segment = self.current_list[self.get_index(action_key)]
-        if segment_number >= len(doc.segments) or segment != doc.segments[segment_number]:
-            raise errors.RecreateDynamicMenuBar
-        state = self.editor.segment_number == self.get_segment_number(action_key)
-        log.debug(f"jumpman_level_list: checked={state}, {self.editor.segment}")
-        menu_item.Check(state)
+        if not self.current_list and doc.segments is not None and len(doc.segments) > 0:
+            print("checking jumpman segments", doc.segments)
+            for i, segment in enumerate(doc.segments):
+                if is_valid_level_segment(segment):
+                    raise errors.RecreateDynamicMenuBar
+        if self.current_list:
+            segment_number, segment = self.current_list[self.get_index(action_key)]
+            if segment_number >= len(doc.segments) or segment != doc.segments[segment_number]:
+                raise errors.RecreateDynamicMenuBar
+            state = self.editor.segment_number == self.get_segment_number(action_key)
+            log.debug(f"jumpman_level_list: checked={state}, {self.editor.segment}")
+            menu_item.Enable(True)
+            menu_item.Check(state)
+        else:
+            menu_item.Enable(False)
 
     def perform(self, action_key):
         self.editor.view_segment_number(self.get_segment_number(action_key))
