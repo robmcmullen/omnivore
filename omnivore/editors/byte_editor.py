@@ -133,6 +133,7 @@ class ByteEditor(TileManagerBase):
         else:
             self.restore_linked_bases()
             self.restore_layout_and_viewers()
+        self.set_initial_focused_viewer()
 
         print(self.document)
         print(self.document.segments)
@@ -227,12 +228,6 @@ class ByteEditor(TileManagerBase):
         if 'focused viewer' in e:
             u = e['focused viewer']
             viewer = self.find_viewer_by_uuid(u)
-        if viewer is None:
-            for viewer in self.viewers:
-                if not self.control.in_sidebar(viewer.control):
-                    break
-        print(("setting focus to %s" % viewer))
-        self.set_focused_viewer(viewer)
         self.task.segments_changed = self.document.segments
 
     def to_metadata_dict(self, mdict, document):

@@ -103,8 +103,14 @@ class TileManagerBase(OmnivoreEditor):
 
         self.create_viewers(viewer_metadata)
 
-
-
+    def set_initial_focused_viewer(self):
+        if self.focused_viewer is None:
+            for viewer in self.viewers:
+                if not self.control.in_sidebar(viewer.control):
+                    break
+            print(("setting focus to %s" % viewer))
+            self.set_focused_viewer(viewer)
+            self.force_focus(viewer)
 
 
     def from_metadata_dict(self, e):
