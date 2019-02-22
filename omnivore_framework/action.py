@@ -34,6 +34,9 @@ def get_action_id(action_key):
         global_action_ids[action_key] = id
     return id
 
+found_modules = {}
+ignore_modules = set()
+
 def find_action_factory_in_module(mod_root, action_key):
     """Given a module name, search for the action using heuristics matching
     based on the action name.
@@ -51,6 +54,8 @@ def find_action_factory_in_module(mod_root, action_key):
         omnivore_framework.actions.file.py
         omnivore_framework.actions.__init__.py
     """
+    global found_modules, ignore_modules
+
     action_key_parts = action_key.split("_")
     modules = []
     while bool(action_key_parts):
@@ -59,27 +64,49 @@ def find_action_factory_in_module(mod_root, action_key):
     modules.append("")
     for ext in modules:
         mod_name = f"{mod_root}{ext}"
-        log.debug(f"searching in {mod_name} for 'action_factory'")
+        if mod_name in ignore_modules:
+            log.debug(f"ignoring {mod_name}")
+            continue
         try:
-            mod = importlib.import_module(mod_name)
-        except ImportError:
-            log.debug(f"no module {mod_name}")
+            mod = found_modules[mod_name]
+            log.debug(f"found previously discovered {mod_name}")
+        except KeyError:
+            try:
+                spec = importlib.util.find_spec(mod_name)
+            except Exception as e:
+                log.error(f"syntax error in module {mod_name}: {e}")
+                ignore_modules.add(mod_name)
+                continue
+            else:
+                if spec is None:
+                    log.debug(f"non-existent module {mod_name}")
+                    ignore_modules.add(mod_name)
+                    continue
+            try:
+                mod = importlib.import_module(mod_name)
+            except Exception as e:
+                log.error(f"error loading module {mod_name}: {e}")
+                ignore_modules.add(mod_name)
+                continue
+            else:
+                log.debug(f"found module {mod_name}")
+                found_modules[mod_name] = mod
+
+        try:
+            factory = mod.action_factory
+        except AttributeError:
+            log.debug(f"no callable action_factory in {mod_name}")
         else:
-            try:
-                factory = mod.action_factory
-            except AttributeError:
-                pass
-            else:
-                log.debug(f"found callable action_factory in {mod_name}")
-                return factory
-            log.debug(f"searching in {mod_name} for '{action_key}'")
-            try:
-                factory = getattr(mod, action_key)
-            except AttributeError:
-                log.debug(f"no callable {action_key} in {mod_name}")
-            else:
-                log.debug(f"found callable {action_key} in {mod_name}")
-                return factory
+            log.debug(f"found callable action_factory in {mod_name}")
+            return factory
+        log.debug(f"searching in {mod_name} for '{action_key}'")
+        try:
+            factory = getattr(mod, action_key)
+        except AttributeError:
+            log.debug(f"no callable {action_key} in {mod_name}")
+        else:
+            log.debug(f"found callable {action_key} in {mod_name}")
+            return factory
 
 def find_action_factory(module_search_order, action_key):
     """Search for the action given its key.
