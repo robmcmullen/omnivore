@@ -45,6 +45,7 @@ class ByteEditor(TileManagerBase):
     ["File", "new_file", "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
     ["Edit", "undo", "redo", None, "copy", "cut", "paste", None, "prefs"],
     ["Bytes", "byte_set_to_zero", "byte_set_to_ff", "byte_nop", None, "byte_set_high_bit", "byte_clear_high_bit", "byte_bitwise_not", "byte_shift_left", "byte_shift_right", "byte_rotate_left", "byte_rotate_right", "byte_reverse_bits", "byte_random", None, "byte_set_value", "byte_or_with_value", "byte_and_with_value", "byte_xor_with_value", None, "byte_ramp_up", "byte_ramp_down", "byte_add_value", "byte_subtract_value", "byte_subtract_from", "byte_multiply_by", "byte_divide_by", "byte_divide_from", None, "byte_reverse_selection", "byte_reverse_group",],
+    ["Jumpman", ["Edit Level", "jumpman_level_list"], None, "clear_trigger", "set_trigger", None, "add_assembly_source", "recompile_assembly_source"],
     ["Help", "about"],
     ]
 
@@ -77,7 +78,7 @@ class ByteEditor(TileManagerBase):
         "byte_reverse_group": "",
     }
 
-    module_search_order = ["omnivore.viewers.actions", "omnivore_framework.actions"]
+    module_search_order = ["omnivore.viewers.actions", "omnivore_framework.actions", "omnivore.jumpman.actions"]
 
     # Convenience functions
 
