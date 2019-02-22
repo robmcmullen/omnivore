@@ -324,7 +324,7 @@ setup(
             'hex2 = omnivore.viewers.hex2',
             'info = omnivore.viewers.info',
             'map2 = omnivore.viewers.map2',
-            # 'jumpman2 = omnivore.viewers.jumpman2',
+            'jumpman2 = omnivore.viewers.jumpman2',
             # 'emulator = omnivore.viewers.emulator',
             'apple2 = omnivore.viewers.apple2',
             'memory = omnivore.viewers.memory',

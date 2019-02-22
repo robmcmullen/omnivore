@@ -12,6 +12,7 @@ from omnivore_framework.utils.command import DisplayFlags
 from omnivore_framework.utils.events import EventHandler
 
 from ..utils.segmentutil import SegmentData, DefaultSegment
+from ..jumpman import playfield as jp
 
 import logging
 log = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class LinkedBase:
 
         ##### Jumpman-specific stuff
         self.jumpman_trigger_selected_event = EventHandler(self)
-        self.jumpman_playfield_model = None
+        self.jumpman_playfield_model = jp.JumpmanPlayfieldModel(self)
 
     #### Properties
 

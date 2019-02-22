@@ -7,14 +7,11 @@ import sys
 import wx
 import numpy as np
 
-# Enthought library imports.
-from omnivore_framework.framework.enthought_api import Action, ActionItem
-
 from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
 from omnivore_framework.utils.textutil import text_to_int
-from omnivore_framework.framework.actions import SelectAllAction, SelectNoneAction, SelectInvertAction, TaskDynamicSubmenuGroup
 from ..byte_edit.actions import UseSegmentAction
 
+from .. import errors
 from ..viewers.commands import SetValueCommand
 from ..viewers.actions import ViewerAction
 
@@ -264,41 +261,45 @@ class RecompileAction(ViewerAction):
         self.linked_base.jumpman_playfield_model.compile_assembly_source(True)
 
 
-class UseLevelAction(UseSegmentAction):
-    """This submenu contains a list of all Jumpman levels in the disk image.
-    Selecting one of these items will change the display to edit that level.
+class jumpman_level_list(ViewerAction):
+    prefix = "jumpman_level_"
 
-    Note that no changes are lost when switching levels; they remain in memory
-    and your edits will be restored when switching back to a previously editing
-    level. However, no changes for any level are saved on disk until using the
-    `Save`_ or `Save As`_ commands.
-    """
-    doc_hint = "parent"
+    prefix_count = len(prefix)
 
+    def init_from_editor(self):
+        valid_segments = []
+        for i, segment in enumerate(self.editor.document.segments):
+            if is_valid_level_segment(segment):
+                valid_segments.append((i, segment))
+        self.current_list = valid_segments
 
-class LevelListGroup(TaskDynamicSubmenuGroup):
-    """Dynamic menu group to display the available levels
-    """
-    #### 'DynamicSubmenuGroup' interface #####################################
+    def get_index(self, action_key):
+        return int(action_key[self.prefix_count:])
 
-    event_name = 'segments_changed'
+    def get_segment(self, action_key):
+        return self.current_list[self.get_index(action_key)][1]
 
-    ##########################################################################
-    # Private interface.
-    ##########################################################################
+    def get_segment_number(self, action_key):
+        return self.current_list[self.get_index(action_key)][0]
 
-    def _get_items(self, event_data=None):
-        items = []
-        if event_data is not None:
-            for i, segment in enumerate(event_data):
-                if is_valid_level_segment(segment):
-                    action = UseLevelAction(segment=segment, segment_number=i, task=self.task, checked=False)
-                    log.debug("LevelListGroup: created %s for %s, num=%d" % (action, str(segment), i))
-                    items.append(ActionItem(action=action, parent=self))
+    def calc_name(self, action_key):
+        if len(self.current_list) == 0:
+            return "No recent files"
+        return str(self.get_segment(action_key))
 
-        if not items:
-            action = UseLevelAction(segment="<no valid levels>", segment_number=0, task=self.task, checked=False, enabled=False)
-            log.debug("LevelListGroup: created empty menu")
-            items.append(ActionItem(action=action, parent=self))
+    def calc_menu_sub_keys(self, action_key):
+        if len(self.current_list) == 0:
+            return [self.prefix + "empty"]
+        return [f"{self.prefix}{i}" for i in range(len(self.current_list))]
 
-        return items
+    def sync_menu_item_from_editor(self, action_key, menu_item):
+        doc = self.editor.document
+        segment_number, segment = self.current_list[self.get_index(action_key)]
+        if segment_number >= len(doc.segments) or segment != doc.segments[segment_number]:
+            raise errors.RecreateDynamicMenuBar
+        state = self.editor.segment_number == self.get_segment_number(action_key)
+        log.debug(f"jumpman_level_list: checked={state}, {self.editor.segment}")
+        menu_item.Check(state)
+
+    def perform(self, action_key):
+        self.active_editor.view_segment_number(self.get_segment_number(action_key))

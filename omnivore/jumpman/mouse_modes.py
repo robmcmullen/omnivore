@@ -9,7 +9,6 @@ from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
 # Local imports.
 from omnivore_framework.utils.command import Overlay
 from ..byte_edit.commands import ChangeByteCommand
-from omnivore_framework.framework.actions import CutAction, CopyAction, PasteAction, SelectAllAction, SelectNoneAction, SelectInvertAction
 
 from . import parser as jp
 from . import commands as jc
@@ -155,9 +154,9 @@ class JumpmanSelectMode(NormalSelectMode):
             clearable = any(o.trigger_function is not None for o in obj)
         else:
             clearable = False
-        clear_trigger = jc.ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
-        trigger_action = jc.SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
-        actions = [clear_trigger, trigger_action, None, CutAction, CopyAction, PasteAction, None, SelectAllAction, SelectNoneAction, SelectInvertAction]
+        # clear_trigger = jc.ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
+        # trigger_action = jc.SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
+        actions = ["clear_trigger", "trigger_action", None, "cut", "copy", "paste", None, "select_all", "select_none", "select_invert"]
         return actions
 
 
