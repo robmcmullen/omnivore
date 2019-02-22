@@ -211,7 +211,7 @@ class jumpman_level_list(ViewerAction):
 
     def sync_menu_item_from_editor(self, action_key, menu_item):
         doc = self.editor.document
-        if not self.current_list and doc.segments is not None and len(doc.segments) > 0:
+        if not self.current_list and doc and doc.segments is not None and len(doc.segments) > 0:
             print("checking jumpman segments", doc.segments)
             for i, segment in enumerate(doc.segments):
                 if is_valid_level_segment(segment):

@@ -151,6 +151,12 @@ class SegmentViewer:
     def is_focused_viewer(self):
         return self.linked_base.editor.focused_viewer == self
 
+    @property
+    def can_copy(self):
+        if self.has_caret:
+            return self.control.caret_handler.has_selection
+        return False
+
     ##### Class methods
 
     @classmethod

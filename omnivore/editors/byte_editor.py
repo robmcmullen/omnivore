@@ -98,6 +98,10 @@ class ByteEditor(TileManagerBase):
     def section_name(self):
         return str(self.segment)
 
+    @property
+    def can_copy(self):
+        return self.focused_viewer.can_copy
+
     #### Initialization
 
     def __init__(self, action_factory_lookup=None):
