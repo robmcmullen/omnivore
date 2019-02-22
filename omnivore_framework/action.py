@@ -98,9 +98,14 @@ def find_action_factory(module_search_order, action_key):
         raise KeyError(f"no action factory found for {action_key} in {module_search_order}")
 
 class OmnivoreAction:
+    name = "base action"
+
     def __init__(self, editor, action_key):
         self.editor = editor
         self.init_from_editor()
+
+    def calc_name(self, action_key):
+        return self.name
 
     def perform(self):
         raise AttributeError(f"no perform method defined for {self}")
