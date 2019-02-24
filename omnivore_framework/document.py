@@ -190,11 +190,11 @@ class BaseDocument:
         log.debug("restoring extra metadata: %s" % str(e))
         if 'document uuid' in e:
             self.uuid = e['document uuid']
-        if 'baseline document' in e:
-            try:
-                self.load_baseline(e['baseline document'])
-            except DocumentError:
-                pass
+        # if 'baseline document' in e:
+        #     try:
+        #         self.load_baseline(e['baseline document'])
+        #     except DocumentError:
+        #         pass
         if 'last_task_id' in e:
             self.last_task_id = e['last_task_id']
 
