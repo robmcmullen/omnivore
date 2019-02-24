@@ -3,6 +3,7 @@ import importlib
 import wx
 
 from . import art
+from . import errors
 
 import logging
 log = logging.getLogger(__name__)
@@ -185,3 +186,66 @@ class OmnivoreActionRadioMixin:
     def append_to_toolbar(self, tb, id, action_key):
         name = self.calc_name(action_key)
         tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_RADIO, name, f"Long help for '{name}'", None)
+
+
+class OmnivoreRadioListAction(OmnivoreActionRadioMixin, OmnivoreAction):
+    prefix = "_prefix_name_"
+
+    empty_list_name = "No Items"
+
+    prefix_count = None
+
+    def __init__(self, editor, action_key):
+        self.init_prefix()
+        OmnivoreAction.__init__(self, editor, action_key)
+
+    @classmethod
+    def init_prefix(cls):
+        cls.prefix_count = len(cls.prefix)
+
+    def init_from_editor(self):
+        self.current_list = self.calc_list_items()
+
+    def calc_list_items(self):
+        return []
+
+    def calc_state_list_item(self, action_key, index, item):
+        """Return checked state of item
+
+        If the item passed into this function is different than the item from
+        the source, raise `RecreateDynamicMenuBar` error to force recalculation
+        of the whole menubar.
+        """
+        raise NotImplementedError
+
+    def get_index(self, action_key):
+        return int(action_key[self.prefix_count:])
+
+    def get_item(self, action_key):
+        return self.current_list[self.get_index(action_key)] if self.current_list else None
+
+    def calc_name(self, action_key):
+        if len(self.current_list) == 0:
+            return self.empty_list_name
+        return str(self.get_item(action_key))
+
+    def calc_menu_sub_keys(self, action_key):
+        if len(self.current_list) == 0:
+            return [self.prefix + "empty"]
+        return [f"{self.prefix}{i}" for i in range(len(self.current_list))]
+
+    def sync_menu_item_from_editor(self, action_key, menu_item):
+        if self.current_list:
+            index = self.get_index(action_key)
+            item = self.current_list[index]
+            state = self.calc_state_list_item(action_key, index, item)
+            log.debug(f"{action_key}: checked={state}, {item}")
+            menu_item.Enable(True)
+            menu_item.Check(state)
+        else:
+            if self.calc_list_items():
+                raise errors.RecreateDynamicMenuBar
+            menu_item.Enable(False)
+
+    def perform(self, action_key):
+        raise NotImplementedError
