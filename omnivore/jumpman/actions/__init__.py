@@ -1,4 +1,5 @@
-from ...viewers.actions import ViewerAction
+from ...viewers.actions import ViewerAction, ViewerActionMixin, ViewerListAction
+from ...editors.actions.segment import segment_select
 from .. import commands as jc
 from ..parser import is_valid_level_segment
 
@@ -176,56 +177,10 @@ class compile_assembly_source(ViewerAction):
         self.editor.linked_base.jumpman_playfield_model.compile_assembly_source(True)
 
 
-class jumpman_level_list(ViewerAction):
+class jumpman_level_list(ViewerActionMixin, segment_select):
     prefix = "jumpman_level_"
 
-    prefix_count = len(prefix)
+    empty_list_name = "No Jumpman Levels Found"
 
-    def init_from_editor(self):
-        valid_segments = []
-        doc = self.editor.document
-        if doc is not None:
-            for i, segment in enumerate(doc.segments):
-                if is_valid_level_segment(segment):
-                    valid_segments.append((i, segment))
-        self.current_list = valid_segments
-
-    def get_index(self, action_key):
-        return int(action_key[self.prefix_count:])
-
-    def get_segment(self, action_key):
-        return self.current_list[self.get_index(action_key)][1] if self.current_list else None
-
-    def get_segment_number(self, action_key):
-        return self.current_list[self.get_index(action_key)][0] if self.current_list else 0
-
-    def calc_name(self, action_key):
-        if len(self.current_list) == 0:
-            return "No Jumpman Levels Found"
-        return str(self.get_segment(action_key))
-
-    def calc_menu_sub_keys(self, action_key):
-        if len(self.current_list) == 0:
-            return [self.prefix + "empty"]
-        return [f"{self.prefix}{i}" for i in range(len(self.current_list))]
-
-    def sync_menu_item_from_editor(self, action_key, menu_item):
-        doc = self.editor.document
-        if not self.current_list and doc and doc.segments is not None and len(doc.segments) > 0:
-            print("checking jumpman segments", doc.segments)
-            for i, segment in enumerate(doc.segments):
-                if is_valid_level_segment(segment):
-                    raise errors.RecreateDynamicMenuBar
-        if self.current_list:
-            segment_number, segment = self.current_list[self.get_index(action_key)]
-            if segment_number >= len(doc.segments) or segment != doc.segments[segment_number]:
-                raise errors.RecreateDynamicMenuBar
-            state = self.editor.segment_number == self.get_segment_number(action_key)
-            log.debug(f"jumpman_level_list: checked={state}, {self.editor.segment}")
-            menu_item.Enable(True)
-            menu_item.Check(state)
-        else:
-            menu_item.Enable(False)
-
-    def perform(self, action_key):
-        self.editor.view_segment_number(self.get_segment_number(action_key))
+    def is_valid_segment(self, segment):
+        return is_valid_level_segment(segment)
