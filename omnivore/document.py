@@ -81,10 +81,12 @@ class SegmentedDocument(BaseDocument):
         # restored from a .omnivore file
         if self.segment_parser is None:
             self.set_segments(file_metadata["atrcopy_parser"])
+        self.restore_extra_from_dict(editor_metadata)
 
     def load_from_raw_data(self, data, file_metadata, editor_metadata):
         self.raw_bytes = data
         self.parse_segments([])
+        self.restore_extra_from_dict(editor_metadata)
 
     #### serialization methods
 

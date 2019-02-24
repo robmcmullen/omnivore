@@ -129,6 +129,9 @@ class ByteEditor(TileManagerBase):
         doc = self.document = SegmentedDocument()
         template_metadata = doc.get_document_template_metadata(file_metadata)
         self.load_extra_metadata(path, template_metadata)
+        print("file_metadata", file_metadata)
+        print("template_metadata", template_metadata)
+        print("extra_metadata", self.extra_metadata)
 
         if "atrcopy_parser" in file_metadata:
             doc.load_from_atrcopy_parser(file_metadata, self.extra_metadata)
