@@ -109,6 +109,10 @@ class SegmentViewer:
 
     priority_refresh_frame_count = 10
 
+    # List of menu bar titles to be excluded from the menu bar when this viewer
+    # is focused
+    exclude_from_menubar = ["Jumpman"]
+
     def __init__(self, control, linked_base, machine=None):
         self.uuid = str(uuid.uuid4())
         self.control = control
@@ -455,6 +459,26 @@ class SegmentViewer:
         return []
 
     ##### toolbar
+
+    def prune_menubar(self, orig_desc):
+        desc = []
+        for menu in orig_desc:
+            if self.is_menu_valid(menu[0]):
+                desc.append(menu)
+        return desc
+
+    def is_menu_valid(self, menu):
+        return menu not in self.exclude_from_menubar
+
+    def prune_toolbar(self, orig_desc):
+        desc = []
+        for tool in orig_desc:
+            if tool is None or self.is_tool_valid(tool):
+                desc.append(tool)
+        return desc
+
+    def is_tool_valid(self, menu):
+        return True
 
     def update_toolbar(self):
         self.update_mouse_mode()

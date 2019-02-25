@@ -371,6 +371,28 @@ class TileManagerBase(OmnivoreEditor):
         self.focused_viewer_changed_event(viewer)
         self.caret_handler = viewer.linked_base
         viewer.linked_base.segment_selected_event(viewer.linked_base.segment_number)
+        self.set_menu_for_viewer(viewer)
+
+    def set_menu_for_viewer(self, viewer):
+        """Update menubar/toolbar for the current viewer.
+
+        Viewers can have menu items that only apply when that viewer is
+        currently focused, so this will change the UI every time a new viewer
+        is selected.
+
+        As currently implemented, all possible menu/tool items are listed in
+        the class attributes `menubar_desc` and `toolbar_desc`, and the viewer
+        prunes the list to remove items that aren't applicable. However, the
+        entire description could be built on the fly by rewriting the call to
+        `SegmentViewer.prune_menubar` to build a new description list from
+        scratch.
+        """
+        # Override the class attributes with instance attributes
+        self.menubar_desc = viewer.prune_menubar(self.__class__.menubar_desc)
+        self.toolbar_desc = viewer.prune_toolbar(self.__class__.toolbar_desc)
+
+        # force rebuild of UI
+        self.frame.make_active(self, True)
 
     def on_viewer_active(self, evt):
         try:

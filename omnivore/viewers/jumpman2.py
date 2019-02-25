@@ -233,6 +233,8 @@ class JumpmanViewer(BitmapViewer):
 
     default_mouse_mode_cls = jm.AnticDSelectMode
 
+    exclude_from_menubar = ["Segments"]
+
 
     def __init__(self, *args, **kwargs):
         BitmapViewer.__init__(self, *args, **kwargs)
@@ -438,6 +440,8 @@ class TriggerPaintingViewer(BaseInfoViewer):
 
     control_cls = TriggerList
 
+    exclude_from_menubar = ["Segments"]
+
     def recalc_data_model(self):
         pass
 
@@ -486,6 +490,8 @@ class LevelSummaryViewer(BaseInfoViewer):
     pretty_name = "Jumpman Level Summary"
 
     viewer_category = "Jumpman"
+
+    exclude_from_menubar = ["Segments"]
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
