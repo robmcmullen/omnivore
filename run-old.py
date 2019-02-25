@@ -5,6 +5,11 @@ import sys
 import logging
 
 
+# A list of the directories that contain the application's eggs (any directory
+# not specified as an absolute path is treated as being relative to the current
+# working directory).
+EGG_PATH = ['eggs']
+
 last_trace_was_system_call = False
 trace_after_funcname = None
 
@@ -58,6 +63,18 @@ def main(argv):
     """ Run the application.
     """
     logging.basicConfig(level=logging.WARNING)
+    for toolkit in ['pyface', 'envisage', 'traits', 'traitsui', 'apptools']:
+        _ = logging.getLogger(toolkit)
+        _.setLevel(logging.WARNING)
+
+    # check for logging early so we can get logging output during application init
+    import omnivore_framework.utils.wx.error_logger as error_logger
+    if "-d" in argv:
+        i = argv.index("-d")
+        error_logger.enable_loggers(argv[i+1])
+    else:
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
 
     if "--trace" in argv:
         i = argv.index("--trace")
@@ -72,22 +89,48 @@ def main(argv):
         trace_after_funcname = funcname
         sys.settrace(trace_calls)
 
-    from omnivore_framework.startup import run
-    from omnivore_framework.application import OmnivoreFrameworkApp
-    from omnivore_framework.filesystem import get_image_path
+    try:
+        from omnivore.plugin import OmnivoreEditorPlugin
+        plugins = [OmnivoreEditorPlugin()]
+
+        import omnivore.file_type
+        plugins.extend(omnivore.file_type.plugins)
+        
+        import omnivore.viewers
+        plugins.extend(omnivore.viewers.plugins)
+    except ImportError as e:
+        plugins = []
+        raise
+    except ModuleNotFoundError as e:
+        plugins = []
+        raise
+
+    from omnivore_framework import get_image_path
+    image_path = [get_image_path("omnivore/icons")]
+
+    template_path = []
     import omnivore
+    template_path.append(get_image_path("templates", omnivore))
+    import atrcopy
+    path = atrcopy.get_template_path()
+    template_path.append(path)
 
-    image_paths = [get_image_path("icons", omnivore)]
-    template_paths = [get_image_path("templates", omnivore)]
+    # # Crypto is separated to make it easy to make it optional for those
+    # # framework users who don't want the extra dependencies
+    # import omnivore_extra.crypto.file_type
+    # plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
-    run(OmnivoreFrameworkApp, image_paths, template_paths)
+    from omnivore_framework.app_init import run
+    from omnivore.document import SegmentedDocument
+    from omnivore._metadata import __version__
+    run(plugins=plugins, use_eggs=False, image_path=image_path, template_path=template_path, document_class=SegmentedDocument, about_version=__version__)
 
     logging.shutdown()
 
 
 if __name__ == '__main__':
     import sys
-    from omnivore_framework.startup import setup_frozen_logging
+    from omnivore_framework.app_init import setup_frozen_logging
     
     setup_frozen_logging()
     main(sys.argv)
