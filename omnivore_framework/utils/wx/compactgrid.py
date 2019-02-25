@@ -986,8 +986,11 @@ class HexTable(object):
     time.
     """
     def __init__(self, data, style, items_per_row, start_addr=0, row_labels_in_multiples=False):
-        self.data = data
-        self.style = style
+        # allow subclasses to turn data/style into properties
+        if data is not None:
+            self.data = data
+        if style is not None:
+            self.style = style
         self.start_addr = start_addr
         self.items_per_row = items_per_row
         self.start_offset = start_addr % items_per_row if row_labels_in_multiples else 0
