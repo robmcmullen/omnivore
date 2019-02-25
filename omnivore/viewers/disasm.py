@@ -11,7 +11,7 @@ from ..disassembler import DisassemblyConfig, flags
 from omnivore_framework.utils.wx import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
 
-from ..ui.segment_grid import SegmentGridControl
+from ..ui.segment_grid import SegmentGridControl, SegmentTable
 
 from ..viewer import SegmentViewer
 
@@ -20,16 +20,14 @@ log = logging.getLogger(__name__)
 
 from ..utils.archutil import Labels
 filename = "./omnivore/templates/atari800.labels"
-#labels1 = Labels.from_file(filename)
-#print(labels1.labels)
+labels1 = Labels.from_file(filename)
+# print(labels1.labels)
 
-class DisassemblyTable(cg.HexTable):
+class DisassemblyTable(SegmentTable):
     column_labels = ["Label", "Disassembly", "Comment"]
     column_sizes = [5, 12, 30]
 
     def __init__(self, linked_base):
-        self.linked_base = linked_base
-
         driver = DisassemblyConfig()
         driver.register_parser("6502", 0)
         driver.register_parser("data", 1)
@@ -38,8 +36,7 @@ class DisassemblyTable(cg.HexTable):
         driver.register_parser("jumpman_harvest", 4)
         self.driver = driver
 
-        s = linked_base.segment
-        cg.HexTable.__init__(self, s.data, s.style, len(self.column_labels), s.origin)
+        SegmentTable.__init__(self, linked_base, len(self.column_labels), False)
 
         self.max_num_entries = 80000
         self.rebuild()
@@ -115,6 +112,7 @@ class DisassemblyTable(cg.HexTable):
                 style |= (s.style[i] & not_user_bit_mask)
         else:
             text = ""
+        # print(f"get_value_style: {row},{col} = {index} {self.last_valid_index} {self.is_index_valid(index)} ; {text}, {style}, {self.linked_base.segment}")
         return text, style
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
@@ -139,7 +137,7 @@ class DisassemblyControl(SegmentGridControl):
 
     def recalc_view(self):
         self.table.rebuild()
-        cg.CompactGrid.recalc_view(self)
+        super().recalc_view()
 
 
 class DisassemblyViewer(SegmentViewer):
@@ -166,4 +164,4 @@ class DisassemblyViewer(SegmentViewer):
         self.table.rebuild()
 
     def recalc_data_model(self):
-        self.table.rebuild()
+        self.control.recalc_view()

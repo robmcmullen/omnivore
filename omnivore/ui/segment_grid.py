@@ -15,13 +15,21 @@ log = logging.getLogger(__name__)
 
 
 class SegmentTable(cg.HexTable):
-    def __init__(self, linked_base, bytes_per_row):
+    def __init__(self, linked_base, items_per_row, row_labels_in_multiples=True):
         self.linked_base = linked_base
-        cg.HexTable.__init__(self, self.segment.data, self.segment.style, bytes_per_row, self.segment.origin, row_labels_in_multiples=True)
+        cg.HexTable.__init__(self, None, None, items_per_row, self.segment.origin, row_labels_in_multiples)
 
     @property
     def segment(self):
         return self.linked_base.segment
+
+    @property
+    def data(self):
+        return self.linked_base.segment.data
+
+    @property
+    def style(self):
+        return self.linked_base.segment.style
 
     def get_label_at_index(self, index):
         # Can't just return hex value of index because some segments (like the
