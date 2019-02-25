@@ -29,6 +29,19 @@ class DummyFocusedViewer(object):
 class TileManagerBase(OmnivoreEditor):
     """Base class for editors that use the tile manager as the central window
     manager
+
+    The TileManager splits up the central window into a set of viewers that ar
+    arranged in a layout in relation to one another. This layout can be saved
+    and restored along with the data being edited.
+
+    The layout can also be overridden when loading an editor. The layout/viewer
+    creation priority is as follows:
+
+    * viewers specified on the command line (any saved layout will be ignored)
+    * viewers & layout restored from the save file
+    * viewers & layout from a template file based on a combination of the
+      editor and MIME type of the file
+    * viewers specified in the default_viewers class attribute of the editor
     """
     name = "omnivore.tile_manager_base"
     pretty_name = "Tile Manager Base"
@@ -61,6 +74,9 @@ class TileManagerBase(OmnivoreEditor):
         panel.Bind(TileManager.EVT_CLIENT_REPLACE, self.on_viewer_replace)
         panel.Bind(TileManager.EVT_CLIENT_TOGGLE_REQUESTED, self.on_viewer_link)
         return panel
+
+    def has_command_line_viewer_override(self, args):
+        return bool(args)
 
     def get_default_layout(self):
         template_name = self.document.calc_layout_template_name(self.name)

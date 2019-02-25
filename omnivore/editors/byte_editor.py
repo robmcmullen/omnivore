@@ -29,8 +29,37 @@ class DummyFocusedViewer(object):
 
 
 class ByteEditor(TileManagerBase):
-    """ The toolkit specific implementation of a ByteEditor.  See the
-    IByteEditor interface for the API documentation.
+    """Edit binary files
+
+    The views can be restored from data saved in the .omnivore file. The
+    metadata file uses the editor name as a keyword into that saved data, so
+    multiple editors can save data in the same metadata file without stomping
+    over each other.
+
+    The .omnivore file (a JSON file) will contain the editor name as the
+    keyword, and editor-specific data below that. Editors should not touch
+    anything in the metadata file outside of their keyword, but should save any
+    keywords that exist in the file.
+
+    E.g. the file may look like this:
+
+        {
+            "omnivore.byte_edit": {
+                "layout": {
+                    "sidebars": [ ... ],
+                    "tile_manager": { .... },
+                },
+                "viewers": [
+                    ...
+                ],
+                "linked_base_view_segment_number" {
+                    "uuid1": 0,
+                    "uuid2": 3,
+                }.
+            "omnivore.emulator": {
+                ...
+            }
+        }
     """
     name = "omnivore.byte_edit"
     pretty_name = "Byte Editor"
@@ -132,6 +161,7 @@ class ByteEditor(TileManagerBase):
         print("file_metadata", file_metadata)
         print("template_metadata", template_metadata)
         print("extra_metadata", self.extra_metadata)
+        print("args", args)
 
         if "atrcopy_parser" in file_metadata:
             doc.load_from_atrcopy_parser(file_metadata, self.extra_metadata)
@@ -140,21 +170,20 @@ class ByteEditor(TileManagerBase):
                 data = fh.read()
             doc.load_from_raw_data(data, file_metadata, self.extra_metadata)
 
-        if self.args_have_viewer_override(args):
+        if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
             self.restore_linked_bases()
             self.restore_layout_and_viewers()
+            self.restore_view_segment_number()
         self.set_initial_focused_viewer()
 
         print("document", self.document)
         print("segments", self.document.segments)
         self.document.recalc_event()
 
-    def args_have_viewer_override(self, args):
-        return args is not None
-
     def create_layout_from_args(self, args):
+        print(f"Creating layout from {args}")
         self.center_base = LinkedBase(self)
         self.linked_bases = {self.center_base.uuid:self.center_base}
         viewer_metadata = {}
@@ -180,6 +209,11 @@ class ByteEditor(TileManagerBase):
         log.critical(f"linked_bases: {linked_bases}")
         self.linked_bases = linked_bases
 
+    def restore_view_segment_number(self):
+        view_map = self.editor_metadata.get("linked_base_view_segment_number", {})
+        for uuid, lb in self.linked_bases.items():
+            segment_number = view_map.get(uuid, 0)
+            lb.view_segment_number(segment_number)
 
 
     def from_metadata_dict(self, e):
