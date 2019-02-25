@@ -193,11 +193,13 @@ class OmnivoreFrame(wx.Frame):
         # windows only works when updating the menu during the event call
         log.debug(f"on_menu_open_win: syncing menubar. From {evt.GetMenu()}")
         self.sync_menubar()
+        evt.Skip()
 
     def on_menu_open_linux(self, evt):
         # workaround for linux which crashes updating the menu bar during an event
         log.debug(f"on_menu_open: syncing menubar. From {evt.GetMenu()}")
         wx.CallAfter(self.sync_menubar)
+        evt.Skip()
 
     def on_menu_open_mac(self, evt):
         # workaround for Mac which sends the EVT_MENU_OPEN for lots of stuff unrelated to menus
@@ -207,6 +209,7 @@ class OmnivoreFrame(wx.Frame):
             wx.CallAfter(self.sync_menubar)
         else:
             log.debug(f"on_menu_open_mac: skipping menubar sync because mouse isn't down. From {evt.GetMenu()}")
+        evt.Skip()
 
     def on_menu(self, evt):
         action_id = evt.GetId()
@@ -217,10 +220,13 @@ class OmnivoreFrame(wx.Frame):
                 wx.CallAfter(action.perform, action_key)
             except AttributeError:
                 log.debug(f"no perform method for {action}")
+            else:
+                log.debug(f"on_menu: found action_key={action_key}, action={action}")
         except KeyError as e:
             log.debug(f"menu id {action_id} not found: {e}")
         else:
             log.debug(f"found action {action}")
+        evt.Skip()
 
     def on_page_changed(self, evt):
         index = evt.GetSelection()
