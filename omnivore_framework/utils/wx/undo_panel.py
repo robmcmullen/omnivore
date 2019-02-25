@@ -35,7 +35,7 @@ class UndoHistoryPanel(wx.ListBox):
         self.Refresh()
 
     def update_history(self):
-        doc = self.editor.document
+        document = self.editor.document
         summary = document.undo_stack.history_list()
         self.Set(summary)
         index = document.undo_stack.insert_index
