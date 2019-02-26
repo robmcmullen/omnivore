@@ -104,7 +104,10 @@ class OmnivoreFrame(wx.Frame):
         self.keybindings = keybindings.KeyBindingDescription(self.active_editor, self.menubar.valid_id_map)
 
     def set_title(self):
-        self.SetTitle(f"{self.active_editor.title} - {wx.GetApp().app_name}")
+        app = wx.GetApp()
+        title = f"{self.active_editor.title} - {app.app_name}"
+        log.debug(f"set_title: {title}")
+        self.SetTitle(title)
 
     def add_editor(self, editor):
         editor.frame = self
@@ -145,6 +148,7 @@ class OmnivoreFrame(wx.Frame):
             new_editor.load_success(path, file_metadata)
             index = self.find_index_of_editor(new_editor)
             self.notebook.SetPageText(index, new_editor.tab_name)
+        self.set_title()
 
     def make_active(self, editor, force=False):
         last = self.active_editor

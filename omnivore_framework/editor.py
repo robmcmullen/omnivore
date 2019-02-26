@@ -166,7 +166,7 @@ class OmnivoreEditor:
         return self.transient or self.__class__ == OmnivoreEditor
 
     def __init__(self, action_factory_lookup=None):
-        self.tab_name = "Text"
+        self.tab_name = self.pretty_name
         self.frame = None
         if action_factory_lookup is None:
             action_factory_lookup = {}
@@ -212,6 +212,7 @@ class OmnivoreEditor:
         self.last_loaded_uri = path
         from omnivore_framework.actions import open_recent
         open_recent.open_recent.append(path)
+        self.tab_name = os.path.basename(path)
         self.frame.status_message(f"loaded {path} {file_metadata}", True)
 
     #### command processing
