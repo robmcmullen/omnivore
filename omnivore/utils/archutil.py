@@ -93,7 +93,6 @@ class Labels:
         self.write_labels = LabelStorage()
 
     def add(self, addr, r, w, type_description, desc_code):
-        print(type_description, type(type_description))
         type_code = type_codes[type_description[-1]]
         try:
             item_count = int(type_description[:-1])

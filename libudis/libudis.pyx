@@ -170,7 +170,7 @@ cdef class LabelStorage(TextStorage):
             info.type_code = (type_code & 0x03) | desc_code
             self.text_index += count
             self.num_lines += 1
-            print("assigning value", value, type(value), hex(<long>info))
+            # print("assigning value", value, type(value), hex(<long>info))
             for i in range(count):
                 self.text_buffer[start] = value[i]
                 start += 1
