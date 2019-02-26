@@ -936,7 +936,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             sy2 = sy
         if cell < sx:
             sx2 = cell
-        elif cell >= sx + self.fully_visible_cells - 1:
+        elif self.fully_visible_cells > 0 and cell >= sx + self.fully_visible_cells - 1:
             sx2 = max(0, cell - (self.fully_visible_cells - 1))
         else:
             sx2 = sx
