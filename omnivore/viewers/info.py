@@ -6,7 +6,7 @@ import wx
 
 from omnivore_framework.utils.wx.undo_panel import UndoHistoryPanel
 from ..editors.linked_base import VirtualTableLinkedBase
-from ..byte_edit.segments import SegmentList
+from .segments import SegmentList
 from ..viewer import SegmentViewer
 
 import logging

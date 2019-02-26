@@ -17,7 +17,6 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable, SegmentGridTextC
 from .hex2 import HexEditControl
 from ..arch.disasm import iter_disasm_styles
 from ..utils import searchutil
-from ..byte_edit.commands import SetCommentCommand
 from ..commands import SetIndexedDataCommand
 from .actions import ViewerAction
 

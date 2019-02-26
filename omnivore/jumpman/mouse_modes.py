@@ -8,7 +8,6 @@ from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
 
 # Local imports.
 from omnivore_framework.utils.command import Overlay
-from ..byte_edit.commands import ChangeByteCommand
 
 from . import parser as jp
 from . import commands as jc

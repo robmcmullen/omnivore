@@ -12,7 +12,6 @@ from omnivore_framework.utils.command import Overlay
 from ..utils.drawutil import get_bounds
 from omnivore_framework.utils.sortutil import invert_rects, rect_ranges_to_indexes
 #import omnivore_framework.framework.actions as fa
-from ..byte_edit.commands import ChangeByteCommand
 from ..clipboard_commands import PasteCommand, PasteRectCommand
 
 from .char2 import CharViewer

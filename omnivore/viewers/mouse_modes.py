@@ -10,7 +10,6 @@ import numpy as np
 # Local imports.
 from omnivore_framework.utils.command import Overlay
 from ..utils.drawutil import get_bounds
-from ..byte_edit.commands import ChangeByteCommand
 from ..clipboard_commands import PasteCommand, PasteRectCommand
 from omnivore_framework.utils.wx.compactgrid import MouseMode, NormalSelectMode, RectangularSelectMode
 

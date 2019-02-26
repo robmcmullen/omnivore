@@ -9,9 +9,6 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from omnivore_framework.utils.wx import compactgrid as cg
 from ..arch.disasm import get_style_name
 
-from ..byte_edit.actions import GotoIndexAction
-from ..byte_edit.commands import ChangeByteCommand
-
 from ..viewer import SegmentViewer
 # from .actions import ViewerWidthAction
 

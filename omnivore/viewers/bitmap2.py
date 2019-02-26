@@ -61,6 +61,7 @@ class BitmapLineRenderer(cg.TableLineRenderer):
 
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         t = grid_control.table
+        log.debug(f"draw_grid: first_row={first_row} visible_rows={visible_rows}; first_cell={first_cell} visible_cells={visible_cells}")
         first_col = self.cell_to_col(first_row, first_cell)
         last_cell = min(first_cell + visible_cells, self.num_cells)
         last_row = min(first_row + visible_rows, t.num_rows)

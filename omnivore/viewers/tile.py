@@ -4,7 +4,6 @@ import sys
 import wx
 
 from ..ui.tilewrap import TileWrapControl
-from ..byte_edit.commands import ChangeByteCommand
 
 from ..viewer import SegmentViewer
 
