@@ -249,6 +249,7 @@ class SegmentViewer:
         self.linked_base.ensure_visible_event += self.on_ensure_visible
         self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
         self.linked_base.refresh_event += self.on_refresh_view
+        self.linked_base.recalc_event += self.on_recalc_view
 
     def from_metadata_dict(self, e):
         log.debug("metadata: %s" % str(e))
@@ -353,14 +354,6 @@ class SegmentViewer:
         else:
             caret_log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
-
-    def sync_caret_to_index(self, index, refresh=True):
-        caret_log.debug("sync_caret_to_index: syncing %s" % self.pretty_name)
-        self.linked_base.carets.force_single_caret(index)
-        flags = self.control.create_mouse_event_flags()
-        self.linked_base.sync_caret_to_index_event = flags
-        if refresh:
-            self.linked_base.refresh_event = flags
 
     # @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
     def machine_metadata_changed(self, evt):

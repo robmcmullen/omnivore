@@ -47,13 +47,13 @@ class LinkedBase:
         self.has_origin = False
         self.segment_view_params = {}
 
-        self.ensure_visible_event = EventHandler(self)
-        self.sync_caret_to_index_event = EventHandler(self)
-        self.refresh_event = EventHandler(self)
-        self.recalc_event = EventHandler(self)
+        self.ensure_visible_event = EventHandler(self, debug=True)
+        self.sync_caret_to_index_event = EventHandler(self, debug=True)
+        self.refresh_event = EventHandler(self, debug=True)
+        self.recalc_event = EventHandler(self, debug=True)
         self.update_trace = EventHandler(self)
         self.key_pressed = EventHandler(self)
-        self.segment_selected_event = EventHandler(self)
+        self.segment_selected_event = EventHandler(self, debug=True)
 
         ##### Jumpman-specific stuff
         self.jumpman_trigger_selected_event = EventHandler(self)
@@ -193,19 +193,14 @@ class LinkedBase:
                 self.save_segment_view_params(old_segment)
             self.segment = doc.segments[num]
             self.segment_number = num
-            self.force_data_model_update()
+            self.recalc_event(True)
             self.adjust_selection(old_segment)
 
             #self.show_trace()
             self.segment_selected_event(self.segment_number)
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             #self.task.update_window_title()
-
-    def force_data_model_update(self):
-        #flags = DisplayFlags()
-        #flags.data_model_changed = True
-        #self.process_flags(flags)
-        self.document.structure_changed_event()
+        log.debug(f"view_segment_number: changed to {self.segment_number}")
 
     def force_refresh(self):
         flags = DisplayFlags()

@@ -160,7 +160,7 @@ class ByteEditor(TileManagerBase):
         self.load_extra_metadata(path, template_metadata)
         print("file_metadata", file_metadata)
         print("template_metadata", template_metadata)
-        print("extra_metadata", self.extra_metadata)
+        # print("extra_metadata", self.extra_metadata)
         print("args", args)
 
         if "atrcopy_parser" in file_metadata:
@@ -213,6 +213,7 @@ class ByteEditor(TileManagerBase):
         view_map = self.editor_metadata.get("linked_base_view_segment_number", {})
         for uuid, lb in self.linked_bases.items():
             segment_number = view_map.get(uuid, 0)
+            print(f"restore_view_segment_number: {uuid}->{segment_number}")
             lb.view_segment_number(segment_number)
 
 
