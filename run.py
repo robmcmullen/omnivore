@@ -80,7 +80,9 @@ def main(argv):
     image_paths = [get_image_path("icons", omnivore)]
     template_paths = [get_image_path("templates", omnivore)]
 
-    run(OmnivoreFrameworkApp, image_paths, template_paths)
+    OmnivoreApp = OmnivoreFrameworkApp
+    OmnivoreApp.app_name = "Omnivore"
+    run(OmnivoreApp, image_paths, template_paths)
 
     logging.shutdown()
 
