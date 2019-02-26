@@ -298,7 +298,7 @@ class MultiCaretHandler:
         """Check if the current caret selection overlaps any existing caret and
         merge any overlaps into the current caret.
         """
-        print(("before collapsed carets: %s" % str(self.carets)))
+        caret_log.debug("before collapsed carets: {str(self.carets)}")
         try:
             current = self.carets.pop()
         except IndexError:
@@ -338,7 +338,7 @@ class MultiCaretHandler:
                             collapsed.append(c)
                 self.carets = collapsed
         self.carets.append(current)
-        print(("collapsed carets: %s" % str(self.carets)))
+        caret_log.debug(f"collapsed carets {str(self.carets)}")
 
     def get_selected_ranges(self, table):
         ranges = []
@@ -693,7 +693,7 @@ class NormalSelectMode(MouseMode):
         cg = self.control
         flags = cg.create_mouse_event_flags()
         input_row, input_cell = cg.get_row_cell_from_event(evt)
-        mode_log.debug("NormalSelectMode: process_left_down: {input_row} {input_cell}")
+        mode_log.debug(f"NormalSelectMode: process_left_down: {input_row} {input_cell}")
         self.event_modifiers = evt.GetModifiers()
         self.last_mouse_event = (input_row, input_cell)
         cmd = self.calc_left_down_command(evt, input_row, input_cell, flags)
@@ -981,7 +981,6 @@ class GridCellTextCtrl(wx.TextCtrl):
             wx.CallAfter(self.GetParent().advance_caret)
         elif key == wx.WXK_ESCAPE:
             wx.CallAfter(self.GetParent().end_editing)
-            print("OSEUCHORECUHCROEUHSCOEHUESCAPE")
         elif key == wx.WXK_RETURN:
             wx.CallAfter(self.GetParent().accept_edit, self.num_chars_autoadvance)
         else:
@@ -1262,7 +1261,7 @@ class MouseEventMixin:
         elif evt.ShiftDown():
             self.multi_select_mode = False
             self.select_extend_mode = True
-        mode_log.debug(("start before:", ch.carets, "multi", self.multi_select_mode, "extend", self.select_extend_mode))
+        mode_log.debug(f"start before: {ch.carets}, multi {self.multi_select_mode}, extend {self.select_extend_mode}")
         if self.select_extend_mode:
             caret = ch.current
             if mouse_at < caret.anchor_start:
