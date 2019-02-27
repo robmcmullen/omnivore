@@ -7,6 +7,8 @@ import numpy as np
 # Enthought library imports.
 from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Event, Enum, DictStrStr
 
+from omnivore_framework import persistence
+
 # Local imports.
 from . import fonts
 from . import colors
@@ -16,6 +18,43 @@ from . import antic_renderers
 
 import logging
 log = logging.getLogger(__name__)
+
+
+def restore_from_last_time():
+    log.debug("Restoring Machine config")
+    init_font_list()
+    init_assemblers()
+
+def init_font_list():
+    try:
+        Machine.font_list = persistence.get_bson_data("font_list")
+    except IOError:
+        # file not found
+        Machine.font_list = []
+    except ValueError:
+        # bad JSON format
+        Machine.font_list = []
+
+def init_assemblers():
+    if Machine.assembler_list is None:
+        Machine.assembler_list = persistence.get_json_data("assembler_list", [])
+
+        # With built-in MAC/65 compilation support, fix the list of default
+        # assemblers to change the default assembler to MAC/65 if the user
+        # hasn't made an alteration to the list.
+        a = Machine.assembler_list
+        if len(a) == 2 and a[0]['name'] == "cc65" and a[1]['name'] == "MAC/65":
+            Machine.assembler_list = None
+
+    if not Machine.assembler_list:
+        Machine.assembler_list = Machine.guess_default_assemblers()
+
+def remember_for_next_time():
+    log.debug("Remembering Machine config")
+    if Machine.font_list:
+        persistence.save_bson_data("font_list", Machine.font_list)
+    if Machine.assembler_list:
+        persistence.save_json_data("assembler_list", Machine.assembler_list)
 
 
 class Machine(HasTraits):
@@ -68,47 +107,6 @@ class Machine(HasTraits):
     assembler_list = None
 
     text_font = None
-
-    @classmethod
-    def init_fonts(cls, editor):
-        if cls.font_list is None:
-            try:
-                cls.font_list = editor.window.application.get_bson_data("font_list")
-            except IOError:
-                # file not found
-                cls.font_list = []
-            except ValueError:
-                # bad JSON format
-                cls.font_list = []
-
-    @classmethod
-    def remember_fonts(cls, application):
-        application.save_bson_data("font_list", cls.font_list)
-
-    @classmethod
-    def init_assemblers(cls, editor):
-        if cls.assembler_list is None:
-            cls.assembler_list = editor.window.application.get_json_data("assembler_list", [])
-
-            # With built-in MAC/65 compilation support, fix the list of default
-            # assemblers to change the default assembler to MAC/65 if the user
-            # hasn't made an alteration to the list.
-            a = cls.assembler_list
-            if len(a) == 2 and a[0]['name'] == "cc65" and a[1]['name'] == "MAC/65":
-                cls.assembler_list = None
-
-        if not cls.assembler_list:
-            cls.assembler_list = cls.guess_default_assemblers()
-
-    @classmethod
-    def remember_assemblers(cls, application):
-        if cls.assembler_list:
-            application.save_json_data("assembler_list", cls.assembler_list)
-
-    @classmethod
-    def one_time_init(cls, editor):
-        cls.init_fonts(editor)
-        cls.init_assemblers(editor)
 
     @classmethod
     def find_machine_by_mime(cls, mime, default_if_not_matched=False):
