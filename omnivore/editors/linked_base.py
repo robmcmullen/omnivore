@@ -81,6 +81,10 @@ class LinkedBase:
     def emulator(self):
         return self.editor.emulator
 
+    @property
+    def cached_preferences(self):
+        return self.editor.preferences
+
     ##### Cleanup
 
     def prepare_for_destroy(self):

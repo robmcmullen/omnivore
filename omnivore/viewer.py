@@ -132,6 +132,16 @@ class SegmentViewer:
     ##### Properties
 
     @property
+    def machine(self):
+        return self._machine
+
+    @machine.setter
+    def machine(self, value):
+        self._machine = value
+        if self._machine is not None:
+            self._machine.machine_metadata_changed_event += self.on_machine_metadata_changed
+
+    @property
     def segment(self):
         return self.linked_base.segment
 
@@ -355,12 +365,13 @@ class SegmentViewer:
             caret_log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
 
-    # @on_trait_change('machine.font_change_event,machine.bitmap_shape_change_event,machine.bitmap_color_change_event,machine.disassembler_change_event')
-    def machine_metadata_changed(self, evt):
-        log.debug("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
-        if self.linked_base is not None and evt is not Undefined:
-            self.update_caption()
-            self.linked_base.editor.update_pane_names()
+    def on_machine_metadata_changed(self, evt):
+        log.error("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
+        self.machine_metadata_changed()
+
+    def machine_metadata_changed(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
 
     @property
     def window_title(self):

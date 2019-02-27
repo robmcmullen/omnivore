@@ -42,6 +42,7 @@ class BaseRenderer(object):
 
     def get_colors(self, segment_viewer, registers):
         color_registers = [segment_viewer.machine.color_registers[r] for r in registers]
+        log.debug(f"get_colors: {color_registers} from {segment_viewer.machine}")
         h_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.highlight_background_color)
         m_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.match_background_color)
         c_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.comment_background_color)

@@ -190,12 +190,10 @@ class CharViewer(SegmentViewer):
     def window_title(self):
         return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name + ", " + self.machine.color_standard_name
 
-    def update_font_colors(self, evt):
-        log.debug("CharViewer: machine font colors changed for %s" % self.control)
-        if evt is not Undefined:
-            self.set_font()
-
-    def update_font(self, evt):
-        log.debug("CharViewer: machine font changed for %s" % self.control)
-        if evt is not Undefined:
-            self.control.recalc_view()
+    def machine_metadata_changed(self):
+        """Rebuild the entire UI after a document formatting (or other
+        structural change) or loading a new document.
+        """
+        self.set_font()
+        self.control.recalc_view()
+        self.control.refresh_view()

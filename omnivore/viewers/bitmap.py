@@ -192,12 +192,6 @@ class BitmapViewer(SegmentViewer):
     def window_title(self):
         return self.control.bitmap_renderer.name
 
-    def update_bitmap(self, evt):
-        log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
-        if evt is not Undefined:
-            self.control.recalc_view()
-            self.linked_base.editor.update_pane_names()
-
     def validate_width(self, width):
         return self.machine.bitmap_renderer.validate_bytes_per_row(width)
 

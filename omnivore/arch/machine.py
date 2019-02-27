@@ -5,9 +5,10 @@ import sys
 import numpy as np
 
 # Enthought library imports.
-from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Event, Enum, DictStrStr
+from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Enum, DictStrStr
 
 from omnivore_framework import persistence
+from omnivore_framework.utils.events import EventHandler
 
 # Local imports.
 from . import fonts
@@ -90,15 +91,7 @@ class Machine(HasTraits):
 
     assembler = Any(transient=True)
 
-    # Trait events
-
-    font_change_event = Event
-
-    bitmap_shape_change_event = Event
-
-    bitmap_color_change_event = Event
-
-    disassembler_change_event = Event
+    machine_metadata_changed_event = Any
 
     # Class attributes (not traits)
 
@@ -117,6 +110,9 @@ class Machine(HasTraits):
             return predefined['machine'][0]
 
     # Trait initializers
+
+    def _machine_metadata_changed_event_default(self):
+        return EventHandler(self, debug=True)
 
     def _name_default(self):
         return "Generic 6502"
@@ -256,7 +252,8 @@ class Machine(HasTraits):
             baseline[0:len(c)] = [int(i) for i in c]
         self.antic_color_registers = baseline
         self.color_registers = self.get_color_registers()
-        self.bitmap_color_change_event = True
+        print("COLOR REGISTERS", self.color_registers)
+        self.machine_metadata_changed_event(True)
 
     def get_color_registers(self, antic_color_registers=None):
         color_converter = self.get_color_converter()
