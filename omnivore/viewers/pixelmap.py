@@ -13,7 +13,7 @@ from omnivore_framework.utils.wx import compactgrid as cg
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 
 from ..viewer import SegmentViewer
-from . import bitmap2 as b
+from . import bitmap as b
 from . import actions as va
 from ..arch import pixel_converters as px
 from ..arch import colors

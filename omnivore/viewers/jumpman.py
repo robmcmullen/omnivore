@@ -22,7 +22,7 @@ from ..viewer import SegmentViewer
 from . import actions as va
 from ..jumpman import mouse_modes as jm
 from ..jumpman import commands as jc
-from .bitmap2 import BitmapGridControl, BitmapViewer, BitmapLineRenderer
+from .bitmap import BitmapGridControl, BitmapViewer, BitmapLineRenderer
 from .info import BaseInfoViewer
 
 import logging

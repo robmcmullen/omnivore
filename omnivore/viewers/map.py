@@ -14,7 +14,7 @@ from omnivore_framework.utils.sortutil import invert_rects, rect_ranges_to_index
 #import omnivore_framework.framework.actions as fa
 from ..clipboard_commands import PasteCommand, PasteRectCommand
 
-from .char2 import CharViewer
+from .char import CharViewer
 from .map_commands import *
 from . import mouse_modes as m
 

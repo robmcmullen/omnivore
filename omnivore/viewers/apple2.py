@@ -16,8 +16,8 @@ from ..editors.linked_base import LinkedBase
 
 from ..viewer import SegmentViewer
 from . import actions as va
-from . import bitmap2 as b
-from . import char2 as c
+from . import bitmap as b
+from . import char as c
 
 import logging
 log = logging.getLogger(__name__)

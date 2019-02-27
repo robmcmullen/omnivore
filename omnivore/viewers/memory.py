@@ -10,7 +10,7 @@ from omnivore_framework.utils.wx import compactgrid as cg
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from ..viewer import SegmentViewer
 from . import actions as va
-from . import bitmap2 as b
+from . import bitmap as b
 from ..arch.antic_renderers import MemoryAccessMap
 
 import logging

@@ -318,13 +318,13 @@ setup(
         "omnivore_framework.editors": 'byte = omnivore.editors.byte_editor',
 
         "omnivore.viewers": [
-            'bitmap2 = omnivore.viewers.bitmap2',
+            'bitmap = omnivore.viewers.bitmap',
             'pixelmap = omnivore.viewers.pixelmap',
-            'char2 = omnivore.viewers.char2',
-            'hex2 = omnivore.viewers.hex2',
+            'char = omnivore.viewers.char',
+            'hex = omnivore.viewers.hex',
             'info = omnivore.viewers.info',
-            'map2 = omnivore.viewers.map2',
-            'jumpman2 = omnivore.viewers.jumpman2',
+            'map = omnivore.viewers.map',
+            'jumpman = omnivore.viewers.jumpman',
             # 'emulator = omnivore.viewers.emulator',
             'apple2 = omnivore.viewers.apple2',
             'memory = omnivore.viewers.memory',
