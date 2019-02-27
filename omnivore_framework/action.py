@@ -76,6 +76,8 @@ def find_action_factory_in_module(mod_root, action_key):
                 spec = importlib.util.find_spec(mod_name)
             except Exception as e:
                 log.error(f"syntax error in module {mod_name}: {e}")
+                import traceback
+                log.error(traceback.format_exc())
                 ignore_modules.add(mod_name)
                 continue
             else:
@@ -87,6 +89,8 @@ def find_action_factory_in_module(mod_root, action_key):
                 mod = importlib.import_module(mod_name)
             except Exception as e:
                 log.error(f"error loading module {mod_name}: {e}")
+                import traceback
+                log.error(traceback.format_exc())
                 ignore_modules.add(mod_name)
                 continue
             else:
@@ -186,6 +190,26 @@ class OmnivoreActionRadioMixin:
     def append_to_toolbar(self, tb, id, action_key):
         name = self.calc_name(action_key)
         tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_RADIO, name, f"Long help for '{name}'", None)
+
+
+class OmnivoreRadioAction(OmnivoreActionRadioMixin, OmnivoreAction):
+    def calc_checked(self, action_key):
+        """Return checked state of item
+
+        If the item passed into this function is different than the item from
+        the source, raise `RecreateDynamicMenuBar` error to force recalculation
+        of the whole menubar.
+        """
+        raise NotImplementedError
+
+    def sync_menu_item_from_editor(self, action_key, menu_item):
+        if self.calc_enabled(action_key):
+            state = self.calc_checked(action_key)
+            log.debug(f"{action_key}: checked={state}")
+            menu_item.Enable(True)
+            menu_item.Check(state)
+        else:
+            menu_item.Enable(False)
 
 
 class OmnivoreRadioListAction(OmnivoreActionRadioMixin, OmnivoreAction):
