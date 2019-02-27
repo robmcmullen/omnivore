@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import json
+import pkg_resources
 
 import jsonpickle
 from datetime import datetime
@@ -203,3 +204,29 @@ def get_binary_user_data(subdir, filename, default_on_error=None):
 
 def save_binary_user_data(subdir, filename, data):
     return save_user_data(subdir, filename, data, 'wb')
+
+
+def restore_from_last_time():
+    modules = []
+    for entry_point in pkg_resources.iter_entry_points('omnivore_framework.remember'):
+        mod = entry_point.load()
+        log.debug(f"restore_from_last_time: Found module {entry_point.name}")
+        try:
+            restore = getattr(mod, 'restore_from_last_time')
+        except AttributeError:
+            log.warning(f"restore_from_last_time: no restore function in module {entry_point.name}")
+        else:
+            restore()
+            modules.append(mod)
+    return modules
+
+
+def remember_for_next_time(modules):
+    for mod in modules:
+        log.debug(f"remember_for_next_time: {mod}")
+        try:
+            remember = getattr(mod, 'remember_for_next_time')
+        except AttributeError:
+            log.warning(f"remember_for_next_time: no remember function in module {mod}")
+        else:
+            remember()

@@ -10,6 +10,7 @@ from .frame import OmnivoreFrame
 from .editor import get_editors, find_editor_class_by_name
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
+from .persistence import setup_file_persistence, restore_from_last_time, remember_for_next_time
 from .utils.events import EventHandler
 from .utils.wx import error_logger
 from . import errors
@@ -65,8 +66,14 @@ class OmnivoreFrameworkApp(wx.App):
         self.SetAppName(self.app_name)
         self.init_class_attrs()
         init_filesystems(self)
+        setup_file_persistence(self.app_name)
+        self.remember = restore_from_last_time()
         self.keybindings_changed_event = EventHandler(self)
         return True
+
+    def OnExit(self):
+        remember_for_next_time(self.remember)
+        return wx.App.OnExit(self)
 
     @classmethod
     def init_class_attrs(cls):
