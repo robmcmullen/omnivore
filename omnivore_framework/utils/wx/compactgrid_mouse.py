@@ -93,7 +93,7 @@ class Caret:
         if self.has_selection:
             s = self.anchor_start
             e = self.anchor_end
-            if e > s: s, e = e, s
+            if s > e: s, e = e, s
         else:
             s = e = self.rc
         return (s, e)
@@ -339,6 +339,10 @@ class MultiCaretHandler:
                 self.carets = collapsed
         self.carets.append(current)
         caret_log.debug(f"collapsed carets {str(self.carets)}")
+
+    def collapse_selections_to_carets(self):
+        for caret in self.carets:
+            caret.clear_selection()
 
     def get_selected_ranges(self, table):
         ranges = []
