@@ -427,24 +427,6 @@ class MultiCaretHandler:
             flags.refresh_needed = True
         log.debug(f"FINISHED process_caret_flags: refresh_needed={flags.refresh_needed}, skip_source_control_refresh={flags.skip_source_control_refresh}")
 
-    def post_process_caret_flags(self, flags, document):
-        """Perform any caret updates after the data model has been regenerated
-        (e.g. the disassembler where the number of bytes per row can change
-        after an edit)
-
-        """
-        log.debug("post processing caret flags: %s" % str(flags))
-
-        if flags.advance_caret_position_in_control:
-            log.debug("advancing each caret to next position")
-            selection_before = self.has_selection
-            flags.advance_caret_position_in_control.advance_caret_position()
-            self.validate_carets()
-            if selection_before:
-                self.collapse_selections_to_carets()
-                flags.refresh_needed = True
-            self.sync_caret_event = flags
-
 
 ##### Mouse modes
 
