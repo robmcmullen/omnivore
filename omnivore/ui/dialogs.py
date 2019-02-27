@@ -14,7 +14,7 @@ from omnivore_framework.utils.textutil import text_to_int
 from omnivore_framework.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
 from omnivore_framework.utils.wx.dialogs import DictEditDialog
 
-from ..document import SegmentedDocument
+from ..document import DiskImageDocument
 
 
 class AssemblerDialog(DictEditDialog):
@@ -178,7 +178,7 @@ class SegmentOrderDialog(wx.Dialog):
     def get_document(self):
         segments = self.get_segments()
         root, segs = get_xex(segments)
-        doc = SegmentedDocument(bytes=root.raw_bytes, style=root.style)
+        doc = DiskImageDocument(bytes=root.raw_bytes, style=root.style)
         Parser = namedtuple("Parser", ['segments'])
         segs[0:0] = [root]
         p = Parser(segments=segs)

@@ -137,14 +137,21 @@ class Labels:
         self.write_labels.update(other.write_labels)
 
 
+machine_labels = {}
+
 def load_memory_map(keyword):
+    global machine_labels
     try:
-        text = get_template(keyword)
-    except OSError as e:
+        labels = machine_labels[keyword]
+    except KeyError:
         try:
-            text = get_template(keyword + ".labels")
+            text = get_template(keyword)
         except OSError as e:
-            log.error(f"Couldn't find memory map named '{keyword}'")
-            return Labels()
-    m = Labels.from_text(text)
-    return m
+            try:
+                text = get_template(keyword + ".labels")
+            except OSError as e:
+                log.error(f"Couldn't find memory map named '{keyword}'")
+                return Labels()
+        labels = Labels.from_text(text)
+        machine_labels[keyword] = labels
+    return labels

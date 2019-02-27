@@ -9,7 +9,7 @@ import json
 
 # Local imports.
 from .tile_manager_base_editor import TileManagerBase
-from ..document import SegmentedDocument
+from ..document import DiskImageDocument
 
 from omnivore_framework.utils.processutil import run_detach
 
@@ -156,7 +156,7 @@ class ByteEditor(TileManagerBase):
     #### file handling
 
     def load(self, path, file_metadata, args=None):
-        doc = self.document = SegmentedDocument()
+        doc = self.document = DiskImageDocument()
         template_metadata = doc.get_document_template_metadata(file_metadata)
         self.load_extra_metadata(path, template_metadata)
         print("file_metadata", file_metadata)

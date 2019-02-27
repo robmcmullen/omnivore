@@ -11,11 +11,13 @@ from omnivore_framework.document import BaseDocument
 from omnivore_framework.utils.nputil import to_numpy
 from omnivore_framework.utils.events import EventHandler
 
+from .utils.archutil import Labels, load_memory_map
+
 import logging
 log = logging.getLogger(__name__)
 
 
-class SegmentedDocument(BaseDocument):
+class DiskImageDocument(BaseDocument):
     """Document for atrcopy-parsed segmented files
 
     Events:
@@ -45,6 +47,7 @@ class SegmentedDocument(BaseDocument):
         self.segments = list([DefaultSegment(r, 0)])
         self.user_segments = []
         self.document_memory_map = {}
+        self.machine_labels = Labels()
 
         self.priority_level_refresh_event = EventHandler(self)
         self.emulator_breakpoint_event = EventHandler(self)
@@ -57,6 +60,10 @@ class SegmentedDocument(BaseDocument):
     @property
     def can_resize(self):
         return self.segments and self.container_segment.can_resize
+
+    @property
+    def labels(self):
+        return self.machine_labels.labels
 
     #### object methods
 
@@ -81,6 +88,7 @@ class SegmentedDocument(BaseDocument):
         # restored from a .omnivore file
         if self.segment_parser is None:
             self.set_segments(file_metadata["atrcopy_parser"])
+        self.machine_labels = load_memory_map("atari800")
         self.restore_extra_from_dict(editor_metadata)
 
     def load_from_raw_data(self, data, file_metadata, editor_metadata):
@@ -294,7 +302,7 @@ class SegmentedDocument(BaseDocument):
     #### Baseline document for comparisons
 
     def init_baseline(self, metadata, raw_bytes):
-        d = SegmentedDocument(metadata=metadata, raw_bytes=raw_bytes)
+        d = DiskImageDocument(metadata=metadata, raw_bytes=raw_bytes)
         d.parse_segments([])
         self.baseline_document = d
 

@@ -5,7 +5,7 @@ from traits.api import HasTraits, provides
 from atrcopy import SegmentData, SegmentParser, errors, ObjSegment, get_style_bits
 
 from omnivore_framework.file_type.i_file_recognizer import IFileRecognizer
-from ..document import SegmentedDocument
+from ..document import DiskImageDocument
 
 try:
     from pyatari800 import parse_atari800
@@ -31,7 +31,7 @@ class Atari800Recognizer(HasTraits):
         return self.id
 
     def load(self, guess):
-        doc = SegmentedDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
+        doc = DiskImageDocument(metadata=guess.metadata, raw_bytes=guess.numpy)
         doc.load_metadata_before_editor(guess)
         return doc
 

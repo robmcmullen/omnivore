@@ -10,7 +10,7 @@ from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, Strin
 
 from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError, EmulatorError
 
-from ..document import SegmentedDocument
+from ..document import DiskImageDocument
 
 import logging
 log = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class EmulationTimer(wx.Timer):
         self.document.ready_for_next_frame()
 
 
-class EmulationDocument(SegmentedDocument):
+class EmulationDocument(DiskImageDocument):
 
     # Class attributes
 
@@ -114,7 +114,7 @@ class EmulationDocument(SegmentedDocument):
     #### serialization methods
 
     def restore_extra_from_dict(self, e):
-        SegmentedDocument.restore_extra_from_dict(self, e)
+        DiskImageDocument.restore_extra_from_dict(self, e)
         self.restore_save_points_from_dict(e)
 
     def restore_save_points_from_dict(self, e):
@@ -128,7 +128,7 @@ class EmulationDocument(SegmentedDocument):
         self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
 
     def serialize_extra_to_dict(self, mdict):
-        SegmentedDocument.serialize_extra_to_dict(self, mdict)
+        DiskImageDocument.serialize_extra_to_dict(self, mdict)
 
         mdict["emulator_type"] = self.emulator.name
         mdict.update(self.emulator.frame_history.serialize_to_dict())
