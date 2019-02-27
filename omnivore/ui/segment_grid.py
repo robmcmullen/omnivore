@@ -213,6 +213,23 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     def process_flags(self, flags):
         self.caret_handler.process_char_flags(flags)
 
+    def post_process_caret_flags(self, flags):
+        """Perform any caret updates after the data model has been regenerated
+        (e.g. the disassembler where the number of bytes per row can change
+        after an edit)
+
+        """
+        log.debug(f"post_process_caret_flags: advancing to next position {str(flags)}")
+        ch = self.caret_handler
+        selection_before = ch.has_selection
+        self.advance_caret_position(None, flags)
+        ch.validate_carets()
+        if selection_before:
+            ch.collapse_selections_to_carets()
+            ch.refresh_style_from_selection(self.table)
+        flags.carets_to_indexes = ch.convert_to_indexes(self.table)
+        self.segment_viewer.linked_base.sync_caret_to_index_event(flags=flags)
+
 
     ##### Rectangular regions
 

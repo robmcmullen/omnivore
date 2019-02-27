@@ -522,6 +522,10 @@ class ByteEditor(TileManagerBase):
         if flags.metadata_dirty:
             self.metadata_dirty = True
 
+        control = flags.advance_caret_position_in_control
+        if control:
+            control.post_process_caret_flags(flags)
+
         if flags.data_model_changed:
             log.debug(f"process_flags: data_model_changed")
             d.data_model_changed_event(flags=flags)
@@ -538,8 +542,6 @@ class ByteEditor(TileManagerBase):
             d.byte_style_changed_event(flags=flags)
             flags.rebuild_ui = True
             flags.refresh_needed = True
-
-        # self.caret_handler.post_process_caret_flags(flags, d)
 
         if flags.rebuild_ui:
             log.debug(f"process_flags: rebuild_ui")

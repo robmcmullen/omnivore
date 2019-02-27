@@ -120,6 +120,7 @@ class SetRangeCommand(ChangeByteValuesCommand):
 
     def do_change(self, editor, undo):
         indexes = self.range_to_index_function(self.ranges)
+        # print(f"{self.short_name}: ranges={self.ranges}, indexes={indexes}")
         undo.flags.index_range = indexes[0], indexes[-1]
         old_data = self.segment[indexes].copy()
         self.segment[indexes] = self.get_data(old_data)
