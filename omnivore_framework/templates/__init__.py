@@ -55,26 +55,59 @@ def get_template(name):
     return source
 
 
+class TemplateItem(dict):
+    def __init__(self, json_dict):
+        dict.__init__(self)
+        for k, v in json_dict.items():
+            self[k] = v
+            setattr(self, k, v)
+
+    def __str__(self):
+        return self.get("label", "") or self.get("description", "") or self.get("name", "") or self.get("uri", "") or dict.__str__(self)
+
+    def __lt__(self, other):
+        return str(self) < str(other)
+
 def iter_templates(inf_type=None):
+    """Returns dictionary containing info about specific template types
+
+    Dict contains keys:
+
+    * pathname  - the full pathname to the template to differentiate default
+      and user templates with the same name
+    * uri
+    * task  - editor name
+    """
     templates = {}
     for toplevel in template_subdirs:
         pathname = construct_path(toplevel, "*")
         for template in glob.glob(pathname):
+            if template.endswith(".inf"):
+                # skip loading inf files
+                continue
             inf = template + ".inf"
-            if os.path.exists(template) and os.path.isfile(template) and os.path.exists(inf):
-                try:
-                    log.debug("Loading json file %s" % inf)
-                    with open(inf, "r") as fh:
-                        j = json.loads(fh.read())
-                except ValueError:
-                    j = {}
-                if inf_type and "type" in j and j["type"] != inf_type:
-                    continue
-                j["pathname"] = template
-                # Allow full path in template to differentiate default and user
-                # templates with the same name
-                j["uri"] = "template://" + template
-                if "task" in j and j["task"] == "hex_edit":
-                    j["task"] = "byte_edit"
-                log.debug("template json: %s" % str(template))
-                yield j
+            j = None
+            if os.path.exists(template) and os.path.isfile(template):
+                if os.path.exists(inf):
+                    try:
+                        log.debug("Loading json file %s" % inf)
+                        with open(inf, "r") as fh:
+                            j = json.loads(fh.read())
+                    except ValueError:
+                        j = {}
+                    if inf_type and "type" in j and j["type"] != inf_type:
+                        continue
+                    j["pathname"] = template
+                    j["uri"] = "template://" + template
+                    if "task" in j and j["task"] == "hex_edit":
+                        j["task"] = "byte_edit"
+                else:
+                    _, ext = os.path.splitext(template)
+                    if ext and ext[1:] == inf_type:
+                        j = {}
+                        j["pathname"] = template
+                        j["uri"] = "template://" + template
+                if j is not None:
+                    item = TemplateItem(j)
+                    log.debug(f"template: {item}")
+                    yield item

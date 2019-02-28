@@ -73,7 +73,7 @@ class OmnivoreEditor:
     compatibility_names = []
 
     menubar_desc = [
-    ["File", "new_file", "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
+    ["File", ["New", "new_blank_file", None, "new_file_from_template"], "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
     ["Edit", "undo", "redo", None, "copy", "cut", "paste", None, "prefs"],
     ["Help", "about"],
     ]
