@@ -3,7 +3,7 @@ import collections
 
 import numpy as np
 
-from omnivore_framework.templates import get_template
+from omnivore_framework.templates import get_template, iter_templates
 
 from ..disassembler.libudis import LabelStorage
 
@@ -155,3 +155,12 @@ def load_memory_map(keyword):
         labels = Labels.from_text(text)
         machine_labels[keyword] = labels
     return labels
+
+available_memory_maps = {}
+
+def calc_available_memory_maps():
+    global available_memory_maps
+    if not available_memory_maps:
+        for template in iter_templates("labels"):
+            available_memory_maps[template.keyword] = template
+    return available_memory_maps

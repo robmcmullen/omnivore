@@ -48,9 +48,10 @@ class DiskImageDocument(BaseDocument):
         self.segments = list([DefaultSegment(r, 0)])
         self.user_segments = []
         self.document_memory_map = {}
-        self.machine_labels = Labels()
         self._cpu = "6502"
         self._disassembler = None
+        self._operating_system = "atari800"
+        self._machine_labels = None
 
         self.cpu_changed_event = EventHandler(self)
         self.priority_level_refresh_event = EventHandler(self)
@@ -80,10 +81,26 @@ class DiskImageDocument(BaseDocument):
         self.cpu_changed_event(value)
 
     @property
+    def operating_system(self):
+        return self._operating_system
+
+    @operating_system.setter
+    def operating_system(self, value):
+        self._operating_system = value
+        self._machine_labels = None
+        self.cpu_changed_event(value)
+
+    @property
+    def machine_labels(self):
+        if self._machine_labels is None:
+            self._machine_labels = load_memory_map(self._operating_system)
+        return self._machine_labels
+
+    @property
     def disassembler(self):
         if self._disassembler is None:
             driver = DisassemblyConfig()
-            driver.register_parser(self.cpu, 0)
+            driver.register_parser(self._cpu, 0)
             driver.register_parser("data", 1)
             driver.register_parser("antic_dl", 2)
             driver.register_parser("jumpman_level", 3)
@@ -114,7 +131,6 @@ class DiskImageDocument(BaseDocument):
         # restored from a .omnivore file
         if self.segment_parser is None:
             self.set_segments(file_metadata["atrcopy_parser"])
-        self.machine_labels = load_memory_map("atari800")
         self.restore_extra_from_dict(editor_metadata)
 
     def load_from_raw_data(self, data, file_metadata, editor_metadata):
