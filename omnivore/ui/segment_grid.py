@@ -24,6 +24,10 @@ class SegmentTable(cg.HexTable):
         return self.linked_base.segment
 
     @property
+    def document(self):
+        return self.linked_base.document
+
+    @property
     def data(self):
         return self.linked_base.segment.data
 

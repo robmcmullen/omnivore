@@ -11,6 +11,7 @@ from omnivore_framework.document import BaseDocument
 from omnivore_framework.utils.nputil import to_numpy
 from omnivore_framework.utils.events import EventHandler
 
+from .disassembler import DisassemblyConfig
 from .utils.archutil import Labels, load_memory_map
 
 import logging
@@ -48,7 +49,10 @@ class DiskImageDocument(BaseDocument):
         self.user_segments = []
         self.document_memory_map = {}
         self.machine_labels = Labels()
+        self._cpu = "6502"
+        self._disassembler = None
 
+        self.cpu_changed_event = EventHandler(self)
         self.priority_level_refresh_event = EventHandler(self)
         self.emulator_breakpoint_event = EventHandler(self)
 
@@ -64,6 +68,28 @@ class DiskImageDocument(BaseDocument):
     @property
     def labels(self):
         return self.machine_labels.labels
+
+    @property
+    def cpu(self):
+        return self._cpu
+
+    @cpu.setter
+    def cpu(self, value):
+        self._cpu = value
+        self._disassembler = None
+        self.cpu_changed_event(value)
+
+    @property
+    def disassembler(self):
+        if self._disassembler is None:
+            driver = DisassemblyConfig()
+            driver.register_parser(self.cpu, 0)
+            driver.register_parser("data", 1)
+            driver.register_parser("antic_dl", 2)
+            driver.register_parser("jumpman_level", 3)
+            driver.register_parser("jumpman_harvest", 4)
+            self._disassembler = driver
+        return self._disassembler
 
     #### object methods
 

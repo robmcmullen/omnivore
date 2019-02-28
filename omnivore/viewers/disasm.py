@@ -6,7 +6,6 @@ import numpy as np
 import wx
 
 from atrcopy import DefaultSegment, not_user_bit_mask
-from ..disassembler import DisassemblyConfig, flags
 
 from omnivore_framework.utils.wx import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
@@ -24,14 +23,6 @@ class DisassemblyTable(SegmentTable):
     column_sizes = [5, 12, 30]
 
     def __init__(self, linked_base):
-        driver = DisassemblyConfig()
-        driver.register_parser("6502", 0)
-        driver.register_parser("data", 1)
-        driver.register_parser("antic_dl", 2)
-        driver.register_parser("jumpman_level", 3)
-        driver.register_parser("jumpman_harvest", 4)
-        self.driver = driver
-
         SegmentTable.__init__(self, linked_base, len(self.column_labels), False)
 
         self.max_num_entries = 80000
@@ -116,7 +107,7 @@ class DisassemblyTable(SegmentTable):
 
     def rebuild(self):
         segment = self.linked_base.segment
-        self.current = self.driver.parse(segment, self.max_num_entries)
+        self.current = self.linked_base.document.disassembler.parse(segment, self.max_num_entries)
         self.parsed = None
         self.init_boundaries()
         print(f"new num_rows: {self.num_rows}")
@@ -152,6 +143,10 @@ class DisassemblyViewer(SegmentViewer):
     @property
     def table(self):
         return self.control.table
+
+    def set_event_handlers(self):
+        self.document.cpu_changed_event += self.on_recalc_view
+        super().set_event_handlers()
 
     def refresh_view_for_value_change(self, flags):
         self.table.rebuild()
