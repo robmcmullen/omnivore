@@ -212,35 +212,24 @@ class OmnivoreRadioAction(OmnivoreActionRadioMixin, OmnivoreAction):
             menu_item.Enable(False)
 
 
-class OmnivoreRadioListAction(OmnivoreActionRadioMixin, OmnivoreAction):
+class OmnivoreActionListMixin:
     prefix = "_prefix_name_"
 
     empty_list_name = "No Items"
 
     prefix_count = None
 
-    def __init__(self, editor, action_key):
-        self.init_prefix()
-        OmnivoreAction.__init__(self, editor, action_key)
-
     @classmethod
     def init_prefix(cls):
-        cls.prefix_count = len(cls.prefix)
+        if cls.prefix_count is None:
+            cls.prefix_count = len(cls.prefix)
 
     def init_from_editor(self):
+        self.init_prefix()
         self.current_list = self.calc_list_items()
 
     def calc_list_items(self):
         return []
-
-    def calc_state_list_item(self, action_key, index, item):
-        """Return checked state of item
-
-        If the item passed into this function is different than the item from
-        the source, raise `RecreateDynamicMenuBar` error to force recalculation
-        of the whole menubar.
-        """
-        raise NotImplementedError
 
     def get_index(self, action_key):
         return int(action_key[self.prefix_count:])
@@ -257,6 +246,32 @@ class OmnivoreRadioListAction(OmnivoreActionRadioMixin, OmnivoreAction):
         if len(self.current_list) == 0:
             return [self.prefix + "empty"]
         return [f"{self.prefix}{i}" for i in range(len(self.current_list))]
+
+
+class OmnivoreListAction(OmnivoreActionListMixin, OmnivoreAction):
+    def sync_menu_item_from_editor(self, action_key, menu_item):
+        if self.current_list:
+            state = self.calc_enabled(action_key)
+            menu_item.Enable(state)
+        else:
+            if self.calc_list_items():
+                raise errors.RecreateDynamicMenuBar
+            menu_item.Enable(False)
+
+    def perform(self, action_key):
+        raise NotImplementedError
+
+
+class OmnivoreRadioListAction(OmnivoreActionListMixin, OmnivoreActionRadioMixin, OmnivoreAction):
+
+    def calc_state_list_item(self, action_key, index, item):
+        """Return checked state of item
+
+        If the item passed into this function is different than the item from
+        the source, raise `RecreateDynamicMenuBar` error to force recalculation
+        of the whole menubar.
+        """
+        raise NotImplementedError
 
     def sync_menu_item_from_editor(self, action_key, menu_item):
         if self.current_list:
