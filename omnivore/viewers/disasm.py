@@ -145,8 +145,12 @@ class DisassemblyViewer(SegmentViewer):
         return self.control.table
 
     def set_event_handlers(self):
-        self.document.cpu_changed_event += self.on_recalc_view
+        self.document.cpu_changed_event += self.on_cpu_changed
         super().set_event_handlers()
+
+    def on_cpu_changed(self, evt):
+        self.recalc_view()
+        self.refresh_view(True)
 
     def refresh_view_for_value_change(self, flags):
         self.table.rebuild()
