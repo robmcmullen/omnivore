@@ -23,8 +23,8 @@ class ToolbarDescription:
                     # usable_actions limit the visible actions to what the current editor supports
                     try:
                         action = editor.calc_usable_action(action_key)
-                    except:
-                        log.debug(f"action {action_key} not used in this editor")
+                    except KeyError as e:
+                        log.debug(f"action {action_key} not used in this editor: {e}")
                         pass
                     else:
                         # a single action can create multiple entries
