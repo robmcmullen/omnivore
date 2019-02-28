@@ -90,7 +90,7 @@ def fix_opcode_table(cpu, allow_undoc=False):
     exclude_modes = cpu.get('modesExclude', set())
     ret = cpu.get('returnOpcodes', set())
     possibilities = []
-    nop = 0x00
+    nop = -1  # flag NOP as non-existent unless there's actually a NOP instruction
     found_undoc = False
     fixed_table = {}
     for opcode, optable in list(table.items()):
@@ -144,6 +144,7 @@ def read_udis(pathname, cpus=None):
                 continue
             if "addressModeTable" in source and "opcodeTable" in source:
                 cpu_name, _ = os.path.splitext(localfile)
+                title = cpu_name.replace("_", " ").title()
                 g = {"pcr": pcr, "und": und, "z80bit": z80bit, "lbl": lbl, "comment": comment}
                 d = {}
                 try:
@@ -158,6 +159,7 @@ def read_udis(pathname, cpus=None):
                         cpus[cpu_name] = d
                         nop, found_undoc = fix_opcode_table(d, False)
                         cpus[cpu_name]["nop"] = nop
+                        cpus[cpu_name]["description"] = title
                         if found_undoc:
                             # reload because dict was modified in fix_opcode_table
                             d = {}
@@ -166,6 +168,7 @@ def read_udis(pathname, cpus=None):
                             cpus[undoc_cpu_name] = d
                             nop, found_undoc = fix_opcode_table(d, True)
                             cpus[undoc_cpu_name]["nop"] = nop
+                            cpus[undoc_cpu_name]["description"] = f"{title} (including undocumented instructions)"
                 except SyntaxError:
                     raise
     return cpus

@@ -15,7 +15,7 @@ from collections import defaultdict
 import numpy as np
 
 try:
-    from . import cputables
+    from .cputables import processors
 except ImportError:
     raise RuntimeError("Generate cputables.py using cpugen.py before using the miniassembler")
 
@@ -25,6 +25,9 @@ from .flags import pcr, z80bit
 import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
+
+
+valid_cpus = sorted([k for k in processors.keys() if processors[k]['nop'] >= 0])
 
 
 class FormatSpec(object):
@@ -173,7 +176,7 @@ class MiniAssembler(object):
         """ Create the opcode lookup tables that store all the possible
         addressing modes for each opcode.
         """
-        cpu = cputables.processors[cpu_name]
+        cpu = processors[cpu_name]
         self.little = True  # all 8-bit processors little endian???
         
         # Create temporary format dictionary that will be used in the expanded

@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 try:
-    from .miniasm import MiniAssembler
+    from .miniasm import MiniAssembler, valid_cpus, processors
     from .disasm import DisassemblyConfig, ParsedDisassembly
     from .history import HistoryStorage
     from . import libudis
