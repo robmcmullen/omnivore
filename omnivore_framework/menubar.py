@@ -90,4 +90,7 @@ class MenubarDescription:
         for id, (action_key, action) in self.valid_id_map.items():
             log.debug(f"syncing {id}: {action_key}, {action}")
             menu_item = menubar_control.FindItemById(id)
-            action.sync_menu_item_from_editor(action_key, menu_item)
+            try:
+                action.sync_menu_item_from_editor(action_key, menu_item)
+            except AttributeError as e:
+                log.warning(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")

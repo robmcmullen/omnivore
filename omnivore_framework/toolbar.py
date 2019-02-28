@@ -42,4 +42,7 @@ class ToolbarDescription:
         for id, (action_key, action) in self.valid_id_map.items():
             log.debug(f"syncing tool {id}: {action_key}, {action}")
             item = toolbar_control.FindById(id)
-            action.sync_tool_item_from_editor(action_key, toolbar_control, id)
+            try:
+                action.sync_tool_item_from_editor(action_key, toolbar_control, id)
+            except AttributeError as e:
+                log.warning(f"Skipping sync of {action_key} toolbar item from {action.editor}: {e}")

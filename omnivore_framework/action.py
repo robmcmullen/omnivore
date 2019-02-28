@@ -167,20 +167,12 @@ class OmnivoreAction:
         return True
 
     def sync_menu_item_from_editor(self, action_key, menu_item):
-        try:
-            state = self.calc_enabled(action_key)
-        except AttributeError as e:
-            log.warning(f"Skipping sync of {action_key} menu item from {self.editor}: {e}")
-        else:
-            menu_item.Enable(state)
+        state = self.calc_enabled(action_key)
+        menu_item.Enable(state)
 
     def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
-        try:
-            state = self.calc_enabled(action_key)
-        except AttributeError as e:
-            log.warning(f"Skipping sync of {action_key} toolbar item from {self.editor}: {e}")
-        else:
-            toolbar_control.EnableTool(id, state)
+        state = self.calc_enabled(action_key)
+        toolbar_control.EnableTool(id, state)
 
 
 class OmnivoreActionRadioMixin:
