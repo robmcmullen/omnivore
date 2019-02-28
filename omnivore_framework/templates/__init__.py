@@ -56,14 +56,16 @@ def get_template(name):
 
 
 class TemplateItem(dict):
-    def __init__(self, json_dict):
+    def __init__(self, keyword, inf_type, json_dict):
         dict.__init__(self)
+        self.keyword = keyword
+        self.inf_type = inf_type
         for k, v in json_dict.items():
             self[k] = v
             setattr(self, k, v)
 
     def __str__(self):
-        return self.get("label", "") or self.get("description", "") or self.get("name", "") or self.get("uri", "") or dict.__str__(self)
+        return self.get("label", "") or self.get("description", "") or self.get("name", "") or self.keyword
 
     def __lt__(self, other):
         return str(self) < str(other)
@@ -80,34 +82,39 @@ def iter_templates(inf_type=None):
     """
     templates = {}
     for toplevel in template_subdirs:
-        pathname = construct_path(toplevel, "*")
-        for template in glob.glob(pathname):
-            if template.endswith(".inf"):
+        wildcard = construct_path(toplevel, "*")
+        for template_path in glob.glob(wildcard):
+            if template_path.endswith(".inf"):
                 # skip loading inf files
                 continue
-            inf = template + ".inf"
+            inf_path = template_path + ".inf"
             j = None
-            if os.path.exists(template) and os.path.isfile(template):
-                if os.path.exists(inf):
+            if os.path.exists(template_path) and os.path.isfile(template_path):
+                keyword = os.path.basename(template_path)
+                keyword2, ext = os.path.splitext(keyword)
+                if ext and ext[1:] == inf_type:
+                    keyword = keyword2
+                    ext = inf_type
+                if os.path.exists(inf_path):
                     try:
-                        log.debug("Loading json file %s" % inf)
-                        with open(inf, "r") as fh:
+                        log.debug("Loading json file %s" % inf_path)
+                        with open(inf_path, "r") as fh:
                             j = json.loads(fh.read())
-                    except ValueError:
+                    except ValueError as e:
+                        log.debug(f"Error in json: {e}")
                         j = {}
                     if inf_type and "type" in j and j["type"] != inf_type:
                         continue
-                    j["pathname"] = template
-                    j["uri"] = "template://" + template
+                    j["pathname"] = template_path
+                    j["uri"] = "template://" + template_path
                     if "task" in j and j["task"] == "hex_edit":
                         j["task"] = "byte_edit"
-                else:
-                    _, ext = os.path.splitext(template)
-                    if ext and ext[1:] == inf_type:
-                        j = {}
-                        j["pathname"] = template
-                        j["uri"] = "template://" + template
+                elif ext == inf_type:
+                    j = {}
+                    j["type"] = inf_type
+                    j["pathname"] = template_path
+                    j["uri"] = "template://" + template_path
                 if j is not None:
-                    item = TemplateItem(j)
+                    item = TemplateItem(keyword, inf_type, j)
                     log.debug(f"template: {item}")
                     yield item
