@@ -71,7 +71,7 @@ class ByteEditor(TileManagerBase):
     preferences_module = "omnivore.editors.byte_editor_preferences"
 
     menubar_desc = [
-    ["File", "new_file", "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
+    ["File", ["New", "new_blank_file", None, "new_file_from_template"], "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
     ["Edit", "undo", "redo", None, "copy", "cut", "paste", None, "select_all", "select_none", "select_invert", None, "prefs"],
     ["View", "view_width", "view_zoom", ["Colors", "view_ntsc", "view_pal", None, "view_antic_powerup_colors", None, "view_ask_colors"]],
     ["Bytes", "byte_set_to_zero", "byte_set_to_ff", "byte_nop", None, "byte_set_high_bit", "byte_clear_high_bit", "byte_bitwise_not", "byte_shift_left", "byte_shift_right", "byte_rotate_left", "byte_rotate_right", "byte_reverse_bits", "byte_random", None, "byte_set_value", "byte_or_with_value", "byte_and_with_value", "byte_xor_with_value", None, "byte_ramp_up", "byte_ramp_down", "byte_add_value", "byte_subtract_value", "byte_subtract_from", "byte_multiply_by", "byte_divide_by", "byte_divide_from", None, "byte_reverse_selection", "byte_reverse_group",],

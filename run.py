@@ -76,9 +76,10 @@ def main(argv):
     from omnivore_framework.application import OmnivoreFrameworkApp
     from omnivore_framework.filesystem import get_image_path
     import omnivore
+    import atrcopy
 
     image_paths = [get_image_path("icons", omnivore)]
-    template_paths = [get_image_path("templates", omnivore)]
+    template_paths = [get_image_path("templates", omnivore), atrcopy.get_template_path()]
 
     OmnivoreApp = OmnivoreFrameworkApp
     OmnivoreApp.app_name = "Omnivore"
