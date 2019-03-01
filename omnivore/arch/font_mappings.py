@@ -12,6 +12,9 @@ class ATASCIIFontMapping(object):
     name = "ASCII Order"
     font_mapping = atascii_to_internal
 
+    def __str__(self):
+        return self.name
+
     def __eq__(self, other):
         try:
             return self.name == other.name

@@ -10,6 +10,8 @@ from omnivore_framework.utils.wx import dialogs
 from . import ViewerAction, ViewerListAction
 from .. import commands
 from ...arch import colors
+from ...arch.font_renderers import font_renderer_list
+from ...arch.font_mappings import font_mapping_list
 from ...arch.ui.antic_colors import AnticColorDialog
 
 import logging
@@ -95,3 +97,39 @@ class view_color_standards(ViewerListAction):
     def perform(self, action_key):
         item = self.get_item(action_key)
         self.viewer.color_standard_name = item.name
+
+
+class view_font_renderers(ViewerListAction):
+    prefix = "view_font_renderers_"
+
+    def calc_name(self, action_key):
+        item = self.get_item(action_key)
+        return str(item)
+
+    def calc_list_items(self):
+        return font_renderer_list
+
+    def calc_state_list_item(self, action_key, index, item):
+        return self.viewer.font_renderer_name == item.name
+
+    def perform(self, action_key):
+        item = self.get_item(action_key)
+        self.viewer.font_renderer_name = item.name
+
+
+class view_font_mappings(ViewerListAction):
+    prefix = "view_font_mappings_"
+
+    def calc_name(self, action_key):
+        item = self.get_item(action_key)
+        return str(item)
+
+    def calc_list_items(self):
+        return font_mapping_list
+
+    def calc_state_list_item(self, action_key, index, item):
+        return self.viewer.font_mapping_name == item.name
+
+    def perform(self, action_key):
+        item = self.get_item(action_key)
+        self.viewer.font_mapping_name = item.name

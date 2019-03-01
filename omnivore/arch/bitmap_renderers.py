@@ -25,6 +25,9 @@ class BaseRenderer(object):
     bitplanes = 1
     ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
 
+    def __str__(self):
+        return self.name
+
     def __eq__(self, other):
         try:
             return other is not None and self.name == other.name and self.pixels_per_byte == other.pixels_per_byte and self.bitplanes == other.bitplanes
