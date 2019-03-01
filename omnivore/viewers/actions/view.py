@@ -10,6 +10,7 @@ from omnivore_framework.utils.wx import dialogs
 from . import ViewerAction, ViewerListAction
 from .. import commands
 from ...arch import colors
+from ...arch.bitmap_renderers import bitmap_renderer_list
 from ...arch.font_renderers import font_renderer_list
 from ...arch.font_mappings import font_mapping_list
 from ...arch.ui.antic_colors import AnticColorDialog
@@ -100,6 +101,27 @@ class view_color_standards(ViewerListAction):
     def perform(self, action_key):
         item = self.get_item(action_key)
         self.viewer.color_standard_name = item.name
+
+
+class view_bitmap_renderers(ViewerListAction):
+    prefix = "view_bitmap_renderers_"
+
+    def calc_enabled(self, action_key):
+        return self.viewer.has_bitmap
+
+    def calc_name(self, action_key):
+        item = self.get_item(action_key)
+        return str(item)
+
+    def calc_list_items(self):
+        return bitmap_renderer_list
+
+    def calc_checked_list_item(self, action_key, index, item):
+        return self.viewer.bitmap_renderer_name == item.name
+
+    def perform(self, action_key):
+        item = self.get_item(action_key)
+        self.viewer.bitmap_renderer_name = item.name
 
 
 class view_font_renderers(ViewerListAction):
