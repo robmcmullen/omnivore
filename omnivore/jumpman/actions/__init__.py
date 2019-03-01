@@ -15,6 +15,9 @@ class clear_trigger(ViewerAction):
         ViewerAction.__init__(self, *args, **kwargs)
         self.picked = None
 
+    def calc_enabled(self, action_key):
+        return self.viewer.control.mouse_mode.all_objects_are_coins()
+
     def get_objects(self):
         if self.picked is not None:
             return self.picked

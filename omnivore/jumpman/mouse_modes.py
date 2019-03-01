@@ -31,6 +31,17 @@ class JumpmanSelectMode(NormalSelectMode):
     def resync_objects(self):
         pass
 
+    def all_objects_are_coins(self):
+        if self.objects:
+            state = True
+            for obj in self.objects:
+                if not obj.single:
+                    state = False
+                    break
+        else:
+            state = False
+        return state
+
     def calc_playfield_override(self):
         """ Replace the entire bit image generation in JumpmanLevelView """
         return None
