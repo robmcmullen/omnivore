@@ -8,7 +8,7 @@ from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
-from ..arch.fonts import AnticFont, A8DefaultFont
+from ..arch.fonts import AnticFont, valid_fonts
 from ..arch.font_mappings import valid_font_mappings
 from ..arch.font_renderers import valid_font_renderers
 from .antic import AnticColorViewer
@@ -189,7 +189,8 @@ class CharViewer(AnticColorViewer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._antic_font = None
-        self._antic_font_data = A8DefaultFont
+        self._antic_font_uuid = "e46c1a08-b718-de27-3303-6e2701f0b0b3"  # atari800 default font
+        self._antic_font_data = None
         self._font_renderer_name = "Antic 2 (Gr 0)"
         self._font_renderer = None
         self._font_mapping_name = "ASCII Order"
@@ -240,13 +241,28 @@ class CharViewer(AnticColorViewer):
         return self._antic_font
 
     @property
+    def antic_font_uuid(self):
+        return self._antic_font_uuid
+
+    @antic_font_uuid.setter
+    def antic_font_uuid(self, value):
+        self._antic_font_uuid = value
+        self._antic_font_data = None
+        self._antic_font = None
+        self.graphics_properties_changed()
+
+    @property
     def antic_font_data(self):
+        if self._antic_font_data is None:
+            self._antic_font_data = valid_fonts[self._antic_font_uuid]
         return self._antic_font_data
 
     @antic_font_data.setter
     def antic_font_data(self, value):
+        self._antic_font_uuid = value["uuid"]
         self._antic_font_data = value
         self._antic_font = None
+        self.graphics_properties_changed()
 
     def colors_changed(self):
         """Hook for subclasses that need to invalidate stuff when colors change

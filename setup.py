@@ -315,7 +315,7 @@ setup(
     include_dirs = [np.get_include()],
     packages = find_packages(exclude=["libudis"]),
     entry_points={
-        "omnivore_framework.remember": 'machine = omnivore.arch.machine',
+        "omnivore_framework.remember": 'fonts = omnivore.arch.fonts',
 
         "omnivore_framework.editors": 'byte = omnivore.editors.byte_editor',
 
