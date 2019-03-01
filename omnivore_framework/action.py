@@ -256,7 +256,7 @@ class OmnivoreListAction(OmnivoreActionListMixin, OmnivoreAction):
 
 class OmnivoreRadioListAction(OmnivoreActionListMixin, OmnivoreActionRadioMixin, OmnivoreAction):
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         """Return checked state of item
 
         If the item passed into this function is different than the item from
@@ -267,12 +267,16 @@ class OmnivoreRadioListAction(OmnivoreActionListMixin, OmnivoreActionRadioMixin,
 
     def sync_menu_item_from_editor(self, action_key, menu_item):
         if self.current_list:
-            index = self.get_index(action_key)
-            item = self.current_list[index]
-            state = self.calc_state_list_item(action_key, index, item)
-            log.debug(f"{action_key}: checked={state}, {item}")
-            menu_item.Enable(True)
-            menu_item.Check(state)
+            state = self.calc_enabled(action_key)
+            if state:
+                index = self.get_index(action_key)
+                item = self.current_list[index]
+                checked = self.calc_checked_list_item(action_key, index, item)
+                log.debug(f"{action_key}: checked={state}, {item}")
+            else:
+                checked = False
+            menu_item.Enable(state)
+            menu_item.Check(checked)
         else:
             if self.calc_list_items():
                 raise errors.RecreateDynamicMenuBar
