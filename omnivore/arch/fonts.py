@@ -59,7 +59,6 @@ builtin_font_data = {f['uuid']:f for f in [A8DefaultFont, A8ComputerFont, A2Defa
 
 class AnticFont(object):
     def __init__(self, segment_viewer, font_data, font_renderer, playfield_colors, reverse=False):
-        self.use_blinking = font_data.get('blink', False)
         self.char_w = font_renderer.char_bit_width
         self.char_h = font_renderer.char_bit_height
         self.scale_w = font_renderer.scale_width
@@ -71,7 +70,7 @@ class AnticFont(object):
 
     def set_colors(self, segment_viewer, playfield_colors):
         fg, bg = colors.gr0_colors(playfield_colors)
-        conv = segment_viewer.machine.get_color_converter()
+        conv = segment_viewer.color_standard
         fg = conv(fg)
         bg = conv(bg)
         self.normal_gr0_colors = [fg, bg]
@@ -88,7 +87,7 @@ class AnticFont(object):
             data = np.fromstring(font_data['data'], dtype=np.uint8)
         self.font_data = font_data
 
-        m = segment_viewer.machine
+        m = segment_viewer
         self.normal_font = font_renderer.get_font(data, m.color_registers, self.normal_gr0_colors, reverse)
 
         prefs = segment_viewer.preferences

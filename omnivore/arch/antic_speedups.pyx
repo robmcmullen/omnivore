@@ -83,7 +83,7 @@ def get_numpy_font_map_image(segment_viewer, antic_font, np.ndarray[np.uint8_t, 
     cdef np.ndarray[np.uint8_t, ndim=4] fc = antic_font.comment_font
     cdef np.uint8_t[:,:,:,:] fast_fc = fc
     cdef np.uint8_t s, c
-    cdef np.ndarray[np.uint8_t] mapping = segment_viewer.machine.font_mapping.font_mapping
+    cdef np.ndarray[np.uint8_t] mapping = segment_viewer.font_mapping.font_mapping
     for j in range(num_rows):
         x = 0
         for i in range(start_col, start_col + num_cols):

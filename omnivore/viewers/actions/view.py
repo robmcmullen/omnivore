@@ -7,7 +7,7 @@ import wx
 
 from omnivore_framework.utils.wx import dialogs
 
-from . import ViewerAction, ViewerRadioAction
+from . import ViewerAction, ViewerListAction
 from .. import commands
 from ...arch import colors
 from ...arch.ui.antic_colors import AnticColorDialog
@@ -65,9 +65,9 @@ class view_ask_colors(ColorAction):
 
     def perform(self, action_key):
         v = self.viewer
-        dlg = AnticColorDialog(v.control, v.machine.antic_color_registers, v.linked_base.cached_preferences)
+        dlg = AnticColorDialog(v.control, v.antic_color_registers, v.linked_base.cached_preferences)
         if dlg.ShowModal() == wx.ID_OK:
-            v.machine.update_colors(dlg.colors)
+            v.antic_color_registers = dlg.colors
 
 
 class view_antic_powerup_colors(ColorAction):
@@ -76,34 +76,22 @@ class view_antic_powerup_colors(ColorAction):
     name = 'ANTIC Powerup Colors'
 
     def perform(self, action_key):
-        self.viewer.machine.update_colors(colors.powerup_colors())
+        self.viewer.antic_color_registers = colors.powerup_colors()
 
 
-class ColorStandardAction(ViewerRadioAction):
-    """This list sets the color encoding standard for all bitmapped graphics of
-    the disk image. Currently supported are:
-    """
-    doc_hint = "parent,list"
+class view_color_standards(ViewerListAction):
+    prefix = "view_color_standards_"
 
-    color_standard = None
+    def calc_name(self, action_key):
+        item = self.get_item(action_key)
+        return str(item)
 
-    def calc_enabled(self, action_key):
-        state = self.viewer.has_colors
-        return state
+    def calc_list_items(self):
+        return colors.color_standard_list
 
-    def calc_checked(self, action_key):
-        state = self.viewer.machine.color_standard == self.color_standard
-        return state
+    def calc_state_list_item(self, action_key, index, item):
+        return self.viewer.color_standard_name == item.name
 
     def perform(self, action_key):
-        self.viewer.machine.set_color_standard(self.color_standard)
-
-
-class view_ntsc(ColorStandardAction):
-    name = 'NTSC'
-    color_standard = 0
-
-
-class view_pal(ColorStandardAction):
-    name = 'PAL'
-    color_standard = 1
+        item = self.get_item(action_key)
+        self.viewer.color_standard_name = item.name

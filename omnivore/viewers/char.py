@@ -8,8 +8,10 @@ from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
-
-from ..viewer import SegmentViewer
+from ..arch.fonts import AnticFont, A8DefaultFont
+from ..arch.font_mappings import valid_font_mappings
+from ..arch.font_renderers import valid_font_renderers
+from .antic import AnticColorViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -23,7 +25,7 @@ class AnticCharImageCache(cg.DrawTextImageCache):
         data = data.reshape((nr, -1))
         style = style.reshape((nr, -1))
         v = parent.segment_viewer
-        array = parent.font_renderer.get_image(v, v.current_antic_font, data, style, start, end, end, nr, start, end)
+        array = parent.font_renderer.get_image(v, v.antic_font, data, style, start, end, end, nr, start, end)
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
@@ -114,7 +116,7 @@ class AnticCharRenderer(cg.TableLineRenderer):
 
         # get_image(cls, machine, antic_font, byte_values, style, start_byte, end_byte, bytes_per_row, nr, start_col, visible_cols):
 
-        array = grid_control.font_renderer.get_image(grid_control.segment_viewer, grid_control.segment_viewer.current_antic_font, data, style, first_index, last_index, bytes_per_row, nr, first_col, nc)
+        array = grid_control.font_renderer.get_image(grid_control.segment_viewer, grid_control.segment_viewer.antic_font, data, style, first_index, last_index, bytes_per_row, nr, first_col, nc)
         width = array.shape[1]
         height = array.shape[0]
         if width > 0 and height > 0:
@@ -144,7 +146,7 @@ class CharGridControl(SegmentGridControl):
 
     @property
     def font_renderer(self):
-        return self.segment_viewer.machine.font_renderer
+        return self.segment_viewer.font_renderer
 
     @property
     def zoom_w(self):
@@ -163,11 +165,11 @@ class CharGridControl(SegmentGridControl):
         c = evt.GetKeyCode()
         print(("ordinary char: %s", c))
         if c != wx.WXK_NONE:
-            c = self.segment_viewer.machine.font_mapping.convert_byte_mapping(c)
+            c = self.segment_viewer.font_mapping.convert_byte_mapping(c)
             self.process_edit(c| self.inverse)
 
 
-class CharViewer(SegmentViewer):
+class CharViewer(AnticColorViewer):
     name = "char"
 
     pretty_name = "Character"
@@ -175,8 +177,6 @@ class CharViewer(SegmentViewer):
     control_cls = CharGridControl
 
     has_font = True
-
-    has_colors = True
 
     has_width = True
 
@@ -186,14 +186,69 @@ class CharViewer(SegmentViewer):
 
     zoom_text = "character zoom factor"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._antic_font = None
+        self._antic_font_data = A8DefaultFont
+        self._font_renderer_name = "Antic 2 (Gr 0)"
+        self._font_renderer = None
+        self._font_mapping_name = "ASCII Order"
+        self._font_mapping = None
+
     @property
     def window_title(self):
-        return self.machine.font_renderer.name + ", " + self.machine.font_mapping.name + ", " + self.machine.color_standard_name
+        return self.font_renderer_name + ", " + self.font_mapping_name + ", " + self.color_standard_name
 
-    def machine_metadata_changed(self):
-        """Rebuild the entire UI after a document formatting (or other
-        structural change) or loading a new document.
+    #### Fonts
+
+    @property
+    def font_mapping_name(self):
+        return self._font_mapping_name
+
+    @font_mapping_name.setter
+    def font_mapping_name(self, value):
+        self._font_mapping_name = value
+        self._font_mapping = None
+        self.graphics_properties_changed()
+
+    @property
+    def font_mapping(self):
+        if self._font_mapping is None:
+            self._font_mapping = valid_font_mappings[self._font_mapping_name]
+        return self._font_mapping
+
+    @property
+    def font_renderer_name(self):
+        return self._font_renderer_name
+
+    @font_renderer_name.setter
+    def font_renderer_name(self, value):
+        self._font_renderer_name = value
+        self._font_renderer = None
+        self.graphics_properties_changed()
+
+    @property
+    def font_renderer(self):
+        if self._font_renderer is None:
+            self._font_renderer = valid_font_renderers[self._font_renderer_name]
+        return self._font_renderer
+
+    @property
+    def antic_font(self):
+        if self._antic_font is None:
+            self._antic_font = AnticFont(self, self.antic_font_data, self.font_renderer, self.antic_color_registers[4:9])
+        return self._antic_font
+
+    @property
+    def antic_font_data(self):
+        return self._antic_font_data
+
+    @antic_font_data.setter
+    def antic_font_data(self, value):
+        self._antic_font_data = value
+        self._antic_font = None
+
+    def colors_changed(self):
+        """Hook for subclasses that need to invalidate stuff when colors change
         """
-        self.set_font()
-        self.control.recalc_view()
-        self.control.refresh_view()
+        self._antic_font = None

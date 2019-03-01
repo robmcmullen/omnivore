@@ -11,8 +11,7 @@ from omnivore_framework.templates import get_template
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel
-from ..arch.machine import Machine
-from ..arch.antic_renderers import BaseRenderer
+from ..arch.bitmap_renderers import BaseRenderer
 from ..arch.colors import powerup_colors
 from ..jumpman import parser as ju
 from ..jumpman import playfield as jp
@@ -100,20 +99,6 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
             bmp = wx.Bitmap(image)
             dc.SetClippingRegion(frame_rect)
             dc.DrawBitmap(bmp, frame_rect.x, frame_rect.y)
-
-
-class JumpmanMachine(Machine):
-
-    ##### Trait initializers
-
-    def _name_default(self):
-        return "Jumpman"
-
-    def _bitmap_renderer_default(self):
-        return JumpmanPlayfieldRenderer()
-
-    def _mime_prefix_default(self):
-        return "application/vnd.atari8bit"
 
 
 class JumpmanSegmentTable(cg.HexTable):
@@ -217,10 +202,6 @@ class JumpmanViewer(BitmapViewer):
 
     control_cls = JumpmanGridControl
 
-    has_bitmap = True
-
-    has_colors = True
-
     has_zoom = True
 
     zoom_text = "bitmap zoom factor"
@@ -238,9 +219,14 @@ class JumpmanViewer(BitmapViewer):
 
     def __init__(self, *args, **kwargs):
         BitmapViewer.__init__(self, *args, **kwargs)
-        self.machine = JumpmanMachine()
 
     ##### Properties
+
+    @property
+    def bitmap_renderer(self):
+        if self._bitmap_renderer is None:
+            self._bitmap_renderer = JumpmanPlayfieldRenderer()
+        return self._bitmap_renderer
 
     @property
     def window_title(self):
@@ -274,7 +260,7 @@ class JumpmanViewer(BitmapViewer):
 
     def recalc_data_model(self):
         self.current_level.init_level_builder(self)
-        self.machine.update_colors(self.current_level.level_colors)
+        self.antic_color_registers = self.current_level.level_colors
 
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)

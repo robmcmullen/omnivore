@@ -336,7 +336,7 @@ class TileManagerBase(OmnivoreEditor):
                     center_base_used = True
 
                 log.debug("creating viewer %s (%s) with linked base %s" % (uuid, viewer_type, str(linked_base)))
-                viewer = viewer_cls.viewer_factory(self.control, linked_base, None, uuid, e)
+                viewer = viewer_cls.viewer_factory(self.control, linked_base, uuid, e)
                 log.debug("created viewer %s (%s)" % (viewer.uuid, viewer.name))
 
                 self.viewers.append(viewer)

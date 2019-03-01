@@ -11,7 +11,6 @@ from .arch import fonts
 from omnivore_framework import errors
 from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
-from .arch.machine import Machine, Atari800
 from .utils import searchutil
 from .ui.segment_grid import SegmentGridControl
 from .viewers.mouse_modes import NormalSelectMode
@@ -113,15 +112,12 @@ class SegmentViewer:
     # is focused
     exclude_from_menubar = ["Jumpman"]
 
-    def __init__(self, control, linked_base, machine=None):
+    def __init__(self, control, linked_base):
         self.uuid = str(uuid.uuid4())
         self.control = control
         self.linked_base = linked_base
-        self.machine = machine
 
         self.range_processor = ranges_to_indexes
-        self.antic_font = None
-        self.blinking_antic_font = None
         self.is_tracing = False
 
         # start the initial frame count on a random value so the frame refresh
@@ -130,16 +126,6 @@ class SegmentViewer:
         self.frame_count = random.randint(0, self.priority_refresh_frame_count)
 
     ##### Properties
-
-    @property
-    def machine(self):
-        return self._machine
-
-    @machine.setter
-    def machine(self, value):
-        self._machine = value
-        if self._machine is not None:
-            self._machine.machine_metadata_changed_event += self.on_machine_metadata_changed
 
     @property
     def segment(self):
@@ -211,18 +197,16 @@ class SegmentViewer:
         return linked_base
 
     @classmethod
-    def viewer_factory(cls, parent, linked_base, machine=None, uuid=None, mdict={}):
+    def viewer_factory(cls, parent, linked_base, uuid=None, mdict={}):
         linked_base = cls.replace_linked_base(linked_base)
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         print("LINKEDBASE:", linked_base.__class__.__mro__)
         v = cls(control, linked_base)
-        if machine is not None:
-            v.machine = machine
         v.from_metadata_dict(mdict)
 
-        if v.machine is None:
-            print("LOOKING UP MACHINE BY MIME", linked_base.document.mime)
-            v.machine = Machine.find_machine_by_mime(linked_base.document.mime, default_if_not_matched=True)
+        # if v.machine is None:
+        #     print("LOOKING UP MACHINE BY MIME", linked_base.document.mime)
+        #     v.machine = Machine.find_machine_by_mime(linked_base.document.mime, default_if_not_matched=True)
 
         control.segment_viewer = v
         if uuid:
@@ -267,22 +251,22 @@ class SegmentViewer:
             self.uuid = e['uuid']
 
         # FIXME: deprecated stuff?
-        if 'machine' in e:
-            if self.machine is None:
-                self.machine = Machine()
-            self.machine.restore_extra_from_dict(e['machine'])
-        elif 'machine mime' in e:
-            mime = e['machine mime']
-            if self.machine is None or not mime.startswith(self.machine.mime_prefix):
-                m = Machine.find_machine_by_mime(mime)
-                if m is not None:
-                    self.machine = m
+        # if 'machine' in e:
+        #     if self.machine is None:
+        #         self.machine = Machine()
+        #     self.machine.restore_extra_from_dict(e['machine'])
+        # elif 'machine mime' in e:
+        #     mime = e['machine mime']
+        #     if self.machine is None or not mime.startswith(self.machine.mime_prefix):
+        #         m = Machine.find_machine_by_mime(mime)
+        #         if m is not None:
+        #             self.machine = m
 
-        if 'font' in e or 'font renderer' in e or 'font order' in e:
-            if 'font renderer' in e or 'font order' in e:
-                self.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
-            else:
-                self.set_font(e['font'][0], e['font'][1])
+        # if 'font' in e or 'font renderer' in e or 'font order' in e:
+        #     if 'font renderer' in e or 'font order' in e:
+        #         self.set_font(e['font'], e.get('font renderer', None), e.get('font order', None))
+        #     else:
+        #         self.set_font(e['font'][0], e['font'][1])
 
         # 'control' is handled during viewer creation process
         self.from_metadata_dict_post(e)
@@ -295,8 +279,6 @@ class SegmentViewer:
         mdict['name'] = self.name
         mdict['uuid'] = self.uuid
         mdict['linked base'] = self.linked_base.uuid
-        mdict['machine'] = {}
-        self.machine.serialize_extra_to_dict(mdict['machine'])
         mdict['control'] = {}
         try:
             self.control.serialize_extra_to_dict(mdict['control'])
@@ -307,10 +289,6 @@ class SegmentViewer:
     def to_metadata_dict_post(self, mdict, document):
         # placeholder for subclasses to check for extra metadata
         pass
-
-    def set_machine(self, machine):
-        self.machine = machine
-        self.reconfigure_panes()
 
     ##### User interface
 
@@ -364,14 +342,6 @@ class SegmentViewer:
         else:
             caret_log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
-
-    def on_machine_metadata_changed(self, evt):
-        log.error("machine_metadata_changed: %s evt=%s" % (self, str(evt)))
-        self.machine_metadata_changed()
-
-    def machine_metadata_changed(self):
-        self.control.recalc_view()
-        self.control.refresh_view()
 
     @property
     def window_title(self):
@@ -603,48 +573,6 @@ class SegmentViewer:
         for start, end in [c.range for c in carets]:
             labels.append(self.get_label_at_index(start))
         return ", ".join(labels)
-
-    ##### Fonts
-
-    @property
-    def current_antic_font(self):
-        if self.antic_font is None:
-            self.set_font()
-        return self.antic_font
-
-    def get_antic_font(self, reverse=False):
-        return fonts.AnticFont(self, self.machine.antic_font_data, self.machine.font_renderer, self.machine.antic_color_registers[4:9], reverse)
-
-    def set_font(self, font=None, font_renderer=None, font_mapping=None):
-        if font is None:
-            font = self.machine.antic_font_data
-        if font_renderer is not None:
-            if isinstance(font_renderer, str):
-                font_renderer = self.machine.get_font_renderer_from_font_name(font_renderer)
-            self.machine.font_renderer = font_renderer
-        self.machine.antic_font_data = font
-        self.antic_font = self.get_antic_font()
-        if self.antic_font.use_blinking:
-            self.blinking_antic_font = self.get_antic_font(True)
-        else:
-            self.blinking_antic_font = None
-        self.machine.set_font_mapping(font_mapping)
-
-    def change_font_data(self, data):
-        font = dict(data=data[:], blink=self.antic_font.use_blinking)
-        self.machine.antic_font_data = font
-        self.antic_font = self.get_antic_font()
-        if self.antic_font.use_blinking:
-            self.blinking_antic_font = self.get_antic_font(True)
-        else:
-            self.blinking_antic_font = None
-        self.machine.set_font_mapping()
-
-    def get_blinking_font(self, index):
-        if self.antic_font.use_blinking and index == 1 and self.blinking_antic_font is not None:
-            return self.blinking_antic_font
-        else:
-            return self.antic_font
 
     ##### Spring tab (pull out menu) interface
 

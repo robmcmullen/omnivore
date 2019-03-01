@@ -7,8 +7,9 @@ from omnivore_framework.utils.nputil import intscale
 from omnivore_framework.utils.wx import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
+from ..arch.bitmap_renderers import valid_bitmap_renderers
 
-from ..viewer import SegmentViewer
+from .antic import AnticColorViewer
 from . import actions as va
 
 import logging
@@ -134,7 +135,7 @@ class BitmapGridControl(SegmentGridControl):
 
     @property
     def bitmap_renderer(self):
-        return self.segment_viewer.machine.bitmap_renderer
+        return self.segment_viewer.bitmap_renderer
 
     @property
     def zoom_w(self):
@@ -169,7 +170,7 @@ class BitmapGridControl(SegmentGridControl):
         return actions
 
 
-class BitmapViewer(SegmentViewer):
+class BitmapViewer(AnticColorViewer):
     name = "bitmap"
 
     pretty_name = "Bitmap"
@@ -177,8 +178,6 @@ class BitmapViewer(SegmentViewer):
     control_cls = BitmapGridControl
 
     has_bitmap = True
-
-    has_colors = True
 
     has_width = True
 
@@ -188,12 +187,33 @@ class BitmapViewer(SegmentViewer):
 
     zoom_text = "bitmap zoom factor"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._bitmap_renderer_name = "B/W, 1bpp, on=black"
+        self._bitmap_renderer = None
+
+    @property
+    def bitmap_renderer_name(self):
+        return self._bitmap_renderer_name
+
+    @bitmap_renderer_name.setter
+    def bitmap_renderer_name(self, value):
+        self._bitmap_renderer_name = value
+        self._bitmap_renderer = None
+        self.graphics_properties_changed()
+
+    @property
+    def bitmap_renderer(self):
+        if self._bitmap_renderer is None:
+            self._bitmap_renderer = valid_bitmap_renderers[self._bitmap_renderer_name]
+        return self._bitmap_renderer
+
     @property
     def window_title(self):
-        return self.control.bitmap_renderer.name
+        return self.bitmap_renderer.name
 
     def validate_width(self, width):
-        return self.machine.bitmap_renderer.validate_bytes_per_row(width)
+        return self.bitmap_renderer.validate_bytes_per_row(width)
 
     def recalc_data_model(self):
         self.control.recalc_view()

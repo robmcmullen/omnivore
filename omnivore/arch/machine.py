@@ -15,7 +15,7 @@ from . import fonts
 from . import colors
 from . import disasm
 from . import memory_map
-from . import antic_renderers
+# from . import antic_renderers
 
 import logging
 log = logging.getLogger(__name__)
@@ -493,54 +493,54 @@ predefined = {
         disasm.Basic8080Disassembler,
         disasm.BasicZ80Disassembler,
         ],
-    "bitmap_renderer": [
-        antic_renderers.OneBitPerPixelB(),
-        antic_renderers.OneBitPerPixelW(),
-        antic_renderers.OneBitPerPixelPM1(),
-        antic_renderers.OneBitPerPixelPM2(),
-        antic_renderers.OneBitPerPixelPM4(),
-        antic_renderers.OneBitPerPixelApple2Linear(),
-        antic_renderers.ModeB(),
-        antic_renderers.ModeC(),
-        antic_renderers.ModeD(),
-        antic_renderers.ModeE(),
-        antic_renderers.GTIA9(),
-        antic_renderers.GTIA10(),
-        antic_renderers.GTIA11(),
-        antic_renderers.TwoBitsPerPixel(),
-        antic_renderers.FourBitsPerPixel(),
-        antic_renderers.TwoBitPlanesLE(),
-        antic_renderers.TwoBitPlanesLineLE(),
-        antic_renderers.TwoBitPlanesBE(),
-        antic_renderers.TwoBitPlanesLineBE(),
-        antic_renderers.ThreeBitPlanesLE(),
-        antic_renderers.ThreeBitPlanesLineLE(),
-        antic_renderers.ThreeBitPlanesBE(),
-        antic_renderers.ThreeBitPlanesLineBE(),
-        antic_renderers.FourBitPlanesLE(),
-        antic_renderers.FourBitPlanesLineLE(),
-        antic_renderers.FourBitPlanesBE(),
-        antic_renderers.FourBitPlanesLineBE(),
-        ],
-    "font_renderer": [
-        antic_renderers.Mode2(),
-        antic_renderers.Mode4(),
-        antic_renderers.Mode5(),
-        antic_renderers.Mode6Upper(),
-        antic_renderers.Mode6Lower(),
-        antic_renderers.Mode7Upper(),
-        antic_renderers.Mode7Lower(),
-        antic_renderers.Apple2TextMode(),
-        ],
-    "font_mapping": [
-        antic_renderers.ATASCIIFontMapping(),
-        antic_renderers.AnticFontMapping(),
-        ],
-    "page_renderer": [
-        antic_renderers.BytePerPixelMemoryMap(),
-        ],
+    # "bitmap_renderer": [
+    #     antic_renderers.OneBitPerPixelB(),
+    #     antic_renderers.OneBitPerPixelW(),
+    #     antic_renderers.OneBitPerPixelPM1(),
+    #     antic_renderers.OneBitPerPixelPM2(),
+    #     antic_renderers.OneBitPerPixelPM4(),
+    #     antic_renderers.OneBitPerPixelApple2Linear(),
+    #     antic_renderers.ModeB(),
+    #     antic_renderers.ModeC(),
+    #     antic_renderers.ModeD(),
+    #     antic_renderers.ModeE(),
+    #     antic_renderers.GTIA9(),
+    #     antic_renderers.GTIA10(),
+    #     antic_renderers.GTIA11(),
+    #     antic_renderers.TwoBitsPerPixel(),
+    #     antic_renderers.FourBitsPerPixel(),
+    #     antic_renderers.TwoBitPlanesLE(),
+    #     antic_renderers.TwoBitPlanesLineLE(),
+    #     antic_renderers.TwoBitPlanesBE(),
+    #     antic_renderers.TwoBitPlanesLineBE(),
+    #     antic_renderers.ThreeBitPlanesLE(),
+    #     antic_renderers.ThreeBitPlanesLineLE(),
+    #     antic_renderers.ThreeBitPlanesBE(),
+    #     antic_renderers.ThreeBitPlanesLineBE(),
+    #     antic_renderers.FourBitPlanesLE(),
+    #     antic_renderers.FourBitPlanesLineLE(),
+    #     antic_renderers.FourBitPlanesBE(),
+    #     antic_renderers.FourBitPlanesLineBE(),
+    #     ],
+    # "font_renderer": [
+    #     antic_renderers.Mode2(),
+    #     antic_renderers.Mode4(),
+    #     antic_renderers.Mode5(),
+    #     antic_renderers.Mode6Upper(),
+    #     antic_renderers.Mode6Lower(),
+    #     antic_renderers.Mode7Upper(),
+    #     antic_renderers.Mode7Lower(),
+    #     antic_renderers.Apple2TextMode(),
+    #     ],
+    # "font_mapping": [
+    #     antic_renderers.ATASCIIFontMapping(),
+    #     antic_renderers.AnticFontMapping(),
+    #     ],
+    # "page_renderer": [
+    #     antic_renderers.BytePerPixelMemoryMap(),
+    #     ],
     }
 
 
-Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic65C02Disassembler, antic_font_data=fonts.A2DefaultFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0], memory_map=memory_map.Apple2MemoryMap)
-predefined['machine'].append(Apple2)
+# Apple2 = Machine(name="Apple ][", mime_prefix="application/vnd.apple2", disassembler=disasm.Basic65C02Disassembler, antic_font_data=fonts.A2DefaultFont, font_renderer=predefined['font_renderer'][7], font_mapping=predefined['font_mapping'][1], antic_color_registers=[4, 30, 68, 213, 15, 202, 148, 70, 0], memory_map=memory_map.Apple2MemoryMap)
+# predefined['machine'].append(Apple2)

@@ -192,8 +192,34 @@ def calc_dimmed_rgb(rgb_colors, background_color, dimmed_color):
     return registers
 
 
+class NTSCConverter:
+    name = "NTSC"
+    converter = gtia_ntsc_to_rgb
+
+    def __str__(self):
+        return self.name
+
+    def __call__(self, colors):
+        converter = self.__class__.converter
+        return converter(colors)
+
+
+class PALConverter(NTSCConverter):
+    name = "PAL"
+    converter = gtia_pal_to_rgb
+
+
+color_standard_list = [
+    NTSCConverter(),
+    PALConverter(),
+]
+
+valid_color_standards = {item.name: item for item in color_standard_list}
+
+
+
 # Don't export the utility functions
-__all__ = ['atari_color_to_rgb', 'powerup_colors', 'gr0_colors']
+__all__ = ['atari_color_to_rgb', 'powerup_colors', 'gr0_colors', 'color_standard_list', 'valid_color_standards']
 
 
 if __name__ == "__main__":
