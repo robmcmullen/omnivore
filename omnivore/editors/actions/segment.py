@@ -40,7 +40,7 @@ class segment_select(OmnivoreRadioListAction):
                     valid_segments.append(SegmentEntry(segment, i))
         return valid_segments
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         doc = self.editor.document
         if item.segment_number >= len(doc.segments) or item.segment != doc.segments[item.segment_number]:
             raise errors.RecreateDynamicMenuBar

@@ -84,6 +84,9 @@ class view_antic_powerup_colors(ColorAction):
 class view_color_standards(ViewerListAction):
     prefix = "view_color_standards_"
 
+    def calc_enabled(self, action_key):
+        return self.viewer.has_colors
+
     def calc_name(self, action_key):
         item = self.get_item(action_key)
         return str(item)
@@ -91,7 +94,7 @@ class view_color_standards(ViewerListAction):
     def calc_list_items(self):
         return colors.color_standard_list
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         return self.viewer.color_standard_name == item.name
 
     def perform(self, action_key):
@@ -102,6 +105,9 @@ class view_color_standards(ViewerListAction):
 class view_font_renderers(ViewerListAction):
     prefix = "view_font_renderers_"
 
+    def calc_enabled(self, action_key):
+        return self.viewer.has_font
+
     def calc_name(self, action_key):
         item = self.get_item(action_key)
         return str(item)
@@ -109,7 +115,7 @@ class view_font_renderers(ViewerListAction):
     def calc_list_items(self):
         return font_renderer_list
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         return self.viewer.font_renderer_name == item.name
 
     def perform(self, action_key):
@@ -120,6 +126,9 @@ class view_font_renderers(ViewerListAction):
 class view_font_mappings(ViewerListAction):
     prefix = "view_font_mappings_"
 
+    def calc_enabled(self, action_key):
+        return self.viewer.has_font
+
     def calc_name(self, action_key):
         item = self.get_item(action_key)
         return str(item)
@@ -127,7 +136,7 @@ class view_font_mappings(ViewerListAction):
     def calc_list_items(self):
         return font_mapping_list
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         return self.viewer.font_mapping_name == item.name
 
     def perform(self, action_key):

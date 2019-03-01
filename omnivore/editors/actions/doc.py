@@ -26,7 +26,7 @@ class doc_cpu(OmnivoreRadioListAction):
     def calc_list_items(self):
         return valid_cpus
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         return self.editor.document.cpu == item
 
     def perform(self, action_key):
@@ -44,7 +44,7 @@ class doc_os_labels(OmnivoreRadioListAction):
         items = sorted(calc_available_memory_maps().values())
         return items
 
-    def calc_state_list_item(self, action_key, index, item):
+    def calc_checked_list_item(self, action_key, index, item):
         return self.editor.document.operating_system == item.keyword
 
     def perform(self, action_key):
