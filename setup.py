@@ -19,50 +19,17 @@ install_requires = [
     'configobj',
     'pyparsing',
     'pytz',
-    'traits>=4.6',
-    'wxpython>=4.0.3'
+    'wxpython>=4.0.3',
+    'fleep',
     ]
-
 
 cmdclass = dict()
 
-import omnivore_framework
-full_version = omnivore_framework.__version__
+exec(compile(open('omnivore_framework/_version.py').read(), 'omnivore_framework/_version.py', 'exec'))
+exec(compile(open('omnivore_framework/_metadata.py').read(), 'omnivore_framework/_metadata.py', 'exec'))
+
+full_version = __version__
 spaceless_version = full_version.replace(" ", "_")
-
-common_includes = [
-    "ctypes",
-    "ctypes.util",
-    "wx.lib.pubsub.*",
-    "wx.lib.pubsub.core.*",
-    "wx.lib.pubsub.core.kwargs.*",
-    "multiprocessing",
-    "pkg_resources",
-    "configobj",
-    
-    "traits",
-]
-common_includes.extend(omnivore_framework.get_py2exe_toolkit_includes())
-
-py2app_includes = [
-]
-
-common_excludes = [
-    "test",
-#    "unittest", # needed for numpy
-    "pydoc_data",
-     "Tkconstants",
-    "Tkinter", 
-    "tcl", 
-    "_imagingtk",
-    "PIL._imagingtk",
-    "ImageTk",
-    "PIL.ImageTk",
-    "FixTk",
-    ]
-
-py2exe_excludes = [
-    ]
 
 # package_data is for pip and python installs, not for app bundles. Need
 # to use data_files for that
@@ -76,7 +43,6 @@ package_data = {
 # Must explicitly add namespace packages
 packages = find_packages()
 packages.append("omnivore_framework.editors")
-
 
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
@@ -92,10 +58,10 @@ data_files = []
 setup(
     name = 'omnivore-framework',
     version = full_version,
-    author = omnivore_framework.__author__,
-    author_email = omnivore_framework.__author_email__,
-    url = omnivore_framework.__url__,
-    download_url = ('%s/%s.tar.gz' % (omnivore_framework.__download_url__, full_version)),
+    author = __author__,
+    author_email = __author_email__,
+    url = __url__,
+    download_url = ('%s/%s.tar.gz' % (__download_url__, full_version)),
     classifiers = [c.strip() for c in """\
         Development Status :: 5 - Production/Stable
         Intended Audience :: Developers
