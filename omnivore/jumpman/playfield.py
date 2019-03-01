@@ -22,10 +22,10 @@ class JumpmanPlayfieldModel(object):
         self.antic_lines = 88
         self.playfield = self.get_playfield_segment()
         self.pick_buffer = np.zeros((self.items_per_row * self.antic_lines), dtype=np.int32)
-        self.peanut_harvest_diff = -1
+        self.coin_harvest_diff = -1
         self.num_ladders = -1
         self.num_downropes = -1
-        self.num_peanuts = -1
+        self.num_coins = -1
         self.can_select_objects = False
         self.can_erase_objects = False
         self.assembly_source = ""
@@ -73,7 +73,7 @@ class JumpmanPlayfieldModel(object):
             self.force_refresh = True
             self.valid_level = True
             if self.trigger_root is not None:
-                self.trigger_root = self.level_builder.find_equivalent_peanut(self.trigger_root)
+                self.trigger_root = self.level_builder.find_equivalent_coin(self.trigger_root)
             if resync:
                 self.mouse_mode.resync_objects()
         except RuntimeError:
@@ -122,7 +122,7 @@ class JumpmanPlayfieldModel(object):
 
     def set_trigger_root(self, root):
         if root is not None:
-            root = self.level_builder.find_equivalent_peanut(root)
+            root = self.level_builder.find_equivalent_coin(root)
         self.trigger_root = root
         self.force_refresh = True
         self.trigger_state = None
@@ -153,7 +153,7 @@ class JumpmanPlayfieldModel(object):
             self.level_builder.fade_screen(screen)
             root = [self.trigger_root]
             self.level_builder.draw_objects(screen, root, self.segment, highlight=root, pick_buffer=self.pick_buffer)
-            # change highlight to comment color for selected trigger peanut so
+            # change highlight to comment color for selected trigger coin so
             # you don't get confused with any objects actually selected
             old_highlight = np.where(screen.style == selected_bit_mask)
             screen.style[old_highlight] |= comment_bit_mask
@@ -212,7 +212,7 @@ class JumpmanPlayfieldModel(object):
 
     def get_save_location(self):
         if self.trigger_root is not None:
-            equiv = self.level_builder.find_equivalent_peanut(self.trigger_root)
+            equiv = self.level_builder.find_equivalent_coin(self.trigger_root)
             parent = equiv.trigger_painting
         else:
             parent = None
@@ -230,14 +230,14 @@ class JumpmanPlayfieldModel(object):
 
     def save_changes(self, command_cls=jc.MoveObjectCommand):
         source, level_addr, old_harvest_addr = self.get_level_addrs()
-        level_data, harvest_addr, ropeladder_data, num_peanuts = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
+        level_data, harvest_addr, ropeladder_data, num_coins = self.level_builder.create_level_definition(level_addr, source[0x46], source[0x47])
         index = level_addr - source.origin
         ranges = [(0x18,0x2a), (0x3e,0x3f), (0x4e,0x50), (index,index + len(level_data))]
         pdata = np.empty([1], dtype=np.uint8)
-        if self.peanut_harvest_diff < 0:
-            pdata[0] = num_peanuts
+        if self.coin_harvest_diff < 0:
+            pdata[0] = num_coins
         else:
-            pdata[0] = max(0, num_peanuts - self.peanut_harvest_diff)
+            pdata[0] = max(0, num_coins - self.coin_harvest_diff)
         hdata = np.empty([2], dtype=np.uint8)
         hdata.view(dtype="<u2")[0] = harvest_addr
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
@@ -254,7 +254,7 @@ class JumpmanPlayfieldModel(object):
         harvest_state = self.current_level.level_builder.get_harvest_state()
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
-        self.num_peanuts = len(harvest_state.peanuts)
+        self.num_coins = len(harvest_state.coins)
 
     def set_current_draw_pattern(self, pattern, control):
         try:
@@ -379,7 +379,7 @@ class JumpmanPlayfieldModel(object):
         harvest_state = self.level_builder.get_harvest_state()
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
-        self.num_peanuts = len(harvest_state.peanuts)
+        self.num_coins = len(harvest_state.coins)
 
     ##### Jumpman coin triggers
 

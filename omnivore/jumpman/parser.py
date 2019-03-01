@@ -473,8 +473,8 @@ class DownRope(JumpmanDrawObject):
         state.add_downrope(self)
 
 
-class Peanut(JumpmanDrawObject):
-    name = "peanut"
+class Coin(JumpmanDrawObject):
+    name = "coin"
     default_addr = 0x4083
     default_dy = 3
     single = True
@@ -522,12 +522,12 @@ class LevelDef(object):
         self.painting_entries = []
         self.ladder_positions = set()
         self.downrope_positions = set()
-        self.peanuts = set()
+        self.coins = set()
         self.pick_dict = dict()
 
     @property
-    def sorted_peanuts(self):
-        return sorted(self.peanuts, key=lambda a:a.distance)
+    def sorted_coins(self):
+        return sorted(self.coins, key=lambda a:a.distance)
 
     def add_ladder(self, obj):
         self.ladder_positions.add(obj.x + 0x30)
@@ -541,7 +541,7 @@ class LevelDef(object):
     def check_object(self, obj):
         obj.update_table(self)
         if obj.single:
-            self.peanuts.add(obj)
+            self.coins.add(obj)
 
     def get_picked(self, pick_index):
         return self.pick_dict[pick_index]
@@ -630,7 +630,7 @@ class LevelDef(object):
 
         # At this point, the main layer level definition is complete. We
         # now need to create the harvest table entries and painting table
-        # entries from the peanuts that have triggers
+        # entries from the coins that have triggers
         harvest_entries = []
         for obj in trigger_objects:
             h = self.get_harvest_entry(obj, hx, hy)
@@ -670,7 +670,7 @@ class LevelDef(object):
         level_data.extend(harvest_data)
         level_data.extend(painting_data)
 
-        return np.asarray(level_data, dtype=np.uint8), self.origin + harvest_index, self.get_ropeladder_data(), len(self.peanuts)
+        return np.asarray(level_data, dtype=np.uint8), self.origin + harvest_index, self.get_ropeladder_data(), len(self.coins)
 
 
 class ScreenState(LevelDef):
@@ -720,7 +720,7 @@ class ScreenState(LevelDef):
             pixel_list = obj.error_pixel_list
         pixel_list.draw_array(obj, self.screen_2d, self.screen_style_2d, self.pick_buffer_2d, highlight)
 
-        # Draw extra highlight around peanut if has trigger painting functions
+        # Draw extra highlight around coin if has trigger painting functions
         if obj.trigger_painting:
             ox = obj.x + obj.default_dx
             oy = obj.y + obj.default_dy
@@ -799,15 +799,15 @@ class JumpmanLevelBuilder(object):
 
     def check_harvest(self):
         self.check_invalid_harvest(self.objects)
-        self.check_peanut_grid(self.objects)
+        self.check_coin_grid(self.objects)
         self.harvest_ok = not bool(self.harvest_offset_dups) and not bool(self.harvest_bad_locations)
 
     def harvest_reason(self):
         reasons = []
         if self.harvest_offset_dups:
-            reasons.append("* Multiple peanuts in same grid square!\nJumpman will not collect those peanuts properly.")
+            reasons.append("* Multiple coins in same grid square!\nJumpman will not collect those coins properly.")
         if self.harvest_bad_locations:
-            reasons.append("* Peanuts in border area between grid squares!\nGame will crash when collecting those peanuts.")
+            reasons.append("* Coins in border area between grid squares!\nGame will crash when collecting those coins.")
         return "\n\n".join(reasons)
 
     def check_invalid_harvest(self, objs):
@@ -823,19 +823,19 @@ class JumpmanLevelBuilder(object):
             if obj.trigger_painting:
                 self.check_invalid_harvest(obj.trigger_painting)
 
-    def check_peanut_grid(self, objs):
+    def check_coin_grid(self, objs):
         for obj in objs:
             if obj.single:
                 grid = obj.harvest_checksum(*self.harvest_offset)
                 obj.error = grid in self.harvest_offset_dups
                 if obj.error:
-                    log.error("found duplicate peanut @ %s" % grid)
+                    log.error("found duplicate coin @ %s" % grid)
                 else:
                     obj.error = obj.is_bad_location(*self.harvest_offset)
                     if obj.error:
                         log.error("found bad object location")
             if obj.trigger_painting:
-                self.check_peanut_grid(obj.trigger_painting)
+                self.check_coin_grid(obj.trigger_painting)
 
     def parse_objects(self, data):
         x = y = dx = dy = count = 0
@@ -887,7 +887,7 @@ class JumpmanLevelBuilder(object):
         index = horigin - origin
 
         # Walk through the entire list first to pull out any paint objects that
-        # might be peanuts
+        # might be coins
         harvest_info = []
         while index < last:
             c = data[index]
@@ -971,8 +971,8 @@ class JumpmanLevelBuilder(object):
                     found.extend(self.find_equivalent(old_objects, obj.trigger_painting))
         return found
 
-    def find_equivalent_peanut(self, old, objects=None):
-        """ Find the equivalent peanut object.
+    def find_equivalent_coin(self, old, objects=None):
+        """ Find the equivalent coin object.
 
         (see find_equivalent for more info on why this is necessary)
         """
@@ -985,7 +985,7 @@ class JumpmanLevelBuilder(object):
                 obj.orig_y = obj.y
                 found = obj
                 break
-            found = self.find_equivalent_peanut(old, obj.trigger_painting)
+            found = self.find_equivalent_coin(old, obj.trigger_painting)
             if found is not None:
                 break
         return found

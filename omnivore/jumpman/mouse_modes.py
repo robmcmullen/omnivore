@@ -207,7 +207,7 @@ class AnticDSelectMode(JumpmanSelectMode):
         _, _, self.override_state = model.redraw_current(playfield, self.objects)
         log.debug("override_state: %s" % self.override_state)
 
-        # Draw the harvest grid if a peanut is selected
+        # Draw the harvest grid if a coin is selected
         for obj in self.objects:
             if obj.single:
                 self.draw_harvest_grid(playfield)
@@ -448,11 +448,11 @@ class EraseRopeMode(DrawMode):
     editor_trait_for_enabled = 'focused_viewer.can_erase_objects'
 
 
-class DrawPeanutMode(DrawMode):
-    icon = "jumpman_peanut.png"
-    menu_item_name = "Draw Peanuts"
-    menu_item_tooltip = "Draw peanuts (single only)"
-    drawing_object = jp.Peanut
+class DrawCoinMode(DrawMode):
+    icon = "jumpman_coin.png"
+    menu_item_name = "Draw Coins"
+    menu_item_tooltip = "Draw coins (single only)"
+    drawing_object = jp.Coin
 
     def __init__(self, *args, **kwargs):
         DrawMode.__init__(self, *args, **kwargs)

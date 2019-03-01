@@ -409,7 +409,7 @@ class AnticColorsField(InfoField):
     "Player 3",
     "Girder & up ropes",
     "Ladder & down ropes",
-    "Peanuts",
+    "Coins",
     "Bullets",
     "Background",
     ])]
@@ -473,30 +473,30 @@ class DropDownField(InfoField):
         self.panel.linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 
-class PeanutsNeededField(DropDownField):
-    keyword = "peanuts_needed"
+class CoinsNeededField(DropDownField):
+    keyword = "coins_needed"
     same_line = True
 
     def bytes_to_control_data(self, raw):
         e = self.panel.linked_base.jumpman_playfield_model
-        if not hasattr(e, 'num_peanuts'):
+        if not hasattr(e, 'num_coins'):
             return 0
         value = reduce_from_little_endian(raw)
-        diff = e.num_peanuts - value
+        diff = e.num_coins - value
         if diff < 0:
             diff = 0
         diff = min(diff, len(self.choices) - 1)
 
-        if e.peanut_harvest_diff < 0:
+        if e.coin_harvest_diff < 0:
             # First time! Calculate the offset to use subsequently
-            e.peanut_harvest_diff = diff
+            e.coin_harvest_diff = diff
         return diff
 
     def drop_down_changed(self, event):
         e = self.panel.linked_base.jumpman_playfield_model
-        e.peanut_harvest_diff = self.ctrl.GetSelection()
+        e.coin_harvest_diff = self.ctrl.GetSelection()
         raw = np.zeros([self.byte_count],dtype=np.uint8)
-        raw[0] = max(0, e.num_peanuts - e.peanut_harvest_diff)
+        raw[0] = max(0, e.num_coins - e.coin_harvest_diff)
         self.panel.linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
 
 

@@ -4,7 +4,7 @@ from .. import commands as jc
 from ..parser import is_valid_level_segment
 
 class clear_trigger(ViewerAction):
-    """Remove any trigger function from the selected peanut(s).
+    """Remove any trigger function from the selected coin(s).
     
     """
     name = "Clear Trigger Function"
@@ -42,7 +42,7 @@ class clear_trigger(ViewerAction):
 
 
 class set_trigger(clear_trigger):
-    """Set a trigger function for the selected peanut(s).
+    """Set a trigger function for the selected coin(s).
 
     If you have used the custom code option, have compiled your code using the
     built-in assembler, *and* your code has labels that start with ``trigger``,

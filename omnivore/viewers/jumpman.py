@@ -210,7 +210,7 @@ class JumpmanViewer(BitmapViewer):
 
     ##### class attributes
 
-    valid_mouse_modes = [jm.AnticDSelectMode, jm.DrawGirderMode, jm.DrawLadderMode, jm.DrawUpRopeMode, jm.DrawDownRopeMode, jm.DrawPeanutMode, jm.EraseGirderMode, jm.EraseLadderMode, jm.EraseRopeMode, jm.JumpmanRespawnMode]
+    valid_mouse_modes = [jm.AnticDSelectMode, jm.DrawGirderMode, jm.DrawLadderMode, jm.DrawUpRopeMode, jm.DrawDownRopeMode, jm.DrawCoinMode, jm.EraseGirderMode, jm.EraseLadderMode, jm.EraseRopeMode, jm.JumpmanRespawnMode]
 
     default_mouse_mode_cls = jm.AnticDSelectMode
 
@@ -286,7 +286,7 @@ class JumpmanViewer(BitmapViewer):
         harvest_state = self.current_level.level_builder.get_harvest_state()
         self.num_ladders = len(harvest_state.ladder_positions)
         self.num_downropes = len(harvest_state.downrope_positions)
-        self.num_peanuts = len(harvest_state.peanuts)
+        self.num_coins = len(harvest_state.coins)
 
         # FIXME: force redraw of level data here because it depends on the
         # level builder objects so it can count the number of items
@@ -338,7 +338,7 @@ class TriggerList(wx.ListBox):
             self.SetItems([])
             self.triggers = [None]
         else:
-            self.set_peanuts(level)
+            self.set_coins(level)
 
     def refresh_view(self):
         if self.IsShown():
@@ -347,25 +347,25 @@ class TriggerList(wx.ListBox):
         else:
             drawlog.debug("skipping refresh of hidden %s" % self)
 
-    def parse_peanuts(self, peanuts, items, triggers, indent=""):
-        for peanut in peanuts:
-            items.append(indent + peanut.trigger_str)
-            triggers.append(peanut)
+    def parse_coins(self, coins, items, triggers, indent=""):
+        for coin in coins:
+            items.append(indent + coin.trigger_str)
+            triggers.append(coin)
             children = []
-            for p in peanut.trigger_painting:
+            for p in coin.trigger_painting:
                 if p.single:
                     children.append(p)
             if children:
-                self.parse_peanuts(children, items, triggers, indent + "    ")
+                self.parse_coins(children, items, triggers, indent + "    ")
 
-    def set_peanuts(self, level):
+    def set_coins(self, level):
         items = ["Main Level"]
         triggers = [None]
         index = 1
         selected_index = 0
         state = level.screen_state
         if state is not None:
-            self.parse_peanuts(state.sorted_peanuts, items, triggers)
+            self.parse_coins(state.sorted_coins, items, triggers)
             for index, trigger in enumerate(triggers):
                 if trigger == level.trigger_root:
                     selected_index = index
@@ -410,7 +410,7 @@ class TriggerList(wx.ListBox):
         pos = evt.GetPosition()
         selected = self.HitTest(pos)
         if selected >= 0:
-            message = "peanut #%d" % selected
+            message = "coin #%d" % selected
         else:
             message = ""
         # FIXME: set message, maybe in title bar?
@@ -450,9 +450,9 @@ class JumpmanInfoPanel(InfoPanel):
     fields = [
         ("text", "Level Number", 0x00, 2),
         ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
-        ("uint", "Points per Peanut", 0x33, 2, 250),
-        ("label", "# Peanuts", "num_peanuts", 42),
-        ("peanuts_needed", "Peanuts Needed", 0x3e, 1, ["All", "All except 1", "All except 2", "All except 3", "All except 4"]),
+        ("uint", "Points per Coin", 0x33, 2, 250),
+        ("label", "# Coins", "num_coins", 42),
+        ("coins_needed", "Coins Needed", 0x3e, 1, ["All", "All except 1", "All except 2", "All except 3", "All except 4"]),
         ("uint", "Bonus Value", 0x35, 2, 2500),
         ("dropdown", "Number of Bullets", 0x3d, 1, ["None", "1", "2", "3", "4"]),
         ("antic_colors", "Game Colors", 0x2a, 9),
