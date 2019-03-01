@@ -56,10 +56,12 @@ def get_template(name):
 
 
 class TemplateItem(dict):
-    def __init__(self, keyword, inf_type, json_dict):
+    def __init__(self, data_file_path, keyword, inf_type, json_dict):
         dict.__init__(self)
+        self.data_file_path = data_file_path
         self.keyword = keyword
         self.inf_type = inf_type
+        self._data_bytes = None
         for k, v in json_dict.items():
             self[k] = v
             setattr(self, k, v)
@@ -69,6 +71,14 @@ class TemplateItem(dict):
 
     def __lt__(self, other):
         return str(self) < str(other)
+
+    @property
+    def data_bytes(self):
+        if not self._data_bytes:
+            with open(self.data_file_path, 'rb') as fh:
+                self._data_bytes = fh.read()
+        return self._data_bytes
+
 
 def iter_templates(inf_type=None):
     """Returns dictionary containing info about specific template types
@@ -115,6 +125,6 @@ def iter_templates(inf_type=None):
                     j["pathname"] = template_path
                     j["uri"] = "template://" + template_path
                 if j is not None:
-                    item = TemplateItem(keyword, inf_type, j)
+                    item = TemplateItem(template_path, keyword, inf_type, j)
                     log.debug(f"template: {item}")
                     yield item
