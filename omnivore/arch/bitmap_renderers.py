@@ -43,8 +43,8 @@ class BaseRenderer(object):
         return bytes_per_row
 
     def get_colors(self, segment_viewer, registers):
-        color_registers = [segment_viewer.machine.color_registers[r] for r in registers]
-        log.debug(f"get_colors: {color_registers} from {segment_viewer.machine}")
+        color_registers = [segment_viewer.color_registers[r] for r in registers]
+        log.debug(f"get_colors: {color_registers} from {segment_viewer}")
         h_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.highlight_background_color)
         m_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.match_background_color)
         c_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.comment_background_color)
@@ -266,7 +266,7 @@ class ModeB(OneBitPerPixelB):
     scale_height = 2
 
     def get_bw_colors(self, segment_viewer):
-        color_registers = [segment_viewer.machine.color_registers[r] for r in [8, 4]]
+        color_registers = [segment_viewer.color_registers[r] for r in [8, 4]]
         return color_registers
 
 
@@ -661,12 +661,12 @@ class GTIA9(FourBitsPerPixel):
     pixels_per_byte = 2
 
     def get_antic_color_registers(self, segment_viewer):
-        first_color = segment_viewer.machine.antic_color_registers[8] & 0xf0
+        first_color = segment_viewer.antic_color_registers[8] & 0xf0
         return list(range(first_color, first_color + 16))
 
     def get_colors(self, segment_viewer, registers):
         antic_color_registers = self.get_antic_color_registers(segment_viewer)
-        color_registers = segment_viewer.machine.get_color_registers(antic_color_registers)
+        color_registers = colors.get_color_registers(antic_color_registers, segment_viewer.color_standard)
         h_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.highlight_background_color)
         m_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.match_background_color)
         c_colors = colors.get_blended_color_registers(color_registers, segment_viewer.preferences.comment_background_color)
@@ -678,14 +678,14 @@ class GTIA10(GTIA9):
     name = "GTIA 10 (4bpp, 9 colors)"
 
     def get_antic_color_registers(self, segment_viewer):
-        return list(segment_viewer.machine.antic_color_registers[0:9]) + [0] * 7
+        return list(segment_viewer.antic_color_registers[0:9]) + [0] * 7
 
 
 class GTIA11(GTIA9):
     name = "GTIA 11 (4bpp, 1 luminace, 16 colors)"
 
     def get_antic_color_registers(self, segment_viewer):
-        first_color = segment_viewer.machine.antic_color_registers[8] & 0x0f
+        first_color = segment_viewer.antic_color_registers[8] & 0x0f
         return list(range(first_color, first_color + 256, 16))
 
 

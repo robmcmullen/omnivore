@@ -37,7 +37,7 @@ class AnticColorViewer(SegmentViewer):
         if len(value) == 5:
             baseline[4:9] = [int(i) for i in value]
         else:
-            baseline[0:len(c)] = [int(i) for i in value]
+            baseline[0:len(value)] = [int(i) for i in value]
         self._antic_color_registers = baseline
         self._color_registers = None
         print("ANTIC COLOR REGISTERS", self._antic_color_registers)
@@ -65,21 +65,7 @@ class AnticColorViewer(SegmentViewer):
     @property
     def color_registers(self):
         if self._color_registers is None:
-            registers = []
-            for c in self.antic_color_registers:
-                registers.append(self.color_standard(c))
-
-            # make sure there are 16 registers for 4bpp modes
-            i = len(registers)
-            for i in range(len(registers), 16):
-                registers.append((i*16, i*16, i*16))
-
-            # Extend to 32 for dimmed copies of the 16 colors
-            dim = []
-            for r in registers:
-                dim.append((r[0]/4 + 64, r[1]/4 + 64, r[2]/4 + 64))
-            registers.extend(dim)
-            self._color_registers = registers
+            self._color_registers = colors.get_color_registers(self.antic_color_registers, self.color_standard)
         return self._color_registers
 
     def colors_changed(self):

@@ -192,6 +192,24 @@ def calc_dimmed_rgb(rgb_colors, background_color, dimmed_color):
     return registers
 
 
+def get_color_registers(antic_color_registers, color_converter):
+    registers = []
+    for c in antic_color_registers:
+        registers.append(color_converter(c))
+
+    # make sure there are 16 registers for 4bpp modes
+    i = len(registers)
+    for i in range(len(registers), 16):
+        registers.append((i*16, i*16, i*16))
+
+    # Extend to 32 for dimmed copies of the 16 colors
+    dim = []
+    for r in registers:
+        dim.append((r[0]/4 + 64, r[1]/4 + 64, r[2]/4 + 64))
+    registers.extend(dim)
+    return registers
+
+
 class NTSCConverter:
     name = "NTSC"
     converter = gtia_ntsc_to_rgb
