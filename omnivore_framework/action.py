@@ -139,6 +139,9 @@ class OmnivoreAction:
     def calc_name(self, action_key):
         return self.name
 
+    def calc_icon_name(self, action_key):
+        return action_key
+
     def perform(self):
         raise AttributeError(f"no perform method defined for {self}")
 
@@ -157,8 +160,8 @@ class OmnivoreAction:
         tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_NORMAL, name, f"Long help for '{name}'", None)
 
     def calc_bitmap(self, action_key):
-        art_id = art.get_art_id(action_key)
-        return wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR, self.editor.tool_bitmap_size)
+        icon_name = self.calc_icon_name(action_key)
+        return art.get_bitmap(icon_name, self.editor.tool_bitmap_size)
 
     def init_from_editor(self):
         pass
