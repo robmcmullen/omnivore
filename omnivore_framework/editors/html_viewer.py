@@ -36,6 +36,10 @@ class HtmlWindow(wx.html.HtmlWindow):
 class HtmlViewer(OmnivoreEditor):
     name = "html_viewer"
 
+    toolbar_desc = [
+        "open_file", "save_file", None, "copy"
+    ]
+
     @property
     def can_copy(self):
         return bool(self.control.SelectionToText())

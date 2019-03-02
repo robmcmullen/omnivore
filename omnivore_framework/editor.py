@@ -89,7 +89,7 @@ class OmnivoreEditor:
     }
 
     toolbar_desc = [
-        "new_file", "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste"
+        "open_file", "save_file", None, "undo", "redo", None, "copy", "cut", "paste"
     ]
 
     statusbar_desc = [
