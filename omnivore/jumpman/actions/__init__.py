@@ -1,7 +1,8 @@
-from ...viewers.actions import ViewerAction, ViewerActionMixin, ViewerListAction
+from ...viewers.actions import ViewerAction, ViewerActionMixin, ViewerListAction, ViewerRadioAction
 from ...editors.actions.segment import segment_select
 from .. import commands as jc
 from ..parser import is_valid_level_segment
+from .. import mouse_modes as mm
 
 class clear_trigger(ViewerAction):
     """Remove any trigger function from the selected coin(s).
@@ -187,3 +188,49 @@ class jumpman_level_list(ViewerActionMixin, segment_select):
 
     def is_valid_segment(self, segment):
         return is_valid_level_segment(segment)
+
+
+class JumpmanMouseModeTool(ViewerRadioAction):
+    mouse_mode_cls = None
+
+    def calc_name(self, action_key):
+        return self.mouse_mode_cls.menu_item_tooltip
+
+    def calc_enabled(self, action_key):
+        return True
+
+    def calc_checked(self, action_key):
+        return self.viewer.control.is_mouse_mode(self.mouse_mode_cls)
+
+    def perform(self, action_key):
+        self.viewer.control.set_mouse_mode(self.mouse_mode_cls)
+
+class jumpman_select_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.AnticDSelectMode
+
+class jumpman_draw_girder_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.DrawGirderMode
+
+class jumpman_draw_ladder_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.DrawLadderMode
+
+class jumpman_draw_up_rope_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.DrawUpRopeMode
+
+class jumpman_draw_down_rope_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.DrawDownRopeMode
+
+class jumpman_erase_girder_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.EraseGirderMode
+
+class jumpman_erase_ladder_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.EraseLadderMode
+
+class jumpman_erase_rope_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.EraseRopeMode
+
+class jumpman_draw_coin_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.DrawCoinMode
+
+class jumpman_respawn_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.JumpmanRespawnMode

@@ -112,6 +112,9 @@ class SegmentViewer:
     # is focused
     exclude_from_menubar = ["Jumpman"]
 
+    # List of toolbar items that should only be shown with this viewer
+    viewer_extra_toolbar_desc = []
+
     def __init__(self, control, linked_base):
         self.uuid = str(uuid.uuid4())
         self.control = control
@@ -449,6 +452,10 @@ class SegmentViewer:
         for tool in orig_desc:
             if tool is None or self.is_tool_valid(tool):
                 desc.append(tool)
+        if self.viewer_extra_toolbar_desc:
+            if desc:
+                desc.append(None)
+            desc.extend(self.viewer_extra_toolbar_desc)
         return desc
 
     def is_tool_valid(self, menu):

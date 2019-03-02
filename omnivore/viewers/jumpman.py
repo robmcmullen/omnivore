@@ -216,6 +216,8 @@ class JumpmanViewer(BitmapViewer):
 
     exclude_from_menubar = ["Segments"]
 
+    viewer_extra_toolbar_desc = ["jumpman_select_mode", "jumpman_draw_girder_mode", "jumpman_draw_ladder_mode", "jumpman_draw_up_rope_mode", "jumpman_draw_down_rope_mode", "jumpman_erase_girder_mode", "jumpman_erase_ladder_mode", "jumpman_erase_rope_mode", "jumpman_draw_coin_mode", "jumpman_respawn_mode"]
+
 
     def __init__(self, *args, **kwargs):
         BitmapViewer.__init__(self, *args, **kwargs)
