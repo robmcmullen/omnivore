@@ -196,6 +196,9 @@ class JumpmanMouseModeTool(ViewerRadioAction):
     def calc_name(self, action_key):
         return self.mouse_mode_cls.menu_item_tooltip
 
+    def calc_icon_name(self, action_key):
+        return self.mouse_mode_cls.icon
+
     def calc_enabled(self, action_key):
         return True
 

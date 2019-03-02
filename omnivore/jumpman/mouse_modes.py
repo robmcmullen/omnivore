@@ -171,7 +171,7 @@ class JumpmanSelectMode(NormalSelectMode):
 
 
 class AnticDSelectMode(JumpmanSelectMode):
-    icon = "select.png"
+    icon = "select"
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
     min_mouse_distance = 2
@@ -318,7 +318,7 @@ class AnticDSelectMode(JumpmanSelectMode):
 
 
 class DrawMode(JumpmanSelectMode):
-    icon = "select.png"
+    icon = "select"
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw stuff"
     drawing_object = jp.Girder
@@ -397,35 +397,35 @@ class DrawMode(JumpmanSelectMode):
 
 
 class DrawGirderMode(DrawMode):
-    icon = "jumpman_girder.png"
+    icon = "jumpman_girder"
     menu_item_name = "Draw Girder"
     menu_item_tooltip = "Draw girders"
     drawing_object = jp.Girder
 
 
 class DrawLadderMode(DrawMode):
-    icon = "jumpman_ladder.png"
+    icon = "jumpman_ladder"
     menu_item_name = "Draw Ladder"
     menu_item_tooltip = "Draw ladders (vertical only)"
     drawing_object = jp.Ladder
 
 
 class DrawUpRopeMode(DrawMode):
-    icon = "jumpman_uprope.png"
+    icon = "jumpman_uprope"
     menu_item_name = "Draw Up Rope"
     menu_item_tooltip = "Draw up ropes (vertical only)"
     drawing_object = jp.UpRope
 
 
 class DrawDownRopeMode(DrawMode):
-    icon = "jumpman_downrope.png"
+    icon = "jumpman_downrope"
     menu_item_name = "Draw Down Rope"
     menu_item_tooltip = "Draw down ropes (vertical only)"
     drawing_object = jp.DownRope
 
 
 class EraseGirderMode(DrawMode):
-    icon = "jumpman_erase_girder.png"
+    icon = "jumpman_erase_girder"
     menu_item_name = "Erase Girder"
     menu_item_tooltip = "Erase girders"
     drawing_object = jp.EraseGirder
@@ -433,7 +433,7 @@ class EraseGirderMode(DrawMode):
 
 
 class EraseLadderMode(DrawMode):
-    icon = "jumpman_erase_ladder.png"
+    icon = "jumpman_erase_ladder"
     menu_item_name = "Erase Ladder"
     menu_item_tooltip = "Erase ladders (vertical only)"
     drawing_object = jp.EraseLadder
@@ -441,7 +441,7 @@ class EraseLadderMode(DrawMode):
 
 
 class EraseRopeMode(DrawMode):
-    icon = "jumpman_erase_rope.png"
+    icon = "jumpman_erase_rope"
     menu_item_name = "Erase Rope"
     menu_item_tooltip = "Erase ropes (vertical only)"
     drawing_object = jp.EraseRope
@@ -449,7 +449,7 @@ class EraseRopeMode(DrawMode):
 
 
 class DrawCoinMode(DrawMode):
-    icon = "jumpman_coin.png"
+    icon = "jumpman_coin"
     menu_item_name = "Draw Coins"
     menu_item_tooltip = "Draw coins (single only)"
     drawing_object = jp.Coin
@@ -550,7 +550,7 @@ class DrawCoinMode(DrawMode):
 
 
 class JumpmanRespawnMode(DrawMode):
-    icon = "jumpman_respawn.png"
+    icon = "jumpman_respawn"
     menu_item_name = "Set Jumpman Start"
     menu_item_tooltip = "Set jumpman respawn position"
     drawing_object = jp.JumpmanRespawn
