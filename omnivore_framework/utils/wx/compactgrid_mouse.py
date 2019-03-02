@@ -1049,9 +1049,10 @@ class MouseEventMixin:
 
     def set_mouse_mode(self, mode=None):
         self.release_mouse()
+        mode_log.debug(f"set_mouse_mode: current mode: {self.mouse_mode}")
         if mode is None:
             mode = self.default_mouse_mode_cls
-        if self.is_mouse_mode(mode):
+        if not self.is_mouse_mode(mode):
             mode_log.debug("set_mouse_mode: %s" % mode)
             self.mouse_mode = mode(self)
         else:
