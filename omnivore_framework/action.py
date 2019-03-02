@@ -180,7 +180,7 @@ class OmnivoreAction:
 
 class OmnivoreActionRadioMixin:
     def append_to_menu(self, menu, id, action_key):
-        menu.AppendRadioItem(id, self.calc_name(action_key))
+        menu.AppendCheckItem(id, self.calc_name(action_key))
 
     def append_to_toolbar(self, tb, id, action_key):
         name = self.calc_name(action_key)
