@@ -218,18 +218,22 @@ class OmnivoreFrame(wx.Frame):
     def on_menu(self, evt):
         action_id = evt.GetId()
         log.debug(f"on_menu: menu id: {action_id}")
+        action = None
         try:
             action_key, action = self.menubar.valid_id_map[action_id]
+        except KeyError:
+            try:
+                action_key, action = self.toolbar.valid_id_map[action_id]
+            except KeyError:
+                log.warning("No id {action_id} found in menubar or toolbar")
+        if action is not None:
+            log.debug(f"found action {action}")
             try:
                 wx.CallAfter(action.perform, action_key)
             except AttributeError:
                 log.debug(f"no perform method for {action}")
             else:
                 log.debug(f"on_menu: found action_key={action_key}, action={action}")
-        except KeyError as e:
-            log.debug(f"menu id {action_id} not found: {e}")
-        else:
-            log.debug(f"found action {action}")
         evt.Skip()
 
     def on_page_changed(self, evt):

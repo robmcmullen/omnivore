@@ -157,7 +157,7 @@ class OmnivoreAction:
 
     def append_to_toolbar(self, tb, id, action_key):
         name = self.calc_name(action_key)
-        tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_NORMAL, name, f"Long help for '{name}'", None)
+        tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_NORMAL, name, f"{action_key} id={id} '{name}'", None)
 
     def calc_bitmap(self, action_key):
         icon_name = self.calc_icon_name(action_key)
@@ -184,7 +184,7 @@ class OmnivoreActionRadioMixin:
 
     def append_to_toolbar(self, tb, id, action_key):
         name = self.calc_name(action_key)
-        tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_RADIO, name, f"Long help for '{name}'", None)
+        tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_RADIO, name, f"{action_key} id={id} '{name}'", None)
 
 
 class OmnivoreRadioAction(OmnivoreActionRadioMixin, OmnivoreAction):
