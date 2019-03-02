@@ -219,7 +219,10 @@ class AnticDSelectMode(JumpmanSelectMode):
             state = self.override_state
         else:
             state = self.control.model.get_screen_state()
-        return state.get_picked(pick)
+        if state is not None:
+            return state.get_picked(pick)
+        else:
+            raise ValueError("Invalid state")
 
     def highlight_pick(self, evt):
         x, y, pick = self.get_xy(evt)
@@ -266,9 +269,13 @@ class AnticDSelectMode(JumpmanSelectMode):
 
     def process_left_down(self, evt):
         selectlog.debug("left down: %s" % evt)
-        self.highlight_pick(evt)
-        self.control.refresh_view()
-        self.display_coords(evt)
+        try:
+            self.highlight_pick(evt)
+        except ValueError:
+            pass
+        else:
+            self.control.refresh_view()
+            self.display_coords(evt)
 
     def process_mouse_motion_down(self, evt):
         if self.objects:
@@ -304,7 +311,10 @@ class AnticDSelectMode(JumpmanSelectMode):
                 self.control.segment_viewer.set_trigger_view(obj)
 
     def process_left_dclick(self, evt):
-        self.check_trigger_pick(evt)
+        try:
+            self.check_trigger_pick(evt)
+        except ValueError:
+            pass
         evt.Skip()
 
     def delete_key_pressed(self):
