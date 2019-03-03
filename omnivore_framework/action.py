@@ -212,12 +212,8 @@ class OmnivoreActionListMixin:
 
     empty_list_name = "No Items"
 
-    prefix_count = None
-
-    @classmethod
-    def init_prefix(cls):
-        if cls.prefix_count is None:
-            cls.prefix_count = len(cls.prefix)
+    def init_prefix(self):
+        self.prefix_count = len(self.prefix)
 
     def init_from_editor(self):
         self.init_prefix()
