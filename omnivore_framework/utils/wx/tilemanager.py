@@ -321,7 +321,7 @@ class DockTarget(object):
         if source_leaf == self:
             # dummy rectangle for feedback, but can't drop on itself
             rects.append((None, None, r))
-        else:
+        elif self.tile_mgr.dock_target_mode == "split":
             w = r.width // 4
             h = r.height // 4
             ty = r.y + r.height - h
@@ -330,13 +330,24 @@ class DockTarget(object):
             rects.append((self, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))
             rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))
             rects.append((self, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))
+        else:
+            rects.append((self, None, r))
         return rects
 
     def process_dock_target(self, leaf, side):
         log.debug(f"inserting leaf={leaf}, splitting leaf={self} on side={side}")
-        leaf.detach()
-        self.tile_mgr.do_layout()
-        self.split_side(new_side=side, view=leaf)
+        if side is None:
+            # swapping leaf parent
+            self_client = self.detach_client()
+            other_client = leaf.detach_client()
+            self.attach_client(other_client)
+            leaf.attach_client(self_client)
+            self.tile_mgr.do_layout()
+        else:
+            # splitting current leaf
+            leaf.detach()
+            self.tile_mgr.do_layout()
+            self.split_side(new_side=side, view=leaf)
 
 
 class TileManager(wx.Window):
@@ -396,6 +407,7 @@ class TileManager(wx.Window):
         self.menu_popdown_mode = False
         self.menu_hit_test = None
         self.menu_currently_displayed = None
+        self.dock_target_mode = "swap"  # or "split" to split target window on drop
 
     def set_defaults(self):
         self.child_window_x = 2
@@ -1794,56 +1806,28 @@ class TitleBar(wx.Window):
             self.client.maximize()
 
 
-    class VSplitNewLeft(Button):
+    class VSplit(Button):
         def draw_button(self, dc, size, bg_brush, pen, fg_brush):
             split = size.x // 2
             dc.SetBrush(bg_brush)
             dc.SetPen(pen)
-            dc.DrawRectangle(0, 0, split + 1, size.y)
-            dc.SetBrush(fg_brush)
-            dc.DrawRectangle(split, 0, size.x - split, size.y)
-
-        def do_action(self, evt):
-            self.client.split_side(wx.LEFT)
-
-
-    class VSplitNewRight(Button):
-        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-            split = size.x // 2
-            dc.SetBrush(bg_brush)
-            dc.SetPen(pen)
-            dc.DrawRectangle(split, 0, size.x - split, size.y)
-            dc.SetBrush(fg_brush)
-            dc.DrawRectangle(0, 0, split + 1, size.y)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+            dc.DrawLine(split, 0, split, size.y)
 
         def do_action(self, evt):
             self.client.split_side(wx.RIGHT)
 
 
-    class HSplitNewBot(Button):
+    class HSplit(Button):
         def draw_button(self, dc, size, bg_brush, pen, fg_brush):
             split = size.y // 2
             dc.SetBrush(bg_brush)
             dc.SetPen(pen)
-            dc.DrawRectangle(0, split, size.x, size.y - split)
-            dc.SetBrush(fg_brush)
-            dc.DrawRectangle(0, 0, size.x, split + 1)
+            dc.DrawRectangle(0, 0, size.x, size.y)
+            dc.DrawLine(0, split, size.x, split)
 
         def do_action(self, evt):
             self.client.split_side(wx.BOTTOM)
-
-
-    class HSplitNewTop(Button):
-        def draw_button(self, dc, size, bg_brush, pen, fg_brush):
-            split = size.y // 2
-            dc.SetBrush(bg_brush)
-            dc.SetPen(pen)
-            dc.DrawRectangle(0, 0, size.x, split + 1)
-            dc.SetBrush(fg_brush)
-            dc.DrawRectangle(0, split, size.x, size.y - split)
-
-        def do_action(self, evt):
-            self.client.split_side(wx.TOP)
 
 
     class Toggle(Button):
@@ -1881,10 +1865,8 @@ class TitleBar(wx.Window):
         self.buttons.append(TitleBar.Closer(self, m.close_button_size))
         self.buttons.append(TitleBar.Minimize(self, m.close_button_size))
         self.buttons.append(TitleBar.Maximize(self, m.close_button_size))
-        self.buttons.append(TitleBar.HSplitNewBot(self, m.close_button_size))
-        self.buttons.append(TitleBar.HSplitNewTop(self, m.close_button_size))
-        self.buttons.append(TitleBar.VSplitNewRight(self, m.close_button_size))
-        self.buttons.append(TitleBar.VSplitNewLeft(self, m.close_button_size))
+        self.buttons.append(TitleBar.HSplit(self, m.close_button_size))
+        self.buttons.append(TitleBar.VSplit(self, m.close_button_size))
 
         self.toggle_buttons = []
         self.toggle_buttons.append(TitleBar.Toggle(self, m.close_button_size, 1))
