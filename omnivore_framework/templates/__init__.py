@@ -100,6 +100,7 @@ def iter_templates(inf_type=None):
             inf_path = template_path + ".inf"
             j = None
             if os.path.exists(template_path) and os.path.isfile(template_path):
+                log.debug(f"checking template {template_path} for {inf_type}")
                 keyword = os.path.basename(template_path)
                 keyword2, ext = os.path.splitext(keyword)
                 if ext and ext[1:] == inf_type:
@@ -111,10 +112,13 @@ def iter_templates(inf_type=None):
                         with open(inf_path, "r") as fh:
                             j = json.loads(fh.read())
                     except ValueError as e:
-                        log.debug(f"Error in json: {e}")
-                        j = {}
-                    if inf_type and "type" in j and j["type"] != inf_type:
+                        log.error(f"Template properties error in {inf_path}: {e}")
                         continue
+                    if inf_type:
+                        if "type" not in j and ext and ext != inf_type:
+                            continue
+                        elif "type" in j and j["type"] != inf_type:
+                            continue
                     j["pathname"] = template_path
                     j["uri"] = "template://" + template_path
                     if "task" in j and j["task"] == "hex_edit":
