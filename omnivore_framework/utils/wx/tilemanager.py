@@ -286,27 +286,27 @@ class DockTarget(object):
 
     def find_uuid(self, uuid):
         if uuid == self.client.child_uuid:
-            log.debug("find_uuid: found %s in %s" % (uuid, self.client.child.GetName()))
+            log.debug(f"find_uuid: found {uuid} in {self.client.child.GetName()}")
             return self.client
-        log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
+        log.debug(f"find_uuid: skipping {self.client.child_uuid} in {self.client.child.GetName()}")
         return None
 
     def find_control(self, control):
         if control == self.client.child:
-            log.debug("find_control: found %s in %s" % (control, self.client.child.GetName()))
+            log.debug(f"find_control: found {control} in { self.client.child.GetName()}")
             return self.client
-        log.debug("find_control: skipping %s in %s" % (self.client.child, self.client.child.GetName()))
+        log.debug(f"find_control: skipping {self.client.child} in { self.client.child.GetName()}")
         return None
 
     def find_empty(self):
         if hasattr(self.client.child, "tile_manager_empty_control") and self.client.child.tile_manager_empty_control:
-            log.debug("find_empty: found %s" % (self.client.child.GetName()))
+            log.debug(f"find_empty: found {self.client.child.GetName()}")
             return self.client
-        log.debug("find_empty: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
+        log.debug(f"find_empty: skipping {self.client.child_uuid} in { self.client.child.GetName()}")
         return None
 
     def iter_leafs(self):
-        log.debug("iter_leafs: found %s" % (self.client.child.GetName()))
+        log.debug(f"iter_leafs: found {self.client.child.GetName()}")
         yield self
 
     def calc_rectangle_relative_to(self, event_window):
@@ -836,15 +836,15 @@ class TileManager(wx.Window):
             pos = evt.GetPosition()
             menu_item = self.menu_hit_test.in_rect(pos)
             if menu_item is None:
-                log.debug("on_motion: not over any menu; leaving menu displayed %s" % self.menu_currently_displayed)
+                log.debug(f"on_motion: not over any menu; leaving menu displayed {self.menu_currently_displayed}")
             elif self.menu_currently_displayed != menu_item:
                 if self.menu_currently_displayed is not None:
                     self.menu_currently_displayed.close_menu()
                 self.menu_currently_displayed = menu_item
                 menu_item.open_menu()
-                log.debug("on_motion: changing menu to %s" % menu_item)
+                log.debug(f"on_motion: changing menu to {menu_item}")
             else:
-                log.debug("on_motion: still displaying same menu %s" % menu_item)
+                log.debug(f"on_motion: still displaying same menu {menu_item}")
 
     def on_left_up(self, evt):
         if self.dock_handler.is_active:
@@ -903,12 +903,12 @@ class TileManager(wx.Window):
         stops here.
         """
         key = evt.GetKeyCode()
-        log.debug("on_char_hook evt=%s" % key)
+        log.debug(f"on_char_hook evt={key}")
 
         skip = True
         if key == wx.WXK_ESCAPE:
             if self.menu_currently_displayed is not None:
-                log.debug("on_char_hook: popping down active sidebar %s" % self.menu_currently_displayed)
+                log.debug(f"on_char_hook: popping down active sidebar {self.menu_currently_displayed}")
                 self.force_clear_sidebar()
                 skip = False
         if skip:
@@ -1106,7 +1106,7 @@ class ViewContainer(object):
         raise NotImplementedError("implement in subclass!")
 
     def detach_leaf(self, view):
-        log.debug("detach_leaf: view=%s views=%s self=%s parent=%s" % (view, self.views, self, self.GetParent()))
+        log.debug(f"detach_leaf: view={view} views={self.views} self={self} parent={self.GetParent()}")
         index = self.find_leaf_index(view)  # raise IndexError
         view.reparent_to(self.tile_mgr.hiding_space)
         self.delete_leaf_from_list(view, index)
@@ -1237,11 +1237,11 @@ class TileSplit(TileWindowBase, ViewContainer):
             _, h = self.second.GetSize()
             self.y_max = y + h
             self.y_max -= TileManager.sizer_thickness
-            log.debug("calc_extrema: min %d, y %d, h %d, max %d" % (self.y_min, y, h, self.y_max))
+            log.debug(f"calc_extrema: min,y,h,max: {self.y_min}, {y}, {h}, {self.y_max}")
 
         def set_ratios(self, x, y):
             r = float(y - self.zero_pos[1]) / float(self.total_height) * self.total_ratio
-            log.debug("y,r,y_min,xmax", y, r, self.y_min, self.y_max)
+            log.debug(f"y,r,y_min,xmax: {y}, {r}, {self.y_min}, {self.y_max}")
             if y > self.y_min and y < self.y_max:
                 self.first.ratio_in_parent = r
                 self.second.ratio_in_parent = self.total_ratio - r
@@ -1270,7 +1270,7 @@ class TileSplit(TileWindowBase, ViewContainer):
         return "<TileSplit %s %f>" % (self.debug_id, self.ratio_in_parent)
 
     def split(self, leaf, control=None, uuid=None, new_side=wx.RIGHT, view=None, **kwargs):
-        log.debug("split: using view %s" % view)
+        log.debug(f"split: using view {view}")
         layout_direction = side_to_direction[new_side]
         if layout_direction != self.layout_direction:
             new_view = self.split_opposite(leaf, control, uuid, new_side, view, **kwargs)
@@ -1348,7 +1348,7 @@ class TileSplit(TileWindowBase, ViewContainer):
 
     def delete_leaf_from_list(self, view, index):
         if len(self.views) > 2:
-            log.debug("deleting > 2: %d %s" %(index, self.views))
+            log.debug(f"deleting > 2: {index}, {self.views}")
             del self.views[index]
             # add ratio to whichever leaf is bigger
             possible_views = self.views[index - 1: index + 1]
@@ -1360,23 +1360,23 @@ class TileSplit(TileWindowBase, ViewContainer):
             self.do_layout()
             self.tile_mgr.send_layout_changed_event()
         elif len(self.views) == 2:
-            log.debug("deleting == 2: %d %s, parent=%s self=%s" % (index, self.views, self.GetParent(), self))
+            log.debug(f"deleting == 2: {index}, {self.views}, parent={self.GetParent()} self={self}")
             # remove leaf, resulting in a single leaf inside a multisplit.
             # Instead of leaving it like this, move it up into the parent
             # multisplit
             del self.views[index]
             if self.GetParent() == self.tile_mgr:
                 # Only one item left.
-                log.debug("  last item in %s!" % (self))
+                log.debug(f"  last item in {self}")
                 self.views[0].ratio_in_parent = 1.0
                 self.do_layout()
             else:
-                log.debug("  deleting %s from parent %s parent views=%s" % (self, self.GetParent(), self.GetParent().views))
+                log.debug(f"  deleting {self} from parent {self.GetParent()} parent views={self.GetParent().views}")
                 self.GetParent().reparent_from_splitter(self)
                 self.tile_mgr.send_layout_changed_event()
         else:
             # must be at the top; the final splitter.
-            log.debug("Removing the last item!", view)
+            log.debug(f"Removing the last item! {view}")
             self.GetParent().clear_main_splitter()
 
     def reparent_from_splitter(self, splitter):
@@ -1482,7 +1482,7 @@ class TileClient(wx.Window):
                 uuid = str(uuid4())
             self.child_uuid = uuid
 
-        log.debug("Created client for %s" % self.child.GetName())
+        log.debug(f"Created client for {self.child.GetName()}")
         if leaf is None:
             leaf = parent
         self.set_leaf(leaf)
@@ -1527,13 +1527,13 @@ class TileClient(wx.Window):
         return not self.GetEventHandler().ProcessEvent(evt) or evt.IsAllowed()
 
     def do_send_close_event(self):
-        log.debug("sending close event for %s" % self)
+        log.debug(f"sending close event for {self}")
         evt = TileManagerEvent(TileManager.wxEVT_CLIENT_CLOSE, self)
         evt.SetChild(self.child)
         self.do_send_event(evt)
 
     def do_send_replace_event(self, new_child):
-        log.debug("sending replace event for %s" % self)
+        log.debug(f"sending replace event for {self}")
         evt = TileManagerEvent(TileManager.wxEVT_CLIENT_REPLACE, self)
         evt.SetChild(self.child)
         evt.SetReplacementChild(new_child)
@@ -2125,9 +2125,9 @@ class SidebarMenuItem(wx.Window, DockTarget):
 
     def find_uuid(self, uuid):
         if uuid == self.client.child_uuid:
-            log.debug("find_uuid: found %s in %s" % (uuid, self.client.child.GetName()))
+            log.debug(f"find_uuid: found {uuid} in {self.client.child.GetName()}")
             return self.client
-        log.debug("find_uuid: skipping %s in %s" % (self.client.child_uuid, self.client.child.GetName()))
+        log.debug(f"find_uuid: skipping {self.client.child_uuid} in {self.client.child.GetName()}")
         return None
 
     def destroy_leaf(self):
