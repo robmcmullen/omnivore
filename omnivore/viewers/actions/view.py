@@ -7,7 +7,7 @@ import wx
 
 from omnivore_framework.utils.wx import dialogs
 
-from . import ViewerAction, ViewerListAction
+from . import ViewerAction, ViewerListAction, ViewerRadioListAction
 from .. import commands
 from ...arch import colors
 from ...arch.bitmap_renderers import bitmap_renderer_list
@@ -15,7 +15,7 @@ from ...arch.fonts import font_list
 from ...arch.font_renderers import font_renderer_list
 from ...arch.font_mappings import font_mapping_list
 from ...arch.ui.antic_colors import AnticColorDialog
-from ...viewer import find_viewer_class_by_name
+from ...viewer import find_viewer_class_by_name, get_viewers
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class view_antic_powerup_colors(ColorAction):
         self.viewer.antic_color_registers = colors.powerup_colors()
 
 
-class view_color_standards(ViewerListAction):
+class view_color_standards(ViewerRadioListAction):
     prefix = "view_color_standards_"
 
     def calc_enabled(self, action_key):
@@ -105,7 +105,7 @@ class view_color_standards(ViewerListAction):
         self.viewer.color_standard_name = item.name
 
 
-class view_bitmap_renderers(ViewerListAction):
+class view_bitmap_renderers(ViewerRadioListAction):
     prefix = "view_bitmap_renderers_"
 
     def calc_enabled(self, action_key):
@@ -126,7 +126,7 @@ class view_bitmap_renderers(ViewerListAction):
         self.viewer.bitmap_renderer_name = item.name
 
 
-class view_font_renderers(ViewerListAction):
+class view_font_renderers(ViewerRadioListAction):
     prefix = "view_font_renderers_"
 
     def calc_enabled(self, action_key):
@@ -147,7 +147,7 @@ class view_font_renderers(ViewerListAction):
         self.viewer.font_renderer_name = item.name
 
 
-class view_font_mappings(ViewerListAction):
+class view_font_mappings(ViewerRadioListAction):
     prefix = "view_font_mappings_"
 
     def calc_enabled(self, action_key):
@@ -168,7 +168,7 @@ class view_font_mappings(ViewerListAction):
         self.viewer.font_mapping_name = item.name
 
 
-class view_fonts(ViewerListAction):
+class view_fonts(ViewerRadioListAction):
     prefix = "view_fonts_"
 
     def calc_enabled(self, action_key):
@@ -189,19 +189,28 @@ class view_fonts(ViewerListAction):
         self.viewer.antic_font_data = item
 
 
-class view_add_hex(ViewerAction):
-    def get_viewer_name(self, action_key):
-        return action_key[9:]
+class view_add_viewer(ViewerListAction):
+    prefix = "view_add_viewer_"
+
+    def prune_viewers(self, viewer_cls):
+        return viewer_cls.viewer_category != "Emulator"
+
+    def calc_list_items(self):
+        subset = [v for v in get_viewers().values() if self.prune_viewers(v)]
+        subset.sort(key=lambda v: v.pretty_name)
+        return subset
 
     def calc_name(self, action_key):
-        viewer_name = self.get_viewer_name(action_key)
-        viewer = find_viewer_class_by_name(viewer_name)
+        viewer = self.get_item(action_key)
         return viewer.pretty_name
 
     def perform(self, action_key):
-        viewer_name = self.get_viewer_name(action_key)
-        self.editor.add_viewer_by_name(viewer_name)
+        viewer = self.get_item(action_key)
+        self.editor.add_viewer(viewer)
 
 
-class view_add_char(view_add_hex):
-    pass
+class view_add_emulation_viewer(view_add_viewer):
+    prefix = "view_add_emulation_viewer_"
+
+    def prune_viewers(self, viewer_cls):
+        return viewer_cls.viewer_category == "Emulator"

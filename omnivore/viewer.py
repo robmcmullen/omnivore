@@ -33,9 +33,7 @@ def get_viewers():
             mod = entry_point.load()
             log.debug(f"get_viewers: Found module {entry_point.name}")
             for name, obj in inspect.getmembers(mod):
-                if inspect.isclass(obj) and SegmentViewer in obj.__mro__[1:]:
-                    # only use subclasses of SegmentViewer, not the
-                    # SegmentViewer base class itself
+                if inspect.isclass(obj) and SegmentViewer in obj.__mro__ and obj.name:
                     log.debug(f"get_viewers: Found viewer class {name}")
                     viewers[obj.name] = obj
         known_viewers = viewers
@@ -65,9 +63,9 @@ class SegmentViewer:
     """
     ##### class attributes
 
-    name = "_base_"
+    name = ""  # slug to uniquely identify viewer class
 
-    pretty_name = "_base_"
+    pretty_name = ""  # text to be used in titles and menus
 
     viewer_category = "Data"
 

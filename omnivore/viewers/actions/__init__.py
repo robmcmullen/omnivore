@@ -1,6 +1,6 @@
 """Baseclass for actions with common code applicable to viewers
 """
-from omnivore_framework.action import OmnivoreAction, OmnivoreRadioAction, OmnivoreRadioListAction
+from omnivore_framework.action import OmnivoreAction, OmnivoreListAction, OmnivoreRadioAction, OmnivoreRadioListAction
 
 import logging
 log = logging.getLogger(__name__)
@@ -24,5 +24,9 @@ class ViewerRadioAction(ViewerActionMixin, OmnivoreRadioAction):
     pass
 
 
-class ViewerListAction(ViewerActionMixin, OmnivoreRadioListAction):
+class ViewerListAction(ViewerActionMixin, OmnivoreListAction):
+    pass
+
+
+class ViewerRadioListAction(ViewerActionMixin, OmnivoreRadioListAction):
     pass
