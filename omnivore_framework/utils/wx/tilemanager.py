@@ -327,11 +327,16 @@ class DockTarget(object):
         if side is None:
             # swapping leaf parent
             self_client = self.detach_client()
-            other_client = leaf.detach_client()
-            self.attach_client(other_client)
-            leaf.attach_client(self_client)
-            self.tile_mgr.do_layout()
-        else:
+            if self_client is None:
+                # target is a sidebar with nothing in it, so force the
+                # "splitting current leaf" routine below
+                side = True
+            else:
+                other_client = leaf.detach_client()
+                self.attach_client(other_client)
+                leaf.attach_client(self_client)
+                self.tile_mgr.do_layout()
+        if side is not None:
             # splitting current leaf
             leaf.detach()
             self.tile_mgr.do_layout()
@@ -2113,6 +2118,9 @@ class MissingSidebarDock(DockTarget):
         self.tile_mgr = tile_mgr
         self.title_renderer = Sidebar.renderers[side]
 
+    def detach_client(self):
+        return None
+
     def calc_docking_rectangles(self, event_window, source_leaf):
         mw, mh = self.tile_mgr.GetClientSize()
         ux, uy, uw, uh = self.tile_mgr.calc_usable_rect()
@@ -2729,6 +2737,10 @@ if __name__ == '__main__':
     frame.SetSizer(sizer)
     frame.Layout()
     frame.Show(True)
+
+    logging.basicConfig(level=logging.DEBUG)
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
 
     try:
         state = sys.argv[1]
