@@ -252,6 +252,10 @@ class TileManagerBase(OmnivoreEditor):
         self.update_pane_names()
         return viewer
 
+    def add_viewer_by_name(self, viewer_name):
+        viewer_cls = find_viewer_class_by_name(viewer_name)
+        self.add_viewer(viewer_cls)
+
     def replace_viewer(self, viewer_to_replace, new_viewer, linked_base):
         # self.viewers.remove(viewer_to_replace)
         # viewer_to_replace.prepare_for_destroy()

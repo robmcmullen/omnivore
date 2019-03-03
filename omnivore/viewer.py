@@ -22,18 +22,24 @@ caret_log = logging.getLogger("caret")
 # caret_log.setLevel(logging.DEBUG)
 
 
+known_viewers = {}
+
 def get_viewers():
-    viewers = []
-    for entry_point in pkg_resources.iter_entry_points('omnivore.viewers'):
-        mod = entry_point.load()
-        log.debug(f"get_viewers: Found module {entry_point.name}")
-        for name, obj in inspect.getmembers(mod):
-            if inspect.isclass(obj) and SegmentViewer in obj.__mro__[1:]:
-                # only use subclasses of SegmentViewer, not the
-                # SegmentViewer base class itself
-                log.debug(f"get_viewers: Found viewer class {name}")
-                viewers.append(obj)
-    return viewers
+    global known_viewers
+
+    if not known_viewers:
+        viewers = {}
+        for entry_point in pkg_resources.iter_entry_points('omnivore.viewers'):
+            mod = entry_point.load()
+            log.debug(f"get_viewers: Found module {entry_point.name}")
+            for name, obj in inspect.getmembers(mod):
+                if inspect.isclass(obj) and SegmentViewer in obj.__mro__[1:]:
+                    # only use subclasses of SegmentViewer, not the
+                    # SegmentViewer base class itself
+                    log.debug(f"get_viewers: Found viewer class {name}")
+                    viewers[obj.name] = obj
+        known_viewers = viewers
+    return known_viewers
 
 
 def find_viewer_class_by_name(name):
@@ -44,10 +50,10 @@ def find_viewer_class_by_name(name):
     """
     viewers = get_viewers()
     log.debug(f"finding viewers using {viewers}")
-    for viewer in viewers:
-        if viewer.name == name:
-            return viewer
-    raise errors.EditorNotFound(f"No viewer named {name}")
+    try:
+        return viewers[name]
+    except KeyError:
+        raise errors.EditorNotFound(f"No viewer named {name}")
 
 
 class SegmentViewer:
@@ -223,6 +229,10 @@ class SegmentViewer:
         log.debug("create: control=%s, parent=%s uuid=%s" % (control.__class__.__name__, parent.__class__.__name__, v.uuid))
         v.set_event_handlers()
         return v
+
+    @classmethod
+    def get_known_subclasses(cls):
+        return get_all_subclasses_of(SegmentViewer)
 
     ##### Cleanup
 

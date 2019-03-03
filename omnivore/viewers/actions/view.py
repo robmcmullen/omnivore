@@ -15,6 +15,7 @@ from ...arch.fonts import font_list
 from ...arch.font_renderers import font_renderer_list
 from ...arch.font_mappings import font_mapping_list
 from ...arch.ui.antic_colors import AnticColorDialog
+from ...viewer import find_viewer_class_by_name
 
 import logging
 log = logging.getLogger(__name__)
@@ -186,3 +187,21 @@ class view_fonts(ViewerListAction):
     def perform(self, action_key):
         item = self.get_item(action_key)
         self.viewer.antic_font_data = item
+
+
+class view_add_hex(ViewerAction):
+    def get_viewer_name(self, action_key):
+        return action_key[9:]
+
+    def calc_name(self, action_key):
+        viewer_name = self.get_viewer_name(action_key)
+        viewer = find_viewer_class_by_name(viewer_name)
+        return viewer.pretty_name
+
+    def perform(self, action_key):
+        viewer_name = self.get_viewer_name(action_key)
+        self.editor.add_viewer_by_name(viewer_name)
+
+
+class view_add_char(view_add_hex):
+    pass
