@@ -77,27 +77,15 @@ pretty_direction = {
 class DockTarget(object):
     @classmethod
     def calc_bitmap_of_window(cls, win):
-        # modified from a snipped that creates a screenshot of the entire desktop
-        # see http://aspn.activestate.com/ASPN/Mail/Message/wxpython-users/3575899
-        # created by Andrea Gavana
         rect = win.GetRect()
+        source_dc = wx.WindowDC(win)
 
-        sx, sy = win.ClientToScreen((0, 0))
-        rect.x = sx
-        rect.y = sy
-
-        dcScreen = wx.ScreenDC()
-
-        try:
-            # print("trying screenDC subbitmap: %s" % str(rect))
-            drag_bitmap = dcScreen.GetAsBitmap().GetSubBitmap(rect)
-        except wx.wxAssertionError:
-            # print("creating bitmap manually")
-            drag_bitmap = wx.Bitmap(rect.width, rect.height)
-            memDC = wx.MemoryDC()
-            memDC.SelectObject(drag_bitmap)
-            memDC.Blit(0, 0, rect.width, rect.height, dcScreen, sx, sy)
-            memDC.SelectObject(wx.NullBitmap)  # sync data to bitmap
+        drag_bitmap = wx.Bitmap(rect.width, rect.height)
+        print(f"drag_bitmap {drag_bitmap}")
+        memDC = wx.MemoryDC()
+        memDC.SelectObject(drag_bitmap)
+        memDC.Blit(0, 0, rect.width, rect.height, source_dc, 0, 0)
+        memDC.SelectObject(wx.NullBitmap)  # sync data to bitmap
         return rect, drag_bitmap
 
 
