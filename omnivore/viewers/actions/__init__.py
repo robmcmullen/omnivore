@@ -9,7 +9,10 @@ log = logging.getLogger(__name__)
 class ViewerActionMixin:
     @property
     def viewer(self):
-        return self.editor.focused_viewer
+        try:
+            return self.popup_data["popup_viewer"]
+        except (KeyError, TypeError) as e:
+            return self.editor.focused_viewer
 
     @property
     def linked_base(self):

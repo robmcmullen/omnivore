@@ -101,9 +101,44 @@ class SegmentViewer:
 
     default_mouse_mode_cls = NormalSelectMode
 
-    # copy_special = [va.CopyAsReprAction, va.CopyAsCBytesAction]  # additional copy functions available when viewer is present
-
-    # paste_special = [ba.PasteCommentsAction]  # additional paste functions available when viewer is present
+    popup_menu_desc = [
+        "view_width",
+        "view_zoom",
+        None,
+        "copy"
+        "cut",
+        "paste",
+        None,
+        ["Copy Special",
+            "copy_as_repr",
+            "copy_as_c_bytes",
+            "copy_disassembly",
+            "copy_disassembly_comments",
+        ],
+        ["Paste Special",
+            "paste_comments",
+            "paste_disassembly_comments",
+        ],
+        None,
+        "select_all",
+        "select_none",
+        ["Mark Selection As",
+            "select_mark_as_code",
+            "select_mark_as_data",
+            "select_mark_as_unitialized_data",
+            "select_mark_as_display_list",
+            "select_mark_as_jumpman_level",
+            "select_mark_as_jumpman_harvest",
+        ],
+        None,
+        "segment_from_selection",
+        "segment_revert_to_baseline",
+        None,
+        "segment_add_comment",
+        "segment_remove_comment",
+        "segment_add_label",
+        "segment_remove_label",
+    ]
 
     searchers = [  # BaseSearcher classes that are applicable to this viewer
         searchutil.HexSearcher,
@@ -535,22 +570,6 @@ class SegmentViewer:
 
     def get_paste_command(self, serialized_data, *args, **kwargs):
         return PasteCommand(self.segment, serialized_data, *args, **kwargs)
-
-    @classmethod
-    def all_known_copy_special_actions(cls, task):
-        actions = set()
-        for v in task.known_viewers:
-            actions.update(v.copy_special)
-        actions = sorted(actions, key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
-        return actions
-
-    @classmethod
-    def all_known_paste_special_actions(cls, task):
-        actions = set()
-        for v in task.known_viewers:
-            actions.update(v.paste_special)
-        actions = sorted(actions, key=lambda a:a().name)  # name is a trait, so only exists on an instance, not the class
-        return actions
 
     ##### Status info and text utilities
 

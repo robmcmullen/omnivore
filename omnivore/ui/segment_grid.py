@@ -279,24 +279,14 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
             pass
         return ""
 
-    def show_popup(self, actions, data):
-        self.segment_viewer.editor.popup_context_menu_from_actions(self, actions, data)
+    def show_popup(self, popup_desc, data):
+        self.segment_viewer.editor.show_popup(popup_desc, data)
 
-    def calc_control_popup_actions(self, popup_data):
-        actions = self.calc_common_popup_actions(popup_data)
-        last = self.segment_viewer.calc_viewer_popup_actions(popup_data)
-        if last:
-            actions.append(None)
-            actions.extend(last)
-        return actions
+    def add_popup_data(self, evt, popup_data):
+        popup_data["popup_viewer"] = self.segment_viewer
 
-    def calc_common_popup_actions(self, popup_data):
-        copy_special = self.segment_viewer.all_known_copy_special_actions(self.segment_viewer.task)
-        copy_special[0:0] = ["Copy Special"]  # sub-menu title
-        paste_special = self.segment_viewer.all_known_paste_special_actions(self.segment_viewer.task)
-        paste_special[0:0] = ["Paste Special"]  # sub-menu title
-
-        # return [fa.CutAction, fa.CopyAction, copy_special, fa.PasteAction, paste_special, None, fa.SelectAllAction, fa.SelectNoneAction, ["Mark Selection As", ba.MarkSelectionAsCodeAction, ba.MarkSelectionAsDataAction, ba.MarkSelectionAsUninitializedDataAction, ba.MarkSelectionAsDisplayListAction, ba.MarkSelectionAsJumpmanLevelAction, ba.MarkSelectionAsJumpmanHarvestAction], None, ba.GetSegmentFromSelectionAction, ba.RevertToBaselineAction, None, va.AddCommentPopupAction, va.RemoveCommentPopupAction, va.AddLabelPopupAction,va.RemoveLabelPopupAction]
+    def calc_popup_menu(self, evt):
+        return self.segment_viewer.popup_menu_desc
 
     ##### editing
 
