@@ -12,6 +12,7 @@ from . import errors
 # from . import preferences
 from .utils import jsonutil
 from .utils.command import StatusFlags
+from .menubar import MenuDescription
 
 import logging
 log = logging.getLogger(__name__)
@@ -73,9 +74,35 @@ class OmnivoreEditor:
     compatibility_names = []
 
     menubar_desc = [
-    ["File", ["New", "new_blank_file", None, "new_file_from_template"], "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
-    ["Edit", "undo", "redo", None, "copy", "cut", "paste", None, "prefs"],
-    ["Help", "about"],
+        ["File",
+            ["New",
+                "new_blank_file",
+                None,
+                "new_file_from_template",
+            ],
+            "open_file",
+            ["Open Recent",
+                "open_recent",
+            ],
+            None,
+            "save_file",
+            "save_as",
+            None,
+            "quit",
+        ],
+        ["Edit",
+            "undo",
+            "redo",
+            None,
+            "copy",
+            "cut",
+            "paste",
+            None,
+            "prefs",
+        ],
+        ["Help",
+            "about",
+        ],
     ]
 
     keybinding_desc = {
@@ -205,6 +232,9 @@ class OmnivoreEditor:
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Omnivore editors")
 
+    def create_event_bindings(self):
+        pass
+
     def load(self, path, file_metadata, args=None):
         pass
 
@@ -214,6 +244,24 @@ class OmnivoreEditor:
         open_recent.open_recent.append(path)
         self.tab_name = os.path.basename(path)
         self.frame.status_message(f"loaded {path} {file_metadata}", True)
+
+    #### popup menu utilities
+
+    def show_popup(self, popup_menu_desc, popup_data=None):
+        valid_id_map = {}
+        menu = MenuDescription("popup", popup_menu_desc, self, valid_id_map, popup_data=popup_data)
+        menu.sync_with_editor(valid_id_map)
+        action_id = self.control.GetPopupMenuSelectionFromUser(menu.menu)
+        if action_id == wx.ID_NONE:
+            log.debug("show_popup: cancelled")
+        else:
+            action_key, action = valid_id_map[action_id]
+            log.debug(f"show_popup: id={action_id}, action_key='{action_key}' action={action}")
+            try:
+                wx.CallAfter(action.perform, action_key)
+            except AttributeError:
+                log.warning(f"no perform method for {action}")
+
 
     #### command processing
 

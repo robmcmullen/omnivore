@@ -510,21 +510,27 @@ class MouseMode(object):
 
     def process_popup(self, evt):
         data = self.calc_popup_data(evt)
-        actions = self.calc_popup_actions(evt, data)
-        log.debug(f"process_popup: found actions {actions}")
-        if actions:
-            self.show_popup(actions, data)
+        self.control.add_popup_data(evt, data)
+        log.debug(f"process_popup: found popup data {data}")
+        popup_desc = self.calc_popup_menu(evt)
+        if popup_desc:
+            log.debug(f"process_popup: found popup menu for mode {self.menu_item_name}; skipping calc_popup_menu from {self.control}")
+        else:
+            popup_desc = self.control.calc_popup_menu(evt)
+        log.debug(f"process_popup: using popup menu {popup_desc}")
+        if popup_desc:
+            self.show_popup(popup_desc, data)
 
     def calc_popup_data(self, evt):
-        return None
+        return {}
 
-    def calc_popup_actions(self, evt, data):
-        return None
+    def calc_popup_menu(self, evt):
+        return []
 
-    def show_popup(self, actions, data):
+    def show_popup(self, popup_desc, data):
         # default is a proxy to the CompactGrid object, but subclasses may have
         # different needs depending on the mode, so this hook is provided.
-        self.control.show_popup(actions, data)
+        self.control.show_popup(popup_desc, data)
 
     def process_mouse_wheel(self, evt):
         c = self.control
@@ -736,6 +742,7 @@ class NormalSelectMode(MouseMode):
         else:
             style = 0
         popup_data = {
+            'control': cg,
             'index': index,
             'in_selection': style&0x80,
             'row': row,
@@ -743,15 +750,6 @@ class NormalSelectMode(MouseMode):
             'inside': inside,
             }
         return popup_data
-
-    def calc_popup_actions(self, evt, popup_data):
-        actions = self.calc_mode_popup_actions(popup_data)
-        if not actions:
-            actions = self.control.calc_control_popup_actions(popup_data)
-        return actions
-
-    def calc_mode_popup_actions(self, popup_data):
-        return []
 
     def zoom_in(self, evt, amount):
         self.control.zoom_in()

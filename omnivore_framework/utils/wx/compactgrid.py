@@ -1560,6 +1560,9 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     def show_popup(self, actions, popup_data):
         log.error("no popup handler defined")
 
+    def add_popup_data(self, evt, data):
+        pass
+
     ##### event handlers
 
     def on_size(self, evt):

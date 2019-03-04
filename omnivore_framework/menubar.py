@@ -9,12 +9,14 @@ log = logging.getLogger(__name__)
 
 
 class MenuDescription:
-    def __init__(self, desc, editor, valid_id_map, keybinding_desc):
+    def __init__(self, menu_name, desc, editor, valid_id_map, keybinding_desc=None, popup_data=None):
         self.menu = wx.Menu()
         log.debug(f"adding menu {desc}")
-        self.name = desc[0]
+        self.name = menu_name
         allow_separator = False
-        for action_key in desc[1:]:
+        if keybinding_desc is None:
+            keybinding_desc = {}
+        for action_key in desc:
             if action_key is None:
                 if allow_separator:
                     self.menu.AppendSeparator()
@@ -32,6 +34,7 @@ class MenuDescription:
                         log.debug(f"action {action_key} not used in this editor: {e}")
                         pass
                     else:
+                        action.popup_data = popup_data
                         # a single action can create multiple entries
                         try:
                             action_keys = action.calc_menu_sub_keys(editor)
@@ -57,7 +60,9 @@ class MenuDescription:
                                         log.error(f"Invalid key binding {accel_text} for {action_key}")
                             allow_separator = True
             else:
-                submenu = MenuDescription(action_key, editor, valid_id_map, keybinding_desc)
+                submenu_desc = action_key
+                submenu_name = submenu_desc[0]
+                submenu = MenuDescription(submenu_name, submenu_desc[1:], editor, valid_id_map, keybinding_desc)
                 if submenu.count > 0:
                     self.menu.AppendSubMenu(submenu.menu, submenu.name)
                     allow_separator = True
@@ -65,6 +70,9 @@ class MenuDescription:
     @property
     def count(self):
         return self.menu.GetMenuItemCount()
+
+    def sync_with_editor(self, valid_id_map):
+        sync_with_editor(valid_id_map, self.menu)
 
 
 class MenubarDescription:
@@ -74,7 +82,8 @@ class MenubarDescription:
         num_old_menus = parent.raw_menubar.GetMenuCount()
         num_new_menus = 0
         for desc in editor.menubar_desc:
-            menu = MenuDescription(desc, editor, self.valid_id_map, editor.keybinding_desc)
+            menu_name = desc[0]
+            menu = MenuDescription(menu_name, desc[1:], editor, self.valid_id_map, editor.keybinding_desc)
             if menu.count > 0:
                 if num_new_menus < num_old_menus:
                     parent.raw_menubar.Replace(num_new_menus, menu.menu, menu.name)
@@ -87,10 +96,14 @@ class MenubarDescription:
             num_old_menus -= 1
 
     def sync_with_editor(self, menubar_control):
-        for id, (action_key, action) in self.valid_id_map.items():
-            log.debug(f"syncing {id}: {action_key}, {action}")
-            menu_item = menubar_control.FindItemById(id)
-            try:
-                action.sync_menu_item_from_editor(action_key, menu_item)
-            except AttributeError as e:
-                log.warning(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")
+        sync_with_editor(self.valid_id_map, menubar_control)
+
+
+def sync_with_editor(valid_id_map, control):
+    for id, (action_key, action) in valid_id_map.items():
+        log.debug(f"syncing {id}: {action_key}, {action}")
+        menu_item = control.FindItemById(id)
+        try:
+            action.sync_menu_item_from_editor(action_key, menu_item)
+        except AttributeError as e:
+            log.warning(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")

@@ -62,6 +62,9 @@ class TextEditor(OmnivoreEditor):
     def create_control(self, parent):
         return TextEditorControl(parent, -1, style=wx.TE_MULTILINE)
 
+    def create_event_bindings(self):
+        self.control.Bind(wx.EVT_CONTEXT_MENU, self.on_popup)
+
     def load(self, path, file_metadata, args=None):
         with open(path, 'r') as fh:
             text = fh.read()
@@ -83,16 +86,72 @@ class TextEditor(OmnivoreEditor):
     def can_edit_file_generic(cls, file_metadata):
         return file_metadata['mime'].startswith("text/")
 
+    def on_popup(self, evt):
+        popup_menu_desc = [
+            "undo",
+            "redo",
+            None,
+            "copy",
+            "cut",
+            "paste",
+        ]
+        self.show_popup(popup_menu_desc)
+
 
 class DebugTextEditor(TextEditor):
     name = "debug"
 
     menubar_desc = [
-    ["File", ["New", "new_file"], "open_file", ["Open Recent", "open_recent"], None, "save_file", "save_as", None, "quit"],
-    ["Edit", "undo", "redo", None, "copy", "cut", "paste", "paste_rectangular", ["Paste Special", "paste_as_text", "paste_as_hex"], None, "prefs"],
-    ["Debug", None, None, None, "debug_text_counting", None, None, None, "debug_text_last_digit", None, "debug_text_size"],
-    ["Dynamic", "debug_text_last_digit_dyn"],
-    ["Help", "about"],
+        ["File",
+            ["New",
+                "new_file",
+            ],
+            "open_file",
+            ["Open Recent",
+                "open_recent",
+            ],
+            None,
+            "save_file",
+            "save_as",
+            None,
+            "quit",
+        ],
+        ["Edit",
+            "undo",
+            "redo",
+            None,
+            "copy",
+            "cut",
+            "paste",
+            ["Paste Special",
+                "paste_as_text",
+                "paste_as_hex",
+            ],
+            None,
+            "select_all",
+            "select_none",
+            "select_invert",
+            None,
+            "prefs",
+        ],
+        ["Debug",
+            None,
+            None,
+            None,
+            "debug_text_counting",
+            None,
+            None,
+            None,
+            "debug_text_last_digit",
+            None,
+            "debug_text_size",
+        ],
+        ["Dynamic",
+            "debug_text_last_digit_dyn",
+        ],
+        ["Help",
+            "about",
+        ],
     ]
 
     toolbar_desc = [

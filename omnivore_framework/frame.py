@@ -114,6 +114,7 @@ class OmnivoreFrame(wx.Frame):
         control = editor.create_control(self.notebook)
         editor.control = control
         control.editor = editor
+        editor.create_event_bindings()
         if self.active_editor is not None and self.active_editor.is_transient:
             self.close_editor(self.active_editor)
         self.notebook.AddPage(control, editor.tab_name)

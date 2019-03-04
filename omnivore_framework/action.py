@@ -134,6 +134,7 @@ class OmnivoreAction:
 
     def __init__(self, editor, action_key):
         self.editor = editor
+        self.popup_data = None  # set by MenuDescription if action is in a popup menu
         self.init_from_editor()
 
     def calc_name(self, action_key):
@@ -142,7 +143,7 @@ class OmnivoreAction:
     def calc_icon_name(self, action_key):
         return action_key
 
-    def perform(self):
+    def perform(self, action_key):
         raise AttributeError(f"no perform method defined for {self}")
 
     def calc_menu_sub_keys(self, action_key):
