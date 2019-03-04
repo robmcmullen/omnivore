@@ -72,16 +72,24 @@ def main(argv):
         trace_after_funcname = funcname
         sys.settrace(trace_calls)
 
-    from omnivore_framework.startup import run
-    from omnivore_framework.application import OmnivoreFrameworkApp
-    run(OmnivoreFrameworkApp)
+    from sawx.startup import run
+    from sawx.application import SawxApp
+    from sawx._version import __version__
+    SawxApp.about_version = __version__
+    SawxApp.about_html = f"""<h2>{SawxApp.app_name} {SawxApp.about_version}</h2>
+
+<h3>{SawxApp.about_description}</h3>
+
+<p><img src="{SawxApp.about_image}">"""
+
+    run(SawxApp)
 
     logging.shutdown()
 
 
 if __name__ == '__main__':
     import sys
-    from omnivore_framework.startup import setup_frozen_logging
+    from sawx.startup import setup_frozen_logging
     
     setup_frozen_logging()
     main(sys.argv)

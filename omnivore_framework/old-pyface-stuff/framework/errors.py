@@ -1,2 +1,0 @@
-class ProgressCancelError(Exception):
-    pass

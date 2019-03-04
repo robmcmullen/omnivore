@@ -1,8 +1,3 @@
-# setup file for only the framework part of Omnivore_framework. Includes:
-#
-# Enthought (traits, traitsui, pyface, apptools, envisage)
-# pyfilesystem
-#
 import os
 import sys
 import shutil
@@ -25,8 +20,8 @@ install_requires = [
 
 cmdclass = dict()
 
-exec(compile(open('omnivore_framework/_version.py').read(), 'omnivore_framework/_version.py', 'exec'))
-exec(compile(open('omnivore_framework/_metadata.py').read(), 'omnivore_framework/_metadata.py', 'exec'))
+exec(compile(open('sawx/_version.py').read(), 'sawx/_version.py', 'exec'))
+exec(compile(open('sawx/_metadata.py').read(), 'sawx/_metadata.py', 'exec'))
 
 full_version = __version__
 spaceless_version = full_version.replace(" ", "_")
@@ -34,7 +29,7 @@ spaceless_version = full_version.replace(" ", "_")
 # package_data is for pip and python installs, not for app bundles. Need
 # to use data_files for that
 package_data = {
-    'omnivore_framework': ['icons/*.png',
+    'sawx': ['icons/*.png',
                  'icons/*.ico',
                  'templates/*',
                  ],
@@ -42,7 +37,7 @@ package_data = {
 
 # Must explicitly add namespace packages
 packages = find_packages()
-packages.append("omnivore_framework.editors")
+packages.append("sawx.editors")
 
 base_dist_dir = "dist-%s" % spaceless_version
 win_dist_dir = os.path.join(base_dist_dir, "win")
@@ -56,7 +51,7 @@ options = {}
 data_files = []
 
 setup(
-    name = 'omnivore-framework',
+    name = 'sawx',
     version = full_version,
     author = __author__,
     author_email = __author_email__,
@@ -73,10 +68,10 @@ setup(
         Operating System :: Unix
         Programming Language :: Python
         Topic :: Utilities
-        Topic :: Software Development :: Assemblers
-        Topic :: Software Development :: Disassemblers
+        Topic :: Software Development :: Libraries :: Application Frameworks
+        Topic :: Software Development :: User Interfaces
         """.splitlines() if len(c.strip()) > 0],
-    description = "Simple wxPython UI application framework",
+    description = "Simple Application-framework for wxPython",
     long_description = open('README.rst').read(),
     cmdclass = cmdclass,
     ext_modules = [],
@@ -87,13 +82,13 @@ setup(
     package_data = package_data,
     data_files=data_files,
     entry_points={
-        "omnivore_framework.loaders": [
-            'fleep = omnivore_framework.loaders.fleep',
-            'text = omnivore_framework.loaders.text',
+        "sawx.loaders": [
+            'fleep = sawx.loaders.fleep',
+            'text = sawx.loaders.text',
         ],
-        "omnivore_framework.editors": [
-            'html = omnivore_framework.editors.html_viewer',
-            'text = omnivore_framework.editors.text_editor',
+        "sawx.editors": [
+            'html = sawx.editors.html_viewer',
+            'text = sawx.editors.text_editor',
         ],
     },
     options=options,

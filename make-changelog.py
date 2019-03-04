@@ -27,7 +27,7 @@ def findLatestChangeLogVersion(options):
         if match:
             if options.verbose: print('found date %s' % match.group(1))
             release_date = date.fromtimestamp(time.mktime(time.strptime(match.group(1),'%Y-%m-%d'))).strftime('%d %B %Y')
-        match = re.match('\s+\*\s*[Rr]eleased Omnivore-([0-9]+\.[0-9]+(?:\.[0-9]+)?)',line)
+        match = re.match('\s+\*\s*[Rr]eleased Sawx-([0-9]+\.[0-9]+(?:\.[0-9]+)?)',line)
         if match:
             if options.verbose: print('found version %s' % match.group(1))
             version = match.group(1)
@@ -130,7 +130,7 @@ def getChangeLogBlock(version, next_oldest_version, date, options):
     if str(version) == "HEAD":
         new_block.append("...to be included in next version:")
     else:
-        new_block.append("* Released Omnivore-%s" % version)
+        new_block.append("* Released Sawx-%s" % version)
     for line in suggestions:
         new_block.append(line)
     new_block.append("")

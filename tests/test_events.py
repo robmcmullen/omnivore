@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from omnivore_framework.utils import events
+from sawx.utils import events
 
 
 def mp_do_nothing(sender, *args):

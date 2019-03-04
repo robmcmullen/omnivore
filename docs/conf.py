@@ -35,7 +35,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Omnivore'
+project = 'Sawx'
 copyright = '2008-2014, Rob McMullen'
 
 import omnivore
@@ -152,7 +152,7 @@ latex_elements = {
 \begin{minipage}{0.75\textwidth}
 \begin{flushright}
 
-{ \Huge \CTV Omnivore User Manual}\\[0.4cm]
+{ \Huge \CTV Sawx User Manual}\\[0.4cm]
 
 \CTV{\Large Version %s}\\[0.5cm]
 \end{flushright}
@@ -187,7 +187,7 @@ feedback@playermissile.com
 # (source start file, target name, title, author, documentclass [howto/manual],
 # toctree_only).
 latex_documents = [
-  ('index', 'UserManual.tex', 'Omnivore User Manual', 'Rob McMullen', 'manual', True),
+  ('index', 'UserManual.tex', 'Sawx User Manual', 'Rob McMullen', 'manual', True),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

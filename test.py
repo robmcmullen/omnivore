@@ -2,25 +2,25 @@
 """
 import wx
 
-from omnivore_framework import OmnivoreFrameworkApp, OmnivoreEditor, OmnivoreAction, OmnivoreActionRadioMixin, errors
-from omnivore_framework.editor import find_editor_class_by_name
+from sawx import SawxApp, SawxEditor, SawxAction, SawxActionRadioMixin, errors
+from sawx.editor import find_editor_class_by_name
 
 import logging
 logging.basicConfig(level=logging.WARNING)
 
 
-class paste_as_text(OmnivoreAction):
+class paste_as_text(SawxAction):
     def calc_name(self, action_key):
         return "Paste As Text"
 
-class document_list(OmnivoreAction):
+class document_list(SawxAction):
     def calc_name(self, action_key):
         return action_key.replace("_", " ").title()
 
     def calc_menu_sub_keys(self, action_key):
         return ["document_list1", "document_list2", "document_list3"]
 
-class text_counting(OmnivoreAction):
+class text_counting(SawxAction):
     def init_from_editor(self):
         self.counts = list(range(5, 25, 5))
 
@@ -35,7 +35,7 @@ class text_counting(OmnivoreAction):
         count = self.editor.control.GetLastPosition()
         menu_item.Enable(count >= self.count_map[action_key])
 
-class text_last_digit(OmnivoreActionRadioMixin, OmnivoreAction):
+class text_last_digit(SawxActionRadioMixin, SawxAction):
     def calc_name(self, action_key):
         return action_key.replace("_", " ").title()
 
@@ -55,7 +55,7 @@ class text_last_digit(OmnivoreActionRadioMixin, OmnivoreAction):
         divisor = self.count_map[action_key]
         toolbar_control.ToggleTool(id, count % 10 == divisor)
 
-class text_last_digit_dyn(OmnivoreAction):
+class text_last_digit_dyn(SawxAction):
     def init_from_editor(self):
         self.count = (self.editor.control.GetLastPosition() % 10) + 1
 
@@ -71,7 +71,7 @@ class text_last_digit_dyn(OmnivoreAction):
         if count != self.count:
             raise errors.RecreateDynamicMenuBar
 
-class text_size(OmnivoreAction):
+class text_size(SawxAction):
     def init_from_editor(self):
         self.counts = list(range(5, 25, 5))
 
@@ -83,7 +83,7 @@ class text_size(OmnivoreAction):
         name = self.calc_name(action_key)
         menu_item.SetItemLabel(name)
 
-class DemoEditor(OmnivoreEditor):
+class DemoEditor(SawxEditor):
     name = "demo_editor"
 
     menubar_desc = [
@@ -125,8 +125,8 @@ class DemoEditor(OmnivoreEditor):
 
 if __name__ == "__main__":
     import sys
-    import omnivore_framework.editor
-    app = OmnivoreFrameworkApp(False)
+    import sawx.editor
+    app = SawxApp(False)
     frame = app.new_frame()
 
     action_factory_lookup = {
