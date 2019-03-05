@@ -8,10 +8,10 @@ import wx
 import numpy as np
 
 # Local imports.
-from omnivore_framework.utils.command import Overlay
+from sawx.utils.command import Overlay
 from ..utils.drawutil import get_bounds
 from ..clipboard_commands import PasteCommand, PasteRectCommand
-from omnivore_framework.utils.wx.compactgrid import MouseMode, NormalSelectMode, RectangularSelectMode
+from sawx.ui.compactgrid import MouseMode, NormalSelectMode, RectangularSelectMode
 
 from .map_commands import *
 

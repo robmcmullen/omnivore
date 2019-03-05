@@ -7,8 +7,8 @@ import wx
 
 from ..ui.screen import BitmapScreen
 
-from omnivore_framework.utils.wx import compactgrid as cg
-from omnivore_framework.utils.command import DisplayFlags
+from sawx.ui import compactgrid as cg
+from sawx.utils.command import DisplayFlags
 from ..ui import segment_grid as sg
 from ..viewer import SegmentViewer
 from .info import VirtualTableInfoViewer

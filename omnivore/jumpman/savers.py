@@ -1,6 +1,6 @@
 import numpy as np
 
-from omnivore_framework.templates import get_template
+from sawx.templates import get_template
 
 
 class JumpmanSaveAsATR(object):

@@ -3,7 +3,7 @@ import collections
 
 import numpy as np
 
-from omnivore_framework.templates import get_template, iter_templates
+from sawx.templates import get_template, iter_templates
 
 from ..disassembler.libudis import LabelStorage
 

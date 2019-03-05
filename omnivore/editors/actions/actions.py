@@ -11,13 +11,13 @@ import wx.lib.dialogs
 Any = None
 Int = None
 
-# from omnivore_framework.framework.enthought_api import ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
-# import omnivore_framework.framework.clipboard as clipboard
-from omnivore_framework.action import OmnivoreAction
+# from sawx.framework.enthought_api import ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+# import sawx.framework.clipboard as clipboard
+from sawx.action import SawxAction
 
 from . import commands
 from ..arch.ui.antic_colors import AnticColorDialog
-from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog, prompt_for_slice
+from sawx.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog, prompt_for_slice
 from ..ui.dialogs import prompt_for_assembler
 from ..arch.machine import Machine
 from ..byte_edit.commands import SetCommentCommand, ClearCommentCommand, SetLabelCommand, ClearLabelCommand
@@ -31,7 +31,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class ViewerAction(OmnivoreAction):
+class ViewerAction(SawxAction):
     @property
     def viewer(self):
         return self.task.active_editor.focused_viewer

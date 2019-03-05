@@ -7,8 +7,8 @@ import numpy as np
 # Enthought library imports.
 from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Enum, DictStrStr
 
-from omnivore_framework import persistence
-from omnivore_framework.utils.events import EventHandler
+from sawx import persistence
+from sawx.utils.events import EventHandler
 
 # Local imports.
 from . import fonts

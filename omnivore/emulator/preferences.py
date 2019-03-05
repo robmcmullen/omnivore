@@ -37,7 +37,7 @@ class EmulatorPreferences(PreferencesHelper):
     #### 'PreferencesHelper' interface ########################################
 
     # The path to the preference node that contains the preferences.
-    preferences_path = 'omnivore_framework.task.emulator'
+    preferences_path = 'sawx.task.emulator'
 
     #### Preferences ##########################################################
 

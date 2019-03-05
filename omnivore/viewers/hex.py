@@ -6,7 +6,7 @@ import wx
 from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.ui import compactgrid as cg
 from ..arch.disasm import get_style_name
 
 from ..viewer import SegmentViewer

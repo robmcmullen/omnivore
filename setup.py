@@ -315,9 +315,9 @@ setup(
     include_dirs = [np.get_include()],
     packages = find_packages(exclude=["libudis"]),
     entry_points={
-        "omnivore_framework.remember": 'fonts = omnivore.arch.fonts',
+        "sawx.remember": 'fonts = omnivore.arch.fonts',
 
-        "omnivore_framework.editors": 'byte = omnivore.editors.byte_editor',
+        "sawx.editors": 'byte = omnivore.editors.byte_editor',
 
         "omnivore.viewers": [
             'bitmap = omnivore.viewers.bitmap',
@@ -342,7 +342,7 @@ setup(
     'atrcopy>=7',
     'pyopengl',
     'pyopengl_accelerate',
-    'omnivore_framework>=3',
+    'sawx',
     'jsonpickle>=0.9.4',
     'bson<1.0.0',
     'configobj',

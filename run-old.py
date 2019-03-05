@@ -68,7 +68,7 @@ def main(argv):
         _.setLevel(logging.WARNING)
 
     # check for logging early so we can get logging output during application init
-    import omnivore_framework.utils.wx.error_logger as error_logger
+    import sawx.utils.wx.error_logger as error_logger
     if "-d" in argv:
         i = argv.index("-d")
         error_logger.enable_loggers(argv[i+1])
@@ -105,7 +105,7 @@ def main(argv):
         plugins = []
         raise
 
-    from omnivore_framework import get_image_path
+    from sawx import get_image_path
     image_path = [get_image_path("omnivore/icons")]
 
     template_path = []
@@ -120,7 +120,7 @@ def main(argv):
     # import omnivore_extra.crypto.file_type
     # plugins.extend(omnivore_extra.crypto.file_type.plugins)
 
-    from omnivore_framework.app_init import run
+    from sawx.app_init import run
     from omnivore.document import SegmentedDocument
     from omnivore._metadata import __version__
     run(plugins=plugins, use_eggs=False, image_path=image_path, template_path=template_path, document_class=SegmentedDocument, about_version=__version__)
@@ -130,7 +130,7 @@ def main(argv):
 
 if __name__ == '__main__':
     import sys
-    from omnivore_framework.app_init import setup_frozen_logging
+    from sawx.app_init import setup_frozen_logging
     
     setup_frozen_logging()
     main(sys.argv)

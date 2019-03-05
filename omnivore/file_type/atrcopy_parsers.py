@@ -2,7 +2,7 @@ from traits.api import HasTraits, provides
 
 from atrcopy import iter_parsers, guess_parser_for_mime, SegmentData, errors
 
-from omnivore_framework.file_type.i_file_recognizer import IFileRecognizer
+from sawx.file_type.i_file_recognizer import IFileRecognizer
 from ..document import DiskImageDocument
 from ..emulator.document import EmulationDocument
 

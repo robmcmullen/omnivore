@@ -5,7 +5,7 @@ import sys
 
 import wx
 
-from omnivore_framework.action import OmnivoreAction, OmnivoreRadioListAction
+from sawx.action import SawxAction, SawxRadioListAction
 
 from ... import commands
 from ... import errors
@@ -16,7 +16,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class doc_cpu(OmnivoreRadioListAction):
+class doc_cpu(SawxRadioListAction):
     prefix = "doc_cpu_"
 
     def calc_name(self, action_key):
@@ -33,7 +33,7 @@ class doc_cpu(OmnivoreRadioListAction):
         item = self.get_item(action_key)
         self.editor.document.cpu = item
 
-class doc_os_labels(OmnivoreRadioListAction):
+class doc_os_labels(SawxRadioListAction):
     prefix = "doc_os_"
 
     def calc_name(self, action_key):

@@ -11,7 +11,7 @@ from wx.lib.stattext import GenStaticText  # standard static text can't set back
 
 from ..arch.font_mappings import internal_to_atascii, atascii_to_internal
 from ..arch.ui.antic_colors import AnticColorDialog
-from omnivore_framework.utils.runtime import get_all_subclasses
+from sawx.utils.runtime import get_all_subclasses
 
 import logging
 from functools import reduce

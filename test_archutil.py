@@ -3,7 +3,7 @@ import os
 
 from omnivore.utils.archutil import Labels, load_memory_map
 
-from omnivore_framework.templates import template_subdirs
+from sawx.templates import template_subdirs
 template_subdirs.append(os.path.abspath("./omnivore/templates"))
 
 import logging

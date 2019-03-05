@@ -1,11 +1,11 @@
 import wx
 
-from omnivore_framework.utils.wx import compactgrid as cg
-from omnivore_framework.keybindings import KeyBindingControlMixin
-from omnivore_framework.utils.wx.mouse_mode import MouseMode
-from omnivore_framework.utils.command import DisplayFlags
+from sawx.ui import compactgrid as cg
+from sawx.keybindings import KeyBindingControlMixin
+from sawx.ui.mouse_mode import MouseMode
+from sawx.utils.command import DisplayFlags
 from ..arch.disasm import get_style_name
-# from omnivore_framework.framework import actions as fa
+# from sawx.framework import actions as fa
 # from ..byte_edit import actions as ba
 # from ..viewers import actions as va
 from ..commands import SetRangeValueCommand

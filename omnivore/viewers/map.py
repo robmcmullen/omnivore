@@ -8,10 +8,10 @@ import wx
 import numpy as np
 
 # Local imports.
-from omnivore_framework.utils.command import Overlay
+from sawx.utils.command import Overlay
 from ..utils.drawutil import get_bounds
-from omnivore_framework.utils.sortutil import invert_rects, rect_ranges_to_indexes
-#import omnivore_framework.framework.actions as fa
+from sawx.utils.sortutil import invert_rects, rect_ranges_to_indexes
+#import sawx.framework.actions as fa
 from ..clipboard_commands import PasteCommand, PasteRectCommand
 
 from .char import CharViewer

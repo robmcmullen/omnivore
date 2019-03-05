@@ -7,10 +7,10 @@ import wx
 import numpy as np
 import json
 
-from omnivore_framework.editor import OmnivoreEditor
-from omnivore_framework.utils.wx.tilemanager import TileManager
-from omnivore_framework.templates import get_template
-from omnivore_framework.utils.events import EventHandler
+from sawx.editor import SawxEditor
+from sawx.ui.tilemanager import TileManager
+from sawx.templates import get_template
+from sawx.utils.events import EventHandler
 
 from ..viewer import find_viewer_class_by_name
 
@@ -26,7 +26,7 @@ class DummyFocusedViewer(object):
     linked_base = DummyLinkedBase
 
 
-class TileManagerBase(OmnivoreEditor):
+class TileManagerBase(SawxEditor):
     """Base class for editors that use the tile manager as the central window
     manager
 
@@ -49,7 +49,7 @@ class TileManagerBase(OmnivoreEditor):
     default_viewers = "dummy"
 
     def __init__(self, action_factory_lookup=None):
-        OmnivoreEditor.__init__(self, action_factory_lookup)
+        SawxEditor.__init__(self, action_factory_lookup)
         self.focused_viewer = None
         self.focused_viewer_changed_event = EventHandler(self)
         self.viewers = []

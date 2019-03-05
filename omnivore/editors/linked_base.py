@@ -8,8 +8,8 @@ import wx
 import numpy as np
 import json
 
-from omnivore_framework.utils.command import DisplayFlags
-from omnivore_framework.utils.events import EventHandler
+from sawx.utils.command import DisplayFlags
+from sawx.utils.events import EventHandler
 
 from ..utils.segmentutil import SegmentData, DefaultSegment
 from ..jumpman import playfield as jp

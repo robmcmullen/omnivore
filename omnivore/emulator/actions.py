@@ -13,12 +13,12 @@ from pyface.api import YES, NO
 
 from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
 
-from omnivore_framework.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
-from omnivore_framework.utils.command import StatusFlags
-from omnivore_framework.framework import loader
+from sawx.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
+from sawx.utils.command import StatusFlags
+from sawx.framework import loader
 
 from subprocess import *
-from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
+from sawx.ui.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog
 from ..ui.dialogs import SegmentOrderDialog
 from .document import EmulationDocument
 

@@ -1,8 +1,8 @@
 import numpy as np
 
-from omnivore_framework.utils.command import Command, UndoInfo
-from omnivore_framework.utils.sortutil import ranges_to_indexes, indexes_to_ranges
-from omnivore_framework.utils.permute import bit_reverse_table
+from sawx.utils.command import Command, UndoInfo
+from sawx.utils.sortutil import ranges_to_indexes, indexes_to_ranges
+from sawx.utils.permute import bit_reverse_table
 
 import logging
 log = logging.getLogger(__name__)

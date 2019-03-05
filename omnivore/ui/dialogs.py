@@ -9,10 +9,10 @@ from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
 from atrcopy import get_xex
 
-from omnivore_framework.utils.processutil import which
-from omnivore_framework.utils.textutil import text_to_int
-from omnivore_framework.utils.wx.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
-from omnivore_framework.utils.wx.dialogs import DictEditDialog
+from sawx.utils.processutil import which
+from sawx.utils.textutil import text_to_int
+from sawx.ui.dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
+from sawx.ui.dialogs import DictEditDialog
 
 from ..document import DiskImageDocument
 

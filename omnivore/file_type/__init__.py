@@ -62,7 +62,7 @@ from traits.api import List
 
 
 class OmnivoreBinaryFileRecognizerPlugin(Plugin):
-    """ A plugin that contributes to the omnivore_framework.file_type.recognizer extension point. """
+    """ A plugin that contributes to the sawx.file_type.recognizer extension point. """
 
     #### 'IPlugin' interface ##################################################
 
@@ -74,7 +74,7 @@ class OmnivoreBinaryFileRecognizerPlugin(Plugin):
 
     # This tells us that the plugin contributes the value of this trait to the
     # 'greetings' extension point.
-    recognizer = List(recognizers, contributes_to='omnivore_framework.file_recognizer')
+    recognizer = List(recognizers, contributes_to='sawx.file_recognizer')
 
 
 plugins = [OmnivoreBinaryFileRecognizerPlugin()]

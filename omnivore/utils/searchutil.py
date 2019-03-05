@@ -2,7 +2,7 @@ import re
 
 import numpy as np
 
-from omnivore_framework.utils.parseutil import NumpyIntExpression, ParseException
+from sawx.utils.parseutil import NumpyIntExpression, ParseException
 
 import logging
 log = logging.getLogger(__name__)

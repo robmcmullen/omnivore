@@ -4,7 +4,7 @@ from collections import namedtuple
 
 import wx
 
-from omnivore_framework.utils.wx.undo_panel import UndoHistoryPanel
+from sawx.ui.undo_panel import UndoHistoryPanel
 from ..editors.linked_base import VirtualTableLinkedBase
 from .segments import SegmentList
 from ..viewer import SegmentViewer

@@ -2,9 +2,9 @@ import time
 
 import wx
 
-from omnivore_framework import get_image_path
-from omnivore_framework.utils.command import DisplayFlags
-from omnivore_framework.framework.caret import Caret, SelectionHandler
+from sawx import get_image_path
+from sawx.utils.command import DisplayFlags
+from sawx.framework.caret import Caret, SelectionHandler
 
 import logging
 log = logging.getLogger(__name__)

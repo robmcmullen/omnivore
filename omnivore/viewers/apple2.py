@@ -6,8 +6,8 @@ import wx
 
 from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
 
-from omnivore_framework.utils.nputil import intscale
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.utils.nputil import intscale
+from sawx.ui import compactgrid as cg
 
 from ..arch import colors
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable

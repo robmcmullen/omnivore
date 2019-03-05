@@ -5,7 +5,7 @@ import wx
 import wx.lib.scrolledpanel as scrolled
 import wx.lib.buttons as buttons
 
-from omnivore_framework.utils.wx.tilelist import TileButton
+from sawx.ui.tilelist import TileButton
 
 import logging
 log = logging.getLogger(__name__)

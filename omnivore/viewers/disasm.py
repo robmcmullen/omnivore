@@ -7,7 +7,7 @@ import wx
 
 from atrcopy import DefaultSegment, not_user_bit_mask
 
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.ui import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable

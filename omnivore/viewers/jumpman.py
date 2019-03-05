@@ -5,9 +5,9 @@ import wx
 import numpy as np
 from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
 
-from omnivore_framework.utils.nputil import intscale
-from omnivore_framework.utils.wx import compactgrid as cg
-from omnivore_framework.templates import get_template
+from sawx.utils.nputil import intscale
+from sawx.ui import compactgrid as cg
+from sawx.templates import get_template
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel

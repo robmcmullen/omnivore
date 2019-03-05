@@ -11,7 +11,8 @@ import json
 from .tile_manager_base_editor import TileManagerBase
 from ..document import DiskImageDocument
 
-from omnivore_framework.utils.processutil import run_detach
+from sawx.filesystem import fsopen
+from sawx.utils.processutil import run_detach
 
 from .linked_base import LinkedBase
 from .byte_editor_preferences import ByteEditorPreferences
@@ -233,7 +234,7 @@ class ByteEditor(TileManagerBase):
         "byte_reverse_group": "",
     }
 
-    module_search_order = ["omnivore.viewers.actions", "omnivore.editors.actions", "omnivore_framework.actions", "omnivore.jumpman.actions"]
+    module_search_order = ["omnivore.viewers.actions", "omnivore.editors.actions", "sawx.actions", "omnivore.jumpman.actions"]
 
     # Convenience functions
 

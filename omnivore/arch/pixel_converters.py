@@ -32,7 +32,7 @@ from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bi
 ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
 invalid_style = 0xff
 
-from omnivore_framework.utils.permute import bit_reverse_table
+from sawx.utils.permute import bit_reverse_table
 
 
 class ConverterBase:

@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
-from omnivore_framework.utils.permute import bit_reverse_table
+from sawx.utils.permute import bit_reverse_table
 
 import logging
 log = logging.getLogger(__name__)

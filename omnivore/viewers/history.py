@@ -10,7 +10,7 @@ from atrcopy import DefaultSegment
 from ..disassembler import flags
 from ..disassembler import dtypes as dd
 
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.ui import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
 
 from ..ui.segment_grid import SegmentGridControl

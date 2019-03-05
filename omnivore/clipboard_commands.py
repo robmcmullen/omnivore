@@ -1,8 +1,8 @@
 import numpy as np
 
-from omnivore_framework.utils.command import Command, UndoInfo
+from sawx.utils.command import Command, UndoInfo
 from .commands import SegmentCommand
-from omnivore_framework.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
+from sawx.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
 
 import logging
 log = logging.getLogger(__name__)

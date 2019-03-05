@@ -3,13 +3,12 @@ from collections import namedtuple
 
 import numpy as np
 import jsonpickle
-import fs
 
 from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, errors, iter_parsers
 
-from omnivore_framework.document import BaseDocument
-from omnivore_framework.utils.nputil import to_numpy
-from omnivore_framework.utils.events import EventHandler
+from sawx.document import BaseDocument
+from sawx.utils.nputil import to_numpy
+from sawx.utils.events import EventHandler
 
 from .disassembler import DisassemblyConfig
 from .utils.archutil import Labels, load_memory_map
@@ -142,7 +141,7 @@ class DiskImageDocument(BaseDocument):
 
     def get_document_template_metadata(self, file_metadata):
         mime = file_metadata["mime"]
-        log.debug("extra metadata_before_editor: parser=%s, mime=%s" % (file_metadata["atrcopy_parser"], mime))
+        log.debug("extra metadata_before_editor: parser=%s, mime=%s" % (file_metadata.get("atrcopy_parser", None), mime))
         extra = self.calc_unserialized_template(mime)
         if extra:
             log.debug("extra metadata: loaded template for %s" % mime)

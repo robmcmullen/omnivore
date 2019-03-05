@@ -7,7 +7,7 @@ import numpy as np
 from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
 
 # Local imports.
-from omnivore_framework.utils.command import Overlay
+from sawx.utils.command import Overlay
 
 from . import parser as jp
 from . import commands as jc

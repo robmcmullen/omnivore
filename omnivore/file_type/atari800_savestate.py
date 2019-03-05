@@ -4,7 +4,7 @@ from traits.api import HasTraits, provides
 
 from atrcopy import SegmentData, SegmentParser, errors, ObjSegment, get_style_bits
 
-from omnivore_framework.file_type.i_file_recognizer import IFileRecognizer
+from sawx.file_type.i_file_recognizer import IFileRecognizer
 from ..document import DiskImageDocument
 
 try:

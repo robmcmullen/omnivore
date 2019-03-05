@@ -12,18 +12,18 @@ from traits.api import Any, Bool, Int, Str, List, Dict, Event, Enum, Instance, F
 from pyface.key_pressed_event import KeyPressedEvent
 
 # Local imports.
-from omnivore_framework.framework.editor import FrameworkEditor
-import omnivore_framework.framework.clipboard as clipboard
-from omnivore_framework.utils.file_guess import FileMetadata
-from omnivore_framework.utils.wx.tilemanager import TileManager
-from omnivore_framework.templates import get_template
+from sawx.framework.editor import FrameworkEditor
+import sawx.framework.clipboard as clipboard
+from sawx.utils.file_guess import FileMetadata
+from sawx.ui.tilemanager import TileManager
+from sawx.templates import get_template
 from ..byte_edit.byte_editor import ByteEditor
 from ..arch.machine import Machine, Atari800
 from .document import EmulationDocument
 from ..utils.segmentutil import SegmentData, DefaultSegment, AnticFontSegment
 from .. import guess_emulator
 
-from omnivore_framework.utils.processutil import run_detach
+from sawx.utils.processutil import run_detach
 
 import logging
 log = logging.getLogger(__name__)

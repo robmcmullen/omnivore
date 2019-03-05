@@ -7,8 +7,8 @@ import sys
 import wx
 import numpy as np
 
-from omnivore_framework.utils.wx.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
-from omnivore_framework.utils.textutil import text_to_int
+from sawx.ui.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCustomDialog
+from sawx.utils.textutil import text_to_int
 
 from .. import errors
 from ..viewers.commands import SetValueCommand

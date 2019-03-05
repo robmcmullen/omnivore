@@ -2,7 +2,7 @@ import sys
 
 import wx
 
-from omnivore_framework.preferences import OmnivoreFrameworkPreferences, str_to_font, def_font, cached_property
+from sawx.preferences import SawxFrameworkPreferences, str_to_font, def_font, cached_property
 
 
 def byte2hex(val):
@@ -18,9 +18,9 @@ byte2str = byte2hex
 word2str = word2hex
 int2str = int2hex
 
-class ByteEditorPreferences(OmnivoreFrameworkPreferences):
+class ByteEditorPreferences(SawxFrameworkPreferences):
     def __init__(self):
-        OmnivoreFrameworkPreferences.__init__(self)
+        SawxFrameworkPreferences.__init__(self)
 
         # int_display_format = Enum(
         #     "Hexadecimal",

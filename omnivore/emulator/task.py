@@ -10,9 +10,9 @@ from traits.api import on_trait_change, Property, Instance, Any, Event, Int, Boo
 
 from .. import known_emulators
 
-from omnivore_framework.framework.task import FrameworkTask
-from omnivore_framework.framework import actions as fa
-from omnivore_framework.framework.toolbar import get_toolbar_group
+from sawx.framework.task import FrameworkTask
+from sawx.framework import actions as fa
+from sawx.framework.toolbar import get_toolbar_group
 from . import actions as ea
 from .preferences import EmulatorPreferences
 from .editor import EmulatorEditor

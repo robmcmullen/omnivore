@@ -4,8 +4,8 @@ import sys
 import wx
 import numpy as np
 
-from omnivore_framework.utils.nputil import intscale
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.utils.nputil import intscale
+from sawx.ui import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from ..viewer import SegmentViewer

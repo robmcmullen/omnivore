@@ -5,7 +5,7 @@ import sys
 
 import wx
 
-from omnivore_framework.action import OmnivoreAction, OmnivoreRadioListAction
+from sawx.action import SawxAction, SawxRadioListAction
 
 from ... import commands
 from ... import errors
@@ -23,7 +23,7 @@ class SegmentEntry:
         return str(self.segment)
 
 
-class segment_select(OmnivoreRadioListAction):
+class segment_select(SawxRadioListAction):
     prefix = "segment_select_"
 
     empty_list_name = "No Valid Segments"
@@ -59,7 +59,7 @@ def prompt_for_comment(e, s, ranges, desc):
         e.process_command(cmd)
 
 
-class AddCommentAction(OmnivoreAction):
+class AddCommentAction(SawxAction):
     """Add a text comment to a byte location.
 
     A comment is associated with a single byte, so although a range can be
@@ -104,7 +104,7 @@ class AddCommentPopupAction(AddCommentAction):
         return event.popup_data["index"]
 
 
-class RemoveCommentAction(OmnivoreAction):
+class RemoveCommentAction(SawxAction):
     """Remove any comments that are in the selected range, or if no selection
     from the current caret position.
 
@@ -125,7 +125,7 @@ class RemoveCommentAction(OmnivoreAction):
             e.process_command(cmd)
 
 
-class RemoveCommentPopupAction(OmnivoreAction):
+class RemoveCommentPopupAction(SawxAction):
     name = 'Remove Comment'
 
     def perform(self, event):
@@ -149,7 +149,7 @@ def prompt_for_label(e, s, addr, desc):
         e.process_command(cmd)
 
 
-class AddLabelAction(OmnivoreAction):
+class AddLabelAction(SawxAction):
     """Add a label to a byte location.
 
     Like `Add Comment`_, a label is associated with a single byte, so although

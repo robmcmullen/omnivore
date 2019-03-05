@@ -1,6 +1,6 @@
 """Baseclass for actions with common code applicable to viewers
 """
-from omnivore_framework.action import OmnivoreAction, OmnivoreListAction, OmnivoreRadioAction, OmnivoreRadioListAction
+from sawx.action import SawxAction, SawxListAction, SawxRadioAction, SawxRadioListAction
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,17 +19,17 @@ class ViewerActionMixin:
         return self.editor.focused_viewer.linked_base
 
 
-class ViewerAction(ViewerActionMixin, OmnivoreAction):
+class ViewerAction(ViewerActionMixin, SawxAction):
     pass
 
 
-class ViewerRadioAction(ViewerActionMixin, OmnivoreRadioAction):
+class ViewerRadioAction(ViewerActionMixin, SawxRadioAction):
     pass
 
 
-class ViewerListAction(ViewerActionMixin, OmnivoreListAction):
+class ViewerListAction(ViewerActionMixin, SawxListAction):
     pass
 
 
-class ViewerRadioListAction(ViewerActionMixin, OmnivoreRadioListAction):
+class ViewerRadioListAction(ViewerActionMixin, SawxRadioListAction):
     pass

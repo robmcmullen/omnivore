@@ -3,8 +3,8 @@ import sys
 
 import wx
 
-from omnivore_framework.utils.nputil import intscale
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.utils.nputil import intscale
+from sawx.ui import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..arch.bitmap_renderers import valid_bitmap_renderers

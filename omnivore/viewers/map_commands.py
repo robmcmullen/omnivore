@@ -1,7 +1,7 @@
 import numpy as np
 
-from omnivore_framework.errors import ProgressCancelError
-from omnivore_framework.utils.command import Batch, Command, UndoInfo
+from sawx.errors import ProgressCancelError
+from sawx.utils.command import Batch, Command, UndoInfo
 from ..commands import SegmentCommand
 from ..utils import drawutil
 

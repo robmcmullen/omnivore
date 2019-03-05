@@ -7,8 +7,8 @@ import wx
 
 from atrcopy import selected_bit_mask
 
-from omnivore_framework.utils.nputil import intscale
-from omnivore_framework.utils.wx import compactgrid as cg
+from sawx.utils.nputil import intscale
+from sawx.ui import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 

@@ -5,7 +5,7 @@ import sys
 
 import wx
 
-from omnivore_framework.utils.wx import dialogs
+from sawx.utils.wx import dialogs
 
 from . import ViewerAction, ViewerListAction, ViewerRadioListAction
 from .. import commands

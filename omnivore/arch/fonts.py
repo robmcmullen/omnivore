@@ -4,7 +4,7 @@ import uuid
 import numpy as np
 import wx
 
-from omnivore_framework.templates import iter_templates
+from sawx.templates import iter_templates
 
 from . import colors
 

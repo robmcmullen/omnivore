@@ -8,8 +8,8 @@ import wx
 from .editors.linked_base import LinkedBase
 from .arch import fonts
 
-from omnivore_framework import errors
-from omnivore_framework.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from sawx import errors
+from sawx.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 
 from .utils import searchutil
 from .ui.segment_grid import SegmentGridControl
