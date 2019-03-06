@@ -17,7 +17,7 @@ from sawx.action import SawxAction
 
 from . import commands
 from ..arch.ui.antic_colors import AnticColorDialog
-from sawx.utils.wx.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog, prompt_for_slice
+from sawx.ui.dialogs import prompt_for_hex, prompt_for_dec, prompt_for_string, get_file_dialog_wildcard, ListReorderDialog, prompt_for_slice
 from ..ui.dialogs import prompt_for_assembler
 from ..arch.machine import Machine
 from ..byte_edit.commands import SetCommentCommand, ClearCommentCommand, SetLabelCommand, ClearLabelCommand
