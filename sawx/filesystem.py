@@ -1,12 +1,11 @@
 import os
 import sys
+import glob
 import datetime
 from io import BytesIO, StringIO
 
 import wx
 import numpy as np
-
-from .templates import find_template_path
 
 import logging
 log = logging.getLogger(__name__)
@@ -16,6 +15,11 @@ about = {
 }
 
 image_paths = []
+
+template_paths = []
+
+help_paths = []
+
 
 
 def open_about(path, mode):
@@ -44,6 +48,10 @@ def open_blank(path, mode):
         else:
             raise ValueError(f"invalid mode for blank filesystem: '{mode}'")
 
+
+def find_template_path(name):
+    return find_first_in_paths(template_paths, name)
+
 def open_template(path, mode):
     try:
         real_path = find_template_path(path)
@@ -51,6 +59,10 @@ def open_template(path, mode):
         raise FileNotFoundError(str(e))
     else:
         return open(real_path, mode)
+
+
+def find_image_path(name):
+    return find_first_in_paths(image_paths, name)
 
 def open_icon(path, mode):
     try:
@@ -113,18 +125,28 @@ def init_filesystems(app):
         image_paths.append(path)
 
 
-def find_image_path(name):
-    log.debug(f"searching subdirs {image_paths}")
+def find_first_in_paths(paths, name):
+    log.debug(f"find_first_in_paths: searching subdirs {paths}")
+    if name.startswith("/"):
+        log.debug(f"find_first_in_paths: found absolute path '{name}', not searching {paths}")
+        return name
     checked = []
-    for toplevel in image_paths:
-        path = os.path.join(toplevel, name)
-        log.debug("Checking for image at %s" % path)
-        if os.path.exists(path):
-            log.debug("Found image for %s: %s" % (name, path))
-            return path
-        checked.append(toplevel)
+    for toplevel in paths:
+        pathname = os.path.normpath(os.path.join(toplevel, name))
+        log.debug(f"find_first_in_paths: checking for {name} in {toplevel}")
+        if os.path.exists(pathname):
+            log.debug(f"find_first_in_paths: found {name} in {toplevel}")
+            return pathname
+        checked.append(os.path.abspath(os.path.dirname(pathname)))
     else:
-        raise OSError("No image found for %s in %s" % (name, str(checked)))
+        raise OSError(f"find_first_in_paths: '{name}' not found in {checked}")
+
+
+def glob_in_paths(paths):
+    for toplevel in paths:
+        wildcard = os.path.join(toplevel, "*")
+        for item in glob.glob(wildcard):
+            yield item
 
 
 def get_image_path(rel_path, module=None, file=None, up_one_level=False, excludes=[]):

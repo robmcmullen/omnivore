@@ -25,14 +25,12 @@ def setup_frozen_logging():
         sys.stderr = sys.stdout
 
 
-def run(app_cls, image_paths=[], template_paths=[], debug_log=False):
+def run(app_cls, image_paths=[], template_paths=[], help_paths=[], debug_log=False):
     from . import filesystem
-    from .utils.jobs import get_global_job_manager
 
     filesystem.image_paths.extend(image_paths)
-
-    from .templates import template_subdirs
-    template_subdirs.extend(template_paths)
+    filesystem.template_paths.extend(template_paths)
+    filesystem.help_paths.extend(help_paths)
 
     # Create a debugging log
     if debug_log:
@@ -52,6 +50,7 @@ def run(app_cls, image_paths=[], template_paths=[], debug_log=False):
 
     app.MainLoop()
 
+    from .utils.jobs import get_global_job_manager
     job_manager = get_global_job_manager()
     if job_manager is not None:
         job_manager.shutdown()

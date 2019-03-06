@@ -2,20 +2,23 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class SimpleFrameworkError(RuntimeError):
+class SawxError(RuntimeError):
     pass
 
-class RecreateDynamicMenuBar(SimpleFrameworkError):
+class RecreateDynamicMenuBar(SawxError):
     pass
 
-class EditorNotFound(SimpleFrameworkError):
+class EditorNotFound(SawxError):
     pass
 
-class UnsupportedFileType(SimpleFrameworkError):
+class UnsupportedFileType(SawxError):
     pass
 
-class ProgressCancelError(SimpleFrameworkError):
+class ProgressCancelError(SawxError):
     pass
 
-class DocumentError(SimpleFrameworkError):
+class DocumentError(SawxError):
+    pass
+
+class MissingDocumentationError(SawxError):
     pass

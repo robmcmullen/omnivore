@@ -8,7 +8,7 @@ import jsonpickle
 from datetime import datetime
 
 import appdirs
-from .templates import template_subdirs
+from .filesystem import template_paths
 
 import logging
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def setup_file_persistence(app_name):
 
     dirname = appdirs.user_config_dir(app_name)
     config_base_dir = dirname
-    template_subdirs[0:0] = [get_config_subdir("templates")]
+    template_paths[0:0] = [get_config_subdir("templates")]
 
     # Make sure it exists!
     if not os.path.exists(config_base_dir):
