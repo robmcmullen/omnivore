@@ -65,9 +65,9 @@ def check_signature(raw, sig):
 def guess_detail_for_mime(mime, raw, parser):
     for entry in magic:
         if entry['mime'].startswith(mime):
-            log.debug("checking signature for %s" % entry['mime'])
+            log.debug("checking entry for %s" % entry['mime'])
             if check_signature(raw, entry['signature']):
-                log.debug("found signature: %s" % entry['name'])
+                log.debug("found match: %s" % entry['name'])
                 return entry['mime']
     return mime
 

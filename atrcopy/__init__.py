@@ -72,8 +72,10 @@ def find_diskimage_from_data(data, verbose=False):
             if verbose:
                 print("Found parser %s" % parser.menu_name)
             mime2 = guess_detail_for_mime(mime, rawdata, parser)
-            if mime != mime2 and verbose:
-                print("Signature match: %s" % mime2)
+            if mime != mime2:
+                mime = mime2
+                if verbose:
+                    print("Magic signature match: %s" % mime)
             break
     if parser is None:
         raise errors.UnsupportedDiskImage("Unknown disk image type")
@@ -83,6 +85,7 @@ def find_diskimage_from_data(data, verbose=False):
 def find_diskimage(filename, verbose=False):
     if filename == ".":
         parser = LocalFilesystem()
+        mime = ""
     else:
         with open(filename, "rb") as fh:
             if verbose:
@@ -91,7 +94,7 @@ def find_diskimage(filename, verbose=False):
         parser, mime = find_diskimage_from_data(data, verbose)
     parser.image.filename = filename
     parser.image.ext = ""
-    return parser
+    return parser, mime
 
 
 def extract_files(image, files):
@@ -234,7 +237,7 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             log.debug("read data for %s" % s.name)
     for name in obj_files:
         try:
-            parser = find_diskimage(name, options.verbose)
+            parser, _ = find_diskimage(name, options.verbose)
         except errors.AtrError as e:
             print(f"skipping {name}: {e}")
         else:
@@ -388,7 +391,7 @@ def create_image(template, name):
         else:
             with open(name, "wb") as fh:
                 fh.write(data)
-            parser = find_diskimage(name, options.verbose)
+            parser, _ = find_diskimage(name, options.verbose)
             print("created %s: %s" % (name, str(parser.image)))
             list_files(parser.image, [])
     else:
@@ -594,12 +597,12 @@ def run():
         boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
         try:
-            parser = find_diskimage(disk_image_name, options.verbose)
+            parser, mime = find_diskimage(disk_image_name, options.verbose)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
             print(f"{disk_image_name}: {e}")
         else:
             if command not in skip_diskimage_summary:
-                print("%s: %s" % (disk_image_name, parser.image))
+                print(f"{disk_image_name}: {parser.image}{' (%s}' % mime if mime and options.verbose else ''}")
             if command == "vtoc":
                 vtoc = parser.image.get_vtoc_object()
                 print(vtoc)

@@ -221,6 +221,7 @@ def guess_container(r, verbose=False):
             if verbose:
                 log.info(f"found container {c}")
             return found
+    log.info(f"image does not appear to be a container.")
     return None
 
 
@@ -248,8 +249,10 @@ def guess_parser_by_size(r, verbose=False):
                     if verbose:
                         log.info("parser isn't %s: %s" % (parser.__name__, str(e)))
                     pass
-    if found is None:
-        log.info(f"no matching signature")
+        if found is None:
+            log.info(f"no matching signature")
+    else:
+        log.info(f"{size} not found in signature database; skipping sha1 matching")
     return mime, found
 
 def guess_parser_for_mime(mime, r, verbose=False):
