@@ -123,49 +123,32 @@ class DiskImageDocument(BaseDocument):
         return "\n".join(lines)
 
     #### loaders
-    def load_from_atrcopy_parser(self, file_metadata, editor_metadata):
+    def load_from_atrcopy_parser(self, file_metadata, last_session):
         # make sure a parser exists; it probably does in most cases, but
         # emulators use a source document to create the EmulationDocument, and
         # the EmulationDocument won't have a parser assigned if it isn't being
         # restored from a .omnivore file
         if self.segment_parser is None:
             self.set_segments(file_metadata["atrcopy_parser"])
-        self.restore_extra_from_dict(editor_metadata)
+        self.restore_session(last_session)
 
-    def load_from_raw_data(self, data, file_metadata, editor_metadata):
+    def load_from_raw_data(self, data, file_metadata, last_session):
         self.raw_bytes = data
         self.parse_segments([])
-        self.restore_extra_from_dict(editor_metadata)
+        self.restore_session(last_session)
 
     #### serialization methods
 
-    def get_document_template_metadata(self, file_metadata):
-        mime = file_metadata["mime"]
-        log.debug("extra metadata_before_editor: parser=%s, mime=%s" % (file_metadata.get("atrcopy_parser", None), mime))
-        extra = self.calc_unserialized_template(mime)
-        if extra:
-            log.debug("extra metadata: loaded template for %s" % mime)
-        if 'machine mime' not in extra:
-            extra['machine mime'] = mime
-
-        # if 'serialized user segments' in editor_metadata and 'user segments' in extra:
-        #     # Ignore the segments from the built-in data if serialized user
-        #     # segments exist in the .omnivore file. Any built-in segments will
-        #     # have already been saved in the .omnivore file, so this prevents
-        #     # duplication.
-        #     del extra['user segments']
-        return extra
-
-    def serialize_extra_to_dict(self, mdict):
-        BaseDocument.serialize_extra_to_dict(self, mdict)
+    def save_session(self, mdict):
+        BaseDocument.save_session(self, mdict)
 
         mdict["segment parser"] = self.segment_parser
         mdict["serialized user segments"] = list(self.user_segments)
-        self.container_segment.serialize_extra_to_dict(mdict)
+        self.container_segment.save_session(mdict)
         mdict["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
 
-    def restore_extra_from_dict(self, e):
-        BaseDocument.restore_extra_from_dict(self, e)
+    def restore_session(self, e):
+        BaseDocument.restore_session(self, e)
 
         if 'segment parser' in e:
             parser = e['segment parser']
@@ -180,7 +163,7 @@ class DiskImageDocument(BaseDocument):
             for s in e['serialized user segments']:
                 s.reconstruct_raw(self.container_segment.rawdata)
                 self.add_user_segment(s, replace=True)
-        self.container_segment.restore_extra_from_dict(e)
+        self.container_segment.restore_session(e)
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
 

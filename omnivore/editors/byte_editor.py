@@ -65,7 +65,7 @@ class ByteEditor(TileManagerBase):
     name = "omnivore.byte_edit"
     pretty_name = "Byte Editor"
 
-    extra_metadata_file_extensions = ["omnivore"]
+    session_save_file_extension = ".omnivore"
 
     default_viewers = "hex,bitmap,char,disasm"
     default_viewers = "hex,bitmap,disasm"
@@ -282,19 +282,17 @@ class ByteEditor(TileManagerBase):
 
     def load(self, path, file_metadata, args=None):
         doc = self.document = DiskImageDocument()
-        template_metadata = doc.get_document_template_metadata(file_metadata)
-        self.load_extra_metadata(path, template_metadata)
+        self.create_last_session_dict(file_metadata)
         print("file_metadata", file_metadata)
-        print("template_metadata", template_metadata)
-        # print("extra_metadata", self.extra_metadata)
+        # print("last_session", self.last_session)
         print("args", args)
 
         if "atrcopy_parser" in file_metadata:
-            doc.load_from_atrcopy_parser(file_metadata, self.extra_metadata)
+            doc.load_from_atrcopy_parser(file_metadata, self.last_session)
         else:
             with fsopen(path, 'rb') as fh:
                 data = fh.read()
-            doc.load_from_raw_data(data, file_metadata, self.extra_metadata)
+            doc.load_from_raw_data(data, file_metadata, self.last_session)
 
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
