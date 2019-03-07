@@ -288,6 +288,7 @@ else:
     ]
     ext_modules = cythonize(extensions)
 
+exec(compile(open('omnivore/_version.py').read(), 'omnivore/_version.py', 'exec'))
 exec(compile(open('omnivore/_metadata.py').read(), 'omnivore/_metadata.py', 'exec'))
 
 setup(
