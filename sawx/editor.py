@@ -13,6 +13,7 @@ from . import errors
 from .utils import jsonutil
 from .utils.command import StatusFlags
 from .menubar import MenuDescription
+from .filesystem import fsopen as open
 
 import logging
 log = logging.getLogger(__name__)
@@ -39,12 +40,23 @@ def find_editor_class_for_file(file_metadata):
     and if no exact matches are found, returns through the list to find
     one that can edit that class of MIME.
     """
-    editors = get_editors()
-    log.debug(f"finding editors using {editors}")
-    for editor in editors:
-        if editor.can_edit_file_exact(file_metadata):
+    all_editors = get_editors()
+    log.debug(f"find_editor_class_for_file: known editors: {all_editors}")
+    matching_editors = [editor for editor in all_editors if editor.can_edit_file_exact(file_metadata)]
+    log.debug(f"find_editor_class_for_file: exact matches: {matching_editors}")
+
+    # restore last session files from all possible editors before choosing best
+    # editor
+    for editor in matching_editors:
+        editor.load_last_session(file_metadata)
+    for editor in matching_editors:
+        if editor.can_restore_last_session(file_metadata):
             return editor
-    for editor in editors:
+    if matching_editors:
+        return matching_editors[0]
+
+    # Try generic matches if all else fails
+    for editor in all_editors:
         if editor.can_edit_file_generic(file_metadata):
             return editor
     raise errors.UnsupportedFileType(f"No editor available for {file_metadata}")
@@ -126,7 +138,7 @@ class SawxEditor:
 
     module_search_order = ["sawx.actions"]
 
-    extra_metadata_file_extensions = []
+    session_save_file_extension = ""
 
     tool_bitmap_size = (24, 24)
 
@@ -201,7 +213,7 @@ class SawxEditor:
         self.last_loaded_uri = None
         self.last_saved_uri = None
         self.document = None
-        self.extra_metadata = {}
+        self.last_session = {}
         if self.__class__.preferences is None:
             self.create_preferences()
 
@@ -317,27 +329,15 @@ class SawxEditor:
 
     #### metadata
 
-    def load_extra_metadata(self, path, default_metadata):
-        self.extra_metadata.update(default_metadata)
-        for ext in self.extra_metadata_file_extensions:
-            mpath = path + "." + ext
-            try:
-                fh = open(mpath, 'r')
-                text = fh.read()
-            except IOError:
-                log.debug(f"load_extra_metadata: no metadata found at {mpath}")
-                pass
-            else:
-                try:
-                    metadata = jsonutil.unserialize(mpath, text)
-                except ValueError as e:
-                    log.error(f"invalid data in {mpath}: {e}")
-                    metadata = {}
-                self.extra_metadata.update(metadata)
+    def create_last_session_dict(self, file_metadata):
+        d = self.document.calc_default_session(file_metadata)
+        last = file_metadata['last_session'].get(self.session_save_file_extension, {})
+        d.update(last)
+        self.last_session = d
 
     @property
     def editor_metadata(self):
-        m = self.extra_metadata.get(self.name, {})
+        m = self.last_session.get(self.name, {})
         return m
 
     def get_editor_specific_metadata(self, keyword):
@@ -372,6 +372,29 @@ class SawxEditor:
     @classmethod
     def can_edit_file(cls, file_metadata):
         return cls.can_edit_file_exact(file_metadata) or cls.can_edit_file_generic(file_metadata)
+
+    @classmethod
+    def load_last_session(cls, file_metadata):
+        ext = cls.session_save_file_extension
+        if ext is not None:
+            uri = file_metadata['uri'] + ext
+            try:
+                fh = open(uri, 'r')
+                text = fh.read()
+            except IOError:
+                log.debug(f"load_last_session: no metadata found at {uri}")
+                pass
+            else:
+                try:
+                    session_info = jsonutil.unserialize(uri, text)
+                except ValueError as e:
+                    log.error(f"invalid data in {uri}: {e}")
+                    session_info = {}
+                file_metadata['last_session'][ext] = session_info
+
+    @classmethod
+    def can_restore_last_session(cls, file_metadata):
+        return cls.session_save_file_extension in file_metadata['last_session']
 
     def calc_usable_action(self, action_key):
         try:
