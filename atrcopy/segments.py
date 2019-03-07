@@ -553,7 +553,7 @@ class DefaultSegment:
             r = r.get_indexed[other.order]
         return r
 
-    def serialize_extra_to_dict(self, mdict):
+    def save_session(self, mdict):
         """Save extra metadata to a dict so that it can be serialized
 
         This is not saved by __getstate__ because child segments will point to
@@ -573,7 +573,7 @@ class DefaultSegment:
         # pairs
         mdict["comments"] = self.get_sorted_comments()
 
-    def restore_extra_from_dict(self, e):
+    def restore_session(self, e):
         if 'comments' in e:
             for k, v in e['comments']:
                 self.rawdata.extra.comments[k] = v
