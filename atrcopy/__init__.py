@@ -6,7 +6,7 @@ import json
 import logging
 log = logging.getLogger(__name__)
 
-from ._metadata import __version__
+from ._version import __version__
 
 try:
     import numpy as np

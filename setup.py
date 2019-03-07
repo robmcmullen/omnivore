@@ -5,7 +5,8 @@ try:
 except ImportError:
     from distutils.core import setup
 
-exec(open('atrcopy/_metadata.py').read())
+exec(compile(open('atrcopy/_version.py').read(), 'atrcopy/_version.py', 'exec'))
+exec(compile(open('atrcopy/_metadata.py').read(), 'atrcopy/_metadata.py', 'exec'))
 
 with open("README.rst", "r") as fp:
     long_description = fp.read()
