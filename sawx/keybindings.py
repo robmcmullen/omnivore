@@ -52,6 +52,8 @@ class KeyBindingDescription:
             log.debug(f"No keybinding description found in {source}")
         else:
             for action_key, text in source.keybinding_desc.items():
+                if not text:
+                    continue
                 a = wx.AcceleratorEntry()
                 a.FromString(text)
                 # print(f"{a.ToString()}: {action_key} flags={a.GetFlags()} keycode={a.GetKeyCode()}")
