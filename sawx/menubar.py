@@ -106,4 +106,4 @@ def sync_with_editor(valid_id_map, control):
         try:
             action.sync_menu_item_from_editor(action_key, menu_item)
         except AttributeError as e:
-            log.warning(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")
+            log.debug(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")

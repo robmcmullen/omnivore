@@ -45,4 +45,4 @@ class ToolbarDescription:
             try:
                 action.sync_tool_item_from_editor(action_key, toolbar_control, id)
             except AttributeError as e:
-                log.warning(f"Skipping sync of {action_key} toolbar item from {action.editor}: {e}")
+                log.debug(f"Skipping sync of {action_key} toolbar item from {action.editor}: {e}")
