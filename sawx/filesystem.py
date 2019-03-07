@@ -48,42 +48,50 @@ def open_blank(path, mode):
         else:
             raise ValueError(f"invalid mode for blank filesystem: '{mode}'")
 
+computed_filesystems = {
+    "about://": open_about,
+    "blank://": open_blank,
+}
+
 
 def find_template_path(name):
     return find_first_in_paths(template_paths, name)
 
-def open_template(path, mode):
-    try:
-        real_path = find_template_path(path)
-    except OSError as e:
-        raise FileNotFoundError(str(e))
-    else:
-        return open(real_path, mode)
-
-
 def find_image_path(name):
     return find_first_in_paths(image_paths, name)
 
-def open_icon(path, mode):
-    try:
-        real_path = find_image_path(path)
-    except OSError as e:
-        raise FileNotFoundError(str(e))
-    else:
-        return open(real_path, mode)
-
-filesystems = {
-    "about://": open_about,
-    "blank://": open_blank,
-    "template://": open_template,
-    "icon://": open_icon,
+filesystems_to_local_file = {
+    "template://": find_template_path,
+    "icon://": find_image_path,
+    "file://": lambda path: path,
 }
 
-def fsopen(uri, mode):
-    for prefix, opener in filesystems.items():
+def filesystem_path(uri):
+    for prefix, path_finder in filesystems_to_local_file.items():
         if uri.startswith(prefix):
-            return opener(uri[len(prefix):], mode)
-    return open(uri, mode)
+            try:
+                local_path = path_finder(uri[len(prefix):])
+            except OSError as e:
+                raise FileNotFoundError(str(e))
+            else:
+                break
+    else:
+        if "://" in uri:
+            raise FileNotFoundError(f"{uri} not on local filesystem")
+        else:
+            local_path = uri
+    return uri
+
+def fsopen(uri, mode):
+    try:
+        local_path = filesystem_path(uri)
+    except FileNotFoundError:
+        for prefix, opener in computed_filesystems.items():
+            if uri.startswith(prefix):
+                return opener(uri[len(prefix):], mode)
+        else:
+            raise FileNotFoundError(f"Unsupported URI scheme for {uri}")
+    return open(local_path, mode)
 
 
 class WxIconFileSystemHandler(wx.FileSystemHandler):
