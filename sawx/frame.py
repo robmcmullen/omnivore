@@ -30,6 +30,7 @@ class SawxFrame(wx.Frame):
 
         self.toolbar_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer)
+        self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
 
@@ -280,6 +281,10 @@ class SawxFrame(wx.Frame):
         except KeyError as e:
             print(f"key id {key_id} not found in {self.keybindings.valid_key_map}")
             evt.Skip()
+
+    def on_size(self, evt):
+        wx.GetApp().last_window_size = evt.GetSize()
+        evt.Skip()
 
 
     #### convenience functions for alerts and dialogs

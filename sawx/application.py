@@ -10,7 +10,7 @@ from .frame import SawxFrame
 from .editor import get_editors, find_editor_class_by_name
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
-from .persistence import setup_file_persistence, restore_from_last_time, remember_for_next_time
+from . import persistence
 from .utils.events import EventHandler
 from .ui import error_logger
 from . import errors
@@ -56,35 +56,24 @@ class SawxApp(wx.App):
 
     clipboard_check_interval = .75
 
-    default_window_size = (800, 600)
-
-    last_window_size = None
+    window_sizes = {
+        "default": [800, 600],
+        "last_window_size": [1000, 400],
+    }
 
     #### Initialization
 
     def OnInit(self):
         self.SetAppName(self.app_name)
-        self.init_class_attrs()
         init_filesystems(self)
-        setup_file_persistence(self.app_name)
-        self.remember = restore_from_last_time()
+        persistence.setup_file_persistence(self.app_name)
+        self.remember = persistence.restore_from_last_time()
         self.keybindings_changed_event = EventHandler(self)
         return True
 
     def OnExit(self):
-        remember_for_next_time(self.remember)
+        persistence.remember_for_next_time(self.remember)
         return wx.App.OnExit(self)
-
-    @classmethod
-    def init_class_attrs(cls):
-        """Initialize all application class attributes from default values.
-
-        This is called during the OnInit processing, before any configuration files
-        are read, in order to provide sane default in case configuration files don't
-        yet exist.
-        """
-        if cls.last_window_size is None:
-            cls.last_window_size = cls.default_window_size
 
     def process_command_line_args(self, args):
         parser = argparse.ArgumentParser(description="Application parser")
@@ -181,9 +170,29 @@ class SawxApp(wx.App):
 
     #### Convenience functions
 
+    @property
+    def last_window_size(self):
+        return self.window_sizes["last_window_size"]
+
+    @last_window_size.setter
+    def last_window_size(self, value):
+        value = list(value)
+        log.debug(f"new window size: {value}")
+        self.window_sizes["last_window_size"] = value
+
     def new_frame(self, editor=None):
         if editor is None:
             editor = find_editor_class_by_name("title_screen")()
         frame = SawxFrame(editor)
         return frame
 
+
+def restore_from_last_time():
+    log.debug("Restoring window sizes")
+    cls = wx.GetApp().__class__
+    cls.window_sizes = persistence.get_json_data("window_sizes", cls.window_sizes)
+
+
+def remember_for_next_time():
+    log.debug("Remembering window sizes")
+    persistence.save_json_data("window_sizes", wx.GetApp().window_sizes)

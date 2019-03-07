@@ -123,17 +123,14 @@ def get_json_data(json_name, default_on_error=None):
     if raw is None:
         return default_on_error
     try:
-        json_data = jsonpickle.decode(raw)
+        decoded = jsonpickle.decode(raw)
         try:
-            # new format is a list with a format identifier as the first ntry
-            if json_data[0] == "format=v2":
-                decoded = json_data[1]
+            # legacy format is a list with a format identifier as the first
+            # entry
+            if decoded[0] == "format=v2":
+                decoded = decoded[1]
         except KeyError:
-            # deprecated format was a dictionary, and was creating an xtra
-            # layer of indirection by encoding the jsonpickle as another thing
-            json_data = json.loads(raw)
-            encoded = json_data[json_name]
-            decoded = jsonpickle.decode(encoded)
+            pass
         return decoded
     except ValueError:
         # bad JSON format
@@ -141,8 +138,7 @@ def get_json_data(json_name, default_on_error=None):
         return default_on_error
 
 def save_json_data(json_name, data):
-    json_data = ["format=v2", data]
-    encoded = jsonpickle.encode(json_data)
+    encoded = jsonpickle.encode(data)
     save_file_config_data("json", json_name, encoded)
 
 def get_bson_data(bson_name):

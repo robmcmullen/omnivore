@@ -82,6 +82,9 @@ setup(
     package_data = package_data,
     data_files=data_files,
     entry_points={
+        "sawx.remember": [
+            'app = sawx.application',
+        ],
         "sawx.loaders": [
             'fleep = sawx.loaders.fleep',
             'text = sawx.loaders.text',
