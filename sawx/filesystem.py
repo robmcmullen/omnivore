@@ -80,7 +80,7 @@ def filesystem_path(uri):
             raise FileNotFoundError(f"{uri} not on local filesystem")
         else:
             local_path = uri
-    return uri
+    return local_path
 
 def fsopen(uri, mode):
     try:
