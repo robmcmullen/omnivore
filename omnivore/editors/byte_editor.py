@@ -65,8 +65,6 @@ class ByteEditor(TileManagerBase):
     name = "omnivore.byte_edit"
     pretty_name = "Byte Editor"
 
-    session_save_file_extension = ".omnivore"
-
     default_viewers = "hex,bitmap,char,disasm"
     default_viewers = "hex,bitmap,disasm"
 
@@ -270,30 +268,19 @@ class ByteEditor(TileManagerBase):
         self.linked_bases = {}
 
     @classmethod
-    def can_edit_file_exact(cls, file_metadata):
-        return "atrcopy_parser" in file_metadata
+    def can_edit_document_exact(cls, document):
+        return "atrcopy_parser" in document.file_metadata
 
     @classmethod
-    def can_edit_file_generic(cls, file_metadata):
-        mime_type = file_metadata['mime']
-        return mime_type == "application/octet-stream"
+    def can_edit_document_generic(cls, document):
+        return document.mime == "application/octet-stream"
 
     #### file handling
 
-    def load(self, path, file_metadata, args=None):
-        doc = self.document = DiskImageDocument()
-        self.create_last_session_dict(file_metadata)
-        print("file_metadata", file_metadata)
-        # print("last_session", self.last_session)
-        print("args", args)
-
-        if "atrcopy_parser" in file_metadata:
-            doc.load_from_atrcopy_parser(file_metadata, self.last_session)
-        else:
-            with fsopen(path, 'rb') as fh:
-                data = fh.read()
-            doc.load_from_raw_data(data, file_metadata, self.last_session)
-
+    def show(self, args=None):
+        print("document", self.document)
+        print("segments", self.document.segments)
+        print("document", self.document)
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
@@ -301,9 +288,6 @@ class ByteEditor(TileManagerBase):
             self.restore_layout_and_viewers()
             self.restore_view_segment_number()
         self.set_initial_focused_viewer()
-
-        print("document", self.document)
-        print("segments", self.document.segments)
         self.document.recalc_event()
 
     def create_layout_from_args(self, args):

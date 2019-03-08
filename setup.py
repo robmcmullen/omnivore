@@ -318,6 +318,8 @@ setup(
     entry_points={
         "sawx.remember": 'fonts = omnivore.arch.fonts',
 
+        "sawx.documents": 'byte = omnivore.document',
+
         "sawx.editors": 'byte = omnivore.editors.byte_editor',
 
         "omnivore.viewers": [

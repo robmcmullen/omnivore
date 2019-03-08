@@ -6,7 +6,7 @@ import jsonpickle
 
 from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, errors, iter_parsers
 
-from sawx.document import BaseDocument
+from sawx.document import SawxDocument
 from sawx.utils.nputil import to_numpy
 from sawx.events import EventHandler
 
@@ -17,7 +17,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class DiskImageDocument(BaseDocument):
+class DiskImageDocument(SawxDocument):
     """Document for atrcopy-parsed segmented files
 
     Events:
@@ -36,21 +36,15 @@ class DiskImageDocument(BaseDocument):
         'viewers': 2,
     }
 
-    def __init__(self, raw_bytes=b"", style=b""):
-        BaseDocument.__init__(self, raw_bytes)
-        if not style:
-            style = np.zeros(len(self), dtype=np.uint8)
-        self.style = to_numpy(style)
-        self.segment_parser = None
+    session_save_file_extension = ".omnivore"
 
-        r = SegmentData(self.raw_bytes, self.style)
-        self.segments = list([DefaultSegment(r, 0)])
-        self.user_segments = []
+    def __init__(self, file_metadata):
         self.document_memory_map = {}
         self._cpu = "6502"
         self._disassembler = None
         self._operating_system = "atari800"
         self._machine_labels = None
+        SawxDocument.__init__(self, file_metadata)
 
         self.cpu_changed_event = EventHandler(self)
         self.priority_level_refresh_event = EventHandler(self)
@@ -111,7 +105,7 @@ class DiskImageDocument(BaseDocument):
 
     def __str__(self):
         lines = []
-        lines.append(f"Document: id={self.document_id}, mime={self.mime}, {self.uri}")
+        lines.append(f"Document: uuid={self.uuid}, mime={self.mime}, {self.uri}")
         if log.isEnabledFor(logging.DEBUG):
             lines.append("parser: %s" % self.segment_parser)
             lines.append("segments:")
@@ -120,27 +114,39 @@ class DiskImageDocument(BaseDocument):
             lines.append("user segments:")
             for s in self.user_segments:
                 lines.append("  %s" % s)
-        return "\n".join(lines)
+        return "\n---- ".join(lines)
 
     #### loaders
-    def load_from_atrcopy_parser(self, file_metadata, last_session):
+
+    def load_session(self):
+        super().load_session()
+        self.style = np.zeros(len(self), dtype=np.uint8)
+        r = SegmentData(self.raw_data, self.style)
+        self.segments = list([DefaultSegment(r, 0)])
+        self.user_segments = []
+
+        if "atrcopy_parser" in self.file_metadata:
+            self.load_from_atrcopy_parser()
+        else:
+            self.load_from_raw_data()
+        self.restore_session(self.last_session)
+        print(f"load_session: segments: {self.segments}")
+
+    def load_from_atrcopy_parser(self):
         # make sure a parser exists; it probably does in most cases, but
         # emulators use a source document to create the EmulationDocument, and
         # the EmulationDocument won't have a parser assigned if it isn't being
         # restored from a .omnivore file
-        if self.segment_parser is None:
-            self.set_segments(file_metadata["atrcopy_parser"])
-        self.restore_session(last_session)
+        self.set_segments(self.file_metadata["atrcopy_parser"])
+        print(f"load_from_atrcopy_parser: segments: {self.segments}")
 
     def load_from_raw_data(self, data, file_metadata, last_session):
-        self.raw_bytes = data
         self.parse_segments([])
-        self.restore_session(last_session)
 
     #### serialization methods
 
     def save_session(self, mdict):
-        BaseDocument.save_session(self, mdict)
+        SawxDocument.save_session(self, mdict)
 
         mdict["segment parser"] = self.segment_parser
         mdict["serialized user segments"] = list(self.user_segments)
@@ -148,7 +154,7 @@ class DiskImageDocument(BaseDocument):
         mdict["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_session(self, e):
-        BaseDocument.restore_session(self, e)
+        SawxDocument.restore_session(self, e)
 
         if 'segment parser' in e:
             parser = e['segment parser']
@@ -178,7 +184,7 @@ class DiskImageDocument(BaseDocument):
 
     def parse_segments(self, parser_list):
         parser_list.append(DefaultSegmentParser)
-        r = SegmentData(self.raw_bytes, self.style)
+        r = SegmentData(self.raw_data, self.style)
         for parser in parser_list:
             try:
                 s = parser(r)
@@ -222,7 +228,7 @@ class DiskImageDocument(BaseDocument):
             oldsize, newsize = c.resize(size)
             for s in self.contained_segments:
                 s.replace_data(c)
-            self.raw_bytes = c.data
+            self.raw_data = c.data
             start, end = oldsize, newsize
             r = c.rawdata[start:end]
             s = DefaultSegment(r, 0)
@@ -325,8 +331,8 @@ class DiskImageDocument(BaseDocument):
 
     #### Baseline document for comparisons
 
-    def init_baseline(self, metadata, raw_bytes):
-        d = DiskImageDocument(metadata=metadata, raw_bytes=raw_bytes)
+    def init_baseline(self, metadata, raw_data):
+        d = DiskImageDocument(metadata=metadata, raw_data=raw_data)
         d.parse_segments([])
         self.baseline_document = d
 
@@ -348,10 +354,21 @@ class DiskImageDocument(BaseDocument):
 
     @classmethod
     def create_from_segments(cls, root, user_segments):
-        doc = cls(raw_bytes=root.data, style=root.style)
+        doc = cls(raw_data=root.data, style=root.style)
         Parser = namedtuple("Parser", ['segments'])
         segs = [root]
         p = Parser(segments=segs)
         doc.user_segments = list(user_segments)
         doc.set_segments(p)
         return doc
+
+    #### file recognition
+
+    @classmethod
+    def can_load_file_exact(cls, file_metadata):
+        return "atrcopy_parser" in file_metadata
+ 
+    @classmethod
+    def can_load_file_generic(cls, file_metadata):
+        mime_type = file_metadata['mime']
+        return mime_type == "application/octet-stream"
