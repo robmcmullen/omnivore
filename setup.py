@@ -85,6 +85,9 @@ setup(
         "sawx.remember": [
             'app = sawx.application',
         ],
+        "sawx.documents": [
+            'text = sawx.documents.text',
+        ],
         "sawx.loaders": [
             'fleep = sawx.loaders.fleep',
             'text = sawx.loaders.text',

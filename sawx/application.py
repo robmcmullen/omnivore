@@ -182,8 +182,10 @@ class SawxApp(wx.App):
 
     def new_frame(self, editor=None):
         if editor is None:
-            editor = find_editor_class_by_name("title_screen")()
-        frame = SawxFrame(editor)
+            uri = "about://app"
+        else:
+            uri = None
+        frame = SawxFrame(editor, uri)
         return frame
 
 

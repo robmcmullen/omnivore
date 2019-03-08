@@ -33,7 +33,7 @@ def get_editors():
     return editors
 
 
-def find_editor_class_for_file(file_metadata):
+def find_editor_class_for_document(document):
     """Find the "best" editor for a given MIME type string.
 
     First attempts all editors with exact matches for the MIME string,
@@ -42,24 +42,24 @@ def find_editor_class_for_file(file_metadata):
     """
     all_editors = get_editors()
     log.debug(f"find_editor_class_for_file: known editors: {all_editors}")
-    matching_editors = [editor for editor in all_editors if editor.can_edit_file_exact(file_metadata)]
+    matching_editors = [editor for editor in all_editors if editor.can_edit_document_exact(document)]
     log.debug(f"find_editor_class_for_file: exact matches: {matching_editors}")
 
-    # restore last session files from all possible editors before choosing best
-    # editor
-    for editor in matching_editors:
-        editor.load_last_session(file_metadata)
-    for editor in matching_editors:
-        if editor.can_restore_last_session(file_metadata):
-            return editor
+    # # restore last session files from all possible editors before choosing best
+    # # editor
+    # for editor in matching_editors:
+    #     editor.load_last_session(document)
+    # for editor in matching_editors:
+    #     if editor.can_restore_last_session(document):
+    #         return editor
     if matching_editors:
         return matching_editors[0]
 
     # Try generic matches if all else fails
     for editor in all_editors:
-        if editor.can_edit_file_generic(file_metadata):
+        if editor.can_edit_document_generic(document):
             return editor
-    raise errors.UnsupportedFileType(f"No editor available for {file_metadata}")
+    raise errors.UnsupportedFileType(f"No editor available for {document}")
 
 def find_editor_class_by_name(name):
     """Find the editor class given its class name
@@ -220,15 +220,14 @@ class SawxEditor:
     def is_transient(self):
         return self.transient or self.__class__ == SawxEditor
 
-    def __init__(self, action_factory_lookup=None):
+    def __init__(self, document, action_factory_lookup=None):
         self.frame = None
         if action_factory_lookup is None:
             action_factory_lookup = {}
         self.action_factory_lookup = action_factory_lookup
-        self.last_loaded_uri = None
+        self.document = document
+        self.last_loaded_uri = document.uri
         self.last_saved_uri = None
-        self.document = None
-        self.last_session = {}
         if self.__class__.preferences is None:
             self.create_preferences()
 
@@ -259,20 +258,18 @@ class SawxEditor:
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Sawx editors")
 
+    def show(self, args=None):
+        """populate the control with the editor's document.
+
+        Can't do this at editor construction time because the control may not
+        exist.
+        """
+        pass
+
     def create_event_bindings(self):
         pass
 
     #### file load/save
-
-    def load(self, path, file_metadata, args=None):
-        pass
-
-    def load_success(self, path, file_metadata):
-        self.last_loaded_uri = path
-        self.document.uri = path
-        from sawx.actions import open_recent
-        open_recent.open_recent.append(path)
-        self.frame.status_message(f"loaded {path} {file_metadata}", True)
 
     def save(self):
         """Overwrite the file on disk with the version in memory
@@ -389,15 +386,9 @@ class SawxEditor:
 
     #### session
 
-    def create_last_session_dict(self, file_metadata):
-        d = self.document.calc_default_session(file_metadata)
-        last = file_metadata['last_session'].get(self.session_save_file_extension, {})
-        d.update(last)
-        self.last_session = d
-
     @property
     def editor_metadata(self):
-        m = self.last_session.get(self.name, {})
+        m = self.document.last_session.get(self.name, {})
         return m
 
     def get_editor_specific_metadata(self, keyword):
@@ -427,39 +418,16 @@ class SawxEditor:
     #### file identification routines
 
     @classmethod
-    def can_edit_file_exact(cls, file_metadata):
+    def can_edit_document_exact(cls, document):
         return False
 
     @classmethod
-    def can_edit_file_generic(cls, file_metadata):
+    def can_edit_document_generic(cls, document):
         return False
 
     @classmethod
-    def can_edit_file(cls, file_metadata):
-        return cls.can_edit_file_exact(file_metadata) or cls.can_edit_file_generic(file_metadata)
-
-    @classmethod
-    def load_last_session(cls, file_metadata):
-        ext = cls.session_save_file_extension
-        if ext is not None:
-            uri = file_metadata['uri'] + ext
-            try:
-                fh = open(uri, 'r')
-                text = fh.read()
-            except IOError:
-                log.debug(f"load_last_session: no metadata found at {uri}")
-                pass
-            else:
-                try:
-                    session_info = jsonutil.unserialize(uri, text)
-                except ValueError as e:
-                    log.error(f"invalid data in {uri}: {e}")
-                    session_info = {}
-                file_metadata['last_session'][ext] = session_info
-
-    @classmethod
-    def can_restore_last_session(cls, file_metadata):
-        return cls.session_save_file_extension in file_metadata['last_session']
+    def can_edit_document(cls, document):
+        return cls.can_edit_document_exact(document) or cls.can_edit_document_generic(document)
 
     def calc_usable_action(self, action_key):
         try:

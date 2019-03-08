@@ -10,6 +10,7 @@ from . import keybindings
 from . import errors
 from . import editor as editor_module
 from . import loader
+from .document import identify_document
 
 
 import logging
@@ -17,8 +18,8 @@ log = logging.getLogger(__name__)
 
 
 class SawxFrame(wx.Frame):
-    def __init__(self, editor):
-        wx.Frame.__init__(self, None , -1, editor.title, size=wx.GetApp().last_window_size)
+    def __init__(self, editor, uri=None):
+        wx.Frame.__init__(self, None , -1, uri or editor.title, size=wx.GetApp().last_window_size)
 
         self.raw_menubar = wx.MenuBar()
         self.SetMenuBar(self.raw_menubar)
@@ -50,7 +51,10 @@ class SawxFrame(wx.Frame):
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.on_page_closed)
 
         self.active_editor = None
-        self.add_editor(editor)
+        if uri is not None:
+            self.load_file(uri)
+        else:
+            self.add_editor(editor)
 
     @property
     def editors(self):
@@ -138,23 +142,29 @@ class SawxFrame(wx.Frame):
     def load_file(self, path, current_editor=None, args=None):
         try:
             file_metadata = loader.identify_file(path)
-            if current_editor is not None and current_editor.can_edit_file(file_metadata):
+            document = identify_document(file_metadata)
+            if current_editor is not None and current_editor.can_edit_document(document):
                 editor_cls = current_editor.__class__
             else:
-                editor_cls = editor_module.find_editor_class_for_file(file_metadata)
-            new_editor = editor_cls()
+                editor_cls = editor_module.find_editor_class_for_document(document)
+            new_editor = editor_cls(document)
             # have to add before load so the control exists
             self.add_editor(new_editor)
-            new_editor.load(path, file_metadata, args)
+            new_editor.show(args)
         except Exception as e:
             import traceback
             traceback.print_exc()
             self.error(str(e))
         else:
-            new_editor.load_success(path, file_metadata)
+            self.load_success(document)
             index = self.find_index_of_editor(new_editor)
             self.notebook.SetPageText(index, new_editor.tab_name)
         self.set_title()
+
+    def load_success(self, document):
+        from sawx.actions import open_recent
+        open_recent.open_recent.append(document.uri)
+        self.status_message(f"loaded {document.uri} {document}", True)
 
     def make_active(self, editor, force=False):
         last = self.active_editor

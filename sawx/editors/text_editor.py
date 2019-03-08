@@ -3,7 +3,6 @@ import os
 import wx
 
 from ..editor import SawxEditor
-from ..document import BaseDocument
 from ..filesystem import fsopen as open
 from ..keybindings import KeyBindingControlMixin
 
@@ -36,32 +35,6 @@ class TextEditorControl(KeyBindingControlMixin, wx.TextCtrl):
         print("next_char")
 
 
-class TextDocument(BaseDocument):
-    def __init__(self, uri):
-        super().__init__("")
-        self.mime = "text/plain"
-        if uri:
-            self.load_from_uri(uri)
-
-    def load_from_uri(self, uri):
-        with open(uri, 'r') as fh:
-            text = fh.read()
-        self.raw_data = self.calc_raw_data(text)
-        self.uri = uri
-
-    def calc_raw_data(self, raw):
-        return str(raw)
-
-    def calc_raw_data_to_save(self):
-        return self.raw_data
-
-    def save_raw_data(self, uri, raw_data):
-        fh = open(uri, 'w')
-        log.debug("saving to %s" % uri)
-        fh.write(raw_data)
-        fh.close()
-
-
 class TextEditor(SawxEditor):
     name = "text_editor"
 
@@ -91,9 +64,7 @@ class TextEditor(SawxEditor):
     def create_event_bindings(self):
         self.control.Bind(wx.EVT_CONTEXT_MENU, self.on_popup)
 
-    def load(self, path, file_metadata, args=None):
-        self.document = TextDocument(path)
-
+    def show(self, args=None):
         self.control.SetValue(self.document.raw_data)
         if args is not None:
             size = int(args.get('size', -1))
@@ -109,12 +80,12 @@ class TextEditor(SawxEditor):
         self.control.DiscardEdits()
 
     @classmethod
-    def can_edit_file_exact(cls, file_metadata):
-        return file_metadata['mime'] == "text/plain"
+    def can_edit_document_exact(cls, document):
+        return document.mime == "text/plain"
 
     @classmethod
-    def can_edit_file_generic(cls, file_metadata):
-        return file_metadata['mime'].startswith("text/")
+    def can_edit_document_generic(cls, document):
+        return document.mime.startswith("text/")
 
     def on_popup(self, evt):
         popup_menu_desc = [

@@ -3,7 +3,6 @@ import os
 import wx
 import wx.html
 
-from .text_editor import TextDocument
 from ..editor import SawxEditor
 from ..filesystem import fsopen as open
 
@@ -52,13 +51,12 @@ class HtmlViewer(SawxEditor):
     def create_control(self, parent):
         return HtmlWindow(parent)
 
-    def load(self, path, file_metadata, args=None):
-        self.document = TextDocument(path)
+    def show(self, args=None):
         self.control.SetPage(self.document.raw_data)
 
     @classmethod
-    def can_edit_file_exact(cls, file_metadata):
-        return file_metadata['mime'] == "text/html"
+    def can_edit_document_exact(cls, document):
+        return document.mime == "text/html"
 
 
 class TitleScreen(HtmlViewer):
@@ -66,16 +64,6 @@ class TitleScreen(HtmlViewer):
 
     transient = True
 
-    def create_control(self, parent):
-        self.control = HtmlViewer.create_control(self, parent)
-        self.load("about://app", None)
-        # self.tab_name = wx.GetApp().app_name
-        return self.control
-
     @classmethod
-    def can_edit_file_exact(cls, file_metadata):
-        return False
-
-    @classmethod
-    def can_edit_file_generic(cls, file_metadata):
-        return False
+    def can_edit_document_exact(cls, document):
+        return document.uri == "about://app"

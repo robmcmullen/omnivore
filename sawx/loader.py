@@ -33,8 +33,6 @@ def identify_file(uri):
 
     * uri -- the uri of the file
     * mime  -- the text string identifying the MIME type
-    * last_session -- a dict mapping a session name to another dict that
-      holds the corresponding information used to restore the session
 
     and possibly other keys that may be used by specific loaders for specific
     types of data.
@@ -49,7 +47,6 @@ def identify_file(uri):
             log.debug(f"identify_file: trying loader {loader}")
             file_metadata = loader.identify_mime(data, fh)
             if file_metadata:
-                file_metadata['last_session'] = {}
                 file_metadata['uri'] = uri
                 mime_type = file_metadata['mime']
                 if mime_type == "application/octet-stream" or mime_type == "text/plain":
@@ -67,4 +64,4 @@ def identify_file(uri):
         if not fallback:
             fallback = "application/octet-stream"
         log.debug(f"identify_file: identified only as the generic {fallback}")
-        return dict(mime=fallback, uri=uri, last_session={})
+        return dict(mime=fallback, uri=uri)
