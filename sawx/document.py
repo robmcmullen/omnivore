@@ -210,7 +210,7 @@ class SawxDocument:
                     log.error(f"invalid data in {uri}: {e}")
         return session_info
 
-    def save_session(self, mdict):
+    def serialize_session(self, mdict):
         """Save session information to a dict so that it can be serialized
         """
         mdict["document uuid"] = self.uuid
@@ -255,12 +255,10 @@ class SawxDocument:
         else:
             self.del_baseline()
 
-    def save(self, uri=None, raw_data=None):
+    def save(self, uri=None):
         if uri is None:
             uri = self.uri
-        if raw_data is None:
-            raw_data = self.calc_raw_data_to_save()
-
+        raw_data = self.calc_raw_data_to_save()
         self.save_raw_data(uri, raw_data)
         self.file_metadata['uri'] = uri
 
@@ -273,19 +271,29 @@ class SawxDocument:
         fh.write(raw_data)
         fh.close()
 
+    def save_session(self, editor_name, editor_session):
+        if not self.session_save_file_extension:
+            log.debug("no filename extension for session data; not saving")
+        else:
+            s = {}
+            self.serialize_session(s)
+            if s and editor_session:
+                s[editor_name] = editor_session
+                jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
+                text = jsonpickle.dumps(s)
+                text = jsonutil.collapse_json(text, 8, self.json_expand_keywords)
+                path = self.save_adjacent(self.session_save_file_extension, text)
+                log.debug("saved session to {path}")
+                return path
+
     def save_adjacent(self, ext, data, mode="w"):
-        path = self.filesystem_path()
-        dirname = os.path.dirname(path)
-        if dirname:
-            if not ext.startswith("."):
-                ext = "." + ext
-            basename = self.root_name + ext
-            filename = os.path.join(dirname, basename)
-            with open(filename, mode) as fh:
+        if ext:
+            path = self.filesystem_path() + ext
+            with open(path, mode) as fh:
                 fh.write(data)
         else:
-            raise RuntimeError(f"Unable to determine path of {path}")
-        return filename
+            raise RuntimeError(f"Must specify non-blank extension to write a file adjacent to the data file")
+        return path
 
     #### Cleanup functions
 

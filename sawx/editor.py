@@ -275,7 +275,6 @@ class SawxEditor:
         """Overwrite the file on disk with the version in memory
         """
         self.save_to_uri()
-        self.save_success()
 
     def save_as(self):
         """Prompt for a new filename, asking for confirmation if it would
@@ -284,28 +283,17 @@ class SawxEditor:
         path = self.frame.prompt_local_file_dialog("Save As", save=True, default_filename=self.document.root_name)
         if path is not None:
             self.save_to_uri(path)
-            self.save_success()
 
-    def save_to_uri(self, uri=None, saver=None, save_session=True):
-        if saver is None:
-            raw_bytes = None
-        else:
-            raw_bytes = saver(self.document, self)
-        self.document.save(uri, raw_bytes)
-
+    def save_to_uri(self, uri=None, save_session=True):
+        self.document.save(uri)
         if save_session:
-            self.save_session_to_uri(uri)
+            self.save_session()
+        self.save_success()
 
-    def save_session_to_uri(self, uri):
-        mdict = {}
-        self.save_session(mdict)
-        if mdict:
-            jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-            text = jsonpickle.dumps(mdict)
-            text = jsonutil.collapse_json(text, 8, self.json_expand_keywords)
-            text = self.calc_session_header() + text
-            path = self.document.save_adjacent(self.session_save_file_extension, text)
-            log.debug("saved session to {path}")
+    def save_session(self):
+        s = {}
+        self.serialize_session(s)
+        self.document.save_session(self.name, s)
 
     def save_success(self):
         path = self.document.uri
@@ -386,11 +374,6 @@ class SawxEditor:
 
     #### session
 
-    @property
-    def editor_metadata(self):
-        m = self.document.last_session.get(self.name, {})
-        return m
-
     def get_editor_specific_metadata(self, keyword):
         """Get the metadata for the keyword that is specific to this editor
         class.
@@ -412,7 +395,7 @@ class SawxEditor:
             layout_dict = {}
         return layout_dict
 
-    def save_session(self, e):
+    def serialize_session(self, s):
         pass
 
     #### file identification routines
