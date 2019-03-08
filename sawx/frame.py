@@ -58,13 +58,6 @@ class SawxFrame(wx.Frame):
             control = self.notebook.GetPage(index)
             yield control.editor
 
-    @property
-    def is_dirty(self):
-        for editor in self.editors:
-            if editor.is_dirty:
-                return True
-        return False
-
     def create_menubar(self):
         log.debug(f"create_menubar: active editor={self.active_editor}")
         self.menubar = menubar.MenubarDescription(self, self.active_editor)
@@ -109,6 +102,17 @@ class SawxFrame(wx.Frame):
         title = f"{self.active_editor.title} - {app.app_name}"
         log.debug(f"set_title: {title}")
         self.SetTitle(title)
+
+    def sync_name(self):
+        self.set_title()
+        index = self.notebook.GetSelection()
+        editor = self.find_editor_from_index(index)
+        log.debug(f"syncing name {editor.tab_name}")
+        self.notebook.SetPageText(index, editor.tab_name)
+
+    def sync_active_tab(self):
+        self.sync_name()
+        self.sync_toolbar()
 
     def add_editor(self, editor):
         editor.frame = self
@@ -167,7 +171,7 @@ class SawxFrame(wx.Frame):
             log.debug(f"setting tab focus to {index}")
             self.notebook.SetSelection(index)
             editor.control.SetFocus()
-            self.set_title()
+            self.sync_name()
 
     def enumerate_tabs(self):
         for index in range(self.notebook.GetPageCount()):
@@ -255,7 +259,7 @@ class SawxFrame(wx.Frame):
     def on_timer(self, evt):
         evt.Skip()
         log.debug("timer")
-        wx.CallAfter(self.sync_toolbar)
+        wx.CallAfter(self.sync_active_tab)
 
     def on_activate(self, evt):
         if evt.GetActive():
@@ -264,7 +268,7 @@ class SawxFrame(wx.Frame):
         else:
             log.debug("halting toolbar timer")
             self.toolbar_timer.Stop()
-        wx.CallAfter(self.sync_toolbar)
+        wx.CallAfter(self.sync_active_tab)
 
     def on_char_hook(self, evt):
         key_id = (evt.GetModifiers(), evt.GetKeyCode())
