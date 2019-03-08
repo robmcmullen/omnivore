@@ -260,6 +260,10 @@ class JumpmanViewer(BitmapViewer):
 
     #### update routines
 
+    def set_event_handlers(self):
+        super().set_event_handlers()
+        self.linked_base.jumpman_trigger_selected_event += self.on_jumpman_trigger_selected
+
     def recalc_data_model(self):
         self.current_level.init_level_builder(self)
         self.antic_color_registers = self.current_level.level_colors
@@ -275,10 +279,10 @@ class JumpmanViewer(BitmapViewer):
         if index_range is not Undefined:
             self.control.recalc_view()
 
-    def do_jumpman_trigger_selected_event(self, new_trigger_root):
-        log.debug("jumpman_trigger_selected_changed: %s selected=%s" % (self, str(new_trigger_root)))
-        if new_trigger_root is not Undefined:
-            self.set_trigger_view(new_trigger_root)
+    def on_jumpman_trigger_selected(self, evt):
+        new_trigger_root = evt[0]
+        log.debug("on_jumpman_trigger_selected: %s selected=%s" % (self, str(new_trigger_root)))
+        self.set_trigger_view(new_trigger_root)
 
     ##### Jumpman level construction
 
@@ -402,8 +406,8 @@ class TriggerList(wx.ListBox):
         event.Skip()
 
     def update_triggers_in_main_viewer(self, new_trigger_root):
-        print(("new trigger root:", new_trigger_root))
-        self.segment_viewer.linked_base.jumpman_trigger_selected_event = new_trigger_root
+        log.debug(f"new trigger root: {new_trigger_root}")
+        self.segment_viewer.linked_base.jumpman_trigger_selected_event(new_trigger_root)
 
     def on_dclick(self, event):
         event.Skip()

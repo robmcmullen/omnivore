@@ -536,7 +536,7 @@ class DrawCoinMode(DrawMode):
 
             # Force updating of the hex view
             e.document.change_count += 1
-            e.linked_base.refresh_event = True
+            e.linked_base.refresh_event(True)
         else:
             DrawMode.process_left_up(self, evt)
             return

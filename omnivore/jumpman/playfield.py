@@ -123,6 +123,7 @@ class JumpmanPlayfieldModel(object):
     def set_trigger_root(self, root):
         if root is not None:
             root = self.level_builder.find_equivalent_coin(root)
+        log.debug(f"setting trigger root to {root}")
         self.trigger_root = root
         self.force_refresh = True
         self.trigger_state = None
