@@ -26,12 +26,11 @@ class BaseDocument:
 
     metadata_extension = ".omnivore"
 
-    def __init__(self, raw_bytes=b""):
+    def __init__(self, raw_data=b""):
         self.uri = ""
         self.mime = "application/octet-stream"
-        self.name = ""
         self.undo_stack = UndoStack()
-        self.raw_bytes = to_numpy(raw_bytes)
+        self.raw_data = self.calc_raw_data(raw_data)
         self.uuid = str(uuid.uuid4())
         self.document_id = -1
         self.change_count = 0
@@ -48,9 +47,16 @@ class BaseDocument:
 
         self.byte_style_changed_event = EventHandler(self)  # only styling info may have changed, not any of the data byte values
 
+    def calc_raw_data(self, raw):
+        return to_numpy(raw)
+
     @property
     def can_revert(self):
         return self.uri != ""
+
+    @property
+    def name(self):
+        return os.path.basename(self.uri)
 
     @property
     def menu_name(self):
@@ -78,23 +84,23 @@ class BaseDocument:
 
     @classmethod
     def get_blank(cls):
-        return cls(raw_bytes=b"")
+        return cls(raw_data=b"")
 
     def __str__(self):
         return f"Document: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}"
 
     def __len__(self):
-        return np.alen(self.raw_bytes)
+        return np.alen(self.raw_data)
 
     def __getitem__(self, val):
-        return self.raw_bytes[val]
+        return self.raw_data[val]
 
     @property
-    def dirty(self):
+    def is_dirty(self):
         return self.undo_stack.is_dirty()
 
     def to_bytes(self):
-        return self.raw_bytes.tostring()
+        return self.raw_data.tostring()
 
     def load_permute(self, editor):
         if self.permute:
@@ -105,7 +111,7 @@ class BaseDocument:
 
     @property
     def bytestream(self):
-        return BytesIO.BytesIO(self.raw_bytes)
+        return BytesIO.BytesIO(self.raw_data)
 
     # serialization
 
@@ -150,69 +156,42 @@ class BaseDocument:
         except Exception as e:
             log.error("Problem loading baseline file %s: %s" % (uri, str(e)))
             raise DocumentError(str(e))
-        raw_bytes = guess.numpy
-        difference = len(raw_bytes) - len(self)
+        raw_data = guess.numpy
+        difference = len(raw_data) - len(self)
         if difference > 0:
             if confirm_callback("Truncate baseline data by %d bytes?" % difference, "Baseline Size Difference"):
-                raw_bytes = raw_bytes[0:len(self)]
+                raw_data = raw_data[0:len(self)]
             else:
-                raw_bytes = []
+                raw_data = []
         elif difference < 0:
             if confirm_callback("Pad baseline data with %d zeros?" % (-difference), "Baseline Size Difference"):
-                raw_bytes = np.pad(raw_bytes, (0, -difference), "constant", constant_values=0)
+                raw_data = np.pad(raw_data, (0, -difference), "constant", constant_values=0)
             else:
-                raw_bytes = []
-        if len(raw_bytes) > 0:
-            self.init_baseline(guess.metadata, raw_bytes)
+                raw_data = []
+        if len(raw_data) > 0:
+            self.init_baseline(guess.metadata, raw_data)
         else:
             self.del_baseline()
 
-    def save_to_uri(self, uri, editor, saver=None, save_metadata=True):
-        # Have to use a two-step process to write to the file: open the
-        # filesystem, then open the file.  Have to open the filesystem
-        # as writeable in case this is a virtual filesystem (like ZipFS),
-        # otherwise the write to the actual file will fail with a read-
-        # only filesystem error.
-        raw_bytes = self.calc_raw_bytes_to_save(editor, saver)
+    def save(self, uri=None, raw_data=None):
+        if uri is None:
+            uri = self.uri
+        if raw_data is None:
+            raw_data = self.calc_raw_data_to_save()
 
-        fh = filesystem.open(relpath, 'wb')
+        self.save_raw_data(uri, raw_data)
+        self.uri = uri
+
+    def calc_raw_data_to_save(self):
+        return self.raw_data.tostring()
+
+    def save_raw_data(self, uri, raw_data):
+        fh = open(uri, 'wb')
         log.debug("saving to %s" % uri)
-        fh.write(raw_bytes)
+        fh.write(raw_data)
         fh.close()
 
-        if save_metadata:
-            self.save_metadata_to_uri(uri, editor)
-
-    def save_metadata_to_uri(self, uri, editor):
-        mdict = self.calc_metadata_to_save(editor)
-        ext = self.metadata_extension
-        if mdict:
-            extra_uri = uri + ext
-            log.debug("saving extra metadata to %s" % extra_uri)
-            jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
-            raw_bytes = jsonpickle.dumps(mdict)
-            text = jsonutil.collapse_json(raw_bytes, 8, self.json_expand_keywords)
-            header = editor.get_extra_metadata_header()
-            fh = filesystem.open(extra_uri, 'w')
-            fh.write(header)
-            fh.write(text)
-            fh.close()
-
-    def calc_raw_bytes_to_save(self, editor, saver):
-        if saver is None:
-            raw_bytes = self.raw_bytes.tostring()
-        else:
-            raw_bytes = saver(self, editor)
-        return raw_bytes
-
-    def calc_metadata_to_save(self, editor):
-        mdict = self.init_extra_metadata_dict(editor)
-        task_metadata = dict()
-        editor.to_metadata_dict(task_metadata, self)
-        self.store_task_specific_metadata(editor, mdict, task_metadata)
-        return mdict
-
-    def save_next_to_on_filesystem(self, ext, data, mode="w"):
+    def save_adjacent(self, ext, data, mode="w"):
         path = self.filesystem_path()
         dirname = os.path.dirname(path)
         if dirname:
@@ -224,7 +203,7 @@ class BaseDocument:
                 fh.write(data)
         else:
             raise RuntimeError(f"Unable to determine path of {path}")
-        return basename
+        return filename
 
     #### Cleanup functions
 

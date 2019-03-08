@@ -138,6 +138,8 @@ class SawxEditor:
 
     module_search_order = ["sawx.actions"]
 
+    session_save_file_header = ""
+
     session_save_file_extension = ""
 
     tool_bitmap_size = (24, 24)
@@ -152,7 +154,7 @@ class SawxEditor:
 
     @property
     def is_dirty(self):
-        return False
+        return self.document.is_dirty
 
     @property
     def can_copy(self):
@@ -195,17 +197,30 @@ class SawxEditor:
 
     @property
     def title(self):
-        uri = self.last_saved_uri or self.last_loaded_uri
+        if self.document:
+            uri = self.document.uri
+        else:
+            uri = self.last_saved_uri or self.last_loaded_uri
         if uri:
-            return os.path.basename(uri)
+            if self.is_dirty:
+                uri = "\u2605" + uri
+            return uri
         return self.pretty_name
+
+    @property
+    def tab_name(self):
+        name = self.pretty_name
+        if self.document:
+            name = self.document.name
+        if self.is_dirty:
+            name = "\u2605" + name
+        return name
 
     @property
     def is_transient(self):
         return self.transient or self.__class__ == SawxEditor
 
     def __init__(self, action_factory_lookup=None):
-        self.tab_name = self.pretty_name
         self.frame = None
         if action_factory_lookup is None:
             action_factory_lookup = {}
@@ -247,15 +262,60 @@ class SawxEditor:
     def create_event_bindings(self):
         pass
 
+    #### file load/save
+
     def load(self, path, file_metadata, args=None):
         pass
 
     def load_success(self, path, file_metadata):
         self.last_loaded_uri = path
+        self.document.uri = path
         from sawx.actions import open_recent
         open_recent.open_recent.append(path)
-        self.tab_name = os.path.basename(path)
         self.frame.status_message(f"loaded {path} {file_metadata}", True)
+
+    def save(self):
+        """Overwrite the file on disk with the version in memory
+        """
+        self.save_to_uri()
+        self.save_success()
+
+    def save_as(self):
+        """Prompt for a new filename, asking for confirmation if it would
+        overwrite an existing file.
+        """
+        path = self.frame.prompt_local_file_dialog("Save As", save=True, default_filename=self.document.root_name)
+        if path is not None:
+            self.save_to_uri(path)
+            self.save_success()
+
+    def save_to_uri(self, uri=None, saver=None, save_session=True):
+        if saver is None:
+            raw_bytes = None
+        else:
+            raw_bytes = saver(self.document, self)
+        self.document.save(uri, raw_bytes)
+
+        if save_session:
+            self.save_session_to_uri(uri)
+
+    def save_session_to_uri(self, uri):
+        mdict = {}
+        self.save_session(mdict)
+        if mdict:
+            jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
+            text = jsonpickle.dumps(mdict)
+            text = jsonutil.collapse_json(text, 8, self.json_expand_keywords)
+            text = self.calc_session_header() + text
+            path = self.document.save_adjacent(self.session_save_file_extension, text)
+            log.debug("saved session to {path}")
+
+    def save_success(self):
+        path = self.document.uri
+        self.last_saved_uri = path
+        from sawx.actions import open_recent
+        open_recent.open_recent.append(path)
+        self.frame.status_message(f"saved {path}", True)
 
     #### popup menu utilities
 
@@ -327,7 +387,7 @@ class SawxEditor:
             d.recalc_event(flags=flags)
 
 
-    #### metadata
+    #### session
 
     def create_last_session_dict(self, file_metadata):
         d = self.document.calc_default_session(file_metadata)
@@ -360,6 +420,11 @@ class SawxEditor:
         except KeyError:
             layout_dict = {}
         return layout_dict
+
+    def save_session(self, e):
+        pass
+
+    #### file identification routines
 
     @classmethod
     def can_edit_file_exact(cls, file_metadata):

@@ -65,9 +65,15 @@ class save_file(SawxAction):
     def calc_enabled(self, action_key):
         return self.editor.is_dirty
 
-class save_as(SawxAction):
+    def perform(self, action_key):
+        self.editor.save()
+
+class save_as(save_file):
     def calc_name(self, action_key):
         return "Save &As"
+
+    def perform(self, action_key):
+        self.editor.save_as()
 
 class quit(SawxAction):
     def calc_name(self, action_key):

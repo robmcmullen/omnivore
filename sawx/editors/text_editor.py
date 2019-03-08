@@ -3,6 +3,7 @@ import os
 import wx
 
 from ..editor import SawxEditor
+from ..document import BaseDocument
 from ..filesystem import fsopen as open
 from ..keybindings import KeyBindingControlMixin
 
@@ -35,13 +36,38 @@ class TextEditorControl(KeyBindingControlMixin, wx.TextCtrl):
         print("next_char")
 
 
+class TextDocument(BaseDocument):
+    def __init__(self, uri):
+        super().__init__("")
+        self.mime = "text/plain"
+        if uri:
+            self.load_from_uri(uri)
+
+    def load_from_uri(self, uri):
+        with open(uri, 'r') as fh:
+            text = fh.read()
+        self.raw_data = self.calc_raw_data(text)
+        self.uri = uri
+
+    def calc_raw_data(self, raw):
+        return str(raw)
+
+    def calc_raw_data_to_save(self):
+        return self.raw_data
+
+    def save_raw_data(self, uri, raw_data):
+        fh = open(uri, 'w')
+        log.debug("saving to %s" % uri)
+        fh.write(raw_data)
+        fh.close()
+
 
 class TextEditor(SawxEditor):
     name = "text_editor"
 
     @property
     def is_dirty(self):
-        return not self.control.IsEmpty()
+        return self.control.IsModified()
 
     @property
     def can_copy(self):
@@ -66,17 +92,21 @@ class TextEditor(SawxEditor):
         self.control.Bind(wx.EVT_CONTEXT_MENU, self.on_popup)
 
     def load(self, path, file_metadata, args=None):
-        with open(path, 'r') as fh:
-            text = fh.read()
+        self.document = TextDocument(path)
 
-        self.control.SetValue(text)
-        self.tab_name = os.path.basename(path)
+        self.control.SetValue(self.document.raw_data)
         if args is not None:
             size = int(args.get('size', -1))
             if size > 0:
                 font = self.control.GetFont()
                 font.SetPointSize(size)
                 self.control.SetFont(font)
+        self.control.DiscardEdits()
+
+    def save(self):
+        self.document.raw_data = self.control.GetValue()
+        super().save()
+        self.control.DiscardEdits()
 
     @classmethod
     def can_edit_file_exact(cls, file_metadata):
@@ -168,9 +198,9 @@ class DebugTextEditor(TextEditor):
         "paste": "Ctrl+V",
     }
 
-    def load(self, *args, **kwargs):
-        TextEditor.load(self, *args, **kwargs)
-        self.tab_name = "DEBUG " + self.tab_name
+    @property
+    def tab_name(self):
+        return "DEBUG " + super().tab_name
 
     # won't automatically match anything; must force this editor with the -t
     # command line flag
