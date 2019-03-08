@@ -50,7 +50,7 @@ class new_file_from_template(SawxListAction):
 
 class open_file(SawxAction):
     def calc_name(self, action_key):
-        return "&Open"
+        return "Open"
 
     def perform(self, action_key):
         frame = self.editor.frame
@@ -60,7 +60,7 @@ class open_file(SawxAction):
 
 class save_file(SawxAction):
     def calc_name(self, action_key):
-        return "&Save"
+        return "Save"
 
     def calc_enabled(self, action_key):
         return self.editor.is_dirty
@@ -68,59 +68,59 @@ class save_file(SawxAction):
     def perform(self, action_key):
         self.editor.save()
 
-class save_as(save_file):
+class save_as(SawxAction):
     def calc_name(self, action_key):
-        return "Save &As"
+        return "Save As"
 
     def perform(self, action_key):
         self.editor.save_as()
 
 class quit(SawxAction):
     def calc_name(self, action_key):
-        return "&Quit"
+        return "Quit"
 
     def perform(self, action_key):
         wx.GetApp().quit()
 
 class undo(SawxAction):
     def calc_name(self, action_key):
-        return "&Undo"
+        return "Undo"
 
     def calc_enabled(self, action_key):
         return self.editor.can_undo
 
 class redo(SawxAction):
     def calc_name(self, action_key):
-        return "&Redo"
+        return "Redo"
 
     def calc_enabled(self, action_key):
         return self.editor.can_redo
 
 class cut(SawxAction):
     def calc_name(self, action_key):
-        return "&Cut"
+        return "Cut"
 
     def calc_enabled(self, action_key):
         return self.editor.can_copy
 
 class copy(cut):
     def calc_name(self, action_key):
-        return "&Copy"
+        return "Copy"
 
 class paste(SawxAction):
     def calc_name(self, action_key):
-        return "&Paste"
+        return "Paste"
 
     def calc_enabled(self, action_key):
         return self.editor.can_paste
 
 class prefs(SawxAction):
     def calc_name(self, action_key):
-        return "&Preferences"
+        return "Preferences"
 
 class about(SawxAction):
     def calc_name(self, action_key):
-        return "&About"
+        return "About"
 
     def perform(self, action_key):
         wx.GetApp().show_about_dialog()
