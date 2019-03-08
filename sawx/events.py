@@ -7,6 +7,9 @@ import weakref
 
 __all__ = ["EventHandler"]
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class Event(list):
     def __init__(self, sender, *args, **kwargs):
@@ -29,6 +32,8 @@ class EventHandler:
     def __init__(self, sender, event_class=None, debug=False):
         self.callbacks = []
         self.sender = sender
+        if not debug:
+            debug = log.getEffectiveLevel() <= logging.DEBUG
         self.debug = debug
 
     def __call__(self, *args, **kwargs):

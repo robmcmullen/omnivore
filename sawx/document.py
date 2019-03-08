@@ -7,7 +7,7 @@ import numpy as np
 import jsonpickle
 
 # Enthought library imports.
-from .utils.events import EventHandler
+from .events import EventHandler
 from .utils.command import UndoStack
 from .utils import jsonutil
 from .utils.nputil import to_numpy

@@ -11,7 +11,7 @@ from .editor import get_editors, find_editor_class_by_name
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
 from . import persistence
-from .utils.events import EventHandler
+from .events import EventHandler
 from .ui import error_logger
 from . import errors
 
