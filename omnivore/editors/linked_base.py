@@ -9,7 +9,7 @@ import numpy as np
 import json
 
 from sawx.utils.command import DisplayFlags
-from sawx.utils.events import EventHandler
+from sawx.events import EventHandler
 
 from ..utils.segmentutil import SegmentData, DefaultSegment
 from ..jumpman import playfield as jp
@@ -47,13 +47,13 @@ class LinkedBase:
         self.has_origin = False
         self.segment_view_params = {}
 
-        self.ensure_visible_event = EventHandler(self, debug=True)
-        self.sync_caret_to_index_event = EventHandler(self, debug=True)
-        self.refresh_event = EventHandler(self, debug=True)
-        self.recalc_event = EventHandler(self, debug=True)
+        self.ensure_visible_event = EventHandler(self)
+        self.sync_caret_to_index_event = EventHandler(self)
+        self.refresh_event = EventHandler(self)
+        self.recalc_event = EventHandler(self)
         self.update_trace = EventHandler(self)
         self.key_pressed = EventHandler(self)
-        self.segment_selected_event = EventHandler(self, debug=True)
+        self.segment_selected_event = EventHandler(self)
 
         ##### Jumpman-specific stuff
         self.jumpman_trigger_selected_event = EventHandler(self)

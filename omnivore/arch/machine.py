@@ -8,7 +8,7 @@ import numpy as np
 from traits.api import HasTraits, Any, Bool, Int, Str, List, Dict, Enum, DictStrStr
 
 from sawx import persistence
-from sawx.utils.events import EventHandler
+from sawx.events import EventHandler
 
 # Local imports.
 from . import fonts

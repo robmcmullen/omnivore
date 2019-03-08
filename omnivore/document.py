@@ -8,7 +8,7 @@ from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, errors, i
 
 from sawx.document import BaseDocument
 from sawx.utils.nputil import to_numpy
-from sawx.utils.events import EventHandler
+from sawx.events import EventHandler
 
 from .disassembler import DisassemblyConfig
 from .utils.archutil import Labels, load_memory_map

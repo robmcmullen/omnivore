@@ -10,7 +10,7 @@ import json
 from sawx.editor import SawxEditor
 from sawx.ui.tilemanager import TileManager
 from sawx.templates import get_template
-from sawx.utils.events import EventHandler
+from sawx.events import EventHandler
 
 from ..viewer import find_viewer_class_by_name
 
