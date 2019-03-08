@@ -13,15 +13,6 @@ global_action_ids = {
     "about": wx.ID_ABOUT,
     "quit": wx.ID_EXIT,
     "prefs": wx.ID_PREFERENCES,
-    "new_file": wx.ID_NEW,
-    "open_file": wx.ID_OPEN,
-    "save_file": wx.ID_SAVE,
-    "save_as": wx.ID_SAVEAS,
-    "copy": wx.ID_COPY,
-    "cut": wx.ID_CUT,
-    "paste": wx.ID_PASTE,
-    "undo": wx.ID_UNDO,
-    "redo": wx.ID_REDO,
 }
 
 
