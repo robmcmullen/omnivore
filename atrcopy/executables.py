@@ -96,7 +96,7 @@ def get_bsave(segments, run_addr=None):
     words[1] = size
     for s in all_segments:
         index = s.origin - origin + 4
-        print("setting data for $%04x - $%04x at index $%04x" % (s.origin, s.origin + len(s), index))
+        log.debug("setting data for $%04x - $%04x at index $%04x" % (s.origin, s.origin + len(s), index))
         image[index:index + len(s)] = s.data
     return image
 

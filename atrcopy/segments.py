@@ -76,7 +76,7 @@ class BSAVESaver:
         header = np.empty(2, dtype="<u2")
         header[0] = segment.origin
         header[1] = len(data)
-        print("binary data: %x bytes at %x" % (header[1], header[0]))
+        log.debug("binary data: %x bytes at %x" % (header[1], header[0]))
         return header.tobytes() + segment.tobytes()
 
 
@@ -523,7 +523,7 @@ class DefaultSegment:
         """
         if hasattr(self, 'start_addr'):
             self.origin = self.start_addr
-            print(f"moving start_addr to origin: {self.start_addr}")
+            log.debug(f"moving start_addr to origin: {self.start_addr}")
             delattr(self, 'start_addr')
 
     def reconstruct_raw(self, rawdata):

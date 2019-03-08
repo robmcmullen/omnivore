@@ -15,9 +15,9 @@ def identify_mime(header, fh):
         try:
             parser, mime_type = find_diskimage_from_data(data, True)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
-            print(f"error in atrcopy parser: {e}")
+            log.debug(f"error in atrcopy parser: {e}")
         else:
-            print(f"{parser.image}: {mime_type}")
+            log.debug(f"{parser.image}: {mime_type}")
 
         if mime_type:
             log.debug(f"atrcopy loader: identified {mime_type}")

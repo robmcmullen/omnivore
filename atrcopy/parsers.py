@@ -230,7 +230,6 @@ def guess_parser_by_size(r, verbose=False):
     mime = None
     size = len(r)
     if size in sha1_signatures:
-        print(r)
         sha_hash = hashlib.sha1(r.data).digest()
         log.info(f"{size} in signature database, attempting to match {sha_hash}")
         try:

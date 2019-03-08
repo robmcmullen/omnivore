@@ -328,7 +328,6 @@ class AtariDosFile(Bootable):
                 segment_cls = RunAddressSegment
             else:
                 segment_cls = ObjSegment
-            print(start, end, segment_cls)
             self.segments.append(segment_cls(r[pos + 4:pos + 4 + count], pos, pos + 4, start, end))
             pos += 4 + count
             style_pos = pos

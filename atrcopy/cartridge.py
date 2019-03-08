@@ -262,7 +262,6 @@ class BaseAtariCartImage(DiskImageBase):
         return segments
 
     def create_emulator_boot_segment(self):
-        print(self.segments)
         h = self.header
         k, rem = divmod(len(self), 1024)
         if rem == 0:
@@ -335,7 +334,6 @@ class RomImage(DiskImageBase):
         self.segments = [s]
 
     def create_emulator_boot_segment(self):
-        print(self.segments)
         s = self.segments[0]
         if s.origin == 0:
             return None
