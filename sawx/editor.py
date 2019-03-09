@@ -325,10 +325,12 @@ class SawxEditor:
     def undo(self):
         undo = self.document.undo_stack.undo(self)
         self.process_flags(undo.flags)
+        self.frame.sync_active_tab()
 
     def redo(self):
         undo = self.document.undo_stack.redo(self)
         self.process_flags(undo.flags)
+        self.frame.sync_active_tab()
 
     def end_batch(self):
         self.document.undo_stack.end_batch()

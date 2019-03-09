@@ -89,12 +89,18 @@ class undo(SawxAction):
     def calc_enabled(self, action_key):
         return self.editor.can_undo
 
+    def perform(self, action_key):
+        self.editor.undo()
+
 class redo(SawxAction):
     def calc_name(self, action_key):
         return "Redo"
 
     def calc_enabled(self, action_key):
         return self.editor.can_redo
+
+    def perform(self, action_key):
+        self.editor.redo()
 
 class cut(SawxAction):
     def calc_name(self, action_key):
