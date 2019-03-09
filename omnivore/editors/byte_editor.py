@@ -325,10 +325,9 @@ class ByteEditor(TileManagerBase):
         self.linked_bases = linked_bases
 
     def restore_view_segment_number(self, s):
-        view_map = s.get("linked_base_view_segment_number", {})
         for uuid, lb in self.linked_bases.items():
-            segment_number = view_map.get(uuid, 0)
-            print(f"restore_view_segment_number: {uuid}->{segment_number}")
+            segment_number = max(lb.restore_session_segment_number, 0)
+            log.debug(f"restore_view_segment_number: {uuid}->{segment_number}")
             lb.view_segment_number(segment_number)
 
     def rebuild_document_properties(self):

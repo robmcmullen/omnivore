@@ -45,6 +45,7 @@ class LinkedBase:
         rawdata = SegmentData([])
         self.segment = DefaultSegment(rawdata)
         self.segment_number = 0
+        self.restore_session_segment_number = -1
         self.has_origin = False
         self.segment_view_params = {}
 
@@ -104,7 +105,8 @@ class LinkedBase:
             self.diff_highlight = bool(e['diff highlight'])
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
-        #self.editor.document.find_initial_visible_segment(self, e.get('segment number', 0))
+        if 'segment number' in e:
+            self.restore_session_segment_number = e['segment number']
 
     def serialize_session(self, mdict):
         # make sure to save latest values of currently viewed segment
