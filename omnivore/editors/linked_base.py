@@ -11,6 +11,7 @@ import json
 from sawx.utils.command import DisplayFlags
 from sawx.events import EventHandler
 
+from ..commands import CoalescingChangeByteCommand
 from ..utils.segmentutil import SegmentData, DefaultSegment
 from ..jumpman import playfield as jp
 
@@ -215,6 +216,17 @@ class LinkedBase:
         self.segment = self.document.segments[self.segment_number]
         self.reconfigure_panes()
         self.update_segments_ui()
+
+    #### convenience functions
+
+    def change_bytes(self, start, end, byte_values, pretty=None):
+        """Convenience function to perform a ChangeBytesCommand
+        """
+        self.document.change_count += 1
+        cmd = CoalescingChangeByteCommand(self.segment, start, end, byte_values)
+        if pretty:
+            cmd.pretty_name = pretty
+        self.editor.process_command(cmd)
 
     # #### CaretHandler overrides
 

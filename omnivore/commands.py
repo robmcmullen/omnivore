@@ -92,6 +92,38 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
         self.segment[self.start_index:self.end_index] = old_data
 
 
+class ChangeByteCommand(SetContiguousDataCommand):
+    short_name = "cb"
+    pretty_name = "Change Bytes"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('start_index', 'int'),
+            ('end_index', 'int'),
+            ('byte_values', 'string'),
+            ('caret_at_end', 'bool'),
+            ('ignore_if_same_bytes', 'bool'),
+            ]
+
+    def __init__(self, segment, start_index, end_index, byte_values, caret_at_end=False, ignore_if_same_bytes=False, advance=False):
+        SetContiguousDataCommand.__init__(self, segment, start_index, end_index, advance=advance)
+        self.data = byte_values
+        self.caret_at_end = caret_at_end
+        self.ignore_if_same_bytes = ignore_if_same_bytes
+
+    def get_data(self, orig):
+        return self.data
+
+
+class CoalescingChangeByteCommand(ChangeByteCommand):
+    short_name = "ccb"
+
+    def can_coalesce(self, next_command):
+        return next_command.start_index == self.start_index and next_command.end_index == self.end_index
+
+    def coalesce_merge(self, next_command):
+        self.data = next_command.data
+
+
 class SetRangeCommand(ChangeByteValuesCommand):
     short_name = "set_range_base"
     pretty_name = "Set Ranges Abstract Command"

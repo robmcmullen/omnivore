@@ -520,15 +520,6 @@ class ByteEditor(TileManagerBase):
         wx.CallAfter(self.force_focus, control.segment_viewer)
         return ret
 
-    def change_bytes(self, start, end, byte_values, pretty=None):
-        """Convenience function to perform a ChangeBytesCommand
-        """
-        self.document.change_count += 1
-        cmd = CoalescingChangeByteCommand(self.segment, start, end, byte_values)
-        if pretty:
-            cmd.pretty_name = pretty
-        self.process_command(cmd)
-
     def process_flags(self, flags):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
