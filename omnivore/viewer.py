@@ -244,7 +244,7 @@ class SegmentViewer:
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
         print("LINKEDBASE:", linked_base.__class__.__mro__)
         v = cls(control, linked_base)
-        v.from_metadata_dict(mdict)
+        v.restore_session(mdict)
 
         # if v.machine is None:
         #     print("LOOKING UP MACHINE BY MIME", linked_base.document.mime)
@@ -291,10 +291,10 @@ class SegmentViewer:
         self.linked_base.refresh_event += self.on_refresh_view
         self.linked_base.recalc_event += self.on_recalc_view
 
-    def from_metadata_dict(self, e):
-        log.debug("metadata: %s" % str(e))
-        if 'uuid' in e:
-            self.uuid = e['uuid']
+    def restore_session(self, s):
+        log.debug("restore_session: %s" % str(s))
+        if 'uuid' in s:
+            self.uuid = s['uuid']
 
         # FIXME: deprecated stuff?
         # if 'machine' in e:
@@ -315,26 +315,16 @@ class SegmentViewer:
         #         self.set_font(e['font'][0], e['font'][1])
 
         # 'control' is handled during viewer creation process
-        self.from_metadata_dict_post(e)
 
-    def from_metadata_dict_post(self, e):
-        # placeholder for subclasses to check for extra metadata
-        pass
-
-    def to_metadata_dict(self, mdict, document):
-        mdict['name'] = self.name
-        mdict['uuid'] = self.uuid
-        mdict['linked base'] = self.linked_base.uuid
-        mdict['control'] = {}
+    def serialize_session(self, s):
+        s['name'] = self.name
+        s['uuid'] = self.uuid
+        s['linked base'] = self.linked_base.uuid
+        s['control'] = {}
         try:
-            self.control.serialize_extra_to_dict(mdict['control'])
+            self.control.serialize_extra_to_dict(s['control'])
         except AttributeError:
             pass
-        self.to_metadata_dict_post(mdict, document)
-
-    def to_metadata_dict_post(self, mdict, document):
-        # placeholder for subclasses to check for extra metadata
-        pass
 
     ##### User interface
 

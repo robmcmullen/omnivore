@@ -132,6 +132,11 @@ class DiskImageDocument(SawxDocument):
         self.restore_session(self.last_session)
         print(f"load_session: segments: {self.segments}")
 
+        # FIXME: raw_data and the segment raw data sometimes don't end up
+        # pointing to the same place, so force that now. A better way will be
+        # to have atrcopy not create a duplicate.
+        self.raw_data = self.container_segment.rawdata.data
+
     def load_from_atrcopy_parser(self):
         # make sure a parser exists; it probably does in most cases, but
         # emulators use a source document to create the EmulationDocument, and
@@ -145,13 +150,13 @@ class DiskImageDocument(SawxDocument):
 
     #### serialization methods
 
-    def save_session(self, mdict):
-        SawxDocument.save_session(self, mdict)
+    def serialize_session(self, s):
+        SawxDocument.serialize_session(self, s)
 
-        mdict["segment parser"] = self.segment_parser
-        mdict["serialized user segments"] = list(self.user_segments)
-        self.container_segment.save_session(mdict)
-        mdict["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
+        s["segment parser"] = self.segment_parser
+        s["serialized user segments"] = list(self.user_segments)
+        self.container_segment.serialize_session(s)
+        s["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_session(self, e):
         SawxDocument.restore_session(self, e)

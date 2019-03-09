@@ -95,7 +95,7 @@ class LinkedBase:
     def __str__(self):
         return f"LinkedBase {hex(id(self))}: seg={self.segment}"
 
-    def from_metadata_dict(self, e):
+    def restore_session(self, e):
         log.debug("metadata: %s" % str(e))
         if 'uuid' in e:
             self.uuid = e['uuid']
@@ -105,18 +105,13 @@ class LinkedBase:
             self.segment_view_params = e['segment view params']
         #self.editor.document.find_initial_visible_segment(self, e.get('segment number', 0))
 
-    def to_metadata_dict(self, mdict, document):
-        self.prepare_metadata_for_save()
-        if document == self.document:
-            mdict['uuid'] = self.uuid
-            # If we're saving the document currently displayed, save the
-            # display parameters too.
-            mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
-            mdict['segment number'] = self.segment_number
-
-    def prepare_metadata_for_save(self):
+    def serialize_session(self, mdict):
         # make sure to save latest values of currently viewed segment
         self.save_segment_view_params(self.segment)
+
+        mdict['uuid'] = self.uuid
+        mdict['segment view params'] = self.segment_view_params
+        mdict['segment number'] = self.segment_number
 
     def save_segment_view_params(self, segment):
         d = {}

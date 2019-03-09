@@ -284,9 +284,8 @@ class ByteEditor(TileManagerBase):
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
-            self.restore_linked_bases()
-            self.restore_layout_and_viewers()
-            self.restore_view_segment_number()
+            s = self.document.last_session.get(self.name, {})
+            self.restore_session(s)
         self.set_initial_focused_viewer()
         self.document.recalc_event()
 
@@ -300,14 +299,22 @@ class ByteEditor(TileManagerBase):
         self.create_viewers(viewer_metadata)
         self.center_base.view_segment_number(0)
 
-    def restore_linked_bases(self):
+    def restore_session(self, s):
+        log.debug("metadata: %s" % str(s))
+        if 'diff highlight' in s:
+            self.diff_highlight = bool(s['diff highlight'])
+        self.restore_linked_bases(s)
+        self.restore_layout_and_viewers(s)
+        self.restore_view_segment_number(s)
+
+    def restore_linked_bases(self, s):
         linked_bases = {}
-        for b in self.editor_metadata.get("linked bases", []):
+        for b in s.get("linked bases", []):
             base = LinkedBase(editor=self)
-            base.from_metadata_dict(b)
+            base.restore_session(b)
             linked_bases[base.uuid] = base
             log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
-        uuid = self.editor_metadata.get("center_base", None)
+        uuid = s.get("center_base", None)
         try:
             self.center_base = linked_bases[uuid]
         except KeyError:
@@ -317,104 +324,12 @@ class ByteEditor(TileManagerBase):
         log.critical(f"linked_bases: {linked_bases}")
         self.linked_bases = linked_bases
 
-    def restore_view_segment_number(self):
-        view_map = self.editor_metadata.get("linked_base_view_segment_number", {})
+    def restore_view_segment_number(self, s):
+        view_map = s.get("linked_base_view_segment_number", {})
         for uuid, lb in self.linked_bases.items():
             segment_number = view_map.get(uuid, 0)
             print(f"restore_view_segment_number: {uuid}->{segment_number}")
             lb.view_segment_number(segment_number)
-
-
-    def from_metadata_dict(self, e):
-        log.debug("metadata: %s" % str(e))
-        if 'diff highlight' in e:
-            self.diff_highlight = bool(e['diff highlight'])
-
-        viewers = e.get('viewers', [])
-        log.debug("metadata: viewers=%s" % str(viewers))
-        
-        if not viewers:
-            try:
-                e_default = self.get_default_layout()
-                print(("using defaults from template: template=%s" % str(e_default)))
-            except OSError:
-                log.error("No template for default layout; falling back to minimal setup.")
-            else:
-                e.update(e_default)
-                viewers = e.get('viewers', [])
-            log.debug("from layout: viewers=%s" % str(viewers))
-
-        layout = e.get('layout', {})
-        log.debug("metadata: layout=%s" % str(layout))
-
-        viewer_metadata = {}
-        for v in viewers:
-            viewer_metadata[v['uuid']] = v
-            log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
-
-        log.debug("task arguments: '%s'" % self.task_arguments)
-        if self.task_arguments or not viewer_metadata:
-            names = self.task_arguments if self.task_arguments else self.default_viewers
-            log.debug("overriding viewers: %s" % str(names))
-            override_viewer_metadata = {}
-            for viewer_name in names.split(","):
-                if viewer_name == "emulator":
-                    continue
-                override_viewer_metadata[viewer_name.strip()] = {}
-                log.debug("metadata: clearing viewer[%s] because specified in task args" % (viewer_name.strip()))
-            if override_viewer_metadata:
-                # found some specified viewers, so override the default layout
-                viewer_metadata = override_viewer_metadata
-                layout = {}  # empty layout so it isn't cluttered with unused windows
-
-        linked_bases = {}
-        for b in e.get('linked bases', []):
-            base = LinkedBase(editor=self)
-            base.from_metadata_dict(b)
-            linked_bases[base.uuid] = base
-            log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
-        uuid = e.get("center_base", None)
-        try:
-            self.center_base = linked_bases[uuid]
-        except KeyError:
-            self.center_base = LinkedBase(editor=self)
-        self.create_viewers(layout, viewer_metadata, e, linked_bases)
-        viewer = None
-        if 'focused viewer' in e:
-            u = e['focused viewer']
-            viewer = self.find_viewer_by_uuid(u)
-        self.task.segments_changed = self.document.segments
-
-    def to_metadata_dict(self, mdict, document):
-        self.prepare_metadata_for_save()
-        mdict["diff highlight"] = self.diff_highlight
-        mdict["layout"] = self.control.calc_layout()
-        mdict["viewers"] = []
-        bases = {}
-        for v in self.viewers:
-            b = v.linked_base
-            bases[b.uuid] = b
-            e = {"linked base": v.linked_base.uuid}
-            v.to_metadata_dict(e, document)
-            mdict["viewers"].append(e)
-        if self.center_base is not None:
-            bases[self.center_base.uuid] = self.center_base
-            mdict["center_base"] = self.center_base.uuid
-        else:
-            mdict["center_base"] = None
-        mdict["linked bases"] = []
-        for u, b in bases.items():
-            e = {}
-            b.to_metadata_dict(e, document)
-            mdict["linked bases"].append(e)
-        mdict["focused viewer"] = self.focused_viewer.uuid
-        # if document == self.document:
-        #     # If we're saving the document currently displayed, save the
-        #     # display parameters too.
-        #     mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
-
-    def prepare_metadata_for_save(self):
-        pass
 
     def rebuild_document_properties(self):
         if not self.document.has_baseline:

@@ -94,18 +94,18 @@ class TileManagerBase(SawxEditor):
                 layout = {}
         return layout
 
-    def get_layout_metadata(self, keyword):
+    def get_layout_metadata(self, s, keyword):
         """get the TileManager layout
         """
-        layout_dict = self.editor_metadata.get(keyword, {})
+        layout_dict = s.get(keyword, {})
         if not layout_dict:
             layout_dict = self.get_default_layout().get(keyword, {})
         return layout_dict
 
-    def restore_layout_and_viewers(self):
-        viewers = self.get_layout_metadata("viewers")
+    def restore_layout_and_viewers(self, s):
+        viewers = self.get_layout_metadata(s, "viewers")
         if viewers:
-            layout = self.get_layout_metadata("layout")
+            layout = self.get_layout_metadata(s, "layout")
             if layout:
                 self.control.restore_layout(layout)
         else:
@@ -192,35 +192,27 @@ class TileManagerBase(SawxEditor):
         self.set_focused_viewer(viewer)
         self.task.segments_changed = self.document.segments
 
-    def to_metadata_dict(self, mdict, document):
-        self.prepare_metadata_for_save()
-        mdict["layout"] = self.control.calc_layout()
-        mdict["viewers"] = []
+    def serialize_session(self, s):
+        s["layout"] = self.control.calc_layout()
+        s["viewers"] = []
         bases = {}
         for v in self.viewers:
             b = v.linked_base
             bases[b.uuid] = b
             e = {"linked base": v.linked_base.uuid}
-            v.to_metadata_dict(e, document)
-            mdict["viewers"].append(e)
+            v.serialize_session(e)
+            s["viewers"].append(e)
         if self.center_base is not None:
             bases[self.center_base.uuid] = self.center_base
-            mdict["center_base"] = self.center_base.uuid
+            s["center_base"] = self.center_base.uuid
         else:
-            mdict["center_base"] = None
-        mdict["linked bases"] = []
+            s["center_base"] = None
+        s["linked bases"] = []
         for u, b in bases.items():
             e = {}
-            b.to_metadata_dict(e, document)
-            mdict["linked bases"].append(e)
-        mdict["focused viewer"] = self.focused_viewer.uuid
-        # if document == self.document:
-        #     # If we're saving the document currently displayed, save the
-        #     # display parameters too.
-        #     mdict["segment view params"] = dict(self.segment_view_params)  # shallow copy, but only need to get rid of Traits dict wrapper
-
-    def prepare_metadata_for_save(self):
-        pass
+            b.serialize_session(e)
+            s["linked bases"].append(e)
+        s["focused viewer"] = self.focused_viewer.uuid
 
     #### viewer utilities
 
