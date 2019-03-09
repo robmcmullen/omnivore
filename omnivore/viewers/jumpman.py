@@ -134,6 +134,7 @@ class JumpmanGridControl(BitmapGridControl):
 
     def recalc_view_extra_setup(self):
         self.model.init_level_builder(self.segment_viewer)
+        self.segment_viewer._antic_color_registers = self.segment_viewer.current_level.level_colors
 
     def refresh_view(self, *args, **kwargs):
         drawlog.debug("refresh_view")
@@ -284,6 +285,16 @@ class JumpmanViewer(BitmapViewer):
         new_trigger_root = evt[0]
         log.debug("on_jumpman_trigger_selected: %s selected=%s" % (self, str(new_trigger_root)))
         self.set_trigger_view(new_trigger_root)
+
+    def on_refresh_view_for_style_change(self, evt):
+        self.current_level.init_level_builder(self)
+        self.antic_color_registers = self.current_level.level_colors
+
+    def recalc_view(self):
+        """Rebuild the entire UI after a document formatting (or other
+        structural change) or loading a new document.
+        """
+        self.antic_color_registers = self.current_level.level_colors  # refresh forced here
 
     ##### Jumpman level construction
 
