@@ -208,6 +208,11 @@ class JumpmanMouseModeTool(ViewerRadioAction):
     def perform(self, action_key):
         self.viewer.control.set_mouse_mode(self.mouse_mode_cls)
 
+
+class EraseModeMixin:
+    def calc_enabled(self, action_key):
+        return self.viewer.current_level.is_editing_trigger
+
 class jumpman_select_mode(JumpmanMouseModeTool):
     mouse_mode_cls = mm.AnticDSelectMode
 
@@ -223,13 +228,13 @@ class jumpman_draw_up_rope_mode(JumpmanMouseModeTool):
 class jumpman_draw_down_rope_mode(JumpmanMouseModeTool):
     mouse_mode_cls = mm.DrawDownRopeMode
 
-class jumpman_erase_girder_mode(JumpmanMouseModeTool):
+class jumpman_erase_girder_mode(EraseModeMixin, JumpmanMouseModeTool):
     mouse_mode_cls = mm.EraseGirderMode
 
-class jumpman_erase_ladder_mode(JumpmanMouseModeTool):
+class jumpman_erase_ladder_mode(EraseModeMixin, JumpmanMouseModeTool):
     mouse_mode_cls = mm.EraseLadderMode
 
-class jumpman_erase_rope_mode(JumpmanMouseModeTool):
+class jumpman_erase_rope_mode(EraseModeMixin, JumpmanMouseModeTool):
     mouse_mode_cls = mm.EraseRopeMode
 
 class jumpman_draw_coin_mode(JumpmanMouseModeTool):

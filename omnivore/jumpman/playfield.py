@@ -128,6 +128,10 @@ class JumpmanPlayfieldModel(object):
         self.force_refresh = True
         self.trigger_state = None
 
+    @property
+    def is_editing_trigger(self):
+        return self.trigger_root is not None
+
     def get_screen_state(self):
         if self.trigger_state is not None:
             return self.trigger_state
