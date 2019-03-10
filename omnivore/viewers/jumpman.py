@@ -194,12 +194,52 @@ class JumpmanGridControl(BitmapGridControl):
     handle_char_move_delete = handle_char_move_backspace
 
 
-class JumpmanViewer(BitmapViewer):
+class JumpmanViewerToolbarMixin:
+    viewer_category = "Jumpman"
+
+    exclude_from_menubar = ["Segments"]
+
+    default_mouse_mode_cls = jm.AnticDSelectMode
+
+    viewer_extra_toolbar_desc = ["jumpman_select_mode", "jumpman_draw_girder_mode", "jumpman_draw_ladder_mode", "jumpman_draw_up_rope_mode", "jumpman_draw_down_rope_mode", "jumpman_erase_girder_mode", "jumpman_erase_ladder_mode", "jumpman_erase_rope_mode", "jumpman_draw_coin_mode", "jumpman_respawn_mode"]
+
+
+class JumpmanOtherViewerToolbarMixin(JumpmanViewerToolbarMixin):
+    @property
+    def current_level(self):
+        for viewer in self.editor.viewers:
+            if viewer.linked_base == self.linked_base and viewer.name == "jumpman":
+                return viewer.current_level
+
+
+class JumpmanControlMouseModeMixin:
+    """Proxy class to send mouse mode changes to the main JumpmanViewer when
+    the mouse mode gets changed on the auxiliary jumpman viewers.
+    """
+    def set_mouse_mode(self, mode_cls):
+        # there shouldn't be multiple level viewers with the same linked base,
+        # but if there are, make sure they are all set to the same tool.
+        v = self.segment_viewer
+        e = v.editor
+        for viewer in e.viewers:
+            if viewer.linked_base == v.linked_base and viewer.name == "jumpman":
+                viewer.control.set_mouse_mode(mode_cls)
+
+    def is_mouse_mode(self, mode_cls):
+        # this is harder than the above if there are multiple level viewers.
+        # Hopefully they will all be on the same tool, so just use the first
+        # viewer we find.
+        v = self.segment_viewer
+        e = v.editor
+        for viewer in e.viewers:
+            if viewer.linked_base == v.linked_base and viewer.name == "jumpman":
+                return viewer.control.is_mouse_mode(mode_cls)
+
+
+class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
     name = "jumpman"
 
     pretty_name = "Jumpman Level Editor"
-
-    viewer_category = "Jumpman"
 
     control_cls = JumpmanGridControl
 
@@ -208,17 +248,6 @@ class JumpmanViewer(BitmapViewer):
     zoom_text = "bitmap zoom factor"
 
     has_caret = False
-
-    ##### class attributes
-
-    valid_mouse_modes = [jm.AnticDSelectMode, jm.DrawGirderMode, jm.DrawLadderMode, jm.DrawUpRopeMode, jm.DrawDownRopeMode, jm.DrawCoinMode, jm.EraseGirderMode, jm.EraseLadderMode, jm.EraseRopeMode, jm.JumpmanRespawnMode]
-
-    default_mouse_mode_cls = jm.AnticDSelectMode
-
-    exclude_from_menubar = ["Segments"]
-
-    viewer_extra_toolbar_desc = ["jumpman_select_mode", "jumpman_draw_girder_mode", "jumpman_draw_ladder_mode", "jumpman_draw_up_rope_mode", "jumpman_draw_down_rope_mode", "jumpman_erase_girder_mode", "jumpman_erase_ladder_mode", "jumpman_erase_rope_mode", "jumpman_draw_coin_mode", "jumpman_respawn_mode"]
-
 
     def __init__(self, *args, **kwargs):
         BitmapViewer.__init__(self, *args, **kwargs)
@@ -323,7 +352,7 @@ class JumpmanViewer(BitmapViewer):
 
 ##### Trigger painting viewer
 
-class TriggerList(wx.ListBox):
+class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
     """Trigger selector for choosing which trigger actions to edit
     """
 
@@ -435,16 +464,12 @@ class TriggerList(wx.ListBox):
         evt.Skip()
 
 
-class TriggerPaintingViewer(BaseInfoViewer):
+class TriggerPaintingViewer(JumpmanOtherViewerToolbarMixin, BaseInfoViewer):
     name = "trigger_painting"
 
     pretty_name = "Jumpman Trigger Painting"
 
-    viewer_category = "Jumpman"
-
     control_cls = TriggerList
-
-    exclude_from_menubar = ["Segments"]
 
     def recalc_data_model(self):
         pass
@@ -464,7 +489,7 @@ class TriggerPaintingViewer(BaseInfoViewer):
         return 0
 
 
-class JumpmanInfoPanel(InfoPanel):
+class JumpmanInfoPanel(JumpmanControlMouseModeMixin, InfoPanel):
     fields = [
         ("text", "Level Number", 0x00, 2),
         ("atascii_gr2_0xc0", "Level Name", 0x3ec, 20),
@@ -488,14 +513,10 @@ class JumpmanInfoPanel(InfoPanel):
         return jm.possible_jumpman_segment and bool(jm.level_builder.objects)
 
 
-class LevelSummaryViewer(BaseInfoViewer):
+class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, BaseInfoViewer):
     name = "level_summary"
 
     pretty_name = "Jumpman Level Summary"
-
-    viewer_category = "Jumpman"
-
-    exclude_from_menubar = ["Segments"]
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
