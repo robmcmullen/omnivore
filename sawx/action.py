@@ -198,6 +198,15 @@ class SawxRadioAction(SawxActionRadioMixin, SawxAction):
         else:
             menu_item.Enable(False)
 
+    def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
+        if self.calc_enabled(action_key):
+            state = self.calc_checked(action_key)
+            log.debug(f"{action_key}: checked={state}")
+            toolbar_control.EnableTool(id, True)
+            toolbar_control.ToggleTool(id, state)
+        else:
+            toolbar_control.EnableTool(id, False)
+
 
 class SawxActionListMixin:
     prefix = "_prefix_name_"
@@ -272,6 +281,23 @@ class SawxRadioListAction(SawxActionListMixin, SawxActionRadioMixin, SawxAction)
             if self.calc_list_items():
                 raise errors.RecreateDynamicMenuBar
             menu_item.Enable(False)
+
+    def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
+        if self.current_list:
+            state = self.calc_enabled(action_key)
+            if state:
+                index = self.get_index(action_key)
+                item = self.current_list[index]
+                checked = self.calc_checked_list_item(action_key, index, item)
+                log.debug(f"{action_key}: checked={state}, {item}")
+            else:
+                checked = False
+            toolbar_control.EnableTool(id, state)
+            toolbar_control.ToggleTool(id, checked)
+        else:
+            if self.calc_list_items():
+                raise errors.RecreateDynamicMenuBar
+            toolbar_control.EnableTool(id, False)
 
     def perform(self, action_key):
         raise NotImplementedError
