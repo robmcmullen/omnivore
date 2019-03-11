@@ -10,6 +10,7 @@ from . import keybindings
 from . import errors
 from . import editor as editor_module
 from . import loader
+from . import clipboard
 from .document import identify_document
 
 
@@ -51,6 +52,7 @@ class SawxFrame(wx.Frame):
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.on_page_closed)
 
         self.active_editor = None
+        self.active_editor_can_paste = False
         if uri is not None:
             self.load_file(uri)
         else:
@@ -114,9 +116,15 @@ class SawxFrame(wx.Frame):
         log.debug(f"syncing name {editor.tab_name}")
         self.notebook.SetPageText(index, editor.tab_name)
 
+    def sync_can_paste(self):
+        """Check if the active editor can paste anything in the clipboard
+        """
+        self.active_editor_can_paste = clipboard.can_paste(self.active_editor.supported_clipboard_data)
+
     def sync_active_tab(self):
         self.sync_name()
         self.sync_toolbar()
+        self.sync_can_paste()
 
     def add_editor(self, editor):
         editor.frame = self
@@ -182,6 +190,7 @@ class SawxFrame(wx.Frame):
             self.notebook.SetSelection(index)
             editor.control.SetFocus()
             self.sync_name()
+            self.sync_can_paste()
 
     def enumerate_tabs(self):
         for index in range(self.notebook.GetPageCount()):

@@ -11,11 +11,15 @@ log = logging.getLogger(__name__)
 
 
 class TextEditorControl(KeyBindingControlMixin, wx.TextCtrl):
+    # FIXME: is this second level of keyboard processing necessary now that the
+    # on_char_hook event raises a ProcessKeystrokeNormally error, allowing the
+    # control to process that keytroke?
     keybinding_desc = {
         "prev_line": "Up",
         "next_line": "Down",
         "prev_char": "Left",
         "next_char": "Right",
+        "delete_selection": "Delete",
     }
 
     def __init__(self, *args, **kwargs):
@@ -34,6 +38,9 @@ class TextEditorControl(KeyBindingControlMixin, wx.TextCtrl):
     def next_char(self, evt):
         print("next_char")
 
+    def delete_selection(self, evt):
+        print("delete_selection")
+
 
 class TextEditor(SawxEditor):
     name = "text_editor"
@@ -47,10 +54,6 @@ class TextEditor(SawxEditor):
         return self.control.CanCopy()
 
     @property
-    def can_paste(self):
-        return self.control.CanPaste()
-
-    @property
     def can_undo(self):
         return self.control.CanUndo()
 
@@ -59,7 +62,8 @@ class TextEditor(SawxEditor):
         return self.control.CanRedo()
 
     def create_control(self, parent):
-        return TextEditorControl(parent, -1, style=wx.TE_MULTILINE)
+        # return TextEditorControl(parent, -1, style=wx.TE_MULTILINE)
+        return wx.TextCtrl(parent, -1, style=wx.TE_MULTILINE)
 
     def create_event_bindings(self):
         self.control.Bind(wx.EVT_CONTEXT_MENU, self.on_popup)
@@ -97,6 +101,24 @@ class TextEditor(SawxEditor):
             "paste",
         ]
         self.show_popup(popup_menu_desc)
+
+    #### copy/paste stuff
+
+    supported_clipboard_handlers = [
+        (wx.TextDataObject(), "paste_text_control"),
+    ]
+
+    def calc_clipboard_data_from(self, focused):
+        data_objs = []
+        text = self.control.GetStringSelection()
+        d = wx.TextDataObject()
+        d.SetText(text)
+        data_objs.append(d)
+        return data_objs
+
+    def delete_selection_from(self, focused):
+        start, end = focused.GetSelection()
+        focused.Remove(start, end)
 
 
 class DebugTextEditor(TextEditor):
@@ -167,6 +189,11 @@ class DebugTextEditor(TextEditor):
         "cut": "Ctrl+X",
         "copy": "Ctrl+C",
         "paste": "Ctrl+V",
+        "prev_line": "Up",
+        "next_line": "Down",
+        "prev_char": "Left",
+        "next_char": "Right",
+        "delete_selection": "Delete",
     }
 
     @property

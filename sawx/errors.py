@@ -25,3 +25,6 @@ class DocumentError(SawxError):
 
 class MissingDocumentationError(SawxError):
     pass
+
+class ClipboardError(SawxError):
+    pass

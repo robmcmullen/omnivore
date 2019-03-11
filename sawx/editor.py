@@ -9,6 +9,7 @@ import wx
 
 from . import action
 from . import errors
+from . import clipboard
 # from . import preferences
 from .utils import jsonutil
 from .utils.command import StatusFlags
@@ -17,6 +18,7 @@ from .filesystem import fsopen as open
 
 import logging
 log = logging.getLogger(__name__)
+clipboard_log = logging.getLogger("sawx.clipboard")
 
 
 def get_editors():
@@ -157,12 +159,16 @@ class SawxEditor:
         return self.document.is_dirty
 
     @property
+    def can_cut(self):
+        return self.can_copy
+
+    @property
     def can_copy(self):
         return False
 
     @property
     def can_paste(self):
-        return False
+        return self.frame.active_editor_can_paste
 
     @property
     def can_undo(self):
@@ -319,6 +325,51 @@ class SawxEditor:
             except AttributeError:
                 log.warning(f"no perform method for {action}")
 
+    #### clipboard operations
+
+    supported_clipboard_handlers = []
+
+    @property
+    def supported_clipboard_data(self):
+        return [c[0] for c in self.supported_clipboard_handlers]
+
+    def get_clipboard_handler(self, data_obj):
+        for d, handler_name in self.supported_clipboard_handlers:
+            if d == data_obj:
+                try:
+                    handler = getattr(self.__class__, handler_name)
+                except AttributeError:
+                    handler = getattr(clipboard, handler_name)
+                return handler
+
+    def copy_selection_to_clipboard(self):
+        focused = wx.Window.FindFocus()
+        clipboard_log.debug(f"focused control: {focused}")
+        data_objs = self.calc_clipboard_data_from(focused)
+        clipboard_log.debug(f"created data objs: {data_objs}")
+        clipboard.set_clipboard_data(data_objs)
+
+    def calc_clipboard_data_from(self, focused):
+        return None
+
+    def delete_selection(self):
+        focused = wx.Window.FindFocus()
+        clipboard_log.debug(f"deleting selection from {focused}")
+        self.delete_selection_from(focused)
+
+    def delete_selection_from(self, focused):
+        pass
+
+    def paste_clipboard(self):
+        focused = wx.Window.FindFocus()
+        clipboard_log.debug(f"focused control: {focused}")
+        data_obj = clipboard.get_clipboard_data(self.supported_clipboard_data)
+        if data_obj:
+            handler = self.get_clipboard_handler(data_obj)
+            if handler:
+                handler(self, data_obj, focused)
+            else:
+                clipboard_log.error("No clipboard handler found for data {data_obj}")
 
     #### command processing
 

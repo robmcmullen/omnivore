@@ -61,7 +61,7 @@ class KeyBindingDescription:
                     try:
                         action = source.calc_usable_action(action_key)
                     except KeyError:
-                        log.debug(f"action {action_key} not used in this source")
+                        log.debug(f"action {action_key} not used in source {source}")
                         pass
                     else:
                         key_id = (a.GetFlags(), a.GetKeyCode())

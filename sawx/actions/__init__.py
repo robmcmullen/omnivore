@@ -3,6 +3,7 @@ import wx
 from ..action import SawxAction, SawxListAction
 from ..templates import iter_templates
 from ..ui.dialogs import prompt_for_dec
+from .. import errors
 
 import logging
 log = logging.getLogger(__name__)
@@ -107,11 +108,18 @@ class cut(SawxAction):
         return "Cut"
 
     def calc_enabled(self, action_key):
-        return self.editor.can_copy
+        return self.editor.can_cut
+
+    def perform(self, action_key):
+        self.editor.copy_selection_to_clipboard()
+        self.editor.delete_selection()
 
 class copy(cut):
     def calc_name(self, action_key):
         return "Copy"
+
+    def perform(self, action_key):
+        self.editor.copy_selection_to_clipboard()
 
 class paste(SawxAction):
     def calc_name(self, action_key):
@@ -119,6 +127,25 @@ class paste(SawxAction):
 
     def calc_enabled(self, action_key):
         return self.editor.can_paste
+
+    def perform(self, action_key):
+        self.editor.paste_clipboard()
+
+class delete_selection(SawxAction):
+    def calc_name(self, action_key):
+        return "Delete Selection"
+
+    def calc_enabled(self, action_key):
+        return self.editor.can_cut
+
+    def perform_as_keystroke(self, action_key):
+        if self.calc_enabled(action_key):
+            self.perform(action_key)
+        else:
+            raise errors.ProcessKeystrokeNormally("No selection")
+
+    def perform(self, action_key):
+        self.editor.delete_selection()
 
 class prefs(SawxAction):
     def calc_name(self, action_key):
