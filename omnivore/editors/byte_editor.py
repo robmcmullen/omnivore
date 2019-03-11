@@ -378,15 +378,15 @@ class ByteEditor(TileManagerBase):
 
     def select_all(self):
         self.focused_viewer.select_all()
-        self.linked_base.refresh_event = True
+        self.linked_base.refresh_event(flags=True)
 
     def select_none(self):
         self.focused_viewer.select_none()
-        self.linked_base.refresh_event = True
+        self.linked_base.refresh_event(flags=True)
 
     def select_invert(self):
         self.focused_viewer.select_invert()
-        self.linked_base.refresh_event = True
+        self.linked_base.refresh_event(flags=True)
 
     def check_document_change(self):
         self.document.change_count += 1
