@@ -134,6 +134,15 @@ class SawxAction:
     def calc_icon_name(self, action_key):
         return action_key
 
+    def perform_as_menu_item(self, action_key):
+        wx.CallAfter(self.perform, action_key)
+
+    def perform_as_keystroke(self, action_key):
+        try:
+            self.perform(action_key)
+        except AttributeError as e:
+            raise errors.ProcessKeystrokeNormally(e)
+
     def perform(self, action_key):
         raise AttributeError(f"no perform method defined for {self}")
 

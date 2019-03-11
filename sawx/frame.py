@@ -245,7 +245,7 @@ class SawxFrame(wx.Frame):
         if action is not None:
             log.debug(f"found action {action}")
             try:
-                wx.CallAfter(action.perform, action_key)
+                action.perform_as_menu_item(action_key)
             except AttributeError:
                 log.debug(f"no perform method for {action}")
             else:
@@ -286,12 +286,11 @@ class SawxFrame(wx.Frame):
         try:
             action_key, action = self.keybindings.valid_key_map[key_id]
             try:
-                wx.CallAfter(action.perform, action_key)
-            except AttributeError:
-                print(f"no perform method for {action}")
-                evt.Skip()
-            else:
                 print(f"found action {action}")
+                action.perform_as_keystroke(action_key)
+            except errors.ProcessKeystrokeNormally as e:
+                print(f"processing keystroke normally instead of action: {e}")
+                evt.Skip()
         except KeyError as e:
             print(f"key id {key_id} not found in {self.keybindings.valid_key_map}")
             evt.Skip()

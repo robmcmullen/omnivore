@@ -8,6 +8,9 @@ class SawxError(RuntimeError):
 class RecreateDynamicMenuBar(SawxError):
     pass
 
+class ProcessKeystrokeNormally(SawxError):
+    pass
+
 class EditorNotFound(SawxError):
     pass
 
