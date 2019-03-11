@@ -6,6 +6,7 @@ from .action import get_action_id
 
 import logging
 log = logging.getLogger(__name__)
+sync_log = logging.getLogger("sync")
 
 
 class MenuDescription:
@@ -101,9 +102,9 @@ class MenubarDescription:
 
 def sync_with_editor(valid_id_map, control):
     for id, (action_key, action) in valid_id_map.items():
-        log.debug(f"syncing {id}: {action_key}, {action}")
+        sync_log.debug(f"syncing {id}: {action_key}, {action}")
         menu_item = control.FindItemById(id)
         try:
             action.sync_menu_item_from_editor(action_key, menu_item)
         except AttributeError as e:
-            log.debug(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")
+            sync_log.debug(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")

@@ -6,6 +6,7 @@ from .action import get_action_id
 
 import logging
 log = logging.getLogger(__name__)
+sync_log = logging.getLogger("sync")
 
 
 class ToolbarDescription:
@@ -40,9 +41,9 @@ class ToolbarDescription:
 
     def sync_with_editor(self, toolbar_control):
         for id, (action_key, action) in self.valid_id_map.items():
-            log.debug(f"syncing tool {id}: {action_key}, {action}")
+            sync_log.debug(f"syncing tool {id}: {action_key}, {action}")
             item = toolbar_control.FindById(id)
             try:
                 action.sync_tool_item_from_editor(action_key, toolbar_control, id)
             except AttributeError as e:
-                log.debug(f"Skipping sync of {action_key} toolbar item from {action.editor}: {e}")
+                sync_log.debug(f"Skipping sync of {action_key} toolbar item from {action.editor}: {e}")

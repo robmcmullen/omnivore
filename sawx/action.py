@@ -7,6 +7,7 @@ from . import errors
 
 import logging
 log = logging.getLogger(__name__)
+sync_log = logging.getLogger("sync")
 
 
 global_action_ids = {
@@ -201,7 +202,7 @@ class SawxRadioAction(SawxActionRadioMixin, SawxAction):
     def sync_menu_item_from_editor(self, action_key, menu_item):
         if self.calc_enabled(action_key):
             state = self.calc_checked(action_key)
-            log.debug(f"{action_key}: checked={state}")
+            sync_log.debug(f"{action_key}: checked={state}")
             menu_item.Enable(True)
             menu_item.Check(state)
         else:
@@ -210,7 +211,7 @@ class SawxRadioAction(SawxActionRadioMixin, SawxAction):
     def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
         if self.calc_enabled(action_key):
             state = self.calc_checked(action_key)
-            log.debug(f"{action_key}: checked={state}")
+            sync_log.debug(f"{action_key}: checked={state}")
             toolbar_control.EnableTool(id, True)
             toolbar_control.ToggleTool(id, state)
         else:
@@ -281,7 +282,7 @@ class SawxRadioListAction(SawxActionListMixin, SawxActionRadioMixin, SawxAction)
                 index = self.get_index(action_key)
                 item = self.current_list[index]
                 checked = self.calc_checked_list_item(action_key, index, item)
-                log.debug(f"{action_key}: checked={state}, {item}")
+                sync_log.debug(f"{action_key}: checked={state}, {item}")
             else:
                 checked = False
             menu_item.Enable(state)
@@ -298,7 +299,7 @@ class SawxRadioListAction(SawxActionListMixin, SawxActionRadioMixin, SawxAction)
                 index = self.get_index(action_key)
                 item = self.current_list[index]
                 checked = self.calc_checked_list_item(action_key, index, item)
-                log.debug(f"{action_key}: checked={state}, {item}")
+                sync_log.debug(f"{action_key}: checked={state}, {item}")
             else:
                 checked = False
             toolbar_control.EnableTool(id, state)

@@ -16,6 +16,7 @@ from .document import identify_document
 
 import logging
 log = logging.getLogger(__name__)
+sync_log = logging.getLogger("sync")
 
 
 class SawxFrame(wx.Frame):
@@ -106,14 +107,13 @@ class SawxFrame(wx.Frame):
     def set_title(self):
         app = wx.GetApp()
         title = f"{self.active_editor.title} - {app.app_name}"
-        log.debug(f"set_title: {title}")
         self.SetTitle(title)
 
     def sync_name(self):
         self.set_title()
         index = self.notebook.GetSelection()
         editor = self.find_editor_from_index(index)
-        log.debug(f"syncing name {editor.tab_name}")
+        sync_log.debug(f"title={self.GetTitle()}, tab_name={editor.tab_name}")
         self.notebook.SetPageText(index, editor.tab_name)
 
     def sync_can_paste(self):
@@ -277,7 +277,6 @@ class SawxFrame(wx.Frame):
 
     def on_timer(self, evt):
         evt.Skip()
-        log.debug("timer")
         wx.CallAfter(self.sync_active_tab)
 
     def on_activate(self, evt):
