@@ -16,6 +16,8 @@ install_requires = [
     'pytz',
     'wxpython>=4.0.3',
     'fleep',
+    'appdirs',
+    'python-slugify',  # really for omnivore, but needs it installed before its setup.py can be run
     ]
 
 cmdclass = dict()
