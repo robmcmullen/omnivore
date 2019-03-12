@@ -531,13 +531,13 @@ class SegmentViewer:
     ##### Selections
 
     def select_all(self):
-        self.control.select_all(self.linked_base)
+        self.control.mouse_mode.select_all(self.control.caret_handler)
 
     def select_none(self):
-        self.control.select_none(self.linked_base)
+        self.control.mouse_mode.select_none(self.control.caret_handler)
 
     def select_invert(self):
-        self.control.select_invert(self.linked_base)
+        self.control.mouse_mode.select_invert(self.control.caret_handler)
 
     def highlight_selected_ranges_in_segment(self, selected_ranges, segment):
         # This is default implementation which simply highlights everything
