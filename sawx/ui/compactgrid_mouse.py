@@ -597,15 +597,19 @@ class MouseMode(object):
     def select_all(self, caret_handler, refresh=True):
         """ Selects the entire document
         """
-        caret_handler.clear_selection()
-        caret_handler.current.set_initial_selection((0, 0), caret_handler.document_length)
+        caret_handler.move_carets_to(0, 0)
+        caret = caret_handler.current
+        start = caret.rc
+        t = self.control.table
+        end = t.index_to_row_col(t.last_valid_index)
+        caret.set_initial_selection(start, end)
         self.highlight_selected_ranges(caret_handler)
         self.control.update_ui_for_selection_change()
 
     def select_none(self, caret_handler, refresh=True):
         """ Clears any selection in the document
         """
-        caret_handler.clear_selection()
+        caret_handler.collapse_selections_to_carets()
         self.highlight_selected_ranges(caret_handler)
         self.control.update_ui_for_selection_change()
 

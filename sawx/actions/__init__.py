@@ -147,6 +147,36 @@ class delete_selection(SawxAction):
     def perform(self, action_key):
         self.editor.delete_selection()
 
+class select_all(SawxAction):
+    def calc_name(self, action_key):
+        return "Select All"
+
+    def calc_enabled(self, action_key):
+        return True
+
+    def perform(self, action_key):
+        self.editor.select_all()
+
+class select_none(SawxAction):
+    def calc_name(self, action_key):
+        return "Select None"
+
+    def calc_enabled(self, action_key):
+        return True
+
+    def perform(self, action_key):
+        self.editor.select_none()
+
+class select_invert(SawxAction):
+    def calc_name(self, action_key):
+        return "Select Invert"
+
+    def calc_enabled(self, action_key):
+        return True
+
+    def perform(self, action_key):
+        self.editor.select_invert()
+
 class prefs(SawxAction):
     def calc_name(self, action_key):
         return "Preferences"

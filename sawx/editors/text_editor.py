@@ -102,6 +102,24 @@ class TextEditor(SawxEditor):
         ]
         self.show_popup(popup_menu_desc)
 
+    #### selection
+
+    def select_all(self):
+        self.control.SelectAll()
+
+    def select_none(self):
+        self.control.SelectNone()
+
+    def select_invert(self):
+        start, end = self.control.GetSelection()
+        if start == end:
+            self.control.SelectAll()
+        elif start == 0 and end == self.control.GetLastPosition():
+            self.control.SelectNone()
+        else:
+            # need to implement multi-select here
+            pass
+
     #### copy/paste stuff
 
     supported_clipboard_handlers = [
