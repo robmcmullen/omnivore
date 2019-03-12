@@ -122,6 +122,8 @@ class ByteEditor(TileManagerBase):
             ["Font",
                 "view_fonts",
                 None,
+                "view_font_groups",
+                None,
                 "view_load_font",
                 "view_font_from_selection",
                 "view_font_from_segment",
