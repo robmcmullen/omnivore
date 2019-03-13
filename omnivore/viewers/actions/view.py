@@ -202,11 +202,17 @@ class view_font_groups(ViewerListAction):
     def calc_list_items(self):
         return sorted(font_groups.keys())
 
+    def callback(self, font):
+        self.viewer.antic_font_data = font
+
     def perform(self, action_key):
         item = self.get_item(action_key)
-        font = prompt_for_font_from_group(self.editor.frame, item)
-        if font is not None:
-            self.viewer.antic_font_data = font
+        current_font = self.viewer.antic_font_data
+        font = prompt_for_font_from_group(self.editor.frame, item, self.callback)
+        if font is None:
+            # cancel should restore the old font
+            font = current_font
+        self.viewer.antic_font_data = font
 
 
 class view_add_viewer(ViewerListAction):

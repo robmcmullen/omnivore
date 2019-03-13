@@ -139,14 +139,14 @@ class FontListDialog(wx.Dialog):
     """
     border = 5
 
-    def __init__(self, parent, font_uuids, default, title=None):
+    def __init__(self, parent, font_uuids, default, title=None, callback=None):
         if title is None:
             title = "Choose Font"
         wx.Dialog.__init__(self, parent, -1, title,
                            size=(700, 500), pos=wx.DefaultPosition,
                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
-        self.list = FontListBox(self, font_uuids, size=(-1,200))
+        self.list = FontListBox(self, font_uuids, size=(300,400))
         try:
             index = font_uuids.index(default)
         except ValueError:
@@ -168,6 +168,18 @@ class FontListDialog(wx.Dialog):
         sizer.Fit(self)
         self.Layout()
 
+        self.list.Bind(wx.EVT_LISTBOX, self.on_click)
+        self.list.Bind(wx.EVT_LISTBOX_DCLICK, self.on_click)
+        self.callback = callback
+
+    def on_click(self, evt):
+        if evt.IsSelection() or True:
+            index = evt.GetSelection()
+            font = self.list.get_font(index)
+            log.debug(f"index={index} font={font['name']}")
+            if self.callback:
+                self.callback(font)
+
     def show_and_get_font(self):
         result = self.ShowModal()
         if result == wx.ID_OK:
@@ -180,13 +192,13 @@ class FontListDialog(wx.Dialog):
 
 
 class FontGroupDialog(FontListDialog):
-    def __init__(self, parent, font_group_name, default=None):
+    def __init__(self, parent, font_group_name, default=None, callback=None):
         font_uuids = font_groups[font_group_name]
-        FontListDialog.__init__(self, parent, font_uuids, default, f"Choose Font From {font_group_name}")
+        FontListDialog.__init__(self, parent, font_uuids, default, f"Choose Font From {font_group_name}", callback)
 
 
-def prompt_for_font_from_group(parent, font_group_name):
-    d = FontGroupDialog(parent, font_group_name)
+def prompt_for_font_from_group(parent, font_group_name, callback=None):
+    d = FontGroupDialog(parent, font_group_name, callback=callback)
     return d.show_and_get_font()
 
 
