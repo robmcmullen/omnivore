@@ -342,7 +342,7 @@ setup(
     zip_safe = False,
     install_requires = [
     'numpy',
-    'atrcopy>=7',
+    'atrcopy>=10',
     'pyopengl',
     'pyopengl_accelerate',
     'sawx',
