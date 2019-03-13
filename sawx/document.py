@@ -26,8 +26,9 @@ def get_documents():
     documents = []
     for entry_point in pkg_resources.iter_entry_points('sawx.documents'):
         mod = entry_point.load()
-        log.debug(f"get_edtiors: Found module {entry_point.name}")
+        log.debug(f"get_documents: Found module {entry_point.name}")
         for name, obj in inspect.getmembers(mod):
+            log.debug(f"get_documents: checking obj {obj}")
             if inspect.isclass(obj) and SawxDocument in obj.__mro__[1:]:
                 # only use subclasses of Sawxdocument, not the
                 # Sawxdocument base class itself
