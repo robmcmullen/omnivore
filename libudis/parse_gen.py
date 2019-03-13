@@ -818,12 +818,12 @@ def gen_header(fh, stringifiers):
             fh.write(f"extern {p.function_return_type} {p.function_name}({p.function_signature});\n")
 
 def gen_start_guard(fh, filename):
-    guard = "_" + filename.replace(".", "_").upper()
+    guard = "_" + slugify(filename, separator="_").upper()
     fh.write(f"#ifndef {guard}\n")
     fh.write(f"#define {guard}\n")
 
 def gen_end_guard(fh, filename):
-    guard = "_" + filename.replace(".", "_").upper()
+    guard = "_" + slugify(filename, separator="_").upper()
     fh.write(f"#endif /* {guard} */\n")
 
 
