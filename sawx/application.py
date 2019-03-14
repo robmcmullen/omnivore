@@ -22,6 +22,8 @@ log = logging.getLogger(__name__)
 class SawxApp(wx.App):
     app_name = "Sawx Framework"  # user visible application name
 
+    default_uri = "about://app"
+
     about_version = "dev"
 
     about_description = "Sawx framework for wxPython applications"
@@ -182,7 +184,7 @@ class SawxApp(wx.App):
 
     def new_frame(self, editor=None):
         if editor is None:
-            uri = "about://app"
+            uri = self.default_uri
         else:
             uri = None
         frame = SawxFrame(editor, uri)
