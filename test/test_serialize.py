@@ -47,15 +47,15 @@ class TestSegment:
         s.set_user_data([r], 4, 99)
 
         out = dict()
-        s.serialize_extra_to_dict(out)
+        s.serialize_session(out)
         print("saved", out)
 
         data = np.ones([4000], dtype=np.uint8)
         r = SegmentData(data)
         s2 = DefaultSegment(r, 0)
-        s2.restore_extra_from_dict(out)
+        s2.restore_session(out)
         out2 = dict()
-        s2.serialize_extra_to_dict(out2)
+        s2.serialize_session(out2)
         print("loaded", out2)
         assert out == out2
 

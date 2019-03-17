@@ -553,7 +553,7 @@ class DefaultSegment:
             r = r.get_indexed[other.order]
         return r
 
-    def save_session(self, mdict):
+    def serialize_session(self, mdict):
         """Save extra metadata to a dict so that it can be serialized
 
         This is not saved by __getstate__ because child segments will point to
