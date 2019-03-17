@@ -22,7 +22,9 @@ log = logging.getLogger(__name__)
 class SawxApp(wx.App):
     app_name = "Sawx Framework"  # user visible application name
 
-    default_uri = "about://app"
+    default_uri = "about://app"  # when no files specified on the command line
+
+    about_uri = "about://app"  # for Help->About menu item
 
     about_version = "dev"
 
@@ -89,9 +91,7 @@ class SawxApp(wx.App):
             for e in get_editors:
                 print(f"{e.name}: {e.pretty_name}")
         if options.debug_loggers:
-            print(options.debug_loggers)
             for logger_name in options.debug_loggers:
-                print(logger_name)
                 error_logger.enable_loggers(logger_name[0])
         task_arguments = collections.OrderedDict()
         if ":" in options.task_id:
@@ -108,11 +108,17 @@ class SawxApp(wx.App):
             default_editor = find_editor_class_by_name(options.task_id)()
         except errors.EditorNotFound:
             default_editor = None
+        log.debug(f"default editor: {default_editor}")
+        log.debug(f"args: {args}")
 
-        frame = self.new_frame()
-        while len(extra_args) > 0:
-            path = extra_args.pop(0)
-            frame.load_file(path, default_editor, task_arguments)
+        if extra_args:
+            log.debug(f"files to load: {extra_args}")
+            frame = self.new_frame(uri=self.about_uri)
+            while len(extra_args) > 0:
+                path = extra_args.pop(0)
+                frame.load_file(path, default_editor, task_arguments)
+        else:
+            frame = self.new_frame()
         frame.Show()
 
     def MacOpenFiles(self, filenames):
@@ -182,12 +188,10 @@ class SawxApp(wx.App):
         log.debug(f"new window size: {value}")
         self.window_sizes["last_window_size"] = value
 
-    def new_frame(self, editor=None):
-        if editor is None:
+    def new_frame(self, uri=None):
+        if uri is None:
             uri = self.default_uri
-        else:
-            uri = None
-        frame = SawxFrame(editor, uri)
+        frame = SawxFrame(None, uri)
         return frame
 
 
