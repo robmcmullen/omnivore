@@ -20,6 +20,8 @@ def get_loaders():
             mod = entry_point.load()
         except (ModuleNotFoundError, ImportError) as e:
             log.error(f"Failed using loader {entry_point.name}: {e}")
+            import traceback
+            traceback.print_exc()
         else:
             log.debug(f"get_loaders: Found loader {entry_point.name}")
             loaders.append(mod)
@@ -38,7 +40,7 @@ def identify_file(uri):
     types of data.
     """
     loaders = get_loaders()
-    log.debug(f"identify_file: identifying files using {loaders}")
+    log.debug(f"identify_file: identifying file {uri} using {loaders}")
     hits = []
     fallback = None
     with open(uri, 'rb') as fh:

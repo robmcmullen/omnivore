@@ -26,13 +26,12 @@ def get_documents():
     documents = []
     for entry_point in pkg_resources.iter_entry_points('sawx.documents'):
         mod = entry_point.load()
-        log.debug(f"get_documents: Found module {entry_point.name}")
+        log.debug(f"get_documents: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):
-            log.debug(f"get_documents: checking obj {obj}")
             if inspect.isclass(obj) and SawxDocument in obj.__mro__[1:]:
                 # only use subclasses of Sawxdocument, not the
                 # Sawxdocument base class itself
-                log.debug(f"get_documents: Found document class {name}")
+                log.debug(f"get_documents:   found document class {name}")
                 documents.append(obj)
     return documents
 
@@ -45,7 +44,7 @@ def find_document_class_for_file(file_metadata):
     one that can edit that class of MIME.
     """
     all_documents = get_documents()
-    log.debug(f"find_document_class_for_file: known documents: {all_documents}")
+    log.debug(f"find_document_class_for_file: file={file_metadata}, known documents: {all_documents}")
     matching_documents = [document for document in all_documents if document.can_load_file_exact(file_metadata)]
     log.debug(f"find_document_class_for_file: exact matches: {matching_documents}")
 
@@ -76,7 +75,6 @@ class SawxDocument:
         self.load(file_metadata)
         self.uuid = str(uuid.uuid4())
         self.change_count = 0
-        self.global_resource_cleanup_functions = []
         self.permute = None
         self.baseline_document = None
         self.extra_metadata = {}
@@ -259,9 +257,14 @@ class SawxDocument:
     def save(self, uri=None):
         if uri is None:
             uri = self.uri
-        raw_data = self.calc_raw_data_to_save()
-        self.save_raw_data(uri, raw_data)
-        self.file_metadata['uri'] = uri
+        if self.verify_ok_to_save():
+            raw_data = self.calc_raw_data_to_save()
+            self.save_raw_data(uri, raw_data)
+            self.file_metadata['uri'] = uri
+            self.undo_stack.set_save_point()
+
+    def verify_ok_to_save(self):
+        return True
 
     def calc_raw_data_to_save(self):
         return self.raw_data.tostring()
@@ -299,14 +302,17 @@ class SawxDocument:
     #### Cleanup functions
 
     def add_cleanup_function(self, func):
+        if not hasattr(self, "global_resource_cleanup_functions"):
+            self.global_resource_cleanup_functions = []
         # Prevent same function from being added multiple times
         if func not in self.global_resource_cleanup_functions:
             self.global_resource_cleanup_functions.append(func)
 
     def global_resource_cleanup(self):
-        for f in self.global_resource_cleanup_functions:
-            log.debug("Calling cleanup function %s" % f)
-            f()
+        if hasattr(self, "global_resource_cleanup_functions"):
+            for f in self.global_resource_cleanup_functions:
+                log.debug("Calling cleanup function %s" % f)
+                f()
 
     #### file identification
 
