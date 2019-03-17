@@ -86,7 +86,7 @@ xexboot_header = b'\x00\x03\x00\x07\r\x07L\r\x07\x1c[\x00\x00\xa0\x00\x8c\t\x03\
 
 
 def insert_bytes(data, offset, string, color):
-    s = np.fromstring(string.upper(), dtype=np.uint8) - 32  # convert to internal
+    s = np.frombuffer(string.upper(), dtype=np.uint8) - 32  # convert to internal
     s = s | color
     count = len(s)
     tx = offset + (20 - count) // 2
@@ -103,7 +103,7 @@ def add_xexboot_header(bytes, bootcode=None, title=b"DEMO", author=b"an atari us
     paragraphs = padded_size // 16
 
     if bootcode is None:
-        bootcode = np.fromstring(xexboot_header, dtype=np.uint8)
+        bootcode = np.copy(np.frombuffer(xexboot_header, dtype=np.uint8))
     else:
         # don't insert title or author in user supplied bootcode; would have to
         # assume that the user supplied everything desired in their own code!

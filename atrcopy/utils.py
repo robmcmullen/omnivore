@@ -29,7 +29,7 @@ def to_numpy(value):
     if type(value) is np.ndarray:
         return value
     elif type(value) is bytes:
-        return np.fromstring(value, dtype=np.uint8)
+        return np.copy(np.frombuffer(value, dtype=np.uint8))
     elif type(value) is list:
     	return np.asarray(value, dtype=np.uint8)
     raise TypeError("Can't convert to numpy data")

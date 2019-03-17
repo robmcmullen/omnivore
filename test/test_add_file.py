@@ -25,7 +25,7 @@ class BaseFilesystemModifyTest:
             filename = "%s%d.BIN" % (prefix, count)
             self.image.write_file(filename, None, data)
             assert len(self.image.files) == orig_num_files + count
-            data2 = np.fromstring(self.image.find_file(filename), dtype=np.uint8)
+            data2 = np.frombuffer(self.image.find_file(filename), dtype=np.uint8)
             assert np.array_equal(data, data2[0:len(data)])
             count += 1
 
@@ -33,7 +33,7 @@ class BaseFilesystemModifyTest:
         count = 1
         for data in entries:
             filename = "%s%d.BIN" % (prefix, count)
-            data2 = np.fromstring(self.image.find_file(filename), dtype=np.uint8)
+            data2 = np.frombuffer(self.image.find_file(filename), dtype=np.uint8)
             assert np.array_equal(data, data2[0:len(data)])
             count += 1
             filenames.append(filename)
@@ -50,7 +50,7 @@ class BaseFilesystemModifyTest:
         self.image.write_file("TEST.XEX", None, data)
         assert len(self.image.files) == self.num_files_in_sample + 1
 
-        data2 = np.fromstring(self.image.find_file("TEST.XEX"), dtype=np.uint8)
+        data2 = np.frombuffer(self.image.find_file("TEST.XEX"), dtype=np.uint8)
         assert np.array_equal(data, data2[0:len(data)])
 
     def test_50k(self):

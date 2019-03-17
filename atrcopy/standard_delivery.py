@@ -165,7 +165,7 @@ from . fstbt import fstbt
 
 def get_fstbt_code(data, address_list, run_addr):
     pointer = len(fstbt)
-    data[0:pointer] = np.fromstring(fstbt, dtype=np.uint8)
+    data[0:pointer] = np.frombuffer(fstbt, dtype=np.uint8)
     hi, lo = divmod(run_addr, 256)
     data[pointer:pointer + 2] = (lo, hi)
     address_list.append(0xc0)  # last sector flag

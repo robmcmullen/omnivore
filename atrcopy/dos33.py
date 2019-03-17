@@ -251,7 +251,7 @@ class Dos33Dirent(Dirent):
         values[1] = self.sector
         values[2] = self.flag
         n = min(len(self.filename), 30)
-        data[3:3+n] = np.fromstring(self.filename.encode("ascii"), dtype=np.uint8) | 0x80
+        data[3:3+n] = np.frombuffer(self.filename.encode("ascii"), dtype=np.uint8) | 0x80
         data[3+n:] = ord(' ') | 0x80
         if self.deleted:
             data[0x20] = self.track

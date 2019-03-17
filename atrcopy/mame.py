@@ -46,7 +46,7 @@ class MameZipImage(DiskImageBase):
         segment_info = []
         offset = 0
         for item in zf.infolist():
-            rom = np.fromstring(zf.open(item).read(), dtype=np.uint8)
+            rom = np.frombuffer(zf.open(item).read(), dtype=np.uint8)
             roms.append(rom)
             segment_info.append((offset, item.file_size, item.filename, item.CRC))
             offset += item.file_size
