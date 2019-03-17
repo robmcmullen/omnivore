@@ -201,6 +201,12 @@ def get_binary_user_data(subdir, filename, default_on_error=None):
 def save_binary_user_data(subdir, filename, data):
     return save_user_data(subdir, filename, data, 'wb')
 
+def get_cache_dir(subdir):
+    dirname = os.path.join(cache_dir, subdir)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    return dirname
+
 
 def restore_from_last_time():
     modules = []
