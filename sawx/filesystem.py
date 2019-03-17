@@ -82,7 +82,7 @@ def filesystem_path(uri):
             local_path = uri
     return local_path
 
-def fsopen(uri, mode):
+def fsopen(uri, mode="r"):
     try:
         local_path = filesystem_path(uri)
     except FileNotFoundError:
