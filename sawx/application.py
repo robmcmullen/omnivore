@@ -13,6 +13,7 @@ from .filesystem import fsopen as open
 from . import persistence
 from .events import EventHandler
 from .ui import error_logger
+from .utils.background_http import BackgroundHttpDownloader
 from . import errors
 
 import logging
@@ -73,10 +74,12 @@ class SawxApp(wx.App):
         persistence.setup_file_persistence(self.app_name)
         self.remember = persistence.restore_from_last_time()
         self.keybindings_changed_event = EventHandler(self)
+        self.init_subprocesses()
         return True
 
     def OnExit(self):
         persistence.remember_for_next_time(self.remember)
+        self.shutdown_subprocesses()
         return wx.App.OnExit(self)
 
     def process_command_line_args(self, args):
@@ -136,9 +139,6 @@ class SawxApp(wx.App):
 
     #### Shutdown
 
-    def shutdown_subprocesses(self):
-        pass
-
     def quit(self):
         for frame in wx.GetTopLevelWindows():
             try:
@@ -146,7 +146,6 @@ class SawxApp(wx.App):
                     print(f"frame {frame} has unsaved changes")
             except AttributeError:
                 pass
-        self.shutdown_subprocesses()
         self.ExitMainLoop()
 
     #### Application information
@@ -193,6 +192,20 @@ class SawxApp(wx.App):
             uri = self.default_uri
         frame = SawxFrame(None, uri)
         return frame
+
+    #### subprocess helpers
+
+    def init_subprocesses(self):
+        self.downloader = None
+
+    def shutdown_subprocesses(self):
+        if self.downloader:
+            self.downloader.stop_threads()
+
+    def get_downloader(self):
+        if self.downloader is None:
+            self.downloader = BackgroundHttpDownloader()
+        return self.downloader
 
 
 def restore_from_last_time():
