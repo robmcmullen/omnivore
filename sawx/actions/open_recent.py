@@ -16,6 +16,8 @@ class open_recent(SawxListAction):
 
     @classmethod
     def append(cls, uri):
+        if cls.canonical_list is None:
+            cls.reload()
         try:
             index = cls.canonical_list.index(uri)
             cls.canonical_list.pop(index)
