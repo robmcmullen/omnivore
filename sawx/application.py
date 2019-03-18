@@ -63,7 +63,7 @@ class SawxApp(wx.App):
 
     window_sizes = {
         "default": [800, 600],
-        "last_window_size": [1000, 400],
+        "last_window_size": [1000, 800],
     }
 
     #### Initialization
