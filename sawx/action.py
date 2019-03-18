@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 
 import wx
 
@@ -65,7 +66,14 @@ def find_action_factory_in_module(mod_root, action_key):
             log.debug(f"found previously discovered {mod_name}")
         except KeyError:
             try:
+                log.debug(f"importlib: find_spec({mod_name})")
                 spec = importlib.util.find_spec(mod_name)
+            except (AttributeError, ModuleNotFoundError):
+                # non-existent or the name refers to a .py file instead of a
+                # sub-module with a __init__.py
+                log.debug(f"importlib: {mod_name} is not a module; ignoring")
+                ignore_modules.add(mod_name)
+                continue
             except Exception as e:
                 log.error(f"syntax error in module {mod_name}: {e}")
                 import traceback
