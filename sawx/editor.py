@@ -252,10 +252,10 @@ class SawxEditor:
         for name, obj in inspect.getmembers(mod):
             if inspect.isclass(obj):
                 mro_names = [str(s) for s in obj.__mro__]
-                if "SawxFrameworkPreferences" in mro_names[0]:
+                if "SawxPreferences" in mro_names[0]:
                     fallback_cls = obj
                 for obj_name in mro_names[1:]:
-                    if "SawxFrameworkPreferences" in obj_name:
+                    if "SawxPreferences" in obj_name:
                         cls.preferences = obj()
                         break
         if cls.preferences is None:

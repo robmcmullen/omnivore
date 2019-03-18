@@ -128,7 +128,7 @@ class cached_property:
         return value
 
 
-class SawxFrameworkPreferences:
+class SawxPreferences:
     def __init__(self):
         self.text_font = str_to_font(def_font)
         self.background_color = wx.Colour(wx.WHITE)
