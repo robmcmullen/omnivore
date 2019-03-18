@@ -44,7 +44,15 @@ def find_editor_class_for_document(document):
     """
     all_editors = get_editors()
     log.debug(f"find_editor_class_for_file: known editors: {all_editors}")
-    matching_editors = [editor for editor in all_editors if editor.can_edit_document_exact(document)]
+    matching_editors = []
+    for editor in all_editors:
+        try:
+            state = editor.can_edit_document_exact(document)
+        except Exception as e:
+            log.debug(f"failure checking editor {editor}: {e}")
+        else:
+            if state:
+                matching_editors.append(editor)
     log.debug(f"find_editor_class_for_file: exact matches: {matching_editors}")
 
     # # restore last session files from all possible editors before choosing best
