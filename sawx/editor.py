@@ -272,6 +272,12 @@ class SawxEditor:
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Sawx editors")
 
+    def create_layout(self):
+        """Called after the control has been created to allow for initial setup
+        of the user interface
+        """
+        pass
+
     def show(self, args=None):
         """populate the control with the editor's document.
 

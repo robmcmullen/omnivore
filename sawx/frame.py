@@ -11,6 +11,7 @@ from . import errors
 from . import editor as editor_module
 from . import loader
 from . import clipboard
+from .ui import dialogs
 from .document import identify_document
 
 
@@ -131,6 +132,7 @@ class SawxFrame(wx.Frame):
         control = editor.create_control(self.notebook)
         editor.control = control
         control.editor = editor
+        editor.create_layout()
         editor.create_event_bindings()
         if self.active_editor is not None and self.active_editor.is_transient:
             self.close_editor(self.active_editor)
@@ -337,6 +339,11 @@ class SawxFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             return dlg.GetPath()
         return None
+
+    def prompt(self, message, title='Prompt', default_value=""):
+        """ Convenience method to show a text entry dialog."""
+        d = dialogs.SimplePromptDialog(self, message, title, default_value)
+        return d.show_and_get_value()
 
     def confirm(self, message, title="Confirm", cancel=False, yes_default=False):
         """ Convenience method to show a confirmation dialog. """
