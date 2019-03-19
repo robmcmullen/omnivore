@@ -13,6 +13,7 @@ from . import loader
 from . import clipboard
 from .ui import dialogs
 from .document import identify_document
+from .filesystem import fsopen as open
 
 
 import logging
@@ -23,6 +24,8 @@ sync_log = logging.getLogger("sync")
 class SawxFrame(wx.Frame):
     def __init__(self, editor, uri=None):
         wx.Frame.__init__(self, None , -1, uri or editor.title, size=wx.GetApp().last_window_size)
+
+        self.create_icon()
 
         self.raw_menubar = wx.MenuBar()
         self.SetMenuBar(self.raw_menubar)
@@ -65,6 +68,16 @@ class SawxFrame(wx.Frame):
         for index in range(self.notebook.GetPageCount()):
             control = self.notebook.GetPage(index)
             yield control.editor
+
+    def create_icon(self):
+        data = open(wx.GetApp().app_icon, 'rb')
+        image = wx.Image(data)
+        icon = wx.Icon()
+        try:
+            icon.CopyFromBitmap(wx.Bitmap(image))
+            self.SetIcon(icon)
+        except:
+            log.error("AboutDialog: bad icon file: %s" % self.about_image)
 
     def create_menubar(self):
         log.debug(f"create_menubar: active editor={self.active_editor}")

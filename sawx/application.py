@@ -25,20 +25,22 @@ class SawxApp(wx.App):
 
     default_uri = "about://app"  # when no files specified on the command line
 
+    app_version = "dev"
+
+    app_description = "Sawx framework for wxPython applications"
+
+    app_website = "http://playermissile.com/sawx"
+
+    app_icon = "icon://omnivore.ico"
+
     about_uri = "about://app"  # for Help->About menu item
 
-    about_version = "dev"
-
-    about_description = "Sawx framework for wxPython applications"
-
-    about_website = "http://playermissile.com/sawx"
-
-    about_image = "icon://omnivore256.png"
+    about_image = "icon://omnivore256.png"  # for Help->About menu item
 
     about_html = f"""<html>
-<h2>{app_name} {about_version}</h2>
+<h2>{app_name} {app_version}</h2>
 
-<h3>{about_description}</h3>
+<h3>{app_description}</h3>
 
 <p><img src="{about_image}">
 """
@@ -169,9 +171,9 @@ class SawxApp(wx.App):
             log.error("AboutDialog: bad icon file: %s" % self.about_image)
 
         info.SetName(self.app_name)
-        info.SetVersion(self.about_version)
-        info.SetDescription(self.about_description)
-        info.SetWebSite(self.about_website)
+        info.SetVersion(self.app_version)
+        info.SetDescription(self.app_description)
+        info.SetWebSite(self.app_website)
 
         dialog = wx.adv.AboutBox(info)
 
