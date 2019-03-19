@@ -315,8 +315,9 @@ class SawxEditor:
         self.serialize_session(s)
         self.document.save_session(self.name, s)
 
-    def save_success(self):
-        path = self.document.uri
+    def save_success(self, path=None):
+        if path is None:
+            path = self.document.uri
         self.last_saved_uri = path
         from sawx.actions import open_recent
         open_recent.open_recent.append(path)
