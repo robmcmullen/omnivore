@@ -188,6 +188,13 @@ class SawxAction:
         toolbar_control.EnableTool(id, state)
 
 
+class SawxNameChangeAction(SawxAction):
+    def sync_menu_item_from_editor(self, action_key, menu_item):
+        SawxAction.sync_menu_item_from_editor(self, action_key, menu_item)
+        name = self.calc_name(action_key)
+        menu_item.SetText(name)
+
+
 class SawxActionRadioMixin:
     def append_to_menu(self, menu, id, action_key):
         menu.AppendCheckItem(id, self.calc_name(action_key))

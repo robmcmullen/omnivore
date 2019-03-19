@@ -31,9 +31,11 @@ class HistoryList(list):
     def set_save_point(self):
         self.save_point_index = self.insert_index
 
+    @property
     def can_undo(self):
         return self.insert_index > 0
 
+    @property
     def can_redo(self):
         return self.insert_index < len(self)
 
@@ -42,11 +44,11 @@ class HistoryList(list):
         return h
 
     def get_undo_command(self):
-        if self.can_undo():
+        if self.can_undo:
             return self[self.insert_index - 1]
 
     def get_redo_command(self):
-        if self.can_redo():
+        if self.can_redo:
             return self[self.insert_index]
 
     def add_command(self, command):

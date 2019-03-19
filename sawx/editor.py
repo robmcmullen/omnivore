@@ -179,14 +179,6 @@ class SawxEditor:
         return self.frame.active_editor_can_paste
 
     @property
-    def can_undo(self):
-        return self.document is not None and self.document.undo_stack.can_undo()
-
-    @property
-    def can_redo(self):
-        return self.document is not None and self.document.undo_stack.can_redo()
-
-    @property
     def best_file_save_dir(self):
         attempts = []
         if self.last_saved_uri:

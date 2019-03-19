@@ -1,6 +1,6 @@
 import wx
 
-from ..action import SawxAction, SawxListAction
+from ..action import SawxAction, SawxNameChangeAction, SawxListAction
 from ..templates import iter_templates
 from ..ui.dialogs import prompt_for_dec
 from .. import errors
@@ -83,22 +83,34 @@ class quit(SawxAction):
     def perform(self, action_key):
         wx.GetApp().quit()
 
-class undo(SawxAction):
+class undo(SawxNameChangeAction):
     def calc_name(self, action_key):
-        return "Undo"
+        command = self.editor.document.undo_stack.get_undo_command()
+        if command is None:
+            label = "Undo"
+        else:
+            text = str(command).replace("&", "&&")
+            label = "Undo: " + text
+        return label
 
     def calc_enabled(self, action_key):
-        return self.editor.can_undo
+        return self.editor.document.undo_stack.can_undo
 
     def perform(self, action_key):
         self.editor.undo()
 
-class redo(SawxAction):
+class redo(SawxNameChangeAction):
     def calc_name(self, action_key):
-        return "Redo"
+        command = self.editor.document.undo_stack.get_redo_command()
+        if command is None:
+            label = "Redo"
+        else:
+            text = str(command).replace("&", "&&")
+            label = "Redo: " + text
+        return label
 
     def calc_enabled(self, action_key):
-        return self.editor.can_redo
+        return self.editor.document.undo_stack.can_redo
 
     def perform(self, action_key):
         self.editor.redo()
