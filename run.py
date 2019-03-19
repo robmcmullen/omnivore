@@ -84,11 +84,13 @@ def main(argv):
     from omnivore._version import __version__
     OmnivoreApp = SawxApp
     OmnivoreApp.app_name = "Omnivore"
-    OmnivoreApp.about_version = __version__
-    OmnivoreApp.about_description = "The 8-bit Binary Editor, Emulator, and Reverse Engineering Toolbox"
-    OmnivoreApp.about_html = f"""<h2>{OmnivoreApp.app_name} {OmnivoreApp.about_version}</h2>
+    OmnivoreApp.app_version = __version__
+    OmnivoreApp.app_icon = "icon://omnivore.ico"
+    OmnivoreApp.app_description = "The 8-bit Binary Editor, Emulator, and Reverse Engineering Toolbox"
+    OmnivoreApp.app_website = "https://playermissile.com/omnivore"
+    OmnivoreApp.about_html = f"""<h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version}</h2>
 
-<h3>{OmnivoreApp.about_description}</h3>
+<h3>{OmnivoreApp.app_description}</h3>
 
 <p><img src="{OmnivoreApp.about_image}">"""
     run(OmnivoreApp, image_paths, template_paths)
