@@ -37,7 +37,7 @@ def get_bitmap(action_key, icon_size):
         found_bitmaps[bitmap_key] = bitmap
     return bitmap
 
-def find_bitmap(action_key, icon_size):
+def find_bitmap(action_key, icon_size=0):
     bitmap_key = (action_key, icon_size)
     try:
         bitmap = found_bitmaps[bitmap_key]
