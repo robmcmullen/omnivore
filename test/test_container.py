@@ -4,7 +4,9 @@ import numpy as np
 
 from mock import *
 
-from atrcopy import SegmentData, iter_parsers
+from atrcopy.container import guess_container
+from atrcopy.parser import iter_parsers
+from atrcopy import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
 from atrcopy import errors
 
 
@@ -20,8 +22,8 @@ class BaseContainerTest:
         except OSError:
             pass
         else:
-            rawdata = SegmentData(sample_data.copy())
-            mime, parser = iter_parsers(rawdata)
+            container = guess_container(sample_data)
+            mime, parser = iter_parsers(container)
             assert mime == self.expected_mime
             assert len(parser.image.files) == self.num_files_in_sample
 

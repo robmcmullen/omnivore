@@ -2,7 +2,8 @@ import numpy as np
 
 from . import errors
 from .diskimages import DiskImageBase, BaseHeader, Bootable
-from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver, get_style_bits
+from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment, DefaultSegment, SegmentedFileSegment, SegmentSaver
+from .style_bits import get_style_bits
 from .utils import *
 from .executables import get_xex
 

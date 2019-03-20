@@ -17,10 +17,12 @@ from . import errors
 from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
 from .dos33 import Dos33DiskImage
 from .kboot import KBootImage, add_xexboot_header
-from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, interleave_segments, SegmentList, get_style_mask, get_style_bits
+from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, interleave_segments, SegmentList
+from .style_bits import user_bit_mask, match_bit_mask, comment_bit_mask, data_style, selected_bit_mask, diff_bit_mask, not_user_bit_mask, get_style_mask, get_style_bits
 from .spartados import SpartaDosDiskImage
 from .cartridge import A8CartHeader, AtariCartImage, RomImage
-from .parsers import SegmentParser, DefaultSegmentParser, guess_parser_by_size, guess_parser_for_mime, guess_parser_for_system, guess_container, iter_parsers, iter_known_segment_parsers, mime_parse_order, parsers_for_filename
+from .parser import SegmentParser, DefaultSegmentParser, guess_parser_by_size, guess_parser_for_mime, guess_parser_for_system, iter_parsers, iter_known_segment_parsers, mime_parse_order, parsers_for_filename
+from .container import guess_container
 from .magic import guess_detail_for_mime
 from .utils import to_numpy, text_to_int
 from .dummy import LocalFilesystem

@@ -1,8 +1,7 @@
 import numpy as np
 
-from . import errors
-from .container import DiskImageContainer
-from .segments import SegmentData
+from .. import errors
+from ..container import DiskImageContainer
 
 
 class DCMContainer(DiskImageContainer):

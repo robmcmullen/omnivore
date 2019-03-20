@@ -24,7 +24,18 @@ setup(name="atrcopy",
         packages=["atrcopy"],
         include_package_data=True,
         scripts=scripts,
-        entry_points={"sawx.loaders": 'atrcopy = atrcopy.omnivore_loader'},
+        entry_points={
+            "sawx.loaders": [
+                'atrcopy = atrcopy.omnivore_loader',
+            ],
+
+            "atrcopy.containers": [
+                'gzip = atrcopy.containers.gzip',
+                'bzip = atrcopy.containers.bzip',
+                'lzma = atrcopy.containers.lzma',
+                'dcm = atrcopy.containers.dcm',
+            ],
+        },
         description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",
         long_description=long_description,
         license="GPL",

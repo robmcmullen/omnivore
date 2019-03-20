@@ -1,7 +1,7 @@
 import numpy as np
 
 from . import errors
-from .segments import SegmentData, EmptySegment, ObjSegment, RawSectorsSegment
+from .segments import EmptySegment, ObjSegment, RawSectorsSegment
 from .utils import *
 from .executables import create_executable_file_data
 

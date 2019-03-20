@@ -2,6 +2,14 @@ class AtrError(RuntimeError):
     pass
 
 
+class InvalidSegmentLength(AtrError):
+    pass
+
+
+class InvalidSegmentOrder(AtrError):
+    pass
+
+
 class InvalidAtrHeader(AtrError):
     pass
 
@@ -68,6 +76,10 @@ class FileNotFound(AtrError):
 
 
 class UnsupportedContainer(AtrError):
+    pass
+
+
+class ReadOnlyContainer(AtrError):
     pass
 
 

@@ -1,8 +1,6 @@
-import hashlib
-
 import numpy as np
 
-from .segments import SegmentData, DefaultSegment
+from .segments import DefaultSegment
 from .kboot import KBootImage
 from .ataridos import AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, AtariDiskImage
 from .spartados import SpartaDosDiskImage
@@ -13,7 +11,6 @@ from .standard_delivery import StandardDeliveryImage
 from . import errors
 from .magic import guess_detail_for_mime
 from . import container
-from .dcm import DCMContainer
 from .signatures import sha1_signatures
 
 import logging
@@ -25,11 +22,11 @@ class SegmentParser:
     image_type = None
     container_segment = DefaultSegment
 
-    def __init__(self, segment_data, strict=False):
+    def __init__(self, container, strict=False):
         self.image = None
         self.segments = []
         self.strict = strict
-        self.segment_data = segment_data
+        self.container = container
         self.parse()
 
     def __str__(self):
@@ -68,8 +65,7 @@ class SegmentParser:
         self.__dict__.update(state)
 
     def parse(self):
-        r = self.segment_data
-        self.segments.append(self.container_segment(r, 0, name=self.menu_name))
+        r = self.container
         try:
             log.debug("Trying %s" % self.image_type)
             log.debug(self.image_type.__mro__)
@@ -84,7 +80,7 @@ class SegmentParser:
 
     def reconstruct_segments(self, new_rawdata):
         self.image = self.get_image(new_rawdata)
-        self.segment_data = new_rawdata
+        self.container = new_rawdata
         for s in self.segments:
             s.reconstruct_raw(new_rawdata)
 
@@ -106,7 +102,7 @@ class DefaultSegmentParser(SegmentParser):
     menu_name = "Raw Data"
 
     def parse(self):
-        self.segments = [DefaultSegment(self.segment_data, 0)]
+        self.segments = [DefaultSegment(self.container, 0)]
 
 
 class KBootSegmentParser(SegmentParser):
@@ -201,36 +197,12 @@ class ProdosSegmentParser(SegmentParser):
     image_type = ProdosDiskImage
 
 
-known_containers = [
-    container.GZipContainer,
-    container.BZipContainer,
-    container.LZMAContainer,
-    DCMContainer,
-]
-
-
-def guess_container(r, verbose=False):
-    for c in known_containers:
-        if verbose:
-            log.info(f"trying container {c}")
-        try:
-            found = c(r)
-        except errors.InvalidContainer as e:
-            continue
-        else:
-            if verbose:
-                log.info(f"found container {c}")
-            return found
-    log.info(f"image does not appear to be a container.")
-    return None
-
-
-def guess_parser_by_size(r, verbose=False):
+def guess_parser_by_size(container, verbose=False):
     found = None
     mime = None
-    size = len(r)
+    size = len(container)
     if size in sha1_signatures:
-        sha_hash = hashlib.sha1(r.data).digest()
+        sha_hash = container.sha1
         log.info(f"{size} in signature database, attempting to match {sha_hash}")
         try:
             match = sha1_signatures[size][sha_hash]
@@ -242,7 +214,7 @@ def guess_parser_by_size(r, verbose=False):
             parsers = mime_parsers[mime]
             for parser in parsers:
                 try:
-                    found = parser(r, False)
+                    found = parser(container, False)
                     break
                 except errors.InvalidSegmentParser as e:
                     if verbose:
@@ -254,12 +226,12 @@ def guess_parser_by_size(r, verbose=False):
         log.info(f"{size} not found in signature database; skipping sha1 matching")
     return mime, found
 
-def guess_parser_for_mime(mime, r, verbose=False):
+def guess_parser_for_mime(mime, container, verbose=False):
     parsers = mime_parsers[mime]
     found = None
     for parser in parsers:
         try:
-            found = parser(r, True)
+            found = parser(container, True)
             break
         except errors.InvalidSegmentParser as e:
             if verbose:
@@ -268,27 +240,24 @@ def guess_parser_for_mime(mime, r, verbose=False):
     return found
 
 
-def guess_parser_for_system(mime_base, r):
+def guess_parser_for_system(mime_base, container):
     for mime in mime_parse_order:
         if mime.startswith(mime_base):
-            p = guess_parser_for_mime(mime, r)
+            p = guess_parser_for_mime(mime, container)
             if p is not None:
-                mime = guess_detail_for_mime(mime, r, p)
+                mime = guess_detail_for_mime(mime, container, p)
                 return mime, p
     return None, None
 
 
-def iter_parsers(r):
-    container = guess_container(r.data)
-    if container is not None:
-        r = SegmentData(container.unpacked)
-    mime, parser = guess_parser_by_size(r)
+def iter_parsers(container):
+    mime, parser = guess_parser_by_size(container)
     if parser is None:
         for mime in mime_parse_order:
-            p = guess_parser_for_mime(mime, r)
+            p = guess_parser_for_mime(mime, container)
             if p is not None:
                 parser = p
-                mime = guess_detail_for_mime(mime, r, p)
+                mime = guess_detail_for_mime(mime, container, p)
                 break
     return mime, parser
 

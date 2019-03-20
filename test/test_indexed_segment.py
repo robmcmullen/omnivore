@@ -7,7 +7,8 @@ import os
 import numpy as np
 import pytest
 
-from atrcopy.indexed_segment import SourceSegment, IndexedSegment
+from atrcopy.container import DiskImageContainer
+from atrcopy.segments import DefaultSegment
 from atrcopy import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
 from atrcopy import errors
 from functools import reduce
@@ -72,34 +73,34 @@ class TestIndexed:
     def setup(self):
         data = np.arange(4096, dtype=np.uint8)
         data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)
-        self.source = SourceSegment(data)
-        self.segment = IndexedSegment(self.source, 0, length=len(self.source))
+        self.container = DiskImageContainer(data)
+        self.segment = DefaultSegment(self.container, 0, length=len(self.container))
 
     def test_offsets(self):
-        assert np.array_equal(self.segment.offset_into_source, np.arange(len(self.source)))
+        assert np.array_equal(self.segment.container_offset, np.arange(len(self.container)))
 
     def test_subset(self):
         # get indexed, will result in every 3th byte
         s, indexes = get_indexed(self.segment, 256, 3)
-        assert np.array_equal(s.offset_into_source, indexes)
+        assert np.array_equal(s.container_offset, indexes)
         for i in range(len(indexes)):
             index_in_source = i * 3
-            assert np.array_equal(s.offset_into_source[i], index_in_source)
+            assert np.array_equal(s.container_offset[i], index_in_source)
             s[i] = 33
-            assert s[i] == self.source[index_in_source]
-            self.source[index_in_source] = 3
-            assert s[i] == self.source[index_in_source]
+            assert s[i] == self.container[index_in_source]
+            self.container[index_in_source] = 3
+            assert s[i] == self.container[index_in_source]
 
         # get indexed into indexed, will result in every 9th byte
         s2, indexes2 = get_indexed(s, 64, 3)
-        assert np.array_equal(s2.offset_into_source, indexes2 * 3)
+        assert np.array_equal(s2.container_offset, indexes2 * 3)
         for i in range(len(indexes2)):
             index_in_source = i * 9
-            assert np.array_equal(s2.offset_into_source[i], index_in_source)
+            assert np.array_equal(s2.container_offset[i], index_in_source)
             s2[i] = 99
-            assert s2[i] == self.source[index_in_source]
-            self.source[index_in_source] = 9
-            assert s2[i] == self.source[index_in_source]
+            assert s2[i] == self.container[index_in_source]
+            self.container[index_in_source] = 9
+            assert s2[i] == self.container[index_in_source]
 
     # def test_indexed_sub(self):
     #     base = self.segment

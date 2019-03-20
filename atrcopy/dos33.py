@@ -3,7 +3,8 @@ import numpy as np
 from . import errors
 from .diskimages import BaseHeader, DiskImageBase, Bootable
 from .utils import Directory, VTOC, WriteableSector, BaseSectorList, Dirent
-from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, get_style_bits, SegmentData
+from .segments import DefaultSegment, EmptySegment, ObjSegment, RawTrackSectorSegment, SegmentSaver, SegmentData
+from .style_bits import get_style_bits
 from .executables import get_bsave
 
 import logging
