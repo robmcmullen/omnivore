@@ -1,18 +1,24 @@
 import lzma
 import io
 
-import numpy as np
-
-from . import errors
-from .utils import to_numpy
+from .. import errors
 
 
-class LZMAContainer(DiskImageContainer):
-    def unpack_bytes(self, byte_data):
-        try:
-            buf = io.BytesIO(byte_data)
-            with lzma.LZMAFile(buf, mode='rb') as f:
-                unpacked = f.read()
-        except lzma.LZMAError as e:
-            raise errors.InvalidContainer(e)
-        return unpacked
+name = "lzma"
+
+def unpack_bytes(byte_data):
+    try:
+        buf = io.BytesIO(byte_data)
+        with lzma.LZMAFile(buf, mode='rb') as f:
+            unpacked = f.read()
+    except lzma.LZMAError as e:
+        raise errors.InvalidContainer(e)
+    return unpacked
+
+
+def pack_bytes(media_container):
+    """Pack the container using this packing algorithm
+
+    Return a byte string suitable to be written to disk
+    """
+    raise NotImplementedError

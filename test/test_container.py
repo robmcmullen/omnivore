@@ -5,8 +5,6 @@ import numpy as np
 from mock import *
 
 from atrcopy.container import guess_container
-from atrcopy.parser import iter_parsers
-from atrcopy import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
 from atrcopy import errors
 
 
@@ -14,18 +12,22 @@ class BaseContainerTest:
     base_path = None
     expected_mime = ""
 
-    @pytest.mark.parametrize("ext", ['.gz', '.bz2', '.xz', '.dcm'])
-    def test_container(self, ext):
+    @pytest.mark.parametrize(("ext", "mod_name"), [
+        ('.gz', 'gzip'),
+        ('.bz2', 'bzip'),
+        ('.xz', 'lzma'),
+        ('.dcm', 'dcm'),
+    ])
+    def test_container(self, ext, mod_name):
         pathname = self.base_path + ext
         try:
             sample_data = np.fromfile(pathname, dtype=np.uint8)
         except OSError:
             pass
         else:
-            container = guess_container(sample_data)
-            mime, parser = iter_parsers(container)
-            assert mime == self.expected_mime
-            assert len(parser.image.files) == self.num_files_in_sample
+            container, uncompressed_data = guess_container(sample_data)
+            print(container.name)
+            assert container.name == mod_name
 
 class TestContainerAtariDosSDImage(BaseContainerTest):
     base_path = "../test_data/container_dos_sd_test1.atr"
@@ -41,3 +43,9 @@ class TestContainerAtariDosDDImage(BaseContainerTest):
     base_path = "../test_data/container_dos_dd_test1.atr"
     expected_mime = "application/vnd.atari8bit.atr"
     num_files_in_sample = 5
+
+if __name__ == "__main__":
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    c = TestContainerAtariDosSDImage()
+    c.test_container(".gz", "gzip")
