@@ -72,12 +72,12 @@ class SawxDocument:
 
     def __init__(self, file_metadata):
         self.undo_stack = UndoStack()
+        self.extra_metadata = {}
         self.load(file_metadata)
         self.uuid = str(uuid.uuid4())
         self.change_count = 0
         self.permute = None
         self.baseline_document = None
-        self.extra_metadata = {}
 
         # events
         self.recalc_event = EventHandler(self)
