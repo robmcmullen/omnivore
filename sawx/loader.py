@@ -44,10 +44,14 @@ def identify_file(uri):
     hits = []
     fallback = None
     with open(uri, 'rb') as fh:
-        data = fh.read(10240)
+        sample_data = fh.read(10240)
         for loader in loaders:
             log.debug(f"identify_file: trying loader {loader}")
-            file_metadata = loader.identify_mime(data, fh)
+            try:
+                file_metadata = loader.identify_mime(uri, fh, sample_data)
+            except TypeError:
+                log.warning(f"identify_file: attempting to call identify_mime from {loader} with old style parameters")
+                file_metadata = loader.identify_mime(sample_data, fh)
             if file_metadata:
                 file_metadata['uri'] = uri
                 mime_type = file_metadata['mime']
