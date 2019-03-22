@@ -10,14 +10,6 @@ class InvalidSegmentOrder(AtrError):
     pass
 
 
-class InvalidAtrHeader(AtrError):
-    pass
-
-
-class InvalidCartHeader(AtrError):
-    pass
-
-
 class InvalidDiskImage(AtrError):
     """ Disk image is not recognized by a parser.
 
@@ -35,15 +27,19 @@ class UnsupportedDiskImage(AtrError):
     pass
 
 
-class InvalidDirent(AtrError):
+class FilesystemError(AtrError):
     pass
 
 
-class LastDirent(AtrError):
+class InvalidDirent(FilesystemError):
     pass
 
 
-class InvalidFile(AtrError):
+class LastDirent(FilesystemError):
+    pass
+
+
+class InvalidFile(FilesystemError):
     pass
 
 
@@ -63,15 +59,15 @@ class InvalidSegmentParser(AtrError):
     pass
 
 
-class NoSpaceInDirectory(AtrError):
+class NoSpaceInDirectory(FilesystemError):
     pass
 
 
-class NotEnoughSpaceOnDisk(AtrError):
+class NotEnoughSpaceOnDisk(FilesystemError):
     pass
 
 
-class FileNotFound(AtrError):
+class FileNotFound(FilesystemError):
     pass
 
 
@@ -84,4 +80,21 @@ class ReadOnlyContainer(AtrError):
 
 
 class InvalidContainer(AtrError):
+    pass
+
+# Errors when trying to determine media type
+
+class MediaError(AtrError):
+    pass
+
+
+class InvalidMediaSize(MediaError):
+    pass
+
+
+class InvalidAtrHeader(MediaError):
+    pass
+
+
+class InvalidCartHeader(MediaError):
     pass

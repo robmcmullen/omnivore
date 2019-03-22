@@ -35,6 +35,12 @@ setup(name="atrcopy",
                 'lzma = atrcopy.containers.lzma',
                 'dcm = atrcopy.containers.dcm',
             ],
+
+            "atrcopy.media_types": [
+                'atari_disks = atrcopy.media_types.atari_disks',
+                'atari_carts = atrcopy.media_types.atari_carts',
+                'apple_disks = atrcopy.media_types.apple_disks',
+            ],
         },
         description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",
         long_description=long_description,

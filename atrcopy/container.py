@@ -38,15 +38,15 @@ def find_containers():
 def guess_container(raw_data):
     uncompressed = raw_data
     for c in find_containers():
-        log.info(f"trying container {c}")
+        log.debug(f"trying container {c.name}")
         try:
             uncompressed = c.unpack_bytes(raw_data)
         except errors.InvalidContainer as e:
             continue
         else:
-            log.info(f"found container {c}")
+            log.debug(f"found container {c.name}")
             break
     else:
         c = None
-        log.info(f"image does not appear to be compressed.")
+        log.debug(f"image does not appear to be compressed.")
     return c, uncompressed
