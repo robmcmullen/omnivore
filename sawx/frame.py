@@ -95,6 +95,10 @@ class SawxFrame(wx.Frame):
         self.toolbar = toolbar.ToolbarDescription(self, self.active_editor)
         self.raw_toolbar.Realize()
 
+    def rebuild_toolbar(self):
+        self.create_toolbar()
+        self.toolbar.sync_with_editor(self.raw_toolbar)
+
     def sync_toolbar(self):
         try:
             self.toolbar.sync_with_editor(self.raw_toolbar)
