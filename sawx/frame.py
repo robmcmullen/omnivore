@@ -362,7 +362,7 @@ class SawxFrame(wx.Frame):
         d = dialogs.SimplePromptDialog(self, message, title, default_value)
         return d.show_and_get_value()
 
-    def confirm(self, message, title="Confirm", cancel=False, yes_default=False):
+    def confirm(self, message, title="Confirm", cancel=False, yes_default=False, no_label=wx.ID_NO, yes_label=wx.ID_YES):
         """ Convenience method to show a confirmation dialog. """
 
         style = wx.ICON_INFORMATION | wx.YES_NO
@@ -373,6 +373,7 @@ class SawxFrame(wx.Frame):
         else:
             style |= wx.NO_DEFAULT
         dlg = wx.MessageDialog(self, message, title, style)
+        dlg.SetYesNoLabels(yes_label, no_label)
         state = dlg.ShowModal()
         dlg.Destroy()
         return None if state == wx.ID_CANCEL else state == wx.ID_YES
