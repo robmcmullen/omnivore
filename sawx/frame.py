@@ -375,7 +375,7 @@ class SawxFrame(wx.Frame):
         dlg = wx.MessageDialog(self, message, title, style)
         state = dlg.ShowModal()
         dlg.Destroy()
-        return None if state == wx.CANCEL else state == wx.YES
+        return None if state == wx.ID_CANCEL else state == wx.ID_YES
 
     def confirm_cancel(self, message, title="Confirm"):
         """ Convenience method to show a confirmation dialog.
