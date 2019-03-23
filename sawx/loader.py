@@ -27,7 +27,7 @@ def get_loaders():
             loaders.append(mod)
     return loaders
 
-def identify_file(uri):
+def identify_file(uri, match_multiple=False):
     """Examine the file to determine MIME type and other salient info to
     allow the loader to chose an editor with which to open the file
 
@@ -56,10 +56,13 @@ def identify_file(uri):
                 file_metadata['uri'] = uri
                 mime_type = file_metadata['mime']
                 if mime_type == "application/octet-stream" or mime_type == "text/plain":
+                    log.debug(f"identify_file: identified as generic type {mime_type}")
                     if not fallback:
                         fallback = mime_type
                 else:
                     log.debug(f"identify_file: identified: {file_metadata}")
+                    if not match_multiple:
+                        return file_metadata
                     hits.append(file_metadata)
 
     # how to find best guess?
