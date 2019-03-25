@@ -319,3 +319,10 @@ def guess_container(raw_data):
         log.debug(f"image does not appear to be compressed.")
         container = Container(raw_data)
     return container
+
+
+def load(pathname):
+    sample_data = np.fromfile(pathname, dtype=np.uint8)
+    container = guess_container(sample_data)
+    container.guess_media_type()
+    return container

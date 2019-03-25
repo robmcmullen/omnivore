@@ -125,7 +125,21 @@ class DiskImage(MediaType):
         if not self.sector_is_valid(sector):
             raise errors.ByteNotInFile166("Sector %d out of range" % sector)
         pos = (sector - self.starting_sector_label) * self.sector_size
-        return pos + self.header_length, self.sector_size
+        return pos, self.sector_size
+
+    def get_contiguous_sectors(self, start, count):
+        index, _ = self.get_index_of_sector(start)
+        last, size = self.get_index_of_sector(start + count - 1)
+        return Segment(self, index, length=(last + size - index))
+
+    def get_sector_list(self, sector_numbers):
+        offsets = np.empty(len(sector_numbers) * self.sector_size, dtype=np.uint32)
+        i = 0
+        for num in sector_numbers:
+            index, size = self.get_index_of_sector(num)
+            offsets[i:i+size] = np.arange(index, index + size)
+            i += size
+        return Segment(self, offsets)
 
 
 class CartImage(MediaType):
