@@ -65,6 +65,11 @@ class MediaType(Segment):
         """
         pass
 
+    def find_filesystem(self):
+        fs = filesystem.guess_filesystem(self)
+        if fs:
+            self.segments = list(fs.iter_segments())
+
 
 class DiskImage(MediaType):
     pretty_name = "Disk Image"

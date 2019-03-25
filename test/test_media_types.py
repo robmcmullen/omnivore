@@ -56,9 +56,8 @@ if __name__ == "__main__":
         print(f"checking {pathname}")
         sample_data = np.fromfile(pathname, dtype=np.uint8)
         container = guess_container(sample_data)
-        print(container)
-        media = guess_media_type(container)
-        print(f"{pathname}: {media}")
+        container.guess_media_type()
+        print(container.verbose_info)
 
     import sys
     import glob

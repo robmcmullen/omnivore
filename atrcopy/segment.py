@@ -94,7 +94,7 @@ class Segment:
             origin = " @ %04x" % (self.origin)
         else:
             origin = ""
-        s = "%s ($%x bytes%s)" % (self.name, len(self), origin)
+        s = "%s (%d bytes%s)" % (self.name, len(self), origin)
         if self.error:
             s += " " + self.error
         return s
@@ -142,7 +142,7 @@ class Segment:
 
     def create_subset(self, new_order, *args, **kwargs):
         new_order_of_source = self.container_offset[new_order]
-        segment = DefaultSegment(self.container, new_order_of_source, *args, **kwargs)
+        segment = Segment(self.container, new_order_of_source, *args, **kwargs)
         return segment
 
     #### serialization
@@ -211,6 +211,13 @@ class Segment:
         if self.error:
             s += "  error='%s'" % self.error
         return s
+
+    def segment_info(self, indent=""):
+        lines = []
+        lines.append(indent + str(self))
+        for s in self.segments:
+            lines.extend(s.segment_info(indent + "    "))
+        return lines
 
     def is_valid_index(self, i):
         return i >= 0 and i < len(self)

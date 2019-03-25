@@ -7,6 +7,7 @@ import numpy as np
 from . import errors
 from . import style_bits
 from .utils import to_numpy, to_numpy_list, uuid
+from . import media_type
 
 import logging
 log = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ class Container:
         self.segments = []
         self.header = None
         self.filesystem = None
+        self._media_type = None
 
         self._data = None
         self._style = None
@@ -74,7 +76,7 @@ class Container:
     @data.setter
     def data(self, value):
         if self._data is not None:
-            raise errors.ReadOnlyContainer("media_type already populated with data")
+            raise errors.ReadOnlyContainer("container already populated with data")
         raw = value.tobytes()
         try:
             unpacked = self.calc_unpacked_bytes(raw)
@@ -99,6 +101,29 @@ class Container:
     @property
     def header_length(self):
         return len(self.header) if self.header is not None else 0
+
+    @property
+    def media_type(self):
+        return self._media_type
+
+    @media_type.setter
+    def media_type(self, value):
+        self._media_type = value
+        self.segments = []
+        if value.header:
+            self.header = value.header
+            self.segments.append(self.header)
+        self.segments.append(value)
+
+    @property
+    def verbose_info(self):
+        lines = []
+        name = self.verbose_name or self.name
+        lines.append(f"{name}: {len(self)} bytes")
+        for s in self.segments:
+            v = s.segment_info("    ")
+            lines.extend(v)
+        return "\n".join(lines)
 
     #### dunder methods
 
@@ -147,6 +172,18 @@ class Container:
         algorithm.
         """
         return np_data
+
+    #### media
+
+    def guess_media_type(self):
+        media = media_type.guess_media_type(self)
+        self.media_type = media
+
+    def guess_filesystem(self):
+        fs = filesystem.guess_filesystem(self.media_type)
+        if fs is not None:
+            self.filesystem = fs
+            self.segments.append(fs)
 
     #### serialization
 
