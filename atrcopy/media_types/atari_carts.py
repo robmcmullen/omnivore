@@ -104,7 +104,7 @@ def get_cart(cart_type):
     try:
         return known_cart_types[known_cart_type_map[cart_type]]
     except KeyError:
-        raise errors.InvalidCartHeader("Unsupported cart type %d" % cart_type)
+        raise errors.InvalidHeader("Unsupported cart type %d" % cart_type)
 
 
 class A8CartHeader:
@@ -120,12 +120,12 @@ class A8CartHeader:
         if len(data) == 16:
             header = data.view(dtype=self.format)[0]
             if header[0] != b'CART':
-                raise errors.InvalidCartHeader
+                raise errors.InvalidHeader
             self.cart_type = int(header[1])
             self.crc = int(header[2])
             self.set_type(self.cart_type)
         else:
-            raise errors.InvalidCartHeader
+            raise errors.InvalidHeader
 
     def __str__(self):
         return "%s Cartridge (atari800 type=%d size=%d, %d banks, crc=%d)" % (self.cart_name, self.cart_type, self.cart_size, self.bank_size, self.crc)
@@ -150,7 +150,7 @@ class A8CartHeader:
     def check_media(self, media):
         media_size = len(media) - 16
         if self.cart_size != media_size:
-            raise errors.InvalidCartHeader("Invalid cart size: {media_size}, expected {self.cart_size} for {self.cart_name}")
+            raise errors.InvalidHeader("Invalid cart size: {media_size}, expected {self.cart_size} for {self.cart_name}")
 
 
 class Atari8bitCart(CartImage):

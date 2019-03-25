@@ -27,14 +27,14 @@ class AtrHeader(Segment):
         if len(header) == 16:
             values = header.view(dtype=self.format)[0]
             if values[0] != 0x296:
-                raise errors.InvalidAtrHeader("no ATR header magic value")
+                raise errors.InvalidHeader("no ATR header magic value")
             self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
             self.sector_size = int(values[2])
             self.crc = int(values[4])
             self.unused = int(values[5])
             self.flags = int(values[6])
         else:
-            raise errors.InvalidAtrHeader("incorrect AHC header size of %d" % len(bytes))
+            raise errors.InvalidHeader("incorrect AHC header size of %d" % len(bytes))
 
     def encode(self, raw):
         values = raw.view(dtype=self.format)[0]
@@ -51,10 +51,10 @@ class AtrHeader(Segment):
 
     def check_media(self, media):
         if self.sector_size != media.sector_size:
-            raise errors.InvalidAtrHeader("ExpectedMismatch between sector sizes: header claims {self.sector_size}, expected {media.sector_size} for {media.pretty_name}")
+            raise errors.InvalidHeader("ExpectedMismatch between sector sizes: header claims {self.sector_size}, expected {media.sector_size} for {media.pretty_name}")
         media_size = len(media) - 16
         if self.image_size != media_size:
-            raise errors.InvalidAtrHeader("Invalid media size: header claims {self.image_size}, expected {media_size} for {media.pretty_name}")
+            raise errors.InvalidHeader("Invalid media size: header claims {self.image_size}, expected {media_size} for {media.pretty_name}")
 
 
 class AtariSingleDensity(DiskImage):
@@ -71,10 +71,10 @@ class AtariSingleDensity(DiskImage):
         if len(header_data) == 16:
             try:
                 header = AtrHeader(container)
-            except errors.InvalidAtrHeader:
+            except errors.InvalidHeader:
                 header = None
         else:
-            raise errors.InvalidAtrHeader(f"file size {len(data)} small to be {self.pretty_name}")
+            raise errors.InvalidHeader(f"file size {len(data)} small to be {self.pretty_name}")
         return header
 
 
@@ -85,6 +85,14 @@ class AtariSingleDensityShortImage(AtariSingleDensity):
         size = len(self)
         if size >= self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} must be less than size {self.expected_size}")
+
+    def check_magic(self):
+        # Must have an ATR header for this to be a disk image
+        if self.header is None:
+            raise errors.InvalidHeader("Must have an ATR header for a non-standard image size")
+        flag = self[0:2].view(dtype='<u2')
+        if flag == 0xffff:
+            raise errors.InvalidHeader("Appears to be an executable")
 
 
 class AtariEnhancedDensity(AtariSingleDensity):

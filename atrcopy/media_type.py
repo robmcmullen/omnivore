@@ -31,6 +31,7 @@ class MediaType(Segment):
         if self.header is not None:
             self.check_header()
         self.check_media_size()
+        self.check_magic()
 
     #### initialization
 
@@ -59,6 +60,16 @@ class MediaType(Segment):
         """Subclasses should override this method to verify that the payload
         portion of the media (i.e. everything after the header) can be stored
         in this media.
+
+        Subclasses should raise the appropriate MediaError if the data is
+        incompatible with this media type.
+        """
+        pass
+
+    def check_magic(self):
+        """Subclasses should override this method if there is some "magic"
+        values that can identify (or rule out) this disk image class as a
+        canditate.
 
         Subclasses should raise the appropriate MediaError if the data is
         incompatible with this media type.

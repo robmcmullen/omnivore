@@ -92,9 +92,16 @@ class InvalidMediaSize(MediaError):
     pass
 
 
-class InvalidAtrHeader(MediaError):
+class InvalidHeader(MediaError):
     pass
 
 
-class InvalidCartHeader(MediaError):
+# Errors when trying to determine filesystem
+
+class FilesystemError(AtrError):
     pass
+
+
+class IncompatibleMediaError(FilesystemError):
+    pass
+
