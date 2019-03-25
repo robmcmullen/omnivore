@@ -91,6 +91,12 @@ class Filesystem:
 
     ####
 
+    @property
+    def max_file_size(self):
+        return len(self.media)
+
+    ####
+
     def iter_segments(self):
         if self.boot is not None:
             yield self.boot

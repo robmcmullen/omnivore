@@ -202,14 +202,13 @@ class Segment:
 
     @property
     def verbose_info(self):
+        lines = []
         name = self.verbose_name or self.name
-        if self.rawdata.is_indexed:
-            s = "%s ($%04x bytes) non-contiguous file; file index of first byte: $%04x" % (name, len(self), self.rawdata.order[0])
-        else:
-            s = "%s ($%04x bytes)" % (name, len(self))
-        if self.error:
-            s += "  error='%s'" % self.error
-        return s
+        lines.append(f"{name}: {len(self)} bytes")
+        for s in self.segments:
+            v = s.segment_info("    ")
+            lines.extend(v)
+        return "\n".join(lines)
 
     def segment_info(self, indent=""):
         lines = []
@@ -423,8 +422,8 @@ class Segment:
         return comments
 
     def set_comment_at(self, index, text):
-        rawindex = self.get_raw_index(index)
-        self.rawdata.extra.comments[rawindex] = text
+        rawindex = self.container_offset[index]
+        self.container.comments[rawindex] = text
 
     def set_comment(self, ranges, text):
         self.set_style_ranges(ranges, comment=True)

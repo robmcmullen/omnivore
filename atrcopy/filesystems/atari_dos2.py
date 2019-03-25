@@ -110,6 +110,7 @@ class AtariDosDirent(Dirent):
         ])
 
     def __init__(self, filesystem, parent, file_num, start):
+        self.file_num = file_num
         Dirent.__init__(self, filesystem, parent, file_num, start, 16)
         self.flag = 0
         self.opened_output = False
@@ -124,10 +125,8 @@ class AtariDosDirent(Dirent):
         self.basename = b''
         self.ext = b''
         self.is_sane = True
-        self.current_sector = 0
-        self.current_read = 0
-        self.sectors_seen = None
         self.parse_raw_dirent()
+        self.get_file()
 
     def __str__(self):
         return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename.decode("latin1"), self.ext.decode("latin1"), self.num_sectors)
@@ -201,6 +200,33 @@ class AtariDosDirent(Dirent):
     def mark_deleted(self):
         self.deleted = True
         self._in_use = False
+
+    def get_file(self):
+        media = self.filesystem.media
+        offsets = np.empty(self.filesystem.max_file_size, dtype=np.uint32)
+        length = 0
+        next_sector = self.starting_sector
+        sectors_seen = set()
+
+        while next_sector > 0:
+            index, size = media.get_index_of_sector(next_sector)
+            num_bytes = media[index + size - 1]
+            file_num = media[index + size - 3] >> 2
+            if file_num != self.file_num:
+                raise errors.FileNumberMismatchError164(f"Expecting file {self.file_num}, found {file_num}")
+            sectors_seen.add(next_sector)
+
+            offsets[length:length + num_bytes] = np.arange(index, index+num_bytes)
+            length += num_bytes
+
+            next_sector = ((media[index + size - 3] & 0x3) << 8) + media[index + size - 2]
+            if next_sector in sectors_seen:
+                raise errors.InvalidFile(f"Bad sector pointer data: attempting to reread sector {next_sector}")
+
+        offsets = np.copy(offsets[0:length])
+        file_segment = Segment(media, offsets, name=self.filename)
+        self.segments = [file_segment]
+        return file_segment
 
     def update_sector_info(self, sector_list):
         self.num_sectors = sector_list.num_sectors
