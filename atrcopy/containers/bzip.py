@@ -1,24 +1,20 @@
 import bz2
 import io
 
+import numpy as np
+
 from .. import errors
+from ..container import Container
 
 
-name = "bzip"
+class BZipContainer(Container):
+    compression_algorithm = "bzip2"
 
-def unpack_bytes(byte_data):
-    try:
-        buf = io.BytesIO(byte_data)
-        with bz2.BZ2File(buf, mode='rb') as f:
-            unpacked = f.read()
-    except OSError as e:
-        raise errors.InvalidContainer(e)
-    return unpacked
-
-
-def pack_bytes(media_container):
-    """Pack the container using this packing algorithm
-
-    Return a byte string suitable to be written to disk
-    """
-    raise NotImplementedError
+    def calc_unpacked_bytes(self, byte_data):
+        try:
+            buf = io.BytesIO(byte_data)
+            with bz2.BZ2File(buf, mode='rb') as f:
+                unpacked = f.read()
+        except OSError as e:
+            raise errors.InvalidContainer(e)
+        return unpacked

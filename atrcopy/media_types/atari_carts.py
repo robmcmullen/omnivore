@@ -156,9 +156,12 @@ class A8CartHeader:
 class Atari8bitCart(CartImage):
     pretty_name = "Atari 8bit Cart"
 
-    def verify_header(self):
-        header_data = self.data[0:16]
+    def calc_header(self, container):
+        header_data = container[0:16]
         if len(header_data) == 16:
-            self.header = A8CartHeader(header_data)
-            self.header_length = 16
-            self.header.check_media(self)
+            header = A8CartHeader(container)
+            header_length = 16
+            header.check_media(container)
+        else:
+            header = None
+        return header

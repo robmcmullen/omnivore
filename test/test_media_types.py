@@ -52,12 +52,19 @@ if __name__ == "__main__":
     log = logging.getLogger("atrcopy.media_type")
     log.setLevel(logging.DEBUG)
 
-    import glob
-    for pathname in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../test_data/", "*"))):
+    def check(pathname):
         print(f"checking {pathname}")
         sample_data = np.fromfile(pathname, dtype=np.uint8)
-        container, uncompressed_data = guess_container(sample_data)
-        # if container: print(container.name)
-        print(len(uncompressed_data))
-        media = guess_media_type(uncompressed_data)
+        container = guess_container(sample_data)
+        print(container)
+        media = guess_media_type(container)
         print(f"{pathname}: {media}")
+
+    import sys
+    import glob
+    if len(sys.argv) > 1:
+        images = sys.argv[1:]
+    else:
+        images = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../test_data/", "*")))
+    for pathname in images:
+        check(pathname)

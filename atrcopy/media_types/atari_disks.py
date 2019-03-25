@@ -2,12 +2,13 @@ import numpy as np
 
 from .. import errors
 from ..media_type import DiskImage
+from ..segment import Segment
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class AtrHeader:
+class AtrHeader(Segment):
     # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
     format = np.dtype([
         ('wMagic', '<u2'),
@@ -20,8 +21,9 @@ class AtrHeader:
         ])
     file_format = "ATR"
 
-    def __init__(self, data):
-        header = data[0:16]
+    def __init__(self, container):
+        Segment.__init__(self, container, 0, name="ATR Header", length=16)
+        header = container[0:16]
         if len(header) == 16:
             values = header.view(dtype=self.format)[0]
             if values[0] != 0x296:
@@ -60,30 +62,27 @@ class AtariSingleDensity(DiskImage):
     sector_size = 128
     expected_size = 92160
 
-    def verify_header(self):
-        header_data = self.data[0:16]
+    def check_header(self):
+        if self.header.sector_size != self.sector_size:
+            raise errors.InvalidMediaSize(f"Sector size {self.header.sector_size} invalid for {self.pretty_name}")
+
+    def calc_header(self, container):
+        header_data = container[0:16]
         if len(header_data) == 16:
             try:
-                self.header = AtrHeader(header_data)
-                self.header_length = 16
-                self.header.check_media(self)
+                header = AtrHeader(container)
             except errors.InvalidAtrHeader:
-                self.header = None
-                self.header_length = 0
+                header = None
         else:
             raise errors.InvalidAtrHeader(f"file size {len(data)} small to be {self.pretty_name}")
-
-    def verify_data(self):
-        DiskImage.verify_data(self)
-        if self.header is not None:
-            if self.header.sector_size != self.sector_size:
-                raise errors.InvalidMediaSize(f"Sector size {header.sector_size} invalid for {self.pretty_name}")
+        return header
 
 
 class AtariSingleDensityShortImage(AtariSingleDensity):
     pretty_name = "Atari SD Non-Standard Image"
 
-    def check_media_size(self, size):
+    def check_media_size(self):
+        size = len(self)
         if size >= self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} must be less than size {self.expected_size}")
 
@@ -106,12 +105,13 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
     initial_sector_size = 128
     num_initial_sectors = 3
 
-    def check_sector_size(self, size):
+    def calc_num_sectors(self):
+        size = len(self)
         initial_size = self.initial_sector_size * self.num_initial_sectors
         remaining_size = size - initial_size
         if remaining_size % self.sector_size != 0:
             raise errors.InvalidMediaSize("ATR image not an integer number of sectors")
-        self.num_sectors = ((size - initial_size) // self.sector_size) + self.num_initial_sectors
+        return ((size - initial_size) // self.sector_size) + self.num_initial_sectors
 
     def get_index_of_sector(self, sector):
         if not self.sector_is_valid(sector):
@@ -129,7 +129,8 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
 class AtariDoubleDensityHardDriveImage(AtariDoubleDensity):
     pretty_name = "Atari DD Hard Drive Image"
 
-    def check_media_size(self, size):
+    def check_media_size(self):
+        size = len(self)
         if size <= self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} must be greater than size {self.expected_size}")
 

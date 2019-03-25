@@ -13,8 +13,9 @@ class BaseContainerTest:
     expected_mime = ""
 
     @pytest.mark.parametrize(("ext", "mod_name"), [
+        ('', 'no compression'),
         ('.gz', 'gzip'),
-        ('.bz2', 'bzip'),
+        ('.bz2', 'bzip2'),
         ('.xz', 'lzma'),
         ('.dcm', 'dcm'),
     ])
@@ -25,9 +26,9 @@ class BaseContainerTest:
         except OSError:
             pass
         else:
-            container, uncompressed_data = guess_container(sample_data)
+            container = guess_container(sample_data)
             print(container.name)
-            assert container.name == mod_name
+            assert container.compression_algorithm == mod_name
 
 class TestContainerAtariDosSDImage(BaseContainerTest):
     base_path = "../test_data/container_dos_sd_test1.atr"
