@@ -8,6 +8,7 @@ from . import errors
 from . import style_bits
 from .segment import Segment
 from .utils import to_numpy, to_numpy_list, uuid
+from . import filesystem
 
 import logging
 log = logging.getLogger(__name__)
@@ -76,9 +77,10 @@ class MediaType(Segment):
         """
         pass
 
-    def find_filesystem(self):
+    def guess_filesystem(self):
         fs = filesystem.guess_filesystem(self)
         if fs:
+            self.filesystem = fs
             self.segments = list(fs.iter_segments())
 
 
@@ -92,20 +94,8 @@ class DiskImage(MediaType):
         self.num_sectors = 0
         MediaType.__init__(self, container)
 
-    def __str__(self):
-        return f"{self.pretty_name}, size={len(self)} ({self.num_sectors}x{self.sector_size}B)"
-
-    @property
-    def verbose_info(self):
-        name = self.verbose_name or self.name
-        if self.num_sectors > 1:
-            s = "%s (sectors %d-%d)" % (name, self.first_sector, self.first_sector + self.num_sectors - 1)
-        else:
-            s = "%s (sector %d)" % (name, self.first_sector)
-        s += " $%x bytes" % (len(self), )
-        if self.error:
-            s += "  error='%s'" % self.error
-        return s
+    # def __str__(self):
+    #     return f"{self.pretty_name}, size={len(self)} ({self.num_sectors}x{self.sector_size}B)"
 
     #### verification
 
@@ -129,36 +119,51 @@ class DiskImage(MediaType):
             return "s%03d:%02x" % (sector + self.first_sector, byte)
         return "s%03d:%02X" % (sector + self.first_sector, byte)
 
-    def sector_is_valid(self, sector):
+    def is_sector_valid(self, sector):
         return (self.num_sectors < 0) or (sector >= self.starting_sector_label and sector < (self.num_sectors + self.starting_sector_label))
 
     def get_index_of_sector(self, sector):
-        if not self.sector_is_valid(sector):
+        if not self.is_sector_valid(sector):
             raise errors.ByteNotInFile166("Sector %d out of range" % sector)
         pos = (sector - self.starting_sector_label) * self.sector_size
         return pos, self.sector_size
 
-    def get_contiguous_sectors(self, start, count):
+    def get_contiguous_sectors_offsets(self, start, count=1):
         index, _ = self.get_index_of_sector(start)
         last, size = self.get_index_of_sector(start + count - 1)
-        return Segment(self, index, length=(last + size - index))
+        return index, last + size - index
 
-    def get_sector_list(self, sector_numbers):
+    def get_contiguous_sectors(self, start, count=1):
+        start, size = self.get_contiguous_sectors_offsets(start, count)
+        return Segment(self, start, length=size)
+
+    def get_sector_list_offsets(self, sector_numbers):
         offsets = np.empty(len(sector_numbers) * self.sector_size, dtype=np.uint32)
         i = 0
         for num in sector_numbers:
             index, size = self.get_index_of_sector(num)
             offsets[i:i+size] = np.arange(index, index + size)
             i += size
+        return offsets
+
+    def get_sector_list(self, sector_numbers):
+        offsets = self.get_sector_list_offsets(sector_numbers)
         return Segment(self, offsets)
+
+    def iter_sectors(self):
+        i = self.starting_sector_label
+        while self.is_sector_valid(i):
+            pos, size = self.get_index_of_sector(i)
+            yield i, pos, size
+            i += 1
 
 
 class CartImage(MediaType):
     pretty_name = "Cart Image"
     expected_size = 0
 
-    def __str__(self):
-        return f"{len(self) // 1024}K {self.pretty_name}"
+    # def __str__(self):
+    #     return f"{len(self) // 1024}K {self.pretty_name}"
 
     def check_media_size(self):
         size = len(self)
