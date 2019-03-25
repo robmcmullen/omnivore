@@ -32,18 +32,20 @@ class TestMediaTypesInTestDataDir:
     def test_test_data_dir(self):
         for pathname in sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../test_data/", "*"))):
             wrapped, ext = os.path.splitext(pathname)
+            if ext not in ext_to_valid_types:
+                # skip for now until recognize bare files
+                continue
             print(f"checking {pathname}")
             sample_data = np.fromfile(pathname, dtype=np.uint8)
-            container, uncompressed_data = guess_container(sample_data)
-            if container:
+            container = guess_container(sample_data)
+            if container.compression_algorithm != "no compression":
                 _, ext = os.path.splitext(wrapped)
-            print(len(uncompressed_data))
-            media = guess_media_type(uncompressed_data)
-            print(f"{pathname}: {media}")
+            container.guess_media_type()
+            print(ext, ext_to_valid_types)
             if ext in ext_to_valid_types:
-                assert media.__class__ in ext_to_valid_types[ext]
+                assert container.media.__class__ in ext_to_valid_types[ext]
             else:
-                assert media.__class__ == MediaType
+                assert container.media.__class__ == MediaType
 
 
 if __name__ == "__main__":

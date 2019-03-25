@@ -51,14 +51,19 @@ class Segment:
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, container, offset_or_offset_list, origin=0, name="All", error=None, verbose_name=None, length=None):
-        self.container = container
-        try:
-            start_offset = int(offset_or_offset_list)
-        except TypeError:
-            self.set_offset_from_list(offset_or_offset_list)
-        else:
-            self.set_offset_from_ints(start_offset, length)
+    def __init__(self, container_or_segment, offset_or_offset_list, origin=0, name="All", error=None, verbose_name=None, length=None):
+
+        # the container may be specified as the actual container or a segment
+        # of the container. If a segment is specified, the offset list is
+        # calculated relative to the segment to get the real offset into the
+        # container.
+        offset_list = self.calc_offset_list(offset_or_offset_list, length)
+        if hasattr(container_or_segment, 'container_offset'):
+            offset_list = container_or_segment.container_offset[offset_list]
+            container_or_segment = container_or_segment.container
+
+        self.container = container_or_segment
+        self.container_offset = offset_list
         self.verify_offsets()
 
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
@@ -114,13 +119,14 @@ class Segment:
 
     #### offsets
 
-    def set_offset_from_list(self, offsets):
-        self.container_offset = to_numpy_list(offsets)
-
-    def set_offset_from_ints(self, start, length):
-        if length is None:
-            raise errors.InvalidSegmentLength
-        self.container_offset = np.arange(start, start + length, dtype=np.uint32)
+    def calc_offset_list(self, offset_or_offset_list, length):
+        try:
+            start_offset = int(offset_or_offset_list)
+        except TypeError:
+            offset_list = to_numpy_list(offset_or_offset_list)
+        else:
+            offset_list = np.arange(offset_or_offset_list, offset_or_offset_list + length, dtype=np.uint32)
+        return offset_list
 
     def verify_offsets(self):
         self.enforce_offset_bounds()
@@ -137,13 +143,6 @@ class Segment:
         if len(valid) != len(self):
             raise errors.InvalidSegmentOrder
         return r
-
-    #### subset
-
-    def create_subset(self, new_order, *args, **kwargs):
-        new_order_of_source = self.container_offset[new_order]
-        segment = Segment(self.container, new_order_of_source, *args, **kwargs)
-        return segment
 
     #### serialization
 

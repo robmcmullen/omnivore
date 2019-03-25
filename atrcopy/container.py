@@ -43,7 +43,7 @@ class Container:
         self.segments = []
         self.header = None
         self.filesystem = None
-        self._media_type = None
+        self._media = None
 
         self._data = None
         self._style = None
@@ -103,12 +103,12 @@ class Container:
         return len(self.header) if self.header is not None else 0
 
     @property
-    def media_type(self):
-        return self._media_type
+    def media(self):
+        return self._media
 
-    @media_type.setter
-    def media_type(self, value):
-        self._media_type = value
+    @media.setter
+    def media(self, value):
+        self._media = value
         self.segments = []
         if value.header:
             self.header = value.header
@@ -177,10 +177,10 @@ class Container:
 
     def guess_media_type(self):
         media = media_type.guess_media_type(self)
-        self.media_type = media
+        self.media = media
 
     def guess_filesystem(self):
-        fs = filesystem.guess_filesystem(self.media_type)
+        fs = filesystem.guess_filesystem(self.media)
         if fs is not None:
             self.filesystem = fs
             self.segments.append(fs)

@@ -7,16 +7,16 @@ import os
 import numpy as np
 import pytest
 
-from atrcopy.container import DiskImageContainer
-from atrcopy.segments import DefaultSegment
-from atrcopy import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
+from atrcopy.container import Container
+from atrcopy.segment import Segment
+# from atrcopy import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
 from atrcopy import errors
 from functools import reduce
 
 
 def get_indexed(segment, num, scale):
     indexes = np.arange(num) * scale
-    s = segment.create_subset(indexes)
+    s = Segment(segment, indexes)
     return s, indexes
 
 # class TestSegment1:
@@ -25,7 +25,7 @@ def get_indexed(segment, num, scale):
 #         for i in range(8):
 #             data = np.arange(1024, dtype=np.uint8) * i
 #             r = SegmentData(data)
-#             self.segments.append(DefaultSegment(r, i * 1024))
+#             self.segments.append(Segment(r, i * 1024))
 
 #     def test_xex(self):
 #         items = [
@@ -73,8 +73,8 @@ class TestIndexed:
     def setup(self):
         data = np.arange(4096, dtype=np.uint8)
         data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)
-        self.container = DiskImageContainer(data)
-        self.segment = DefaultSegment(self.container, 0, length=len(self.container))
+        self.container = Container(data)
+        self.segment = Segment(self.container, 0, length=len(self.container))
 
     def test_offsets(self):
         assert np.array_equal(self.segment.container_offset, np.arange(len(self.container)))
@@ -106,7 +106,7 @@ class TestIndexed:
     #     base = self.segment
     #     assert not base.rawdata.is_indexed
     #     raw = base.rawdata[512:1536]  # 1024 byte segment
-    #     sub = DefaultSegment(raw, 512)
+    #     sub = Segment(raw, 512)
         
     #     assert not sub.rawdata.is_indexed
     #     for i in range(len(sub)):
@@ -148,9 +148,9 @@ class TestIndexed:
     # def test_interleave(self):
     #     base = self.segment
     #     r1 = base.rawdata[512:1024]  # 512 byte segment
-    #     s1 = DefaultSegment(r1, 512)
+    #     s1 = Segment(r1, 512)
     #     r2 = base.rawdata[1024:1536]  # 512 byte segment
-    #     s2 = DefaultSegment(r2, 1024)
+    #     s2 = Segment(r2, 1024)
         
     #     indexes1 = r1.get_indexes_from_base()
     #     verify1 = np.arange(512, 1024, dtype=np.uint32)
@@ -186,9 +186,9 @@ class TestIndexed:
     # def test_interleave_not_multiple(self):
     #     base = self.segment
     #     r1 = base.rawdata[512:1024]  # 512 byte segment
-    #     s1 = DefaultSegment(r1, 512)
+    #     s1 = Segment(r1, 512)
     #     r2 = base.rawdata[1024:1536]  # 512 byte segment
-    #     s2 = DefaultSegment(r2, 1024)
+    #     s2 = Segment(r2, 1024)
         
     #     indexes1 = r1.get_indexes_from_base()
     #     verify1 = np.arange(512, 1024, dtype=np.uint32)
@@ -216,9 +216,9 @@ class TestIndexed:
     # def test_interleave_different_sizes(self):
     #     base = self.segment
     #     r1 = base.rawdata[512:768]  # 256 byte segment
-    #     s1 = DefaultSegment(r1, 512)
+    #     s1 = Segment(r1, 512)
     #     r2 = base.rawdata[1024:1536]  # 512 byte segment
-    #     s2 = DefaultSegment(r2, 1024)
+    #     s2 = Segment(r2, 1024)
         
     #     indexes1 = r1.get_indexes_from_base()
     #     verify1 = np.arange(512, 768, dtype=np.uint32)
@@ -260,8 +260,8 @@ class TestIndexed:
 #     def setup(self):
 #         data = np.ones([4000], dtype=np.uint8)
 #         r = SegmentData(data)
-#         self.segment = DefaultSegment(r, 0)
-#         self.sub_segment = DefaultSegment(r[2:202], 2)
+#         self.segment = Segment(r, 0)
+#         self.sub_segment = Segment(r[2:202], 2)
 
 #     def test_locations(self):
 #         s = self.segment
@@ -411,7 +411,7 @@ class TestIndexed:
 #         data = np.arange(4096, dtype=np.uint8)
 #         data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)
 #         r = SegmentData(data)
-#         self.container = DefaultSegment(r, 0)
+#         self.container = Segment(r, 0)
 #         self.container.can_resize = True
 
 #     def test_subset(self):
@@ -420,7 +420,7 @@ class TestIndexed:
 #         c = self.container
 #         assert not c.rawdata.is_indexed
 #         offset = 1000
-#         s = DefaultSegment(c.rawdata[offset:offset + offset], 0)
+#         s = Segment(c.rawdata[offset:offset + offset], 0)
 #         assert not s.rawdata.is_indexed
 
 #         # Check that the small view has the same data as its parent
@@ -484,7 +484,7 @@ class TestIndexed:
 if __name__ == "__main__":
     t = TestIndexed()
     t.setup()
-    t.test_indexed()
+    t.test_subset()
     # t.test_indexed_sub()
     # t.test_interleave()
     # t = TestSegment1()
