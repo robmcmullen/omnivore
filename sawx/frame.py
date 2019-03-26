@@ -186,15 +186,10 @@ class SawxFrame(wx.Frame):
             traceback.print_exc()
             self.error(str(e))
         else:
-            self.load_success(document)
+            new_editor.load_success(document.uri)
             index = self.find_index_of_editor(new_editor)
             self.notebook.SetPageText(index, new_editor.tab_name)
         self.set_title()
-
-    def load_success(self, document):
-        from sawx.actions import open_recent
-        open_recent.open_recent.append(document.uri)
-        self.status_message(f"loaded {document.uri} {document}", True)
 
     def make_active(self, editor, force=False):
         last = self.active_editor

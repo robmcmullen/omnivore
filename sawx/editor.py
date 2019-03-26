@@ -293,6 +293,13 @@ class SawxEditor:
         """
         pass
 
+    def load_success(self, path=None):
+        if path is None:
+            path = self.document.uri
+        self.last_loaded_uri = path
+        self.update_recent_path(path)
+        self.frame.status_message(f"loaded {path}", True)
+
     def save(self):
         """Overwrite the file on disk with the version in memory
         """
@@ -321,6 +328,10 @@ class SawxEditor:
         if path is None:
             path = self.document.uri
         self.last_saved_uri = path
+        self.update_recent_path(path)
+        self.frame.status_message(f"saved {path}", True)
+
+    def update_recent_path(self, path):
         from sawx.actions import open_recent
         open_recent.open_recent.append(path)
         self.frame.status_message(f"saved {path}", True)
