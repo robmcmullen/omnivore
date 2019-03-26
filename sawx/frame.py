@@ -169,6 +169,9 @@ class SawxFrame(wx.Frame):
     def load_file(self, path, current_editor=None, args=None):
         try:
             file_metadata = loader.identify_file(path)
+            if current_editor is not None and current_editor.can_load_file(file_metadata):
+                current_editor.load_file(file_metadata)
+                return
             document = identify_document(file_metadata)
             if current_editor is not None and current_editor.can_edit_document(document):
                 editor_cls = current_editor.__class__

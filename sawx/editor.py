@@ -283,6 +283,16 @@ class SawxEditor:
 
     #### file load/save
 
+    def can_load_file(self, file_metadata):
+        """Override in subclass if possible to load files into the document.
+        """
+        return False
+
+    def load_file(self, file_metadata):
+        """Override in subclass to actually load file into the document.
+        """
+        pass
+
     def save(self):
         """Overwrite the file on disk with the version in memory
         """
