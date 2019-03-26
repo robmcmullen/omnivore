@@ -25,6 +25,7 @@ class MediaType(Segment):
     extra_serializable_attributes = []
 
     def __init__(self, container):
+        self.filesystem = None
         self.header = self.calc_header(container)
         self.header_length = len(self.header) if self.header else 0
         size = len(container) - self.header_length

@@ -45,30 +45,30 @@ class AtariDosBootSegment(Segment):
         return [header, code]
 
 
-class AtariDos2VTOC(VTOC):
+class AtariDos1SectorVTOC(VTOC):
     vtoc_type = np.dtype([
         ('code', 'u1'),
         ('total','<u2'),
         ('unused','<u2'),
         ])
 
+    max_sector = 720
+
     def find_segment_location(self):
         media = self.media
         values = media[0:5].view(dtype=self.vtoc_type)[0]
         code = values[0]
         if code == 0 or code == 2:
-            num = 1
+            pass
         else:
-            num = (code * 2) - 3
-        self.first_vtoc = 360 - num + 1
-        if not media.is_sector_valid(self.first_vtoc):
-            raise errors.FilesystemError(f"Invalid first VTOC sector {self.first_vtoc}")
-        self.num_vtoc = num
-        if num < 0 or num > self.calc_vtoc_code():
-            raise errors.InvalidDiskImage(f"Invalid number of VTOC sectors: {num}")
+            raise errors.FilesystemError(f"Invalid VTOC code {code}")
+        if not media.is_sector_valid(360):
+            raise errors.FilesystemError(f"Media ends before sector 360")
         self.total_sectors = values[1]
+        if self.total_sectors > self.max_sector:
+            raise errors.FilesystemError(f"Invalid number of sectors {self.total_sectors}")
         self.unused_sectors = values[2]
-        return media.get_contiguous_sectors_offsets(self.first_vtoc, self.num_vtoc)
+        return media.get_contiguous_sectors_offsets(360, 1)
 
     def unpack_vtoc(self):
         bits = np.unpackbits(self[0x0a:0x64])
@@ -80,23 +80,35 @@ class AtariDos2VTOC(VTOC):
         packed = np.packbits(self.sector_map[0:720])
         self[0x0a:0x64] = packed
 
-    def calc_vtoc_code(self):
-        # From AA post: http://atariage.com/forums/topic/179868-mydos-vtoc-size/
-        media = self.filesystem.media
-        num = 1 + (media.num_sectors + 80) // (media.sector_size * 8)
-        if media.sector_size == 128:
-            if num == 1:
-                code = 2
-            else:
-                if num & 1:
-                    num += 1
-                code = ((num + 1) // 2) + 2
-        else:
-            if media.num_sectors < 1024:
-                code = 2
-            else:
-                code = 2 + num
-        return code
+
+class AtariDos2SectorVTOC(AtariDos1SectorVTOC):
+    vtoc_type = np.dtype([
+        ('code', 'u1'),
+        ('total','<u2'),
+        ('unused','<u2'),
+        ])
+
+    max_sector = 1024
+
+    def find_segment_location(self):
+        if self.media.num_sectors < 1024:
+            raise errors.FilesystemError(f"Not enhanced density disk")
+        AtariDos1SectorVTOC.find_segment_location(self)  # throw away its return value
+        return self.media.get_sector_list_offsets([360, 1024]), 0
+
+    def unpack_vtoc(self):
+        bits = np.unpackbits(self[0x0a:0x64])
+        self.sector_map[0:720] = bits
+        bits = np.unpackbits(self[0xd4:0xfa])  # 0x44 - 0x7a in 2nd sector
+        self.sector_map[720:1024] = bits
+        if _xd: log.debug("vtoc before:\n%s" % str(self))
+
+    def pack_vtoc(self):
+        if _xd: log.debug("vtoc after:\n%s" % str(self))
+        packed = np.packbits(self.sector_map[0:720])
+        self[0x0a:0x64] = packed
+        packed = np.packbits(self.sector_map[720:1024])
+        self[0xd4:0xfa] = packed
 
 
 class AtariDosDirent(Dirent):
@@ -126,7 +138,8 @@ class AtariDosDirent(Dirent):
         self.ext = b''
         self.is_sane = True
         self.parse_raw_dirent()
-        self.get_file()
+        if self.in_use:
+            self.get_file()
 
     def __str__(self):
         return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename.decode("latin1"), self.ext.decode("latin1"), self.num_sectors)
@@ -318,15 +331,14 @@ class AtariDos2Directory(Directory):
         index = 0
         for filenum in range(64):
             dirent = AtariDosDirent(self.filesystem, self, filenum, index)
-            if not dirent.in_use:
-                continue
-            dirent.set_comment_at(0x00, "FILE #%d: Flag" % filenum)
-            dirent.set_comment_at(0x01, "FILE #%d: Number of sectors in file" % filenum)
-            dirent.set_comment_at(0x03, "FILE #%d: Starting sector number" % filenum)
-            dirent.set_comment_at(0x05, "FILE #%d: Filename" % filenum)
-            dirent.set_comment_at(0x0d, "FILE #%d: Extension" % filenum)
+            if dirent.in_use:
+                dirent.set_comment_at(0x00, "FILE #%d: Flag" % filenum)
+                dirent.set_comment_at(0x01, "FILE #%d: Number of sectors in file" % filenum)
+                dirent.set_comment_at(0x03, "FILE #%d: Starting sector number" % filenum)
+                dirent.set_comment_at(0x05, "FILE #%d: Filename" % filenum)
+                dirent.set_comment_at(0x0d, "FILE #%d: Extension" % filenum)
+                segments.append(dirent)
             index += 16
-            segments.append(dirent)
         return segments
 
 
@@ -343,7 +355,11 @@ class AtariDos2(Filesystem):
         return AtariDosBootSegment(self)
 
     def calc_vtoc_segment(self):
-        return AtariDos2VTOC(self)
+        try:
+            return AtariDos2SectorVTOC(self)
+        except errors.FilesystemError:
+            pass
+        return AtariDos1SectorVTOC(self)
 
     def calc_directory_segment(self):
         return AtariDos2Directory(self)
