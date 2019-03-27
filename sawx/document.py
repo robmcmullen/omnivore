@@ -87,10 +87,13 @@ class SawxDocument:
         self.byte_style_changed_event = EventHandler(self)  # only styling info may have changed, not any of the data byte values
 
     def load(self, file_metadata):
-        self.file_metadata = file_metadata
-        raw = self.load_raw_data()
-        self.raw_data = self.calc_raw_data(raw)
-        self.load_session()
+        if file_metadata is None:
+            self.create_empty()
+        else:
+            self.file_metadata = file_metadata
+            raw = self.load_raw_data()
+            self.raw_data = self.calc_raw_data(raw)
+            self.load_session()
 
     def load_raw_data(self):
         fh = open(self.uri, 'rb')
@@ -98,6 +101,10 @@ class SawxDocument:
 
     def calc_raw_data(self, raw):
         return to_numpy(raw)
+
+    def create_empty(self):
+        self.raw_data = np.zeros(0, dtype=np.uint8)
+        self.file_metadata = {'uri': ''}
 
     @property
     def can_revert(self):
