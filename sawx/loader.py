@@ -39,6 +39,7 @@ class FileGuess:
         self._all_data = None
         self._is_binary = None
         self._is_zipfile = None
+        self._zipfile = None
         self._filesystem_path = None
 
     @property
@@ -72,12 +73,35 @@ class FileGuess:
         return self._is_zipfile
 
     @property
+    def zipfile(self):
+        if self._zipfile is None:
+            self.fh.seek(0)
+            self._zipfile = zipfile.ZipFile(self.fh)
+        return self._zipfile
+
+    @property
     def filesystem_path(self):
         if self._filesystem_path is None:
             self._filesystem_path = filesystem_path(self.uri)  # may raise OSError
         return self._filesystem_path
 
+    def zipfile_contains(self, filename):
+        if not self.is_zipfile:
+            return False
+        try:
+            info = self.zipfile.getinfo(filename)
+            print(f"ZIPFILE INFO FOR {filename}: {info}")
+        except KeyError:
+            return False
+        return True
 
+    def zipfile_contains_extension(self, ext):
+        if not self.is_zipfile:
+            return False
+        for item in self.zipfile.infolist():
+            if item.filename.endswith(ext):
+                return True
+        return True
 
 
 def identify_file(uri, match_multiple=False):

@@ -28,14 +28,14 @@ class ExpandZip(object):
             self.zf = self.already_opened_zf = archive_path_or_zipfile
             self.self_opened_zf = None
         else:
-            self.zf = self.self_opened_zf = zipfile.ZipFile(archive_path)
+            self.zf = self.self_opened_zf = zipfile.ZipFile(archive_path_or_zipfile)
             self.already_opened_zf = None
         self.skip_files = skip_files
         self.root = tempfile.mkdtemp()
         self.name_map = {}
         self.expand()
         if self.self_opened_zf is not None:
-            zf.close()
+            self.zf.close()
             self.self_opened_zf = None
 
     def __del__(self):
@@ -52,3 +52,10 @@ class ExpandZip(object):
                 continue
             self.zf.extract(info, self.root)
             self.name_map[info.filename] = os.path.join(self.root, info.filename)
+
+    def find_extension(self, ext):
+        for pathname in self.name_map.values():
+            if pathname.endswith(ext):
+                return pathname
+        else:
+            raise OSError(f"No file ending in {ext} in archive")
