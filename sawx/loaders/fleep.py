@@ -4,8 +4,8 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def identify_mime(uri, fh, header):
-    info = fleep.get(header)
+def identify_loader(file_guess):
+    info = fleep.get(file_guess.sample_data)
     if info.mime:
         log.debug(f"fleep loader: identified {info.mime}")
         return dict(mime=info.mime)

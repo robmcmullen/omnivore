@@ -1,11 +1,14 @@
 import os
 import sys
 import time
+import zipfile
 
 from datetime import datetime
 import wx
 
 from .filesystem import fsopen as open
+from .filesystem import filesystem_path
+from .utils.textutil import guessBinary
 
 import logging
 log = logging.getLogger(__name__)
@@ -27,6 +30,56 @@ def get_loaders():
             loaders.append(mod)
     return loaders
 
+
+class FileGuess:
+    def __init__(self, uri):
+        self.uri = uri
+        self.fh = open(uri, 'rb')
+        self._sample_data = None
+        self._all_data = None
+        self._is_binary = None
+        self._is_zipfile = None
+        self._filesystem_path = None
+
+    @property
+    def sample_data(self):
+        if self._sample_data is None:
+            self._sample_data = self.fh.read(10240)
+        return self._sample_data
+
+    @property
+    def all_data(self):
+        if self._all_data is None:
+            self.fh.seek(0)
+            self._all_data = self.fh.read()
+        return self._all_data
+
+    @property
+    def is_binary(self):
+        if self._is_binary is None:
+            self._is_binary = guessBinary(self.sample_data)
+        return self._is_binary
+
+    @property
+    def is_text(self):
+        return not self.is_binary
+
+    @property
+    def is_zipfile(self):
+        if self._is_zipfile is None:
+            self.fh.seek(0)
+            self._is_zipfile = zipfile.is_zipfile(self.fh)
+        return self._is_zipfile
+
+    @property
+    def filesystem_path(self):
+        if self._filesystem_path is None:
+            self._filesystem_path = filesystem_path(self.uri)  # may raise OSError
+        return self._filesystem_path
+
+
+
+
 def identify_file(uri, match_multiple=False):
     """Examine the file to determine MIME type and other salient info to
     allow the loader to chose an editor with which to open the file
@@ -43,27 +96,28 @@ def identify_file(uri, match_multiple=False):
     log.debug(f"identify_file: identifying file {uri} using {loaders}")
     hits = []
     fallback = None
-    with open(uri, 'rb') as fh:
-        sample_data = fh.read(10240)
-        for loader in loaders:
-            log.debug(f"identify_file: trying loader {loader}")
-            try:
-                file_metadata = loader.identify_mime(uri, fh, sample_data)
-            except TypeError:
-                log.warning(f"identify_file: attempting to call identify_mime from {loader} with old style parameters")
-                file_metadata = loader.identify_mime(sample_data, fh)
-            if file_metadata:
-                file_metadata['uri'] = uri
-                mime_type = file_metadata['mime']
-                if mime_type == "application/octet-stream" or mime_type == "text/plain":
-                    log.debug(f"identify_file: identified as generic type {mime_type}")
-                    if not fallback:
-                        fallback = mime_type
-                else:
-                    log.debug(f"identify_file: identified: {file_metadata}")
-                    if not match_multiple:
-                        return file_metadata
-                    hits.append(file_metadata)
+    file_guess = FileGuess(uri)
+    for loader in loaders:
+        log.debug(f"identify_file: trying loader {loader}")
+        try:
+            loader.identify_loader
+        except AttributeError:
+            log.warning(f"identify_file: attempting to call identify_mime from {loader} with old style parameters")
+            file_metadata = loader.identify_mime(file_guess.sample_data, file_guess.fh)
+        else:
+            file_metadata = loader.identify_loader(file_guess)
+        if file_metadata:
+            file_metadata['uri'] = uri
+            mime_type = file_metadata['mime']
+            if mime_type == "application/octet-stream" or mime_type == "text/plain":
+                log.debug(f"identify_file: identified as generic type {mime_type}")
+                if not fallback:
+                    fallback = mime_type
+            else:
+                log.debug(f"identify_file: identified: {file_metadata}")
+                if not match_multiple:
+                    return file_metadata
+                hits.append(file_metadata)
 
     # how to find best guess?
     if hits:

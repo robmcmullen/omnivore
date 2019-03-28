@@ -1,14 +1,11 @@
-from ..utils.textutil import guessBinary
-
 import logging
 log = logging.getLogger(__name__)
 
 
-def identify_mime(uri, fh, header):
+def identify_loader(file_guess):
     mime_type = None
-    is_binary = guessBinary(header)
-    if not is_binary:
-        header = header.strip().lower()
+    if not file_guess.is_binary:
+        header = file_guess.sample_data.strip().lower()
         if header.startswith(b"<"):
             if header.startswith(b"<?xml"):
                 found_xml = True
