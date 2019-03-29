@@ -27,47 +27,7 @@ class UnsupportedDiskImage(AtrError):
     pass
 
 
-class FilesystemError(AtrError):
-    pass
-
-
-class InvalidDirent(FilesystemError):
-    pass
-
-
-class LastDirent(FilesystemError):
-    pass
-
-
-class InvalidFile(FilesystemError):
-    pass
-
-
-class FileNumberMismatchError164(InvalidFile):
-    pass
-
-
-class ByteNotInFile166(InvalidFile):
-    pass
-
-
-class InvalidBinaryFile(InvalidFile):
-    pass
-
-
 class InvalidSegmentParser(AtrError):
-    pass
-
-
-class NoSpaceInDirectory(FilesystemError):
-    pass
-
-
-class NotEnoughSpaceOnDisk(FilesystemError):
-    pass
-
-
-class FileNotFound(FilesystemError):
     pass
 
 
@@ -96,6 +56,10 @@ class InvalidHeader(MediaError):
     pass
 
 
+class InvalidSectorNumber(MediaError):
+    pass
+
+
 # Errors when trying to determine filesystem
 
 class FilesystemError(AtrError):
@@ -105,3 +69,38 @@ class FilesystemError(AtrError):
 class IncompatibleMediaError(FilesystemError):
     pass
 
+
+class InvalidDirent(FilesystemError):
+    pass
+
+
+class LastDirent(FilesystemError):
+    pass
+
+
+class InvalidFile(FilesystemError):
+    pass
+
+
+class FileNumberMismatchError164(InvalidFile):
+    pass
+
+
+class ByteNotInFile166(InvalidFile):
+    pass
+
+
+class InvalidBinaryFile(InvalidFile):
+    pass
+
+
+class NoSpaceInDirectory(FilesystemError):
+    pass
+
+
+class NotEnoughSpaceOnDisk(FilesystemError):
+    pass
+
+
+class FileNotFound(FilesystemError):
+    pass
