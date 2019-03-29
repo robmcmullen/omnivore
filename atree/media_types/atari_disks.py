@@ -81,7 +81,7 @@ class AtariSingleDensity(DiskImage):
 class AtariSingleDensityShortImage(AtariSingleDensity):
     pretty_name = "Atari SD Non-Standard Image"
 
-    def check_media_size(self):
+    def check_disk_size(self):
         size = len(self)
         if size >= self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} must be less than size {self.expected_size}")
@@ -137,7 +137,7 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
 class AtariDoubleDensityHardDriveImage(AtariDoubleDensity):
     pretty_name = "Atari DD Hard Drive Image"
 
-    def check_media_size(self):
+    def check_disk_size(self):
         size = len(self)
         if size <= self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} must be greater than size {self.expected_size}")

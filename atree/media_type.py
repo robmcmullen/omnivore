@@ -101,10 +101,13 @@ class DiskImage(MediaType):
     #### verification
 
     def check_media_size(self):
+        self.check_disk_size()
+        self.num_sectors = self.calc_num_sectors()
+
+    def check_disk_size(self):
         size = len(self)
         if size != self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} expects size {self.expected_size}; found {size}")
-        self.num_sectors = self.calc_num_sectors()
 
     def calc_num_sectors(self):
         size = len(self)
@@ -125,7 +128,7 @@ class DiskImage(MediaType):
 
     def get_index_of_sector(self, sector):
         if not self.is_sector_valid(sector):
-            raise errors.ByteNotInFile166("Sector %d out of range" % sector)
+            raise errors.InvalidSectorNumber("Sector %d out of range" % sector)
         pos = (sector - self.starting_sector_label) * self.sector_size
         return pos, self.sector_size
 

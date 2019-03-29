@@ -25,18 +25,21 @@ class AtariDosBootSegment(Segment):
         self.segments = self.calc_boot_segments()
 
     def find_segment_size(self, media):
-        self.first_sector = media.get_contiguous_sectors(1)
-        self.values = media[0:6].view(dtype=self.boot_record_type)[0]
-        self.bflag = self.values['BFLAG']
-        if self.bflag == 0:
-            # possible boot sector
-            self.brcnt = self.values['BRCNT']
-            if self.brcnt == 0:
+        try:
+            self.first_sector = media.get_contiguous_sectors(1)
+            self.values = media[0:6].view(dtype=self.boot_record_type)[0]
+            self.bflag = self.values['BFLAG']
+            if self.bflag == 0:
+                # possible boot sector
+                self.brcnt = self.values['BRCNT']
+                if self.brcnt == 0:
+                    self.brcnt = 3
+            else:
                 self.brcnt = 3
-        else:
-            self.brcnt = 3
-        self.bldadr = self.values['BLDADR']
-        index, _ = media.get_index_of_sector(1 + self.brcnt)
+            self.bldadr = self.values['BLDADR']
+            index, _ = media.get_index_of_sector(1 + self.brcnt)
+        except errors.MediaError as e:
+            raise errors.IncompatibleMediaError(f"Invalid boot sector: {e}")
         return index
 
     def calc_boot_segments(self):
