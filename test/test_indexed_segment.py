@@ -7,10 +7,10 @@ import os
 import numpy as np
 import pytest
 
-from atrcopy.container import Container
-from atrcopy.segment import Segment
-# from atrcopy import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
-from atrcopy import errors
+from atree.container import Container
+from atree.segment import Segment
+# from atree import get_xex, interleave_segments, user_bit_mask, diff_bit_mask
+from atree import errors
 from functools import reduce
 
 

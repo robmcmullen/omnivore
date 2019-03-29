@@ -4,8 +4,8 @@ import numpy as np
 
 from mock import *
 
-from atrcopy.container import guess_container
-from atrcopy import errors
+from atree.container import guess_container
+from atree import errors
 
 
 class BaseContainerTest:

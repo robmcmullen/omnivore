@@ -361,7 +361,7 @@ class VTOC(Segment):
 
 def find_filesystems():
     filesystems = []
-    for entry_point in pkg_resources.iter_entry_points('atrcopy.filesystems'):
+    for entry_point in pkg_resources.iter_entry_points('atree.filesystems'):
         mod = entry_point.load()
         log.debug(f"find_filesystems: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):

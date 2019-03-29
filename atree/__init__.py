@@ -11,7 +11,7 @@ from ._version import __version__
 try:
     import numpy as np
 except ImportError:
-    raise RuntimeError("atrcopy %s requires numpy" % __version__)
+    raise RuntimeError("atree %s requires numpy" % __version__)
 
 from . import errors
 from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
@@ -458,7 +458,7 @@ def run():
     usage = "%(prog)s [-h] [-v] [--dry-run] DISK_IMAGE [...]"
     subparser_usage = "%(prog)s [-h] [-v] [--dry-run] DISK_IMAGE"
 
-    parser = argparse.ArgumentParser(prog="atrcopy DISK_IMAGE", description="Manipulate files on several types of 8-bit computer disk images. Type '%(prog)s COMMAND --help' for list of options available for each command.")
+    parser = argparse.ArgumentParser(prog="atree DISK_IMAGE", description="Manipulate files on several types of 8-bit computer disk images. Type '%(prog)s COMMAND --help' for list of options available for each command.")
     parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument("-v", "--verbose", default=0, action="count")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't perform operation, just show what would have happened")
@@ -584,7 +584,7 @@ def run():
 
     # Turn off debug messages by default
     logging.basicConfig(level=logging.WARNING)
-    log = logging.getLogger("atrcopy")
+    log = logging.getLogger("atree")
     if options.verbose:
         log.setLevel(logging.DEBUG)
     else:

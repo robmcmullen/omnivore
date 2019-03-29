@@ -5,45 +5,45 @@ try:
 except ImportError:
     from distutils.core import setup
 
-exec(compile(open('atrcopy/_version.py').read(), 'atrcopy/_version.py', 'exec'))
-exec(compile(open('atrcopy/_metadata.py').read(), 'atrcopy/_metadata.py', 'exec'))
+exec(compile(open('atree/_version.py').read(), 'atree/_version.py', 'exec'))
+exec(compile(open('atree/_metadata.py').read(), 'atree/_metadata.py', 'exec'))
 
 with open("README.rst", "r") as fp:
     long_description = fp.read()
 
 if sys.platform.startswith("win"):
-    scripts = ["scripts/atrcopy.bat"]
+    scripts = ["scripts/atree.bat"]
 else:
-    scripts = ["scripts/atrcopy"]
+    scripts = ["scripts/atree"]
 
-setup(name="atrcopy",
+setup(name="atree",
         version=__version__,
         author=__author__,
         author_email=__author_email__,
         url=__url__,
-        packages=["atrcopy"],
+        packages=["atree"],
         include_package_data=True,
         scripts=scripts,
         entry_points={
             "sawx.loaders": [
-                'atrcopy = atrcopy.omnivore_loader',
+                'atree = atree.omnivore_loader',
             ],
 
-            "atrcopy.containers": [
-                'gzip = atrcopy.containers.gzip',
-                'bzip = atrcopy.containers.bzip',
-                'lzma = atrcopy.containers.lzma',
-                'dcm = atrcopy.containers.dcm',
+            "atree.containers": [
+                'gzip = atree.containers.gzip',
+                'bzip = atree.containers.bzip',
+                'lzma = atree.containers.lzma',
+                'dcm = atree.containers.dcm',
             ],
 
-            "atrcopy.media_types": [
-                'atari_disks = atrcopy.media_types.atari_disks',
-                'atari_carts = atrcopy.media_types.atari_carts',
-                'apple_disks = atrcopy.media_types.apple_disks',
+            "atree.media_types": [
+                'atari_disks = atree.media_types.atari_disks',
+                'atari_carts = atree.media_types.atari_carts',
+                'apple_disks = atree.media_types.apple_disks',
             ],
 
-            "atrcopy.filesystems": [
-                'atari_dos = atrcopy.filesystems.atari_dos2',
+            "atree.filesystems": [
+                'atari_dos = atree.filesystems.atari_dos2',
             ],
         },
         description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",

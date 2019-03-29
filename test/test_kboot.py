@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 from mock import *
-from atrcopy import SegmentData, KBootImage, add_xexboot_header, add_atr_header
+from atree import SegmentData, KBootImage, add_xexboot_header, add_atr_header
 
 
 class TestKbootHeader:

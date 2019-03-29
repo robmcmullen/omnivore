@@ -4,12 +4,12 @@ import numpy as np
 
 from mock import *
 
-from atrcopy.container import guess_container
-from atrcopy.media_type import MediaType, guess_media_type
-from atrcopy import errors
+from atree.container import guess_container
+from atree.media_type import MediaType, guess_media_type
+from atree import errors
 
-from atrcopy.media_types.atari_disks import *
-from atrcopy.media_types.apple_disks import *
+from atree.media_types.atari_disks import *
+from atree.media_types.apple_disks import *
 
 ext_to_valid_types = {
     '.atr': set([
@@ -48,7 +48,7 @@ class TestAtariDos2:
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.WARNING)
-    log = logging.getLogger("atrcopy.media_type")
+    log = logging.getLogger("atree.media_type")
     log.setLevel(logging.DEBUG)
 
     def check(pathname):

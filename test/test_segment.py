@@ -7,8 +7,8 @@ import os
 import numpy as np
 import pytest
 
-from atrcopy import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask, diff_bit_mask
-from atrcopy import errors
+from atree import DefaultSegment, SegmentData, get_xex, interleave_segments, user_bit_mask, diff_bit_mask
+from atree import errors
 from functools import reduce
 
 
