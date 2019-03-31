@@ -107,6 +107,8 @@ class Filesystem:
 
     def iter_dirents(self):
         for segment in self.media.segments:
+            if isinstance(segment, Dirent):
+                yield segment
             yield from segment.yield_for_segment(Dirent)
 
 
@@ -122,6 +124,17 @@ class Dirent(Segment):
 
     def __eq__(self, other):
         raise errors.NotImplementedError
+
+    def __str__(self):
+        return "File #%-2d %s %s" % (self.file_num, f"({self.status})" if self.status else "", self.catalog_entry)
+
+    @property
+    def status(self):
+        return ""
+
+    @property
+    def catalog_entry(self):
+        return self.filename
 
     @property
     def in_use(self):

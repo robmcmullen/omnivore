@@ -144,9 +144,6 @@ class AtariDosDirent(Dirent):
         if self.in_use:
             self.get_file()
 
-    def __str__(self):
-        return "File #%-2d (%s) %03d %-8s%-3s  %03d" % (self.file_num, self.summary, self.starting_sector, self.basename.decode("latin1"), self.ext.decode("latin1"), self.num_sectors)
-
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
 
@@ -160,7 +157,11 @@ class AtariDosDirent(Dirent):
         return (self.basename + ext).decode('latin1')
 
     @property
-    def summary(self):
+    def catalog_entry(self):
+        return "%03d %-8s%-3s  %03d" % (self.starting_sector, self.basename.decode("latin1"), self.ext.decode("latin1"), self.num_sectors)
+
+    @property
+    def status(self):
         output = "o" if self.opened_output else "."
         dos2 = "2" if self.dos_2 else "."
         mydos = "m" if self.mydos else "."

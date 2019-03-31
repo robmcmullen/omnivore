@@ -28,9 +28,18 @@ class KBootDirent(Dirent):
         self.num_sectors = count // 128 + 1
         self.get_file()
 
+    @property
+    def filename(self):
+        ext = (b'.' + self.ext) if self.ext else b''
+        return (self.basename + ext).decode('latin1')
+
+    @property
+    def catalog_entry(self):
+        return "%03d %-8s%-3s  %03d" % (4, self.basename.decode("latin1"), self.ext.decode("latin1"), self.num_sectors)
+
     def get_file(self):
         media = self.filesystem.media
-        file_segment = Segment(media, self.exe_start, name=self.basename, length=self.exe_size)
+        file_segment = Segment(media, self.exe_start, name=self.filename, length=self.exe_size)
         self.segments = [file_segment]
         return file_segment
 
