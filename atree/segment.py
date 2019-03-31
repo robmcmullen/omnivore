@@ -117,6 +117,14 @@ class Segment:
     def __setitem__(self, index, value):
         self.container._data[self.container_offset[index]] = value
 
+    #### iterator utilities
+
+    def yield_for_segment(self, segment_type):
+        for segment in self.segments:
+            if isinstance(segment, segment_type):
+                yield segment
+            segment.yield_for_segment(segment_type)
+
     #### offsets
 
     def calc_offset_list(self, offset_or_offset_list, length):

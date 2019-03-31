@@ -95,7 +95,7 @@ class Filesystem:
     def max_file_size(self):
         return len(self.media)
 
-    ####
+    #### iterators
 
     def iter_segments(self):
         if self.boot is not None:
@@ -104,6 +104,10 @@ class Filesystem:
             yield self.vtoc
         if self.directory is not None:
             yield self.directory
+
+    def iter_dirents(self):
+        for segment in self.media.segments:
+            yield from segment.yield_for_segment(Dirent)
 
 
 class Dirent(Segment):

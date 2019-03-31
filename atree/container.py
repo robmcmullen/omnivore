@@ -9,6 +9,7 @@ from . import errors
 from . import style_bits
 from .utils import to_numpy, to_numpy_list, uuid
 from . import media_type
+from . import filesystem
 
 import logging
 log = logging.getLogger(__name__)
@@ -32,8 +33,8 @@ class Container:
     to be used in the disk image parsing.
 
     """
-    pretty_name = "Raw Data"
-    compression_algorithm = "no compression"
+    pretty_name = "Uncompressed"
+    compression_algorithm = "uncompressed"
     can_resize_default = False
 
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
@@ -45,6 +46,7 @@ class Container:
         self.header = None
         self.filesystem = None
         self._media = None
+        self.mime = "application/octet-stream"
 
         self._data = None
         self._style = None
@@ -134,7 +136,11 @@ class Container:
     #### dunder methods
 
     def __str__(self):
-        return f"{self.pretty_name}, size={len(self)}"
+        if self.media:
+            desc = str(self.media)
+        else:
+            desc = f"{self.pretty_name}, size={len(self)}"
+        return desc
 
     def __len__(self):
         return np.alen(self._data)
@@ -186,10 +192,8 @@ class Container:
         self.media = media
 
     def guess_filesystem(self):
-        fs = filesystem.guess_filesystem(self.media)
-        if fs is not None:
-            self.filesystem = fs
-            self.segments.append(fs)
+        self.media.guess_filesystem()
+        self.filesystem = self.media.filesystem
 
     #### serialization
 

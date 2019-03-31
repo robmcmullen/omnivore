@@ -14,6 +14,7 @@ except ImportError:
     raise RuntimeError("atree %s requires numpy" % __version__)
 
 from . import errors
+from .container import guess_container
 # from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
 # from .dos33 import Dos33DiskImage
 # from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, interleave_segments, SegmentList
@@ -83,19 +84,12 @@ def find_diskimage_from_data(data, verbose=False):
     return parser, mime
 
 
-def find_diskimage(filename, verbose=False):
-    if filename == ".":
-        parser = LocalFilesystem()
-        mime = ""
-    else:
-        with open(filename, "rb") as fh:
-            if verbose:
-                print("Loading file %s" % filename)
-            data = to_numpy(fh.read())
-        parser, mime = find_diskimage_from_data(data, verbose)
-    parser.image.filename = filename
-    parser.image.ext = ""
-    return parser, mime
+def find_container(filename, verbose=False):
+    sample_data = np.fromfile(filename, dtype=np.uint8)
+    container = guess_container(sample_data)
+    container.guess_media_type()
+    container.guess_filesystem()
+    return container
 
 
 def extract_files(image, files):
@@ -168,19 +162,21 @@ def remove_files(image, files):
         image.save()
 
 
-def list_files(image, files, show_crc=False, show_metadata=False):
+def list_files(container, files, show_crc=False, show_metadata=False):
     files = set(files)
-    for dirent in image.files:
-        if not files or dirent.filename in files:
-            if show_crc:
-                data = image.get_file(dirent)
-                crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
-                extra = "  %08x" % crc
-            else:
-                extra = ""
-            print("%s%s" % (dirent, extra))
-            if show_metadata:
-                print(dirent.extra_metadata(image))
+    filesystem = container.filesystem
+    if filesystem is not None:
+        for dirent in filesystem.iter_dirents():
+            if not files or dirent.filename in files:
+                if show_crc:
+                    data = image.get_file(dirent)
+                    crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
+                    extra = "  %08x" % crc
+                else:
+                    extra = ""
+                print("%s%s" % (dirent, extra))
+                if show_metadata:
+                    print(dirent.extra_metadata(image))
 
 
 def crc_files(image, files):
@@ -598,31 +594,31 @@ def run():
         boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
         try:
-            parser, mime = find_diskimage(disk_image_name, options.verbose)
+            container = find_container(disk_image_name, options.verbose)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
             print(f"{disk_image_name}: {e}")
         else:
             if command not in skip_diskimage_summary:
-                print(f"{disk_image_name}: {parser.image}{' (%s}' % mime if mime and options.verbose else ''}")
+                print(f"{disk_image_name}: {container}{' (%s}' % container.mime if container.mime and options.verbose else ''}")
             if command == "vtoc":
-                vtoc = parser.image.get_vtoc_object()
+                vtoc = container.get_vtoc_object()
                 print(vtoc)
                 if options.clear_empty:
-                    shred_image(parser.image)
+                    shred_image(container)
             elif command == "list":
-                list_files(parser.image, options.files, options.crc, options.metadata)
+                list_files(container, options.files, options.crc, options.metadata)
             elif command == "crc":
-                crc_files(parser.image, options.files)
+                crc_files(container, options.files)
             elif command == "add":
-                add_files(parser.image, options.files)
+                add_files(container, options.files)
             elif command == "delete":
-                remove_files(parser.image, options.files)
+                remove_files(container, options.files)
             elif command == "extract":
-                extract_files(parser.image, options.files)
+                extract_files(container, options.files)
             elif command == "assemble":
                 asm = options.asm[0] if options.asm else []
                 data = options.data[0] if options.data else []
                 obj = options.obj[0] if options.obj else []
-                assemble(parser.image, asm, data, obj, options.run_addr)
+                assemble(container, asm, data, obj, options.run_addr)
             elif command == "segments":
                 print("\n".join([str(a) for a in parser.segments]))
