@@ -1,71 +1,48 @@
 import numpy as np
 
-from . import errors
-from .ataridos import AtrHeader, AtariDosDirent, AtariDosDiskImage, XexSegment, get_xex
-from .segments import SegmentData
+from .. import errors
+from ..segment import Segment
+from ..filesystem import VTOC, Dirent, Directory, Filesystem
+from .atari_dos2 import AtariDos2, AtariDosBootSegment
 
-
-class KBootDirent(AtariDosDirent):
-    def __init__(self, image):
-        AtariDosDirent.__init__(self, image)
-        self.in_use = True
+class KBootDirent(Dirent):
+    def __init__(self, filesystem):
+        Dirent.__init__(self, filesystem, filesystem.media, 0, 0, 0)
         self.starting_sector = 4
-        self.basename = image.filename
+        self.basename = self.container.basename
         if not self.basename:
             self.basename = b"KBOOT"
         if self.basename == self.basename.upper():
             self.ext = b"XEX"
         else:
             self.ext = b"xex"
-        start, size = image.header.get_pos(4)
-        i = image.header.header_offset + 9
-        count = image.bytes[i] + 256 * image.bytes[i+1] + 256 * 256 *image.bytes[i + 2]
-        if start + count > image.size or start + count < image.size - 128:
-            self.is_sane = False
+        media = filesystem.media
+        start, size = media.get_index_of_sector(4)
+        i = 9
+        count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
+        if start + count > len(media) or start + count < len(media) - 128:
+            raise errors.NotEnoughSpaceOnDisk(f"KBoot header reports size {count}; media only {len(media)}")
         else:
             self.exe_size = count
             self.exe_start = start
         self.num_sectors = count // 128 + 1
+        self.get_file()
 
-    def parse_raw_dirent(self, image, bytes):
+    def get_file(self):
+        media = self.filesystem.media
+        file_segment = Segment(media, self.exe_start, name=self.basename, length=self.exe_size)
+        self.segments = [file_segment]
+        return file_segment
+
+
+class KBoot(AtariDos2):
+    default_executable_extension = "XEX"
+
+    def calc_vtoc_segment(self):
         pass
 
-    def process_raw_sector(self, image, raw):
-        num_bytes = np.alen(raw)
-        return raw[0:num_bytes], num_bytes
-
-
-class KBootImage(AtariDosDiskImage):
-    def __str__(self):
-        return "%s KBoot Format: %d byte executable" % (self.header, self.files[0].exe_size)
-
-    def check_sane(self):
-        if not self.all_sane:
-            raise errors.InvalidDiskImage("Doesn't seem to be KBoot header")
-
-    def get_vtoc(self):
-        pass
-
-    def get_directory(self):
-        dirent = KBootDirent(self)
-        if not dirent.is_sane:
-            self.all_sane = False
-        self.files = [dirent]
-
-    def get_file_segment(self, dirent):
-        start = dirent.exe_start
-        end = dirent.exe_start + dirent.exe_size
-        raw = self.rawdata[start:end]
-        return XexSegment(raw, 0, 0, start, end, name="KBoot Executable")
-
-    def get_boot_segments(self):
-        return []
-
-    def get_vtoc_segments(self):
-        return []
-
-    def get_directory_segments(self):
-        return []
+    def calc_directory_segment(self):
+        return KBootDirent(self)
 
     @classmethod
     def create_boot_image(cls, segments, run_addr=None):

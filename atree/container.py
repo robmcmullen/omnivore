@@ -1,3 +1,4 @@
+import os
 import hashlib
 import inspect
 import pkg_resources
@@ -50,6 +51,7 @@ class Container:
         self.data = data
         self.style = style
 
+        self.pathname = ""
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
         self.error = error
         self.name = name
@@ -124,6 +126,10 @@ class Container:
             v = s.segment_info("    ")
             lines.extend(v)
         return "\n".join(lines)
+
+    @property
+    def basename(self):
+        return os.path.basename(self.pathname)
 
     #### dunder methods
 
@@ -324,5 +330,6 @@ def guess_container(raw_data):
 def load(pathname):
     sample_data = np.fromfile(pathname, dtype=np.uint8)
     container = guess_container(sample_data)
+    container.pathname = pathname
     container.guess_media_type()
     return container

@@ -44,6 +44,7 @@ setup(name="atree",
 
             "atree.filesystems": [
                 'atari_dos = atree.filesystems.atari_dos2',
+                'kboot = atree.filesystems.kboot',
             ],
         },
         description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",
