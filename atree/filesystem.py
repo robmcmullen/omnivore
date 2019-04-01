@@ -336,7 +336,7 @@ class VTOC(Segment):
         num = len(sector_list)
         order = self.reserve_space(num)
         if len(order) != num:
-            raise errors.InvalidFile("VTOC reserved space for %d sectors. Sectors needed: %d" % (len(order), num))
+            raise errors.NotEnoughSpaceOnDisk(f"Need {num} sectors, VTOC has only {len(order)} available")
         file_length = 0
         last_sector = None
         for sector, sector_num in zip(sector_list.sectors, order):

@@ -78,22 +78,6 @@ class LastDirent(FilesystemError):
     pass
 
 
-class InvalidFile(FilesystemError):
-    pass
-
-
-class FileNumberMismatchError164(InvalidFile):
-    pass
-
-
-class ByteNotInFile166(InvalidFile):
-    pass
-
-
-class InvalidBinaryFile(InvalidFile):
-    pass
-
-
 class NoSpaceInDirectory(FilesystemError):
     pass
 
@@ -103,4 +87,26 @@ class NotEnoughSpaceOnDisk(FilesystemError):
 
 
 class FileNotFound(FilesystemError):
+    pass
+
+
+# Errors in files or structure of a file
+
+class FileError(FilesystemError):
+    pass
+
+
+class FileStructureError(FilesystemError):
+    pass
+
+
+class FileNumberMismatchError164(FileError):
+    pass
+
+
+class ByteNotInFile166(FileError):
+    pass
+
+
+class InvalidBinaryFile(FileError):
     pass
