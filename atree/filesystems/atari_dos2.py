@@ -3,6 +3,7 @@ import numpy as np
 from .. import errors
 from ..segment import Segment
 from ..filesystem import VTOC, Dirent, Directory, Filesystem
+from ..file_type import guess_file_type
 
 try:  # Expensive debugging
     _xd = _expensive_debugging
@@ -238,10 +239,10 @@ class AtariDosDirent(Dirent):
 
             next_sector = ((media[index + size - 3] & 0x3) << 8) + media[index + size - 2]
             if next_sector in sectors_seen:
-                raise errors.InvalidFile(f"Bad sector pointer data: attempting to reread sector {next_sector}")
+                raise errors.FileStructureError(f"Bad sector pointer data: attempting to reread sector {next_sector}")
 
         offsets = np.copy(offsets[0:length])
-        file_segment = Segment(media, offsets, name=self.filename)
+        file_segment = guess_file_type(media, self.filename, offsets)
         self.segments = [file_segment]
         return file_segment
 
@@ -294,7 +295,7 @@ class AtariDosDirent(Dirent):
         self.sectors_seen.add(self.current_sector)
         next_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
         if next_sector in self.sectors_seen:
-            raise errors.InvalidFile("Bad sector pointer data: attempting to reread sector %d" % next_sector)
+            raise errors.FileStructureError("Bad sector pointer data: attempting to reread sector %d" % next_sector)
         self.current_sector = next_sector
         num_bytes = raw[-1]
         return raw[0:num_bytes], num_bytes

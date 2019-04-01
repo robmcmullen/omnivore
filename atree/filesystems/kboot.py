@@ -4,6 +4,7 @@ from .. import errors
 from ..segment import Segment
 from ..filesystem import VTOC, Dirent, Directory, Filesystem
 from .atari_dos2 import AtariDos2, AtariDosBootSegment
+from ..file_type import guess_file_type
 
 class KBootDirent(Dirent):
     def __init__(self, filesystem):
@@ -39,7 +40,7 @@ class KBootDirent(Dirent):
 
     def get_file(self):
         media = self.filesystem.media
-        file_segment = Segment(media, self.exe_start, name=self.filename, length=self.exe_size)
+        file_segment = guess_file_type(media, self.filename, self.exe_start, length=self.exe_size)
         self.segments = [file_segment]
         return file_segment
 

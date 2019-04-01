@@ -59,6 +59,7 @@ class Segment:
         # container.
         offset_list = self.calc_offset_list(offset_or_offset_list, length)
         if hasattr(container_or_segment, 'container_offset'):
+            log.debug(f"creating {name}\n  container: {container_or_segment}, {offset_list}")
             offset_list = container_or_segment.container_offset[offset_list]
             container_or_segment = container_or_segment.container
 
@@ -77,7 +78,7 @@ class Segment:
         self.can_resize = self.__class__.can_resize_default
 
         # Child segments
-        self.segments = []
+        self.segments = self.calc_segments()
 
     #### properties
 
@@ -151,6 +152,13 @@ class Segment:
         if len(valid) != len(self):
             raise errors.InvalidSegmentOrder
         return r
+
+    def calc_segments(self):
+        """Convenience method used by subclasses to create any sub-segments
+        within this segment.
+
+        """
+        return []
 
     #### serialization
 
