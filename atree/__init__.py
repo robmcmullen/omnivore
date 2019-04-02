@@ -621,4 +621,4 @@ def run():
                 obj = options.obj[0] if options.obj else []
                 assemble(container, asm, data, obj, options.run_addr)
             elif command == "segments":
-                print("\n".join([str(a) for a in parser.segments]))
+                print(container.verbose_info)
