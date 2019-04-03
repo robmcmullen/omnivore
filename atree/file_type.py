@@ -77,5 +77,5 @@ def guess_file_type(media, filename, offset, length=0, verbose=False):
             if verbose:
                 log.info(f"found file_type {m}")
             return found
-    log.info(f"No recognized media type.")
+    log.info(f"No recognized file type.")
     return FileType(media, filename, offset, length)

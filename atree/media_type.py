@@ -9,6 +9,7 @@ from . import style_bits
 from .segment import Segment
 from .utils import to_numpy, to_numpy_list, uuid
 from . import filesystem
+from .file_type import guess_file_type
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class MediaType(Segment):
     describing the type of media the data represents: floppy disk image,
     cassette image, cartridge, etc.
     """
-    pretty_name = "Raw Data"
+    pretty_name = "No Filesystem"
     can_resize_default = False
 
     extra_serializable_attributes = []
@@ -83,6 +84,9 @@ class MediaType(Segment):
         if fs:
             self.filesystem = fs
             self.segments = list(fs.iter_segments())
+        else:
+            log.info("Checking for file without filesystem")
+            self.segments = [guess_file_type(self, self.container.name, 0, len(self))]
 
 
 class DiskImage(MediaType):

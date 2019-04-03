@@ -8,6 +8,7 @@ from . import errors
 from . import style_bits
 from .segment import Segment
 from .utils import to_numpy, to_numpy_list, uuid
+from .file_type import guess_file_type
 
 import logging
 log = logging.getLogger(__name__)
