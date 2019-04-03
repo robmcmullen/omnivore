@@ -302,7 +302,9 @@ class Container:
         style_base[comment_text_indexes] |= comment_style
 
 
-def find_containers():
+_containers = None
+
+def _find_containers():
     containers = []
     for entry_point in pkg_resources.iter_entry_points('atree.containers'):
         mod = entry_point.load()
@@ -313,6 +315,12 @@ def find_containers():
                 containers.append(obj)
     return containers
 
+def find_containers():
+    global _containers
+
+    if _containers is None:
+        _containers = _find_containers()
+    return _containers
 
 def guess_container(raw_data):
     container = None

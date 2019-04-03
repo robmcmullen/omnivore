@@ -186,7 +186,9 @@ class CartImage(MediaType):
 
 ignore_base_class_media_types = set([DiskImage, CartImage])
 
-def find_media_types():
+_media_types = None
+
+def _find_media_types():
     media_types = []
     for entry_point in pkg_resources.iter_entry_points('atree.media_types'):
         mod = entry_point.load()
@@ -197,6 +199,12 @@ def find_media_types():
                 media_types.append(obj)
     return media_types
 
+def find_media_types():
+    global _media_types
+
+    if _media_types is None:
+        _media_types = _find_media_types()
+    return _media_types
 
 def guess_media_type(container, verbose=False):
     for m in find_media_types():

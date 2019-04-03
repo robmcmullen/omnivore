@@ -377,7 +377,9 @@ class VTOC(Segment):
         self.calc_bitmap()
 
 
-def find_filesystems():
+_filesystems = None
+
+def _find_filesystems():
     filesystems = []
     for entry_point in pkg_resources.iter_entry_points('atree.filesystems'):
         mod = entry_point.load()
@@ -388,6 +390,12 @@ def find_filesystems():
                 filesystems.append(obj)
     return filesystems
 
+def find_filesystems():
+    global _filesystems
+
+    if _filesystems is None:
+        _filesystems = _find_filesystems()
+    return _filesystems
 
 def guess_filesystem(segment, verbose=False):
     for f in find_filesystems():

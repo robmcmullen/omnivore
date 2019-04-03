@@ -52,7 +52,9 @@ class FileType(Segment):
 
 ignore_base_class_file_types = set([FileType])
 
-def find_file_types():
+_file_types = None
+
+def _find_file_types():
     file_types = []
     for entry_point in pkg_resources.iter_entry_points('atree.file_types'):
         mod = entry_point.load()
@@ -63,6 +65,12 @@ def find_file_types():
                 file_types.append(obj)
     return file_types
 
+def find_file_types():
+    global _file_types
+
+    if _file_types is None:
+        _file_types = _find_file_types()
+    return _file_types
 
 def guess_file_type(media, filename, offset, length=0, verbose=False):
     for m in find_file_types():
