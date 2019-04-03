@@ -178,6 +178,8 @@ class CartImage(MediaType):
         k, rem = divmod(size, 1024)
         if rem > 0:
             raise errors.InvalidMediaSize("Cart not multiple of 1K")
+        if self.expected_size == 0:
+            raise errors.InvalidMediaSize(f"Possible cart image, but unable to identify specifically")
         if size != self.expected_size:
             raise errors.InvalidMediaSize(f"{self.pretty_name} expects size {self.expected_size}; found {size}")
 

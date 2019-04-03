@@ -120,12 +120,12 @@ class A8CartHeader:
         if len(data) == 16:
             header = data.view(dtype=self.format)[0]
             if header[0] != b'CART':
-                raise errors.InvalidHeader
+                raise errors.InvalidHeader("No Atari 8-bit cart header")
             self.cart_type = int(header[1])
             self.crc = int(header[2])
             self.set_type(self.cart_type)
         else:
-            raise errors.InvalidHeader
+            raise errors.InvalidHeader(f"Short cart header: should be 16 bytes; found {len(data)}")
 
     def __str__(self):
         return "%s Cartridge (atari800 type=%d size=%d, %d banks, crc=%d)" % (self.cart_name, self.cart_type, self.cart_size, self.bank_size, self.crc)
@@ -158,10 +158,13 @@ class Atari8bitCart(CartImage):
 
     def calc_header(self, container):
         header_data = container[0:16]
-        if len(header_data) == 16:
-            header = A8CartHeader(container)
-            header_length = 16
-            header.check_media(container)
-        else:
+        try:
+            if len(header_data) == 16:
+                header = A8CartHeader(header_data)
+                header_length = 16
+                header.check_media(container)
+            else:
+                header = None
+        except errors.InvalidHeader:
             header = None
         return header
