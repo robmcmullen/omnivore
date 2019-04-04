@@ -50,6 +50,13 @@ setup(name="atree",
             "atree.file_types": [
                 'atari_xex = atree.file_types.atari_xex',
             ],
+
+            "atree.signatures": [
+                'atari2600_cart = atree.signatures.atari2600_cart',
+                'atari2600_starpath = atree.signatures.atari2600_starpath',
+                'atari5200_cart = atree.signatures.atari5200_cart',
+                'vectrex = atree.signatures.vectrex',
+            ],
         },
         description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",
         long_description=long_description,
