@@ -143,7 +143,11 @@ class AtariDosDirent(Dirent):
         self.is_sane = True
         self.parse_raw_dirent()
         if self.in_use:
-            self.get_file()
+            try:
+                self.get_file()
+            except errors.FileError as e:
+                self.is_sane = False
+                self.error = e
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
@@ -224,9 +228,10 @@ class AtariDosDirent(Dirent):
         offsets = np.empty(self.filesystem.max_file_size, dtype=np.uint32)
         length = 0
         next_sector = self.starting_sector
+        sectors_remaining = self.num_sectors
         sectors_seen = set()
 
-        while next_sector > 0:
+        while next_sector > 0 and sectors_remaining > 0:
             index, size = media.get_index_of_sector(next_sector)
             num_bytes = media[index + size - 1]
             file_num = media[index + size - 3] >> 2
@@ -240,11 +245,13 @@ class AtariDosDirent(Dirent):
             next_sector = ((media[index + size - 3] & 0x3) << 8) + media[index + size - 2]
             if next_sector in sectors_seen:
                 raise errors.FileStructureError(f"Bad sector pointer data: attempting to reread sector {next_sector}")
+            sectors_remaining -= 1
 
-        offsets = np.copy(offsets[0:length])
-        file_segment = guess_file_type(media, self.filename, offsets)
-        self.segments = [file_segment]
-        return file_segment
+        if length > 0:
+            offsets = np.copy(offsets[0:length])
+            file_segment = guess_file_type(media, self.filename, offsets)
+            self.segments = [file_segment]
+            return file_segment
 
     def update_sector_info(self, sector_list):
         self.num_sectors = sector_list.num_sectors

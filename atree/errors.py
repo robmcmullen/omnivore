@@ -60,7 +60,9 @@ class InvalidSectorNumber(MediaError):
     pass
 
 
-# Errors when trying to determine filesystem
+# Errors when trying to determine filesystem. Raising one of these errors
+# during filesystem detection will abort the process and report failure for
+# that filesystem.
 
 class FilesystemError(AtrError):
     pass
@@ -90,13 +92,15 @@ class FileNotFound(FilesystemError):
     pass
 
 
-# Errors in files or structure of a file
+# Errors in files or structure of a file. These are separate from
+# FilesystemError subclasses to indicate they aren't fatal when detecting
+# filesystems
 
-class FileError(FilesystemError):
+class FileError(AtrError):
     pass
 
 
-class FileStructureError(FilesystemError):
+class FileStructureError(FileError):
     pass
 
 
