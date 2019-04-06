@@ -25,9 +25,9 @@ setup(name="atree",
         include_package_data=True,
         scripts=scripts,
         entry_points={
-            "sawx.loaders": [
-                'atree = atree.omnivore_loader',
-            ],
+            # "sawx.loaders": [
+            #     'atree = atree.omnivore_loader',
+            # ],
 
             "atree.containers": [
                 'gzip = atree.containers.gzip',

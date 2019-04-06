@@ -84,13 +84,17 @@ def find_diskimage_from_data(data, verbose=False):
     return parser, mime
 
 
-def find_container(filename, verbose=False):
-    sample_data = np.fromfile(filename, dtype=np.uint8)
-    container = guess_container(sample_data)
-    container.name = os.path.basename(filename)
+def find_container_from_data(name, data, verbose=False):
+    container = guess_container(data)
+    container.name = name
     container.guess_media_type()
     container.guess_filesystem()
     return container
+
+
+def find_container(filename, verbose=False):
+    sample_data = np.fromfile(filename, dtype=np.uint8)
+    return find_container_from_data(os.path.basename(filename), sample_data)
 
 
 def extract_files(image, files):

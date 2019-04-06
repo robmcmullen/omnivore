@@ -4,11 +4,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def identify_mime(header, fh):
+def identify_loader(file_guess):
     mime_type = None
     try:
-        fh.seek(0)
-        data = fh.read()
+        data = file_guess.all_data
     except IOError as e:
         log.debug(f"atree loader: error reading entire file: {e}")
     else:
