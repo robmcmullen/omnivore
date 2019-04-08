@@ -21,7 +21,7 @@ class MediaType(Segment):
     describing the type of media the data represents: floppy disk image,
     cassette image, cartridge, etc.
     """
-    pretty_name = "No Filesystem"
+    pretty_name = "Non-standard media"
     can_resize_default = False
 
     extra_serializable_attributes = []
@@ -36,6 +36,14 @@ class MediaType(Segment):
             self.check_header()
         self.check_media_size()
         self.check_magic()
+
+    def __str__(self):
+        desc = f"{self.pretty_name}, "
+        if len(self.segments) == 1:
+            desc += str(self.segments[0])
+        else:
+            desc += f"size={len(self)}"
+        return desc
 
     #### initialization
 
