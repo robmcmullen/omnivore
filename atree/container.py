@@ -121,11 +121,14 @@ class Container:
 
     @property
     def verbose_info(self):
+        return self.container_info()
+
+    def container_info(self, indent=""):
         lines = []
         name = self.verbose_name or self.name
-        lines.append(f"{name}: {len(self)} bytes")
+        lines.append(f"{indent}{name}: {len(self)} bytes")
         for s in self.segments:
-            v = s.segment_info("    ")
+            v = s.segment_info(indent + "    ")
             lines.extend(v)
         return "\n".join(lines)
 

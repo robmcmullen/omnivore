@@ -29,6 +29,10 @@ setup(name="atree",
             #     'atree = atree.omnivore_loader',
             # ],
 
+            "atree.collections": [
+                'zip = atree.collections.zip',
+            ],
+
             "atree.containers": [
                 'zlib = atree.containers.zlib',
                 'gzip = atree.containers.gzip',

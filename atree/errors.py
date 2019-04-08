@@ -39,6 +39,11 @@ class ReadOnlyContainer(AtrError):
     pass
 
 
+class InvalidCollection(AtrError):
+    pass
+
+
+
 class InvalidContainer(AtrError):
     pass
 

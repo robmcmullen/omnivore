@@ -15,6 +15,7 @@ except ImportError:
 
 from . import errors
 from .container import guess_container
+from .collection import guess_collection
 # from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
 # from .dos33 import Dos33DiskImage
 # from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, interleave_segments, SegmentList
@@ -97,6 +98,11 @@ def find_container(filename, verbose=False):
     return find_container_from_data(os.path.basename(filename), sample_data, verbose)
 
 
+def find_collection(filename, verbose=False):
+    sample_data = np.fromfile(filename, dtype=np.uint8)
+    return guess_collection(filename, sample_data, verbose)
+
+
 def extract_files(image, files):
     if options.all:
         files = image.files
@@ -167,21 +173,19 @@ def remove_files(image, files):
         image.save()
 
 
-def list_files(container, files, show_crc=False, show_metadata=False):
+def list_files(collection, files, show_crc=False, show_metadata=False):
     files = set(files)
-    filesystem = container.filesystem
-    if filesystem is not None:
-        for dirent in filesystem.iter_dirents():
-            if not files or dirent.filename in files:
-                if show_crc:
-                    data = image.get_file(dirent)
-                    crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
-                    extra = "  %08x" % crc
-                else:
-                    extra = ""
-                print("%s%s" % (dirent, extra))
-                if show_metadata:
-                    print(dirent.extra_metadata(image))
+    for dirent in collection.iter_dirents():
+        if not files or dirent.filename in files:
+            if show_crc:
+                data = image.get_file(dirent)
+                crc = zlib.crc32(data) & 0xffffffff  # correct for some platforms that return signed int
+                extra = "  %08x" % crc
+            else:
+                extra = ""
+            print("%s%s" % (dirent, extra))
+            if show_metadata:
+                print(dirent.extra_metadata(image))
 
 
 def crc_files(image, files):
@@ -599,19 +603,19 @@ def run():
         boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
         try:
-            container = find_container(disk_image_name, options.verbose)
+            collection = find_collection(disk_image_name, options.verbose)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
             print(f"{disk_image_name}: {e}")
         else:
             if command not in skip_diskimage_summary:
-                print(f"{disk_image_name}: {container}{' (%s}' % container.mime if container.mime and options.verbose else ''}")
+                print(f"{disk_image_name}: {collection}")
             if command == "vtoc":
                 vtoc = container.get_vtoc_object()
                 print(vtoc)
                 if options.clear_empty:
                     shred_image(container)
             elif command == "list":
-                list_files(container, options.files, options.crc, options.metadata)
+                list_files(collection, options.files, options.crc, options.metadata)
             elif command == "crc":
                 crc_files(container, options.files)
             elif command == "add":
@@ -626,4 +630,4 @@ def run():
                 obj = options.obj[0] if options.obj else []
                 assemble(container, asm, data, obj, options.run_addr)
             elif command == "segments":
-                print(container.verbose_info)
+                print(collection.verbose_info)
