@@ -30,6 +30,7 @@ setup(name="atree",
             # ],
 
             "atree.containers": [
+                'zlib = atree.containers.zlib',
                 'gzip = atree.containers.gzip',
                 'bzip = atree.containers.bzip',
                 'lzma = atree.containers.lzma',

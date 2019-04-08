@@ -322,19 +322,22 @@ def find_containers():
         _containers = _find_containers()
     return _containers
 
-def guess_container(raw_data):
+def guess_container(raw_data, verbose=False):
     container = None
     for c in find_containers():
-        log.debug(f"trying container {c.compression_algorithm}")
+        if verbose:
+            log.info(f"trying container {c.compression_algorithm}")
         try:
             container = c(raw_data)
         except errors.InvalidContainer as e:
             continue
         else:
-            log.debug(f"found container {c.compression_algorithm}")
+            if verbose:
+                log.info(f"found container {c.compression_algorithm}")
             break
     else:
-        log.debug(f"image does not appear to be compressed.")
+        if verbose:
+            log.info(f"image does not appear to be compressed.")
         container = Container(raw_data)
     return container
 
