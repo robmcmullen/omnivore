@@ -2,7 +2,7 @@ from __future__ import print_function
 from builtins import object
 from mock import *
 
-from atree import SegmentData, AtariDosFile, DefaultSegment, XexContainerSegment, errors
+from atrip import SegmentData, AtariDosFile, DefaultSegment, XexContainerSegment, errors
 
 
 

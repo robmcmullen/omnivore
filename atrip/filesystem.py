@@ -381,7 +381,7 @@ _filesystems = None
 
 def _find_filesystems():
     filesystems = []
-    for entry_point in pkg_resources.iter_entry_points('atree.filesystems'):
+    for entry_point in pkg_resources.iter_entry_points('atrip.filesystems'):
         mod = entry_point.load()
         log.debug(f"find_filesystems: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):

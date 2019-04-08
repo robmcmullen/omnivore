@@ -4,8 +4,8 @@ import numpy as np
 
 from mock import *
 
-from atree import SegmentData, AtariDosDiskImage, Dos33DiskImage
-from atree import errors
+from atrip import SegmentData, AtariDosDiskImage, Dos33DiskImage
+from atrip import errors
 
 
 class BaseFilesystemModifyTest:

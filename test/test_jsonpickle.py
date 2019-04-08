@@ -9,7 +9,7 @@ jsonpickle = pytest.importorskip("jsonpickle")
 
 import numpy as np
 
-from atree import DefaultSegment, SegmentData
+from atrip import DefaultSegment, SegmentData
 
 
 class TestJsonPickle:

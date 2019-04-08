@@ -9,18 +9,18 @@ def identify_loader(file_guess):
     try:
         data = file_guess.all_data
     except IOError as e:
-        log.debug(f"atree loader: error reading entire file: {e}")
+        log.debug(f"atrip loader: error reading entire file: {e}")
     else:
         try:
             parser, mime_type = find_diskimage_from_data(data, True)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
-            log.debug(f"error in atree parser: {e}")
+            log.debug(f"error in atrip parser: {e}")
         else:
             log.debug(f"{parser.image}: {mime_type}")
 
         if mime_type:
-            log.debug(f"atree loader: identified {mime_type}")
-            return dict(mime=mime_type, ext="", atree_parser=parser)
+            log.debug(f"atrip loader: identified {mime_type}")
+            return dict(mime=mime_type, ext="", atrip_parser=parser)
         else:
-            log.debug(f"atree loader: not recognized")
+            log.debug(f"atrip loader: not recognized")
     return None

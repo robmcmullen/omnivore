@@ -1,6 +1,6 @@
 from builtins import object
 from mock import *
-from atree import utils
+from atrip import utils
 
 
 class TestTextToInt:

@@ -16,7 +16,7 @@ def parse(filename, mime):
 
 
 if __name__ == '__main__':
-    source_dir = "atree/signatures/"
+    source_dir = "atrip/signatures/"
     mime = sys.argv[1]
     slug = slugify.slugify(mime.replace("application/vnd.", ""), separator="_")
     source = os.path.join(source_dir, slug) + ".py"

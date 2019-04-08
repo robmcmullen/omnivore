@@ -5,62 +5,62 @@ try:
 except ImportError:
     from distutils.core import setup
 
-exec(compile(open('atree/_version.py').read(), 'atree/_version.py', 'exec'))
-exec(compile(open('atree/_metadata.py').read(), 'atree/_metadata.py', 'exec'))
+exec(compile(open('atrip/_version.py').read(), 'atrip/_version.py', 'exec'))
+exec(compile(open('atrip/_metadata.py').read(), 'atrip/_metadata.py', 'exec'))
 
 with open("README.rst", "r") as fp:
     long_description = fp.read()
 
 if sys.platform.startswith("win"):
-    scripts = ["scripts/atree.bat"]
+    scripts = ["scripts/atrip.bat"]
 else:
-    scripts = ["scripts/atree"]
+    scripts = ["scripts/atrip"]
 
-setup(name="atree",
+setup(name="atrip",
         version=__version__,
         author=__author__,
         author_email=__author_email__,
         url=__url__,
-        packages=["atree"],
+        packages=["atrip"],
         include_package_data=True,
         scripts=scripts,
         entry_points={
             # "sawx.loaders": [
-            #     'atree = atree.omnivore_loader',
+            #     'atrip = atrip.omnivore_loader',
             # ],
 
-            "atree.collections": [
-                'zip = atree.collections.zip',
+            "atrip.collections": [
+                'zip = atrip.collections.zip',
             ],
 
-            "atree.containers": [
-                'zlib = atree.containers.zlib',
-                'gzip = atree.containers.gzip',
-                'bzip = atree.containers.bzip',
-                'lzma = atree.containers.lzma',
-                'dcm = atree.containers.dcm',
+            "atrip.containers": [
+                'zlib = atrip.containers.zlib',
+                'gzip = atrip.containers.gzip',
+                'bzip = atrip.containers.bzip',
+                'lzma = atrip.containers.lzma',
+                'dcm = atrip.containers.dcm',
             ],
 
-            "atree.media_types": [
-                'atari_disks = atree.media_types.atari_disks',
-                'atari_carts = atree.media_types.atari_carts',
-                'apple_disks = atree.media_types.apple_disks',
+            "atrip.media_types": [
+                'atari_disks = atrip.media_types.atari_disks',
+                'atari_carts = atrip.media_types.atari_carts',
+                'apple_disks = atrip.media_types.apple_disks',
             ],
 
-            "atree.filesystems": [
-                'atari_dos = atree.filesystems.atari_dos2',
-                'kboot = atree.filesystems.kboot',
+            "atrip.filesystems": [
+                'atari_dos = atrip.filesystems.atari_dos2',
+                'kboot = atrip.filesystems.kboot',
             ],
 
-            "atree.file_types": [
-                'atari_xex = atree.file_types.atari_xex',
+            "atrip.file_types": [
+                'atari_xex = atrip.file_types.atari_xex',
             ],
 
-            "atree.signatures": [
-                'atari2600_cart = atree.signatures.atari2600_cart',
-                'atari2600_starpath = atree.signatures.atari2600_starpath',
-                'atari5200_cart = atree.signatures.atari5200_cart',
-                'vectrex = atree.signatures.vectrex',
+            "atrip.signatures": [
+                'atari2600_cart = atrip.signatures.atari2600_cart',
+                'atari2600_starpath = atrip.signatures.atari2600_starpath',
+                'atari5200_cart = atrip.signatures.atari5200_cart',
+                'vectrex = atrip.signatures.vectrex',
             ],
         },
         description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",

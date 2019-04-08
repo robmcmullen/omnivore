@@ -4,12 +4,12 @@ import numpy as np
 
 from mock import *
 
-from atree.container import guess_container, load
-from atree.media_type import MediaType, guess_media_type
-from atree import errors
+from atrip.container import guess_container, load
+from atrip.media_type import MediaType, guess_media_type
+from atrip import errors
 
-from atree.media_types.atari_disks import *
-from atree.media_types.apple_disks import *
+from atrip.media_types.atari_disks import *
+from atrip.media_types.apple_disks import *
 
 class TestDiskImage:
 
@@ -42,7 +42,7 @@ class TestDiskImage:
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.WARNING)
-    log = logging.getLogger("atree.media_type")
+    log = logging.getLogger("atrip.media_type")
     log.setLevel(logging.DEBUG)
 
     def check(pathname):

@@ -309,7 +309,7 @@ _containers = None
 
 def _find_containers():
     containers = []
-    for entry_point in pkg_resources.iter_entry_points('atree.containers'):
+    for entry_point in pkg_resources.iter_entry_points('atrip.containers'):
         mod = entry_point.load()
         log.debug(f"find_container: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):

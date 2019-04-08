@@ -56,7 +56,7 @@ _file_types = None
 
 def _find_file_types():
     file_types = []
-    for entry_point in pkg_resources.iter_entry_points('atree.file_types'):
+    for entry_point in pkg_resources.iter_entry_points('atrip.file_types'):
         mod = entry_point.load()
         log.debug(f"find_file_type: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):

@@ -1,9 +1,9 @@
-atree
+atrip
 =======
 
 Python library for hierarchical filesystem parsing on Atari 8-bit and Apple ][
 disk images. The successor to `atrcopy <https://pypi.org/atrcopy>`_, this is
-currently experimental and for testing purposes only.
+under heavy development and is not stable.
 
 .. contents:: **Contents**
 
@@ -22,19 +22,19 @@ Dependencies
 
 * numpy
 
-It will be automatically installed when installing ``atree`` with ``pip`` as
+It will be automatically installed when installing ``atrip`` with ``pip`` as
 described below.
 
 For development, pytest is used to run the test suite, but this is not required
-for normal installation of ``atree``.
+for normal installation of ``atrip``.
 
 Installation
 ============
 
-``atree`` is available in the `PyPI <https://pypi.org/atree/>`_
+``atrip`` is available in the `PyPI <https://pypi.org/atrip/>`_
 and installable using ``pip``::
 
-    pip install atree
+    pip install atrip
 
 Linux and macOS note: if numpy needs to be installed on your system, it may be
 compiled from source which can take several minutes.
@@ -110,7 +110,7 @@ Supported Compression/Container Formats
 
 Compressed disk images are supported transparently, so any type of disk image
 compressed with one of the supported container formats can be used directly,
-without first decompressing it before running ``atree``.
+without first decompressing it before running ``atrip``.
 
 +--------------------+----------+------+-------+------------------------------+
 | Container          | File Ext | Read | Write | Status                       |
@@ -137,7 +137,7 @@ References
 Related Atari Projects
 ----------------------
 
-* `atrcopy <http://pypi.org/atrcopy>`_: Precursor to ``atree``; stable and includes command line utility to manipulate disk images.
+* `atrcopy <http://pypi.org/atrcopy>`_: Precursor to ``atrip``; stable and includes command line utility to manipulate disk images.
 * `franny <http://atari8.sourceforge.net/franny.html>`_: (C, macOS/linux) Command line program to manage Atari DOS 2 and SpartaDOS II image and file systems
 * `dir2atr <http://www.horus.com/~hias/atari/>`_: (Win) Suite of command line programs to manage Atari disk images and DOS 2/MyDOS file systems
 * `atadim <http://raster.infos.cz/atari/forpc/atadim.htm>`_: (Win) Graphical program to manage Atari disk images and DOS 2/MyDOS file systems

@@ -199,7 +199,7 @@ _media_types = None
 
 def _find_media_types():
     media_types = []
-    for entry_point in pkg_resources.iter_entry_points('atree.media_types'):
+    for entry_point in pkg_resources.iter_entry_points('atrip.media_types'):
         mod = entry_point.load()
         log.debug(f"find_media_type: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):

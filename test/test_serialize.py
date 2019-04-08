@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pytest
 
-from atree import DefaultSegment, SegmentData, get_xex, interleave_segments
+from atrip import DefaultSegment, SegmentData, get_xex, interleave_segments
 
 
 class TestSegment:

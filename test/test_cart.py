@@ -3,8 +3,8 @@ from __future__ import division
 from builtins import object
 from mock import *
 
-from atree import AtariCartImage, SegmentData, RomImage, errors
-from atree.cartridge import known_cart_types
+from atrip import AtariCartImage, SegmentData, RomImage, errors
+from atrip.cartridge import known_cart_types
 
 
 class TestAtariCart:
@@ -120,7 +120,7 @@ class TestRomCart:
 
 
 if __name__ == "__main__":
-    from atree.parsers import mime_parse_order
+    from atrip.parsers import mime_parse_order
     print("\n".join(mime_parse_order))
 
     t = TestAtariCart()

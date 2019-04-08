@@ -4,8 +4,8 @@ import numpy as np
 
 from mock import *
 
-from atree import SegmentData, AtariDosDiskImage, Dos33DiskImage, DefaultSegment
-from atree import errors
+from atrip import SegmentData, AtariDosDiskImage, Dos33DiskImage, DefaultSegment
+from atrip import errors
 
 
 def get_image(file_name, diskimage_type):

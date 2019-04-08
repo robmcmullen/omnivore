@@ -10,7 +10,7 @@ _signatures = None
 
 def _find_signatures():
     signatures = []
-    for entry_point in pkg_resources.iter_entry_points('atree.signatures'):
+    for entry_point in pkg_resources.iter_entry_points('atrip.signatures'):
         mod = entry_point.load()
         log.debug(f"find_signatures: Found module {entry_point.name}={mod.__name__}")
         if hasattr(mod, "sha1_signatures"):
