@@ -1,7 +1,13 @@
 include LICENSE
 include README.rst
 recursive-include scripts *
-include atrcopy/templates/*
+include atrip/templates/*
+include atrip/collections/*
+include atrip/containers/*
+include atrip/media_types/*
+include atrip/filesystems/*
+include atrip/file_types/*
+include atrip/signatures/*
 include test_data/*_test?.atr
 include test_data/*_test?.atr.*
 include test_data/*.xex

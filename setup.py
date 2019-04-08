@@ -63,7 +63,7 @@ setup(name="atrip",
                 'vectrex = atrip.signatures.vectrex',
             ],
         },
-        description="Utility to manage file systems on Atari 8-bit (DOS 2) and Apple ][ (DOS 3.3) disk images.",
+        description="Utility to manage file systems on retro computer disk images",
         long_description=long_description,
         license="GPL",
         classifiers=[
