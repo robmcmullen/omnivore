@@ -24,14 +24,20 @@ clipboard_log = logging.getLogger("sawx.clipboard")
 def get_editors():
     editors = []
     for entry_point in pkg_resources.iter_entry_points('sawx.editors'):
-        mod = entry_point.load()
-        log.debug(f"get_edtiors: Found module {entry_point.name}")
-        for name, obj in inspect.getmembers(mod):
-            if inspect.isclass(obj) and SawxEditor in obj.__mro__[1:]:
-                # only use subclasses of SawxEditor, not the
-                # SawxEditor base class itself
-                log.debug(f"get_editors: Found editor class {name}")
-                editors.append(obj)
+        try:
+            mod = entry_point.load()
+        except Exception as e:
+            log.error(f"Failed importing editor {entry_point.name}: {e}")
+            import traceback
+            traceback.print_exc()
+        else:
+            log.debug(f"get_edtiors: Found module {entry_point.name}")
+            for name, obj in inspect.getmembers(mod):
+                if inspect.isclass(obj) and SawxEditor in obj.__mro__[1:]:
+                    # only use subclasses of SawxEditor, not the
+                    # SawxEditor base class itself
+                    log.debug(f"get_editors: Found editor class {name}")
+                    editors.append(obj)
     return editors
 
 

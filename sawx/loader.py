@@ -21,8 +21,8 @@ def get_loaders():
     for entry_point in pkg_resources.iter_entry_points('sawx.loaders'):
         try:
             mod = entry_point.load()
-        except (ModuleNotFoundError, ImportError) as e:
-            log.error(f"Failed using loader {entry_point.name}: {e}")
+        except Exception as e:
+            log.error(f"Failed importing loader {entry_point.name}: {e}")
             import traceback
             traceback.print_exc()
         else:

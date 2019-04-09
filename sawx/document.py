@@ -25,14 +25,20 @@ log = logging.getLogger(__name__)
 def get_documents():
     documents = []
     for entry_point in pkg_resources.iter_entry_points('sawx.documents'):
-        mod = entry_point.load()
-        log.debug(f"get_documents: Found module {entry_point.name}={mod.__name__}")
-        for name, obj in inspect.getmembers(mod):
-            if inspect.isclass(obj) and SawxDocument in obj.__mro__[1:]:
-                # only use subclasses of Sawxdocument, not the
-                # Sawxdocument base class itself
-                log.debug(f"get_documents:   found document class {name}")
-                documents.append(obj)
+        try:
+            mod = entry_point.load()
+        except Exception as e:
+            log.error(f"Failed importing document {entry_point.name}: {e}")
+            import traceback
+            traceback.print_exc()
+        else:
+            log.debug(f"get_documents: Found module {entry_point.name}={mod.__name__}")
+            for name, obj in inspect.getmembers(mod):
+                if inspect.isclass(obj) and SawxDocument in obj.__mro__[1:]:
+                    # only use subclasses of Sawxdocument, not the
+                    # Sawxdocument base class itself
+                    log.debug(f"get_documents:   found document class {name}")
+                    documents.append(obj)
     return documents
 
 

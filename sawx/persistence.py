@@ -211,15 +211,21 @@ def get_cache_dir(subdir):
 def restore_from_last_time():
     modules = []
     for entry_point in pkg_resources.iter_entry_points('sawx.remember'):
-        mod = entry_point.load()
-        log.debug(f"restore_from_last_time: Found module {entry_point.name}")
         try:
-            restore = getattr(mod, 'restore_from_last_time')
-        except AttributeError:
-            log.warning(f"restore_from_last_time: no restore function in module {entry_point.name}")
+            mod = entry_point.load()
+        except Exception as e:
+            log.error(f"Failed importing remember entry point {entry_point.name}: {e}")
+            import traceback
+            traceback.print_exc()
         else:
-            restore()
-            modules.append(mod)
+            log.debug(f"restore_from_last_time: Found module {entry_point.name}")
+            try:
+                restore = getattr(mod, 'restore_from_last_time')
+            except AttributeError:
+                log.warning(f"restore_from_last_time: no restore function in module {entry_point.name}")
+            else:
+                restore()
+                modules.append(mod)
     return modules
 
 
