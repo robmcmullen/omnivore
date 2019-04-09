@@ -154,7 +154,7 @@ class AtariDosDirent(Dirent):
 
     @property
     def in_use(self):
-        return self._in_use
+        return self.is_sane and self._in_use
 
     @property
     def filename(self):
@@ -232,7 +232,12 @@ class AtariDosDirent(Dirent):
         sectors_seen = set()
 
         while next_sector > 0 and sectors_remaining > 0:
-            index, size = media.get_index_of_sector(next_sector)
+            try:
+                index, size = media.get_index_of_sector(next_sector)
+            except errors.MediaError:
+                length = 0
+                self.is_sane = False
+                break
             num_bytes = media[index + size - 1]
             file_num = media[index + size - 3] >> 2
             if file_num != self.file_num:
