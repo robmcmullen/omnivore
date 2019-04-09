@@ -1,9 +1,16 @@
-atrip
+ATRip
 =======
 
 Python library for hierarchical filesystem parsing on Atari 8-bit and Apple ][
 disk images. The successor to `atrcopy <https://pypi.org/atrcopy>`_, this is
 under heavy development and is not stable.
+
+Pronounced "uh-trip", the name is a happy coincidence that a dictionary word
+exists that is the quasi-portmanteau of "ATR" (the Atari 8 bit disk image
+container) & "rip" (extracting stuff from images). The actual word is a
+nautical term: "atrip" as in "the anchor is atrip", meaning the ship's anchor
+is off the bottom. I have no particular affinity for ships, but that I had some
+justification in the portmanteau is enough for me.
 
 .. contents:: **Contents**
 
@@ -17,21 +24,27 @@ Supported Python versions:
 
 * Python 3.6 (and later)
 
-Dependencies
-------------
+Runtime Dependencies
+---------------------
 
 * numpy
 
-It will be automatically installed when installing ``atrip`` with ``pip`` as
-described below.
+It will be automatically installed when installing with ``pip`` as described
+below.
 
-For development, pytest is used to run the test suite, but this is not required
-for normal installation of ``atrip``.
+Development Dependencies
+------------------------
+
+* pytest
+* pytest-cov (optional)
+
+The test suite uses pytest and pytest-cov, but these are not required for
+normal installation.
 
 Installation
 ============
 
-``atrip`` is available in the `PyPI <https://pypi.org/atrip/>`_
+``ATRip`` is available in the `PyPI <https://pypi.org/atrip/>`_
 and installable using ``pip``::
 
     pip install atrip
@@ -110,7 +123,7 @@ Supported Compression/Container Formats
 
 Compressed disk images are supported transparently, so any type of disk image
 compressed with one of the supported container formats can be used directly,
-without first decompressing it before running ``atrip``.
+without first decompressing it before running ``ATRip``.
 
 +--------------------+----------+------+-------+------------------------------+
 | Container          | File Ext | Read | Write | Status                       |
@@ -137,7 +150,7 @@ References
 Related Atari Projects
 ----------------------
 
-* `atrcopy <http://pypi.org/atrcopy>`_: Precursor to ``atrip``; stable and includes command line utility to manipulate disk images.
+* `atrcopy <http://pypi.org/atrcopy>`_: Precursor to ``ATRip``; stable and includes command line utility to manipulate disk images.
 * `franny <http://atari8.sourceforge.net/franny.html>`_: (C, macOS/linux) Command line program to manage Atari DOS 2 and SpartaDOS II image and file systems
 * `dir2atr <http://www.horus.com/~hias/atari/>`_: (Win) Suite of command line programs to manage Atari disk images and DOS 2/MyDOS file systems
 * `atadim <http://raster.infos.cz/atari/forpc/atadim.htm>`_: (Win) Graphical program to manage Atari disk images and DOS 2/MyDOS file systems
