@@ -67,14 +67,17 @@ class save_file(SawxAction):
         return self.editor.is_dirty
 
     def perform(self, action_key):
-        self.editor.save()
+        self.editor.save_to_uri()
 
 class save_as(SawxAction):
     def calc_name(self, action_key):
         return "Save As"
 
     def perform(self, action_key):
-        self.editor.save_as()
+        e = self.editor
+        path = e.frame.prompt_local_file_dialog("Save As", save=True, default_filename=e.document.root_name)
+        if path is not None:
+            e.save_to_uri(path)
 
 class quit(SawxAction):
     def calc_name(self, action_key):

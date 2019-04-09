@@ -300,19 +300,6 @@ class SawxEditor:
         self.update_recent_path(path)
         self.frame.status_message(f"loaded {path}", True)
 
-    def save(self):
-        """Overwrite the file on disk with the version in memory
-        """
-        self.save_to_uri()
-
-    def save_as(self):
-        """Prompt for a new filename, asking for confirmation if it would
-        overwrite an existing file.
-        """
-        path = self.frame.prompt_local_file_dialog("Save As", save=True, default_filename=self.document.root_name)
-        if path is not None:
-            self.save_to_uri(path)
-
     def save_to_uri(self, uri=None, save_session=True):
         self.document.save(uri)
         if save_session:
