@@ -88,6 +88,16 @@ class save_as(save_file):
 
     perform = save_file.perform_prompt
 
+class save_as_image(save_as):
+    def calc_name(self, action_key):
+        return "Save As Image"
+
+    def perform(self, action_key):
+        e = self.editor
+        path = e.frame.prompt_local_file_dialog("Save As Image", save=True, default_filename=e.document.root_name, wildcard=get_file_dialog_wildcard("Images", [".png", ".jpg"]))
+        if path is not None:
+            e.save_as_image(path)
+
 class quit(SawxAction):
     def calc_name(self, action_key):
         return "Quit"

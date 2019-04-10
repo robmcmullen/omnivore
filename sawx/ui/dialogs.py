@@ -385,8 +385,8 @@ def get_file_dialog_wildcard(name, extension_list):
     # Using only the first extension
     wildcards = []
     if extension_list:
-        ext = extension_list[0]
-        wildcards.append("%s (*%s)|*%s" % (name, ext, ext))
+        ext = ";".join(["*" + e for e in extension_list])
+        wildcards.append("%s (%s)|%s" % (name, ext, ext))
     return "|".join(wildcards)
 
 

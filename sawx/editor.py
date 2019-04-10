@@ -312,6 +312,31 @@ class SawxEditor:
             self.save_session()
         self.save_success()
 
+    def save_as_image(self, uri):
+        """ Saves the contents of the editor in a maproom project file
+        """
+        valid = {
+            '.png': wx.BITMAP_TYPE_PNG,
+            '.tif': wx.BITMAP_TYPE_TIFF,
+            '.tiff': wx.BITMAP_TYPE_TIFF,
+            '.jpg': wx.BITMAP_TYPE_JPEG,
+            '.jpeg': wx.BITMAP_TYPE_JPEG,
+            }
+        _, ext = os.path.splitext(uri)
+        if ext not in valid:
+            path += ".png"
+            t = wx.BITMAP_TYPE_PNG
+        else:
+            t = valid[ext]
+
+        raw_data = self.get_numpy_image()
+        h, w, depth = raw_data.shape
+        image = wx.Image(w, h, raw_data)
+        image.SaveFile(uri, t)
+
+    def get_numpy_image(self):
+        raise NotImplementedError
+
     def save_session(self):
         s = {}
         self.serialize_session(s)
