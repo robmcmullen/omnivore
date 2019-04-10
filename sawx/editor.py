@@ -330,9 +330,10 @@ class SawxEditor:
             t = valid[ext]
 
         raw_data = self.get_numpy_image()
-        h, w, depth = raw_data.shape
-        image = wx.Image(w, h, raw_data)
-        image.SaveFile(uri, t)
+        if raw_data is not None:
+            h, w, depth = raw_data.shape
+            image = wx.Image(w, h, raw_data)
+            image.SaveFile(uri, t)
 
     def get_numpy_image(self):
         raise NotImplementedError
