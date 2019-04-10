@@ -2,7 +2,7 @@ import wx
 
 from ..action import SawxAction, SawxNameChangeAction, SawxListAction
 from ..templates import iter_templates
-from ..ui.dialogs import prompt_for_dec
+from ..ui.dialogs import prompt_for_dec, get_file_dialog_wildcard
 from .. import errors
 
 import logging
@@ -75,7 +75,7 @@ class save_file(SawxAction):
 
     def perform_prompt(self, action_key):
         e = self.editor
-        path = e.frame.prompt_local_file_dialog("Save As", save=True, default_filename=e.document.root_name)
+        path = e.frame.prompt_local_file_dialog("Save As", save=True, default_filename=e.document.name, wildcard=get_file_dialog_wildcard("MapRoom Project Files", [".maproom"]))
         if path is not None:
             e.save_to_uri(path)
 
