@@ -270,11 +270,16 @@ class SawxDocument:
     def save(self, uri=None):
         if uri is None:
             uri = self.uri
+        if not self.verify_writeable_uri(uri):
+            raise errors.ReadOnlyFilesystemError(uri)
         if self.verify_ok_to_save():
             raw_data = self.calc_raw_data_to_save()
             self.save_raw_data(uri, raw_data)
             self.file_metadata['uri'] = uri
             self.undo_stack.set_save_point()
+
+    def verify_writeable_uri(self, uri):
+        return filesystem.is_user_writeable_uri(uri)
 
     def verify_ok_to_save(self):
         return True

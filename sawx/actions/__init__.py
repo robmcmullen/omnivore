@@ -67,17 +67,26 @@ class save_file(SawxAction):
         return self.editor.is_dirty
 
     def perform(self, action_key):
-        self.editor.save_to_uri()
+        e = self.editor
+        try:
+            e.save_to_uri()
+        except errors.ReadOnlyFilesystemError:
+            self.perform_prompt(action_key)
 
-class save_as(SawxAction):
-    def calc_name(self, action_key):
-        return "Save As"
-
-    def perform(self, action_key):
+    def perform_prompt(self, action_key):
         e = self.editor
         path = e.frame.prompt_local_file_dialog("Save As", save=True, default_filename=e.document.root_name)
         if path is not None:
             e.save_to_uri(path)
+
+class save_as(save_file):
+    def calc_name(self, action_key):
+        return "Save As"
+
+    def calc_enabled(self, action_key):
+        return True
+
+    perform = save_file.perform_prompt
 
 class quit(SawxAction):
     def calc_name(self, action_key):

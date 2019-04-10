@@ -82,6 +82,17 @@ def filesystem_path(uri):
             local_path = uri
     return local_path
 
+def is_user_writeable_uri(uri):
+    """Is it OK for the user to use the specified URI to save normal documents,
+    i.e. as prompted by a file dialog or similar.
+
+    In general, computed and template filesystems won't be allowed here.
+    """
+    for prefix, path_finder in filesystems_to_local_file.items():
+        if uri.startswith(prefix):
+            return False
+    return True
+
 def fsopen(uri, mode="r"):
     try:
         local_path = filesystem_path(uri)

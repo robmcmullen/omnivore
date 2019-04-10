@@ -28,3 +28,6 @@ class MissingDocumentationError(SawxError):
 
 class ClipboardError(SawxError):
     pass
+
+class ReadOnlyFilesystemError(SawxError):
+    pass
