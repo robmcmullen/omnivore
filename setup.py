@@ -38,6 +38,7 @@ setup(name="atrip",
                 'gzip = atrip.containers.gzip',
                 'bzip = atrip.containers.bzip',
                 'lzma = atrip.containers.lzma',
+                'lzw = atrip.containers.lzw',
                 'dcm = atrip.containers.dcm',
             ],
 

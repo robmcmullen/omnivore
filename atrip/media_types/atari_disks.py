@@ -115,6 +115,7 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
 
     def calc_num_sectors(self):
         size = len(self)
+        print(size)
         initial_size = self.initial_sector_size * self.num_initial_sectors
         remaining_size = size - initial_size
         if remaining_size % self.sector_size != 0:
@@ -122,7 +123,7 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
         return ((size - initial_size) // self.sector_size) + self.num_initial_sectors
 
     def get_index_of_sector(self, sector):
-        if not self.sector_is_valid(sector):
+        if not self.is_sector_valid(sector):
             raise errors.ByteNotInFile166("Sector %d out of range" % sector)
         if sector <= self.num_initial_sectors:
             pos = self.num_initial_sectors * (sector - 1)
@@ -130,7 +131,6 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
         else:
             pos = self.num_initial_sectors * self.initial_sector_size + (sector - 1 - self.num_initial_sectors) * self.sector_size
             size = self.sector_size
-        pos += self.header_length
         return pos, size
 
 

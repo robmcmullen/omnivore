@@ -126,7 +126,10 @@ class Container:
     def container_info(self, indent=""):
         lines = []
         name = self.verbose_name or self.name
-        lines.append(f"{indent}{name}: {len(self)} bytes")
+        desc = f"{indent}{name}: {len(self)} bytes"
+        if self.compression_algorithm != Container.compression_algorithm:
+           desc += f" (uncompressed using {self.compression_algorithm})"
+        lines.append(desc)
         for s in self.segments:
             v = s.segment_info(indent + "    ")
             lines.extend(v)
