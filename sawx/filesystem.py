@@ -57,6 +57,9 @@ computed_filesystems = {
 def find_template_path(name):
     return find_first_in_paths(template_paths, name)
 
+def find_latest_template_path(name):
+    return find_latest_in_paths(template_paths, name)
+
 def find_image_path(name):
     return find_first_in_paths(image_paths, name)
 
@@ -159,6 +162,21 @@ def find_first_in_paths(paths, name):
         checked.append(os.path.abspath(os.path.dirname(pathname)))
     else:
         raise OSError(f"find_first_in_paths: '{name}' not found in {checked}")
+
+
+def find_latest_in_paths(paths, namespec):
+    found = []
+    for toplevel in paths:
+        pathspec = os.path.normpath(os.path.join(toplevel, namespec))
+        files = glob.glob(pathspec)
+        if files:
+            # for f in files:
+            #     print os.path.getctime(f), os.path.getmtime(f), f
+            found.extend(files)
+    if found:
+        newest = max(found, key=os.path.getmtime)
+        return newest
+    return pathspec
 
 
 def glob_in_paths(paths):
