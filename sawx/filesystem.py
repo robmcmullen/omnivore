@@ -16,7 +16,11 @@ about = {
 
 image_paths = []
 
-template_paths = []
+# None is used as a separator between user paths and system paths. User paths
+# come first and can shadow identically named system templates. So, insert user
+# paths using code like ``template_paths[0:0] = ["my/cool/path"]`` and append
+# system paths with ``template_paths.append("my/system/path")``
+template_paths = [None]
 
 help_paths = []
 
@@ -54,11 +58,24 @@ computed_filesystems = {
 }
 
 
-def find_template_path(name):
-    return find_first_in_paths(template_paths, name)
+def calc_template_paths(include_user_defined):
+    paths = template_paths
+    if not include_user_defined:
+        try:
+            start_system = paths.index(None)
+        except ValueError:
+            pass
+        else:
+            paths = paths[start_system+1:]
+    return paths
 
-def find_latest_template_path(name):
-    return find_latest_in_paths(template_paths, name)
+def find_template_path(name, include_user_defined=True):
+    paths = calc_template_paths(include_user_defined)
+    return find_first_in_paths(paths, name)
+
+def find_latest_template_path(name, include_user_defined=True):
+    paths = calc_template_paths(include_user_defined)
+    return find_latest_in_paths(paths, name)
 
 def find_image_path(name):
     return find_first_in_paths(image_paths, name)
@@ -154,6 +171,8 @@ def find_first_in_paths(paths, name):
         return name
     checked = []
     for toplevel in paths:
+        if toplevel is None:
+            continue  # skip user/system path separator
         pathname = os.path.normpath(os.path.join(toplevel, name))
         log.debug(f"find_first_in_paths: checking for {name} in {toplevel}")
         if os.path.exists(pathname):
@@ -167,6 +186,8 @@ def find_first_in_paths(paths, name):
 def find_latest_in_paths(paths, namespec):
     found = []
     for toplevel in paths:
+        if toplevel is None:
+            continue  # skip user/system path separator
         pathspec = os.path.normpath(os.path.join(toplevel, namespec))
         files = glob.glob(pathspec)
         if files:
@@ -181,6 +202,8 @@ def find_latest_in_paths(paths, namespec):
 
 def glob_in_paths(paths):
     for toplevel in paths:
+        if toplevel is None:
+            continue
         wildcard = os.path.join(toplevel, "*")
         for item in glob.glob(wildcard):
             yield item

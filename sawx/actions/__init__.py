@@ -1,7 +1,7 @@
 import wx
 
 from ..action import SawxAction, SawxNameChangeAction, SawxListAction
-from ..templates import iter_templates
+from ..persistence import iter_templates
 from ..ui.dialogs import prompt_for_dec, get_file_dialog_wildcard
 from .. import errors
 

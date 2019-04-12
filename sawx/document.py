@@ -13,7 +13,7 @@ from .events import EventHandler
 from .utils.command import UndoStack
 from .utils import jsonutil
 from .utils.nputil import to_numpy
-from .templates import get_template
+from .persistence import get_template
 from . import filesystem
 from .filesystem import fsopen as open
 from . import errors
