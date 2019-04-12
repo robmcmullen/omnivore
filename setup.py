@@ -351,7 +351,6 @@ setup(
     'configobj',
     'pyparsing',
     'pytz',
-    'traits>=4.6'
     'construct<2.9',  # Construct 2.9 changed the String class
     'ply',
     'python-slugify',
