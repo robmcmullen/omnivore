@@ -29,8 +29,8 @@ setup(name="atrip",
             #     'atrip = atrip.omnivore_loader',
             # ],
 
-            "atrip.collections": [
-                'zip = atrip.collections.zip',
+            "atrip.archivers": [
+                'zip = atrip.archivers.zip',
             ],
 
             "atrip.containers": [

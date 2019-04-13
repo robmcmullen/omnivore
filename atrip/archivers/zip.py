@@ -5,14 +5,14 @@ import zipfile
 import numpy as np
 
 from .. import errors
-from ..collection import Collection
+from ..archiver import Archiver
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class ZipCollection(Collection):
-    archive_type = "zip archive"
+class ZipArchiver(Archiver):
+    archive_type = "zip"
 
     def iter_archive(self, byte_data):
         byte_data = io.BytesIO(byte_data)
@@ -23,4 +23,4 @@ class ZipCollection(Collection):
                     item_data = np.frombuffer(zf.open(item).read(), dtype=np.uint8)
                     yield item_data
         except:
-            raise errors.InvalidCollection("Not a zip file")
+            raise errors.InvalidArchiver("Not a zip file")

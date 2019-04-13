@@ -39,7 +39,12 @@ class ReadOnlyContainer(AtrError):
     pass
 
 
-class InvalidCollection(AtrError):
+# Errors for archivers
+
+class ArchiverError(AtrError):
+    pass
+
+class InvalidArchiver(ArchiverError):
     pass
 
 

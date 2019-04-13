@@ -15,7 +15,7 @@ except ImportError:
 
 from . import errors
 from .container import guess_container
-from .collection import guess_collection
+from .collection import Collection
 # from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
 # from .dos33 import Dos33DiskImage
 # from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, interleave_segments, SegmentList
@@ -100,7 +100,7 @@ def find_container(filename, verbose=False):
 
 def find_collection(filename, verbose=False):
     sample_data = np.fromfile(filename, dtype=np.uint8)
-    return guess_collection(filename, sample_data, verbose)
+    return Collection(filename, sample_data)
 
 
 def extract_files(image, files):
