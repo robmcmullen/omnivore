@@ -612,32 +612,24 @@ class TileManager(wx.Window):
 
     def replace_all(self, layout=None, sidebar_layout=[]):
         old = self.child
-        uuid_map = {view.client.child_uuid: view for view in old.iter_views()}
-        self.child = TileSplit(self, self, old.layout_direction, layout=layout)
-
-        for view in self.child.iter_views():
-            print(view, view.client.child_uuid)
-            # if view.client.child_uuid == "layer_canvas":
-            #     continue
-            try:
-                old_view = uuid_map[view.client.child_uuid]
-            except KeyError:
-                continue
-            else:
-                client = old_view.detach_client()
-                view.remove_client()
-                view.attach_client(client)
-            print(view, view.client.child_uuid)
-
-
-        #old.remove_all()
+        uuid_map = old.uuid_map()
         for sidebar in self.sidebars:
-            sidebar.remove_all()
+            uuid_map.update(sidebar.uuid_map())
+        self.child = TileSplit(self, self, old.layout_direction, layout=layout)
+        self.child.replace_clients_by_uuid(uuid_map)
+
+        old.remove_all()
+
+        old_sidebars = self.sidebars
         self.sidebars = []
         for d in sidebar_layout:
-            self.use_sidebar(layout=d)
+            sidebar = self.use_sidebar(layout=d)
+            sidebar.replace_clients_by_uuid(uuid_map)
+
+        for sidebar in old_sidebars:
+            sidebar.remove_all()
+
         self.do_layout(layout_changed=True)
-        print("layout complete")
 
     def calc_layout(self, to_json=False, pretty=False):
         d = {'tile_manager': self.child.calc_layout()}
@@ -1097,6 +1089,22 @@ class ViewContainer(object):
                 yield from view.iter_views()
             except AttributeError:
                 yield view
+
+    def uuid_map(self):
+        return {view.client.child_uuid: view for view in self.iter_views()}
+
+    def replace_clients_by_uuid(self, uuid_map):
+        for view in self.iter_views():
+            print(view, view.client.child_uuid)
+            try:
+                old_view = uuid_map[view.client.child_uuid]
+            except KeyError:
+                continue
+            else:
+                client = old_view.detach_client()
+                view.remove_client()
+                view.attach_client(client)
+            print(view, view.client.child_uuid)
 
     def find_uuid(self, uuid):
         for view in self.views:
@@ -2122,7 +2130,8 @@ class SidebarMenuItem(wx.Window, DockTarget):
         self.Refresh()
 
     def remove(self):
-        self.client.do_send_close_event()
+        if self.client is not None:
+            self.client.do_send_close_event()
         self.actual_popup.Destroy()
         self.Destroy()
 
