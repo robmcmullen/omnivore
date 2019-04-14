@@ -612,14 +612,32 @@ class TileManager(wx.Window):
 
     def replace_all(self, layout=None, sidebar_layout=[]):
         old = self.child
+        uuid_map = {view.client.child_uuid: view for view in old.iter_views()}
         self.child = TileSplit(self, self, old.layout_direction, layout=layout)
-        old.remove_all()
+
+        for view in self.child.iter_views():
+            print(view, view.client.child_uuid)
+            # if view.client.child_uuid == "layer_canvas":
+            #     continue
+            try:
+                old_view = uuid_map[view.client.child_uuid]
+            except KeyError:
+                continue
+            else:
+                client = old_view.detach_client()
+                view.remove_client()
+                view.attach_client(client)
+            print(view, view.client.child_uuid)
+
+
+        #old.remove_all()
         for sidebar in self.sidebars:
             sidebar.remove_all()
         self.sidebars = []
         for d in sidebar_layout:
             self.use_sidebar(layout=d)
         self.do_layout(layout_changed=True)
+        print("layout complete")
 
     def calc_layout(self, to_json=False, pretty=False):
         d = {'tile_manager': self.child.calc_layout()}
@@ -634,19 +652,25 @@ class TileManager(wx.Window):
                 d = json.dumps(d)
         return d
 
-    def restore_layout(self, d):
+    def check_layout(self, d):
         try:
             layout = d['tile_manager']
         except KeyError:
-            log.error("No tile manager layout found")
-            return
+            raise ValueError("No tile manager layout found in layout dictionary")
         except TypeError:
             try:
                 d = json.loads(d)
             except ValueError as e:
-                log.error("Error loading layout: %s" % str(e))
-                return
+                raise ValueError(f"Error loading layout: {e}")
             layout = d['tile_manager']
+        return layout
+
+    def restore_layout(self, d):
+        try:
+            layout = self.check_layout(d)
+        except ValueError as e:
+            log.error(str(e))
+            return
         try:
             self.replace_all(layout, d.get('sidebars', []))
         except KeyError as e:
@@ -1066,6 +1090,13 @@ class ViewContainer(object):
         for view in self.views:
             view.remove_all()
         self.remove()
+
+    def iter_views(self):
+        for view in self.views:
+            try:
+                yield from view.iter_views()
+            except AttributeError:
+                yield view
 
     def find_uuid(self, uuid):
         for view in self.views:
