@@ -717,7 +717,7 @@ class ZoomRulerBase(object):
                 if (event.LeftIsDown() and event.AltDown()) or event.MiddleIsDown():
                     op = "start drag"
                 elif event.ShiftDown() and self.ruler.has_selection:
-                    op = "extend selection"
+                    op = "start extend selection"
                 else:
                     op = "start selection"
             elif event.LeftUp():
@@ -783,6 +783,16 @@ class ZoomRulerBase(object):
                 self.ruler.selected_ranges = [(self.select_start, self.select_end)]
                 self.selection_started_callback(self.ruler.selected_ranges)
                 self.Refresh()
+        elif op == "start extend selection":
+            last_start, last_end = self.ruler.selected_ranges[-1]
+            value = self.position_to_value(pos)
+            start, end = self.select_start, self.select_end
+            if value < self.select_start:
+                self.select_start = end
+            self.select_end = value
+            self.ruler.selected_ranges[-1] = (self.select_start, self.select_end)
+            self.selection_extended_callback(self.ruler.selected_ranges, self.ruler.marks_in_selection())
+            self.Refresh()
         elif op == "extend selection":
             last_start, last_end = self.ruler.selected_ranges[-1]
             value = self.position_to_value(pos)
@@ -790,6 +800,10 @@ class ZoomRulerBase(object):
             self.selection_extended_callback(self.ruler.selected_ranges, self.ruler.marks_in_selection())
             self.Refresh()
         elif op == "finish selection":
+            start, end = self.ruler.selected_ranges[-1]
+            if end < start:
+                start, end = end, start
+            self.select_start, self.select_end = start, end
             self.selection_finished_callback(self.ruler.selected_ranges)
             if self.HasCapture():
                 self.ReleaseMouse()
