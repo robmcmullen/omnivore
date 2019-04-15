@@ -50,6 +50,7 @@ class LabeledRuler(RulerCtrl):
         self._mark_pen = wx.Pen(wx.RED)
         self._selected_mark_pen = wx.Pen(wx.RED, 2)
         self._pixel_hit_distance = 3
+        self._drag_handle_hit_distance = 6
         self._highlight = wx.Colour(100, 200, 230)
         self._range_color = wx.Colour(255, 100, 100)
         self._caret_color = wx.Colour(50, 100, 230)
@@ -357,6 +358,17 @@ class LabeledRuler(RulerCtrl):
                 return data
         return None
 
+    def hit_test_value(self, mouse_pos, value):
+        if mouse_pos < 0 or mouse_pos >= self._length:
+            return None
+
+        x, y = self.GetViewStart()
+        mouse_pos += x
+        pos = self.value_to_position(value)
+        if pos is not None and abs(mouse_pos - pos) < self._drag_handle_hit_distance:
+            return True
+        return False
+
     def LabelString(self, d, major=None):
         if self._format == TimeFormat:
             if self._timeformat == DateFormat:
@@ -582,6 +594,7 @@ class ZoomRulerBase(object):
             "select": wx.Cursor(wx.CURSOR_ARROW),
             "drag_mode": self.can_drag_cursor,
             "dragging": self.dragging_cursor,
+            "drag handle": wx.Cursor(wx.CURSOR_SIZEWE),
         }
         self.cursor_mode = "select"
 
@@ -739,6 +752,14 @@ class ZoomRulerBase(object):
                 op = "unknown"
                 next_mode = mode
 
+        elif mode == "drag handle":
+            if event.ButtonDown():
+                if event.LeftIsDown():
+                    op = "start extend selection"
+                    next_mode = "select"
+            elif event.Moving():
+                op = "hit test"
+
         elif mode == "drag_mode":
             if event.ButtonDown():
                 if (event.LeftIsDown() and event.AltDown()) or event.MiddleIsDown():
@@ -787,8 +808,13 @@ class ZoomRulerBase(object):
             last_start, last_end = self.ruler.selected_ranges[-1]
             value = self.position_to_value(pos)
             start, end = self.select_start, self.select_end
-            if value < self.select_start:
-                self.select_start = end
+            if mode == "drag handle":
+                # nearest end to handle determines which edge is moving
+                if abs(value - start) < abs(value - end):
+                    self.select_start = end
+            else:
+                if value < self.select_start:
+                    self.select_start = end
             self.select_end = value
             self.ruler.selected_ranges[-1] = (self.select_start, self.select_end)
             self.selection_extended_callback(self.ruler.selected_ranges, self.ruler.marks_in_selection())
@@ -824,11 +850,21 @@ class ZoomRulerBase(object):
             if self.HasCapture():
                 self.ReleaseMouse()
         elif op == "hit test":
+            if self.has_selection:
+                start, end = self.ruler.selected_ranges[-1]
+                if self.ruler.hit_test_value(pos, start) or self.ruler.hit_test_value(pos, end):
+                    next_mode = "drag handle"
             label = self.ruler.hit_test(pos)
             if label is not None:
                 self.over_item_callback(pos, label)
             else:
                 self.not_over_item_callback(pos)
+        elif op == "drag handle":
+            start, end = self.ruler.selected_ranges[-1]
+            if self.ruler.hit_test_value(pos, start) or self.ruler.hit_test_value(pos, end):
+                pass
+            else:
+                next_mode = "select"
         elif op == "select item":
             self.caret_value = None
             if self.ruler.has_selection:
@@ -1125,6 +1161,11 @@ if __name__ == "__main__":
             return info
 
 
+    class DebugZoomRuler(VirtualZoomRuler):
+        def selected_item_callback(self, item):
+            print(f"item:{item}")
+
+
     app = wx.App()
     frm = wx.Frame(None,-1,"Test",style=wx.TAB_TRAVERSAL|wx.DEFAULT_FRAME_STYLE,
                    size=(800,400))
@@ -1134,7 +1175,7 @@ if __name__ == "__main__":
     text = wx.StaticText(panel, -1, "Just a placeholder here.")
     sizer.Add(text, 1, wx.EXPAND)
 
-    scroll = VirtualZoomRuler(panel)
+    scroll = DebugZoomRuler(panel)
     sizer.Add(scroll, 0, wx.EXPAND)
     scroll.rebuild(SampleData)
 
