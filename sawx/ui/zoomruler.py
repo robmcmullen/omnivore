@@ -54,7 +54,7 @@ class LabeledRuler(RulerCtrl):
         self._highlight = wx.Colour(100, 200, 230)
         self._range_color = wx.Colour(255, 100, 100)
         self._caret_color = wx.Colour(50, 100, 230)
-        self._caret_pen = wx.Pen(self._caret_color)
+        self._caret_pen = wx.Pen(self._caret_color, 3)
         self.selected_ranges = []
         self.visible_range = (0,0)
         self.mark_length = 10  # pixels
