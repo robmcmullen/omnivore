@@ -81,7 +81,7 @@ class DockTarget(object):
         source_dc = wx.WindowDC(win)
 
         drag_bitmap = wx.Bitmap(rect.width, rect.height)
-        print(f"drag_bitmap {drag_bitmap}")
+        # print(f"drag_bitmap {drag_bitmap}")
         memDC = wx.MemoryDC()
         memDC.SelectObject(drag_bitmap)
         memDC.Blit(0, 0, rect.width, rect.height, source_dc, 0, 0)
@@ -1104,7 +1104,7 @@ class ViewContainer(object):
 
     def replace_clients_by_uuid(self, uuid_map):
         for view in self.iter_views():
-            print(view, view.client.child_uuid)
+            # print(view, view.client.child_uuid)
             try:
                 old_view = uuid_map[view.client.child_uuid]
             except KeyError:
@@ -1114,7 +1114,7 @@ class ViewContainer(object):
                 view.remove_client()
                 view.attach_client(client)
                 client.Show()  # in case moving from sidebar to main area
-            print(view, view.client.child_uuid)
+            # print(view, view.client.child_uuid)
 
     def find_uuid(self, uuid):
         for view in self.views:
