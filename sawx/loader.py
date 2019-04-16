@@ -36,6 +36,7 @@ class FileGuess:
         self.uri = uri
         self.fh = open(uri, 'rb')
         self._sample_data = None
+        self._sample_lines = None
         self._all_data = None
         self._is_binary = None
         self._is_zipfile = None
@@ -47,6 +48,12 @@ class FileGuess:
         if self._sample_data is None:
             self._sample_data = self.fh.read(10240)
         return self._sample_data
+
+    @property
+    def sample_lines(self):
+        if self._sample_lines is None:
+            self._sample_lines = self.sample_data.splitlines()
+        return self._sample_lines
 
     @property
     def all_data(self):
