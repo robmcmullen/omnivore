@@ -268,6 +268,12 @@ class SawxActionListMixin:
 class SawxListAction(SawxActionListMixin, SawxAction):
     def sync_menu_item_from_editor(self, action_key, menu_item):
         if self.current_list:
+            if self.get_index(action_key) == 0:
+                # Only need to check one action key because they all use the
+                # same list of items
+                new_list = self.calc_list_items()
+                if new_list != self.current_list:
+                    raise errors.RecreateDynamicMenuBar
             state = self.calc_enabled(action_key)
             menu_item.Enable(state)
         else:
