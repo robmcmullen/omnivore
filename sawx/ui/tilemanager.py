@@ -1113,6 +1113,7 @@ class ViewContainer(object):
                 client = old_view.detach_client()
                 view.remove_client()
                 view.attach_client(client)
+                client.Show()  # in case moving from sidebar to main area
             print(view, view.client.child_uuid)
 
     def find_uuid(self, uuid):
