@@ -59,3 +59,11 @@ class ExpandZip(object):
                 return pathname
         else:
             raise OSError(f"No file ending in {ext} in archive")
+
+
+def save_to_flat_zip(dest_filename, files):
+    with open(dest_filename, "wb") as fh:
+        zf = zipfile.ZipFile(fh, mode='w', compression=zipfile.ZIP_DEFLATED)
+        for source in files:
+            zf.write(source, os.path.basename(source), zipfile.ZIP_STORED)
+        zf.close()
