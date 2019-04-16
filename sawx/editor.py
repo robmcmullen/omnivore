@@ -312,7 +312,7 @@ class SawxEditor:
             self.save_session()
         self.save_success()
 
-    def save_as_image(self, uri):
+    def save_as_image(self, uri, raw_data=None):
         """ Saves the contents of the editor in a maproom project file
         """
         valid = {
@@ -329,11 +329,15 @@ class SawxEditor:
         else:
             t = valid[ext]
 
-        raw_data = self.get_numpy_image()
+        if raw_data is None:
+            raw_data = self.get_numpy_image()
         if raw_data is not None:
             h, w, depth = raw_data.shape
             image = wx.Image(w, h, raw_data)
             image.SaveFile(uri, t)
+
+    def get_numpy_image_before_prompt(self):
+        pass
 
     def get_numpy_image(self):
         raise NotImplementedError

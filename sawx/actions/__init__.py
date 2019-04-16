@@ -94,9 +94,14 @@ class save_as_image(save_as):
 
     def perform(self, action_key):
         e = self.editor
+        try:
+            raw_data = e.get_numpy_image_before_prompt()
+        except RuntimeError:
+            # cancelled
+            return
         path = e.frame.prompt_local_file_dialog("Save As Image", save=True, default_filename=e.document.root_name, wildcard=get_file_dialog_wildcard("Images", [".png", ".jpg"]))
         if path is not None:
-            e.save_as_image(path)
+            e.save_as_image(path, raw_data)
 
 class quit(SawxAction):
     def calc_name(self, action_key):
