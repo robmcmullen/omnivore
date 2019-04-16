@@ -6,7 +6,7 @@ from .action import get_action_id
 
 import logging
 log = logging.getLogger(__name__)
-sync_log = logging.getLogger("sync")
+sync_log = logging.getLogger("sync-toolbar")
 
 
 class ToolbarDescription:
