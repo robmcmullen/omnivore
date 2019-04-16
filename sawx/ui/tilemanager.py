@@ -258,6 +258,7 @@ class DockTarget(object):
     def detach_client(self):
         client = self.client
         if client is not None:
+            log.debug(f"detach_client: moving {client} to hiding space")
             client.Reparent(self.tile_mgr.hiding_space)
         self.client = None
         return client
@@ -374,6 +375,14 @@ class TileManager(wx.Window):
 
         def reparent_client(self, client):
             client.Reparent(self)
+
+    def show_window_hierarchy(self, start=None, indent=""):
+        if start is None:
+            start = self
+        children = start.GetChildren()
+        print(f"{indent}{start.GetName()}: {len(children)}")
+        for child in children:
+            self.show_window_hierarchy(child, "    " + indent)
 
     def __init__(self, parent, layout_direction=wx.HORIZONTAL, name="top", toggle_checker=None, *_args, **_kwargs):
         wx.Window.__init__(self, parent, name=name, *_args, **_kwargs)
