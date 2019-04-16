@@ -54,10 +54,12 @@ class SawxFrame(wx.Frame):
         self.SetSizer(sizer)
 
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.on_page_changed)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_closing)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.on_page_closed)
 
         self.active_editor = None
         self.active_editor_can_paste = False
+        self.pending_editor_close = None
         if uri is not None:
             self.load_file(uri)
         else:
@@ -156,14 +158,15 @@ class SawxFrame(wx.Frame):
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
 
-    def close_editor(self, editor):
-        index = self.find_index_of_editor(editor)
+    def close_editor(self, editor, remove=True):
         control = editor.control
+        if remove:
+            index = self.find_index_of_editor(editor)
+            self.notebook.RemovePage(index)
+            control.Destroy()
         control.editor = None
-        editor.prepare_destroy()
-        self.notebook.RemovePage(index)
-        control.Destroy()
         editor.control = None
+        wx.CallAfter(self.find_active_editor)
         del editor
 
     def load_file(self, path, current_editor=None, args=None):
@@ -212,6 +215,7 @@ class SawxFrame(wx.Frame):
     def enumerate_tabs(self):
         for index in range(self.notebook.GetPageCount()):
             control = self.notebook.GetPage(index)
+            log.debug(f"index={index}, control={control}, editor={control.editor}")
             yield index, control, control.editor
 
     def find_index_of_editor(self, editor):
@@ -221,17 +225,25 @@ class SawxFrame(wx.Frame):
         for index in range(self.notebook.GetPageCount()):
             if control == self.notebook.GetPage(index):
                 return control.editor
-        raise EditorNotFound
+        raise errors.EditorNotFound
 
     def find_index_of_control(self, control):
+        log.debug(f"find_index_of_control: looking for control={control}")
         for index in range(self.notebook.GetPageCount()):
-            if control == self.notebook.GetPage(index):
+            notebook_control = self.notebook.GetPage(index)
+            log.debug(f"find_index_of_control: index={index}, control={notebook_control}")
+            if control == notebook_control:
                 return index
-        raise EditorNotFound
+        raise errors.EditorNotFound
 
     def find_editor_from_index(self, index):
         control = self.notebook.GetPage(index)
         return self.find_editor_from_control(control)
+
+    def find_active_editor(self):
+        control = self.notebook.GetCurrentPage()
+        editor = self.find_editor_from_control(control)
+        self.make_active(editor, True)
 
     #### Event callbacks
 
@@ -281,15 +293,26 @@ class SawxFrame(wx.Frame):
     def on_page_changed(self, evt):
         index = evt.GetSelection()
         editor = self.find_editor_from_index(index)
-        log.debug(f"on_page_changed: page id: {index}, {editor}")
+        log.debug(f"on_page_changed: page id: {index}, {editor.document.uri}")
         self.make_active(editor, True)
         evt.Skip()
 
-    def on_page_closed(self, evt):
+    def on_page_closing(self, evt):
         index = evt.GetSelection()
-        log.debug(f"on_page_closed: page id: {index}")
         editor = self.find_editor_from_index(index)
-        self.close_editor(editor)
+        self.pending_editor_close = index, editor
+        log.debug(f"on_page_changing: page id: {index}, {editor.document.uri}")
+        editor.prepare_destroy()
+        evt.Skip()
+
+    def on_page_closed(self, evt):
+        index, editor = self.pending_editor_close
+        count = self.notebook.GetPageCount()
+        if index >= count:
+            index = count - 1
+        log.debug(f"on_page_closed: new active page id: {index}")
+        self.close_editor(editor, remove=False)
+        self.pending_editor_close = None
         evt.Skip()
 
     def on_timer(self, evt):

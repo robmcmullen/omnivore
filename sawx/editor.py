@@ -263,9 +263,10 @@ class SawxEditor:
                 raise RuntimeError("No preference module {self.preferences_module}")
 
     def prepare_destroy(self):
-        print(f"prepare_destroy: {self.tab_name}")
-        self.control = None
-        self.frame = None
+        """Release any resources held by the editor, but don't delete the main
+        control as that will be deleted by the tabbed notebook control.
+        """
+        pass
 
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Sawx editors")
