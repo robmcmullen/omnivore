@@ -240,8 +240,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     def get_rects_from_selections(self):
         rects = []
         for caret in self.caret_handler.carets_with_selection:
-            _, _, ul, lr = self.segment_viewer.segment.get_rect_indexes(caret.anchor_start_index, caret.anchor_end_index, self.table.items_per_row)
-            rects.append((ul, lr))
+            rects.append(caret.range)
         return rects
 
     def get_data_from_rect(self, r):
@@ -251,7 +250,22 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         data = d[r1:r2, c1:c2]
         return r2 - r1, c2 - c1, data
 
-    #####
+    ##### Copy/paste
+
+    def calc_clipboard_data_objs(self, focused_control):
+        rects = self.get_rects_from_selections()
+        data = []
+        for (r1, c1), (r2, c2) in rects:
+            start, _ = self.table.get_index_range(r1, c1)
+            _, end = self.table.get_index_range(r2, c2)
+            data.append((start, end, self.table.data[start:end]))
+        if len(data) > 1:
+            data_obj = wx.CustomDataObject("numpy,multiple")
+            # multiple
+
+
+
+
 
     def get_start_end_index_of_row(self, row):
         return self.table.get_start_end_index_of_row(row)

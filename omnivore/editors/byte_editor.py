@@ -359,8 +359,11 @@ class ByteEditor(TileManagerBase):
     def clipboard_data_format(self):
         return self.focused_viewer.clipboard_data_format
 
-    def copy_selection_to_clipboard(self, name):
-        return clipboard.set_from_selection(self.focused_viewer, name)
+    def calc_clipboard_data_from(self, focused):
+        print("FOCUSED CONTROL", focused)
+        # FIXME: for the moment, assume focused control is in focused viewer
+        data_objs = self.focused_viewer.control.calc_clipboard_data_objs(focused)
+        return data_objs
 
     def get_paste_data_from_clipboard(self):
         return clipboard.get_paste_data(self.focused_viewer)
