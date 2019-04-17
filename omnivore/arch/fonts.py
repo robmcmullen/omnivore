@@ -5,7 +5,7 @@ from collections import defaultdict
 import numpy as np
 import wx
 
-from sawx.templates import iter_templates
+from sawx.persistence import iter_templates
 
 from . import colors
 

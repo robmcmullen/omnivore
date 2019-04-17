@@ -1,6 +1,6 @@
 import numpy as np
 
-from sawx.templates import get_template
+from sawx.persistence import get_template
 
 
 class JumpmanSaveAsATR(object):

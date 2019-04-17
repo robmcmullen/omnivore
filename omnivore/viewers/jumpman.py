@@ -7,7 +7,7 @@ from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
-from sawx.templates import get_template
+from sawx.persistence import get_template
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel

@@ -16,7 +16,7 @@ from sawx.framework.editor import FrameworkEditor
 import sawx.framework.clipboard as clipboard
 from sawx.utils.file_guess import FileMetadata
 from sawx.ui.tilemanager import TileManager
-from sawx.templates import get_template
+from sawx.persistence import get_template
 from ..byte_edit.byte_editor import ByteEditor
 from ..arch.machine import Machine, Atari800
 from .document import EmulationDocument
