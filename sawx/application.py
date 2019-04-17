@@ -7,7 +7,7 @@ import wx
 import wx.adv
 
 from .frame import SawxFrame
-from .editor import get_editors, find_editor_class_by_name
+from .editor import get_editors, find_editor_class_by_id
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
 from . import persistence
@@ -95,7 +95,7 @@ class SawxApp(wx.App):
         options, extra_args = parser.parse_known_args(args)
         if options.show_editors:
             for e in get_editors:
-                print(f"{e.name}: {e.ui_name}")
+                print(f"{e.editor_id}: {e.ui_name}")
         if options.debug_loggers:
             for logger_name in options.debug_loggers:
                 error_logger.enable_loggers(logger_name[0])
@@ -111,7 +111,7 @@ class SawxApp(wx.App):
                 task_arguments[item] = v
         log.debug("task arguments: %s" % task_arguments)
         try:
-            default_editor = find_editor_class_by_name(options.task_id)()
+            default_editor = find_editor_class_by_id(options.task_id)()
         except errors.EditorNotFound:
             default_editor = None
         log.debug(f"default editor: {default_editor}")

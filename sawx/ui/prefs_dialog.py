@@ -41,7 +41,7 @@ class PreferencesDialog(wx.Dialog):
         for e in editors:
             print(e, e.preferences_module)
             panel = wx.Panel(self.book, -1, size=(500,500))
-            text = wx.StaticText(panel, -1, e.preferences_module)
+            text = wx.StaticText(panel, -1, f"{e.editor_id}: {e.preferences_module}")
             sizer = wx.BoxSizer(wx.VERTICAL)
             panel.SetSizer(sizer)
             sizer.Add(text, 0, wx.ALL|wx.EXPAND, self.border)

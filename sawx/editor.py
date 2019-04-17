@@ -77,7 +77,7 @@ def find_editor_class_for_document(document):
             return editor
     raise errors.UnsupportedFileType(f"No editor available for {document}")
 
-def find_editor_class_by_name(name):
+def find_editor_class_by_id(editor_id):
     """Find the editor class given its class name
 
     Returns the SawxEditor subclass whose `name` class attribute matches
@@ -86,15 +86,15 @@ def find_editor_class_by_name(name):
     editors = get_editors()
     log.debug(f"finding editors using {editors}")
     for editor in editors:
-        if editor.name == name:
+        if editor.editor_id == editor_id:
             return editor
-        if name in editor.compatibility_names:
+        if editor_id in editor.compatibility_names:
             return editor
-    raise errors.EditorNotFound(f"No editor named {name}")
+    raise errors.EditorNotFound(f"No editor named {editor_id}")
 
 
 class SawxEditor:
-    name = "sawx_base_editor"
+    editor_id = "sawx_base_editor"
     ui_name = "Sawx Framework Base Editor"
 
     # list of alternate names for this editor, for compatibility with task_ids
@@ -346,7 +346,7 @@ class SawxEditor:
     def save_session(self):
         s = {}
         self.serialize_session(s)
-        self.document.save_session(self.name, s)
+        self.document.save_session(self.editor_id, s)
 
     def save_success(self, path=None):
         if path is None:
@@ -484,7 +484,7 @@ class SawxEditor:
         class.
 
         E.g. if there is a layout stored in the metadata, it will be in
-        metadata[self.name]['layout']:
+        metadata[self.editor_id]['layout']:
 
         {
             "omnivore.byte_edit": {
@@ -495,7 +495,7 @@ class SawxEditor:
         }
         """
         try:
-            layout_dict = metadata[self.name][keyword]
+            layout_dict = metadata[self.editor_id][keyword]
         except KeyError:
             layout_dict = {}
         return layout_dict

@@ -43,7 +43,9 @@ class TextEditorControl(KeyBindingControlMixin, wx.TextCtrl):
 
 
 class TextEditor(SawxEditor):
-    name = "text_editor"
+    editor_id = "text_editor"
+
+    ui_name = "Text Editor"
 
     @property
     def is_dirty(self):
@@ -140,7 +142,9 @@ class TextEditor(SawxEditor):
 
 
 class DebugTextEditor(TextEditor):
-    name = "debug"
+    editor_id = "debug"
+
+    ui_name = "Debug Text Editor"
 
     menubar_desc = [
         ["File",

@@ -34,7 +34,9 @@ class HtmlWindow(wx.html.HtmlWindow):
 
 
 class HtmlViewer(SawxEditor):
-    name = "html_viewer"
+    editor_id = "html_viewer"
+
+    ui_name = "HTML Viewer"
 
     toolbar_desc = [
         "open_file", "save_file", None, "copy"
@@ -60,7 +62,9 @@ class HtmlViewer(SawxEditor):
 
 
 class TitleScreen(HtmlViewer):
-    name = "title_screen"
+    editor_id = "title_screen"
+
+    ui_name = "Title Screen"
 
     transient = True
 

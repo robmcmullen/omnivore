@@ -293,14 +293,14 @@ class SawxDocument:
         fh.write(raw_data)
         fh.close()
 
-    def save_session(self, editor_name, editor_session):
+    def save_session(self, editor_id, editor_session):
         if not self.session_save_file_extension:
             log.debug("no filename extension for session data; not saving")
         else:
             s = {}
             self.serialize_session(s)
             if s and editor_session:
-                s[editor_name] = editor_session
+                s[editor_id] = editor_session
                 jsonpickle.set_encoder_options("json", sort_keys=True, indent=4)
                 text = jsonpickle.dumps(s)
                 text = jsonutil.collapse_json(text, 8, self.json_expand_keywords)
