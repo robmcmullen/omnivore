@@ -32,7 +32,7 @@ class Minibuffer(object):
         if label is not None:
             self.label = label
         elif self.command_cls is not None:
-            self.label = command_cls.pretty_name
+            self.label = command_cls.ui_name
         self.initial = initial
         self.help_text = help_text
         self.help_tip = help_tip

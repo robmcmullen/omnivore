@@ -95,7 +95,7 @@ def find_editor_class_by_name(name):
 
 class SawxEditor:
     name = "sawx_base_editor"
-    pretty_name = "Sawx Framework Base Editor"
+    ui_name = "Sawx Framework Base Editor"
 
     # list of alternate names for this editor, for compatibility with task_ids
     # from Sawx 1.0
@@ -217,11 +217,11 @@ class SawxEditor:
             if self.is_dirty:
                 uri = "\u2605" + uri
             return uri
-        return self.pretty_name
+        return self.ui_name
 
     @property
     def tab_name(self):
-        name = self.pretty_name
+        name = self.ui_name
         if self.document:
             name = self.document.name
         if self.is_dirty:

@@ -94,7 +94,7 @@ class SawxApp(wx.App):
         options, extra_args = parser.parse_known_args(args)
         if options.show_editors:
             for e in get_editors:
-                print(f"{e.name}: {e.pretty_name}")
+                print(f"{e.name}: {e.ui_name}")
         if options.debug_loggers:
             for logger_name in options.debug_loggers:
                 error_logger.enable_loggers(logger_name[0])
