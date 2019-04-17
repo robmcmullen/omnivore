@@ -3,6 +3,7 @@ import wx
 from ..action import SawxAction, SawxNameChangeAction, SawxListAction
 from ..persistence import iter_templates
 from ..ui.dialogs import prompt_for_dec, get_file_dialog_wildcard
+from ..ui.prefs_dialog import PreferencesDialog
 from .. import errors
 
 import logging
@@ -219,6 +220,9 @@ class select_invert(SawxAction):
 class prefs(SawxAction):
     def calc_name(self, action_key):
         return "Preferences"
+
+    def perform(self, action_key):
+        wx.GetApp().show_preferences_dialog(self.editor.frame)
 
 class about(SawxAction):
     def calc_name(self, action_key):

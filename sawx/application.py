@@ -13,6 +13,7 @@ from .filesystem import fsopen as open
 from . import persistence
 from .events import EventHandler
 from .ui import error_logger
+from .ui.prefs_dialog import PreferencesDialog
 from .utils.background_http import BackgroundHttpDownloader
 from . import errors
 
@@ -176,6 +177,10 @@ class SawxApp(wx.App):
         info.SetWebSite(self.app_website)
 
         dialog = wx.adv.AboutBox(info)
+
+    def show_preferences_dialog(self, parent):
+        dialog = PreferencesDialog(parent)
+        dialog.ShowModal()
 
     #### Convenience functions
 
