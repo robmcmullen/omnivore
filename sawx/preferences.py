@@ -131,6 +131,13 @@ class cached_property:
 
 
 class SawxPreferences:
+    display_order = [
+        ("text_font", "wx.Font"),
+        ("text_color", "wx.Colour"),
+        ("background_color", "wx.Colour"),
+        ("empty_background_color", "wx.Colour"),
+    ]
+
     def __init__(self):
         self.text_font = str_to_font(def_font)
         self.background_color = wx.Colour(wx.WHITE)

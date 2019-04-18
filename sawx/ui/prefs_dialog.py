@@ -2,6 +2,7 @@ import sys
 import time
 
 import wx
+import wx.lib.scrolledpanel
 
 from ..editor import get_editors
 
@@ -39,9 +40,9 @@ class PreferencesDialog(wx.Dialog):
     def add_pages(self):
         editors = get_editors()
         for e in editors:
-            print(e, e.preferences_module)
+            print(e, e.get_preferences())
             panel = wx.Panel(self.book, -1, size=(500,500))
-            text = wx.StaticText(panel, -1, f"{e.editor_id}: {e.preferences_module}")
+            text = wx.StaticText(panel, -1, f"{e.editor_id}: {e.preferences_module} {e.preferences}")
             sizer = wx.BoxSizer(wx.VERTICAL)
             panel.SetSizer(sizer)
             sizer.Add(text, 0, wx.ALL|wx.EXPAND, self.border)
@@ -57,3 +58,238 @@ class PreferencesDialog(wx.Dialog):
 
     def persist_preferences(self):
         print("STUFF!")
+
+
+class InfoField:
+    same_line = True
+    display_label = True
+
+    # wx.Sizer proportion of the main control (not the label).  See the
+    # wx.Sizer docs, but basically 0 will fix vertical size to initial size, >
+    # 0 will fill available space based on the total proportion in the sizer.
+    vertical_proportion = 0
+
+    default_width = 100
+
+    popup_width = 300
+
+    def __init__(self, panel, settings, desc, prefs, attrib_name):
+        self.panel = panel
+        self.field_name = desc
+        self.prefs = prefs
+        self.attrib_name = attrib_name
+        self.create(settings)
+
+    def is_displayed(self, layer):
+        return True
+
+    def show(self, state=True):
+        self.parent.Show(state)
+
+    def hide(self):
+        self.show(False)
+
+    def create(self, settings):
+        self.parent = wx.Window(self.panel)
+        self.box = wx.BoxSizer(wx.VERTICAL)
+        self.parent.SetSizer(self.box)
+        if self.display_label:
+            self.label = wx.StaticText(self.parent, label=self.field_name, style=wx.ST_ELLIPSIZE_END)
+            bold_font = self.parent.GetFont()
+            bold_font.SetWeight(weight=wx.FONTWEIGHT_BOLD)
+            self.label.SetFont(bold_font)
+        self.create_all_controls(settings)
+        if self.same_line and self.display_label:
+            hbox = wx.BoxSizer(wx.HORIZONTAL)
+            hbox.Add(self.label, 99, wx.ALIGN_CENTER)
+            hbox.AddStretchSpacer(1)
+            hbox.Add(self.ctrl, 0, wx.ALIGN_CENTER)
+            for extra in self.extra_ctrls:
+                hbox.Add(extra, 0, wx.ALIGN_CENTER)
+            self.box.Add(hbox, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, self.panel.SIDE_SPACING)
+        else:
+            if self.display_label:
+                self.box.Add(self.label, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, self.panel.SIDE_SPACING)
+                self.box.AddSpacer(self.panel.LABEL_SPACING)
+            self.box.Add(self.ctrl, self.vertical_proportion, wx.EXPAND | wx.LEFT | wx.RIGHT, self.panel.SIDE_SPACING)
+            for extra in self.extra_ctrls:
+                self.box.Add(extra, 0, wx.ALIGN_CENTER)
+        self.box.AddSpacer(self.panel.VALUE_SPACING)
+
+    def create_all_controls(self, settings):
+        self.ctrl = self.create_control(settings)
+        self.extra_ctrls = self.create_extra_controls(settings)
+        self.create_extra_event_handlers()
+
+    def is_editable_control(self, ctrl):
+        return ctrl == self.ctrl
+
+    def create_extra_controls(self, settings):
+        return []
+
+    def create_extra_event_handlers(self):
+        pass
+
+    def add_to_parent(self):
+        self.panel.sizer.Add(self.parent, self.vertical_proportion, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.ALIGN_TOP, 0)
+        self.show(True)
+
+    def fill_data(self):
+        raise NotImplementedError
+
+    def is_valid(self):
+        return True
+
+    def wants_focus(self):
+        return False
+
+    def set_focus(self):
+        pass
+
+    def process_command(self, cmd):
+        # Override the normal refreshing of the InfoPanel when editing the
+        # properties here because refreshing them messes up the text editing.
+        self.panel.project.process_command(cmd, override_editable_properties_changed=False)
+
+
+class LabelField(InfoField):
+    alignment_style = wx.ALIGN_RIGHT
+
+    def create_control(self, settings):
+        c = wx.StaticText(self.parent, style=self.alignment_style)
+        return c
+
+
+class TextEditField(InfoField):
+    def create_control(self, settings):
+        c = wx.TextCtrl(self.parent)
+        c.Bind(wx.EVT_TEXT, self.on_text_changed)
+        c.SetEditable(True)
+        return c
+
+    def fill_data(self):
+        try:
+            text = self.get_value()
+            self.ctrl.Enable(True)
+        except IndexError:
+            text = ""
+            self.ctrl.Enable(False)
+        self.ctrl.ChangeValue(text)
+        self.is_valid()
+
+    def get_value(self):
+        """Return a text representation of the attribute so populate the
+        TextCtrl."""
+        raise NotImplementedError
+
+    def is_valid(self):
+        c = self.ctrl
+        c.SetBackgroundColour("#FFFFFF")
+        try:
+            self.parse_from_string()
+            valid = True
+        except Exception:
+            c.SetBackgroundColour("#FF8080")
+            valid = False
+        self.ctrl.Refresh()
+        return valid
+
+    def parse_from_string(self):
+        return self.ctrl.GetValue()
+
+    def on_text_changed(self, evt):
+        if self.is_valid():
+            value = self.parse_from_string()
+            setattr(self.prefs, self.attrib_name, value)
+
+    def initial_text_input(self, text):
+        self.ctrl.SetValue(text)
+        self.ctrl.SetInsertionPointEnd()  # (self.ctrl.GetLastPosition())
+
+
+class IntField(TextEditField):
+    def get_value(self):
+        value = getattr(self.prefs, self.attrib_name)
+        text = str(value)
+        return text
+
+    def parse_from_string(self):
+        return int(self.ctrl.GetValue())
+
+
+known_fields = {
+    "int": IntField,
+    # "bool": BoolField,
+    # "Font": FontField,
+}
+
+
+def find_field(field_type):
+    if ":" in field_type:
+        field_cls, field_settings = field_type.split(":", 1)
+    try:
+        field_cls = known_fields[attrib_cls_name]
+        settings = None
+    except KeyError:
+        log.error(f"Unknown preference type {field_type}")
+        pass
+    return field_cls, settings
+
+def calc_field(parent, prefs, attrib_name, field_type, desc):
+    field_cls, settings = find_field(field_type)
+    field = field_cls(parent, settings, desc, prefs, attrib_name)
+    return field
+
+
+PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel
+class PreferencesPanel(PANELTYPE):
+    """
+    A panel for displaying and manipulating the properties of a layer.
+    """
+    LABEL_SPACING = 0
+    VALUE_SPACING = 3
+    SIDE_SPACING = 5
+
+    window_name = "InfoPanel"
+
+    def __init__(self, parent, editor):
+        PANELTYPE.__init__(self, parent, name=self.window_name, size=size)
+
+        # Mac/Win needs this, otherwise background color is black
+        attr = self.GetDefaultAttributes()
+        self.SetBackgroundColour(attr.colBg)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.sizer)
+
+        self.display_panel_for_editor(editor)
+
+    def display_panel_for_editor(self, editor):
+        self.editor = editor
+        prefs = editor.preferences
+
+        self.sizer.AddSpacer(self.LABEL_SPACING)
+
+        self.fields = []
+        for field_info in editor.display_order:
+            attrib_cls = None
+            desc = None
+            if isinstance(field_info, str):
+                attrib_name = field_info
+            else:
+                try:
+                    attrib_name, attrib_cls_name, desc = field_info
+                except ValueError:
+                    try:
+                        attrib_name, attrib_cls_name = field_info
+                    except ValueError:
+                        attrib_name = field_info[0]
+            desc = attrib_name.replace("_", " ").title()
+            if attrib_cls_name is None:
+                attrib = getattr(prefs, attrib_name)
+                attrib_cls_name = attrib.__class__.__name__
+
+            field = calc_field(self, prefs, attrib_name, attrib_cls_name, desc)
+            self.fields.append(field)
+
+        self.sizer.Layout()
