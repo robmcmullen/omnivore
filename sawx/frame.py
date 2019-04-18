@@ -28,7 +28,6 @@ class SawxFrame(wx.Frame):
         self.create_icon()
 
         self.raw_menubar = wx.MenuBar()
-        self.SetMenuBar(self.raw_menubar)
         self.Bind(wx.EVT_MENU, self.on_menu)
 
         self.raw_toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
@@ -43,15 +42,21 @@ class SawxFrame(wx.Frame):
 
         if wx.Platform == "__WXMAC__":
             self.Bind(wx.EVT_MENU_OPEN, self.on_menu_open_mac)
-        elif wx.Platform == "__WXMSW__":
-            self.Bind(wx.EVT_MENU_OPEN, self.on_menu_open_win)
         else:
-            # EVT_MENU_OPEN fires every time the mouse moves to a different main
-            # menu item, so this reduces it to only once: when the mouse
-            # enters the menubar control itself. This doesn't seem to work on
-            # other platforms, as they have native menubars which don't seem
-            # to operate like regular wx.Window classes.
-            self.raw_menubar.Bind(wx.EVT_ENTER_WINDOW, self.on_menu_open_linux)
+            # Mac needs deferred SetMenuBar because that's where it moves the About
+            # and Preferences to the Application menu. Other platforms set it
+            # here and forget about it.
+            self.SetMenuBar(self.raw_menubar)
+
+            if wx.Platform == "__WXMSW__":
+                self.Bind(wx.EVT_MENU_OPEN, self.on_menu_open_win)
+            else:
+                # EVT_MENU_OPEN fires every time the mouse moves to a different main
+                # menu item, so this reduces it to only once: when the mouse
+                # enters the menubar control itself. This doesn't seem to work on
+                # other platforms, as they have native menubars which don't seem
+                # to operate like regular wx.Window classes.
+                self.raw_menubar.Bind(wx.EVT_ENTER_WINDOW, self.on_menu_open_linux)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.notebook = aui.AuiNotebook(self, -1)
@@ -96,6 +101,8 @@ class SawxFrame(wx.Frame):
         except errors.RecreateDynamicMenuBar:
             self.create_menubar()
             self.menubar.sync_with_editor(self.raw_menubar)
+        if wx.Platform == "__WXMAC__":
+            self.SetMenuBar(self.raw_menubar)
 
     def create_toolbar(self):
         log.debug(f"create_toolbar: active editor={self.active_editor}")
