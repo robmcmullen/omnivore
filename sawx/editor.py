@@ -10,7 +10,7 @@ import wx
 from . import action
 from . import errors
 from . import clipboard
-# from . import preferences
+from . import preferences
 from .utils import jsonutil
 from .utils.command import StatusFlags
 from .menubar import MenuDescription
@@ -240,27 +240,13 @@ class SawxEditor:
         self.document = document
         self.last_loaded_uri = document.uri
         self.last_saved_uri = None
-        if self.__class__.preferences is None:
-            self.create_preferences()
+        self.get_preferences()
 
     @classmethod
-    def create_preferences(cls):
-        mod = importlib.import_module(cls.preferences_module)
-        fallback_cls = None
-        for name, obj in inspect.getmembers(mod):
-            if inspect.isclass(obj):
-                mro_names = [str(s) for s in obj.__mro__]
-                if "SawxPreferences" in mro_names[0]:
-                    fallback_cls = obj
-                for obj_name in mro_names[1:]:
-                    if "SawxPreferences" in obj_name:
-                        cls.preferences = obj()
-                        break
+    def get_preferences(cls):
         if cls.preferences is None:
-            if fallback_cls:
-                cls.preferences = fallback_cls()
-            else:
-                raise RuntimeError("No preference module {self.preferences_module}")
+            cls.preferences = preferences.find_preferences(cls.preferences_module)
+        return cls.preferences
 
     def prepare_destroy(self):
         """Release any resources held by the editor, but don't delete the main

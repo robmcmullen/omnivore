@@ -1,5 +1,7 @@
 import sys
 import time
+import importlib
+import inspect
 
 import wx
 
@@ -146,3 +148,13 @@ class SawxPreferences:
         dc.SetFont(self._text_font)
         self.text_font_char_width = dc.GetCharWidth()
         self.text_font_char_height = dc.GetCharHeight()
+
+
+def find_preferences(prefs_module):
+    mod = importlib.import_module(prefs_module)
+    prefs_cls = SawxPreferences
+    for name, obj in inspect.getmembers(mod):
+        if inspect.isclass(obj) and SawxPreferences in obj.__mro__[1:]:
+            prefs_cls = obj
+            break
+    return prefs_cls()
