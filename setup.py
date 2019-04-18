@@ -88,11 +88,11 @@ setup(
             'app = sawx.application',
         ],
         "sawx.documents": [
-            'text = sawx.documents.text',
+            '99text = sawx.documents.text',
         ],
         "sawx.loaders": [
-            'fleep = sawx.loaders.fleep',
-            'text = sawx.loaders.text',
+            '99fleep = sawx.loaders.fleep',
+            '98text = sawx.loaders.text',
         ],
         "sawx.editors": [
             'html = sawx.editors.html_viewer',
