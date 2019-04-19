@@ -126,6 +126,7 @@ class SawxApp(wx.App):
         else:
             frame = self.new_frame()
         frame.Show()
+        self.show_preferences_dialog(frame)
 
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon

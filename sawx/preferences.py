@@ -136,6 +136,8 @@ class SawxPreferences:
         ("text_color", "wx.Colour"),
         ("background_color", "wx.Colour"),
         ("empty_background_color", "wx.Colour"),
+        ("num_open_recent", "int"),
+        ("confirm_before_close", "bool"),
     ]
 
     def __init__(self):
@@ -143,6 +145,8 @@ class SawxPreferences:
         self.background_color = wx.Colour(wx.WHITE)
         self.text_color = wx.Colour(wx.BLACK)
         self.empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
+        self.num_open_recent = 15
+        self.confirm_before_close = True
 
     @property
     def text_font(self):
