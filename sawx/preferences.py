@@ -84,6 +84,17 @@ class SawxPreferences:
         self.text_font_char_width = dc.GetCharWidth()
         self.text_font_char_height = dc.GetCharHeight()
 
+    def copy_from(self, other):
+        for d in self.display_order:
+            attrib_name = d[0]
+            value = getattr(other, attrib_name)
+            setattr(self, attrib_name, value)
+
+    def clone(self):
+        other = self.__class__()
+        other.copy_from(self)
+        return other
+
 
 def find_preferences(prefs_module):
     mod = importlib.import_module(prefs_module)

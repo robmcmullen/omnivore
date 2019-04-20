@@ -55,14 +55,18 @@ class PreferencesDialog(wx.Dialog):
 
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
-            self.persist_preferences()
+            self.commit_preferences()
             self.EndModal(wx.ID_OK)
         else:
             self.EndModal(wx.ID_CANCEL)
         evt.Skip()
 
-    def persist_preferences(self):
-        print("STUFF!")
+    def commit_preferences(self):
+        print("Saving preferences!")
+        for i in range(self.book.GetPageCount()):
+            panel = self.book.GetPage(i)
+            print(panel.editor)
+            panel.editor.preferences.copy_from(panel.preferences)
 
 
 class InfoField:
@@ -420,7 +424,8 @@ class PreferencesPanel(PANELTYPE):
 
     def display_panel_for_editor(self, editor):
         self.editor = editor
-        prefs = editor.preferences
+        prefs = editor.preferences.clone()
+        self.preferences = prefs
 
         self.sizer.AddSpacer(self.LABEL_SPACING)
 
