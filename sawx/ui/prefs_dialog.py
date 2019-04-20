@@ -50,7 +50,6 @@ class PreferencesDialog(wx.Dialog):
 
         editors = get_editors()
         for e in editors:
-            print(e, e.get_preferences())
             try:
                 panel = EditorPreferencesPanel(self.book, e, size=(500,500))
             except RuntimeError:
@@ -69,11 +68,9 @@ class PreferencesDialog(wx.Dialog):
         evt.Skip()
 
     def commit_preferences(self):
-        print("Saving preferences!")
         for i in range(self.book.GetPageCount()):
             panel = self.book.GetPage(i)
-            print(panel.editor)
-            panel.editor.preferences.copy_from(panel.preferences)
+            panel.accept_preferences()
 
 
 class InfoField:
@@ -507,20 +504,29 @@ class PreferencesPanel(PANELTYPE):
 
         self.sizer.Layout()
 
+    def accept_preferences(self):
+        pass
+
 
 class ApplicationPreferencesPanel(PreferencesPanel):
     def __init__(self, parent, size=(-1,-1)):
-        prefs = preferences.find_application_preferences(wx.GetApp().preferences_module)
+        prefs = wx.GetApp().get_preferences().clone()
         PreferencesPanel.__init__(self, parent, prefs, size=size)
+
+    def accept_preferences(self):
+        wx.GetApp().get_preferences().copy_from(self.prefs)
 
 
 class EditorPreferencesPanel(PreferencesPanel):
     def __init__(self, parent, editor, size=(-1,-1)):
         self.editor = editor
-        prefs = editor.preferences.clone()
+        prefs = editor.get_preferences().clone()
         if not prefs.display_order:
             raise RuntimeError("No displayed preferences")
         s = editor.__mro__[1]
         if s.preferences_module == editor.preferences_module:
             raise RuntimeError("Unchanged preferences from superclass")
         PreferencesPanel.__init__(self, parent, prefs, size=size)
+
+    def accept_preferences(self):
+        self.editor.get_preferences().copy_from(self.prefs)

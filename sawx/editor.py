@@ -10,7 +10,7 @@ import wx
 from . import action
 from . import errors
 from . import clipboard
-from . import preferences
+from .preferences import find_editor_preferences
 from .utils import jsonutil
 from .utils.command import StatusFlags
 from .menubar import MenuDescription
@@ -162,7 +162,7 @@ class SawxEditor:
 
     preferences_module = "sawx.preferences"
 
-    preferences = None
+    _preferences = None
 
     # if an editor is marked as transient, it will be replaced if it's the
     # active frame when a new frame is added.
@@ -240,13 +240,16 @@ class SawxEditor:
         self.document = document
         self.last_loaded_uri = document.uri
         self.last_saved_uri = None
-        self.get_preferences()
 
     @classmethod
     def get_preferences(cls):
-        if cls.preferences is None:
-            cls.preferences = preferences.find_editor_preferences(cls.preferences_module)
-        return cls.preferences
+        if cls._preferences is None:
+            cls._preferences = find_editor_preferences(cls.preferences_module)
+        return cls._preferences
+
+    @property
+    def preferences(self):
+        return self.get_preferences()
 
     def prepare_destroy(self):
         """Release any resources held by the editor, but don't delete the main

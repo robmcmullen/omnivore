@@ -16,6 +16,7 @@ from .ui import error_logger
 from .ui.prefs_dialog import PreferencesDialog
 from .utils.background_http import BackgroundHttpDownloader
 from . import errors
+from .preferences import find_application_preferences
 
 import logging
 log = logging.getLogger(__name__)
@@ -70,6 +71,8 @@ class SawxApp(wx.App):
     }
 
     preferences_module = "sawx.preferences"
+
+    _preferences = None
 
     #### Initialization
 
@@ -155,6 +158,16 @@ class SawxApp(wx.App):
         self.ExitMainLoop()
 
     #### Application information
+
+    @classmethod
+    def get_preferences(cls):
+        if cls._preferences is None:
+            cls._preferences = find_application_preferences(cls.preferences_module)
+        return cls._preferences
+
+    @property
+    def preferences(self):
+        return self.get_preferences()
 
     @property
     def about_image_bitmap(self):
