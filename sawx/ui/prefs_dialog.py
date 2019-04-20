@@ -4,6 +4,7 @@ import time
 import wx
 import wx.lib.scrolledpanel
 
+from . import buttons
 from ..editor import get_editors
 
 import logging
@@ -278,9 +279,35 @@ class ChoiceField(InfoField):
         setattr(self.prefs, self.attrib_name, self.choices[index])
 
 
+class ColorPickerField(InfoField):
+    same_line = True
+
+    default_width = 100
+
+    def get_value(self):
+        return getattr(self.prefs, self.attrib_name)
+
+    def fill_data(self):
+        rgba = self.get_value()
+        self.ctrl.SetColour(rgba)
+
+    def create_control(self, settings):
+        color = (0, 0, 0)
+        c = buttons.ColorSelectButton(self.container, -1, "", color, size=(self.default_width, -1), style=wx.BORDER_NONE)
+        c.Bind(buttons.EVT_COLORSELECT, self.on_color_changed)
+        return c
+
+    def on_color_changed(self, event):
+        rgba = event.GetValue()
+        color = wx.Colour(rgba)
+        setattr(self.prefs, self.attrib_name, color)
+
+
 known_fields = {
     "int": IntField,
     "bool": BoolField,
+    "wx.Colour": ColorPickerField,
+    "Color": ColorPickerField,
     # "Font": FontField,
 }
 
