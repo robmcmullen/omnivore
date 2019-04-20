@@ -50,12 +50,14 @@ class PreferencesDialog(wx.Dialog):
         editors = get_editors()
         for e in editors:
             print(e, e.get_preferences())
-            panel = EditorPreferencesPanel(self.book, e, size=(500,500))
-            # text = wx.StaticText(panel, -1, f"{e.editor_id}: {e.preferences_module} {e.preferences}")
-            # sizer = wx.BoxSizer(wx.VERTICAL)
-            # panel.SetSizer(sizer)
-            # sizer.Add(text, 0, wx.ALL|wx.EXPAND, self.border)
-            self.book.AddPage(panel, e.ui_name)
+            try:
+                panel = EditorPreferencesPanel(self.book, e, size=(500,500))
+            except RuntimeError:
+                # this editor has no preferences or preferences are same as its
+                # superclass
+                pass
+            else:
+                self.book.AddPage(panel, e.ui_name)
 
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
@@ -496,4 +498,9 @@ class EditorPreferencesPanel(PreferencesPanel):
     def __init__(self, parent, editor, size=(-1,-1)):
         self.editor = editor
         prefs = editor.preferences.clone()
+        if not prefs.display_order:
+            raise RuntimeError("No displayed preferences")
+        s = editor.__mro__[1]
+        if s.preferences_module == editor.preferences_module:
+            raise RuntimeError("Unchanged preferences from superclass")
         PreferencesPanel.__init__(self, parent, prefs, size=size)
