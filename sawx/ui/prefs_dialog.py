@@ -5,6 +5,7 @@ import wx
 import wx.lib.scrolledpanel
 
 from . import buttons
+from . import fonts
 from ..editor import get_editors
 
 import logging
@@ -139,6 +140,9 @@ class InfoField:
         self.panel.sizer.Add(self.container, self.vertical_proportion, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.ALIGN_TOP, 0)
         self.show(True)
 
+    def get_value(self):
+        return getattr(self.prefs, self.attrib_name)
+
     def fill_data(self):
         raise NotImplementedError
 
@@ -181,11 +185,6 @@ class TextEditField(InfoField):
             self.ctrl.Enable(False)
         self.ctrl.ChangeValue(text)
         self.is_valid()
-
-    def get_value(self):
-        """Return a text representation of the attribute so populate the
-        TextCtrl."""
-        raise NotImplementedError
 
     def is_valid(self):
         c = self.ctrl
@@ -234,12 +233,6 @@ class BoolField(InfoField):
         self.ctrl.SetValue(state)
         self.is_valid()
 
-    def get_value(self):
-        """Return a control representation of the attribute so populate the
-        TextCtrl."""
-        state = getattr(self.prefs, self.attrib_name)
-        return state
-
     def is_valid(self):
         return True
 
@@ -257,16 +250,9 @@ class BoolField(InfoField):
 
 
 class ChoiceField(InfoField):
-    def get_value(self, layer):
-        return ""
-
     def fill_data(self):
         default_choice = self.get_value()
         self.ctrl.SetSelection(self.choices.index(default_choice))
-
-    def get_value(self):
-        state = getattr(self.prefs, self.attrib_name)
-        return state
 
     def create_control(self, settings):
         self.choices = settings
@@ -284,9 +270,6 @@ class ColorPickerField(InfoField):
 
     default_width = 100
 
-    def get_value(self):
-        return getattr(self.prefs, self.attrib_name)
-
     def fill_data(self):
         rgba = self.get_value()
         self.ctrl.SetColour(rgba)
@@ -303,12 +286,91 @@ class ColorPickerField(InfoField):
         setattr(self.prefs, self.attrib_name, color)
 
 
+class FontComboBox(wx.adv.OwnerDrawnComboBox):
+    # Overridden from OwnerDrawnComboBox, called to draw each
+    # item in the list
+    def OnDrawItem(self, dc, rect, item, flags):
+        if item == wx.NOT_FOUND:
+            # painting the control, but there is no valid item selected yet
+            return
+
+        r = wx.Rect(*rect)  # make a copy
+        r.Deflate(3, 5)
+
+        face = fonts.get_font_name(item)
+        font = wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, face)
+        dc.SetFont(font)
+
+        if flags & wx.adv.ODCB_PAINTING_CONTROL:
+            # for painting the control itself
+            dc.DrawText(face, r.x + 5, (r.y + 5) + ((r.height / 2) - dc.GetCharHeight()) / 2)
+
+        else:
+            # for painting the items in the popup
+            dc.DrawText(face,
+                        r.x + 3,
+                        (r.y + 5) + ((r.height / 2) - dc.GetCharHeight()) / 2
+                        )
+
+    # Overridden from OwnerDrawnComboBox, should return the height
+    # needed to display an item in the popup, or -1 for default
+    def OnMeasureItem(self, item):
+        return 24
+
+    # Overridden from OwnerDrawnComboBox.  Callback for item width, or
+    # -1 for default/undetermined
+    def OnMeasureItemWidth(self, item):
+        return -1  # default - will be measured from text width
+
+
+class FontField(InfoField):
+    default_width = 200
+
+
+    def fill_data(self):
+        font = self.get_value()
+        face = font.GetFaceName()
+        index = fonts.get_font_index(face)
+        self.ctrl.SetSelection(index)
+        size = font.GetPointSize()
+        index = fonts.standard_font_sizes.index(size)
+        self.size_ctrl.SetSelection(index)
+
+    def create_control(self, settings):
+        names = fonts.get_font_names()
+        c = FontComboBox(self.container, -1, "", size=(self.default_width, -1), choices=names, style=wx.CB_READONLY)
+        c.Bind(wx.EVT_COMBOBOX, self.on_face_changed)
+        return c
+
+    def create_extra_controls(self, settings):
+        names = [str(s) for s in fonts.standard_font_sizes]
+        c = wx.ComboBox(self.container, -1, str(fonts.default_font_size), size=(self.default_width/2, -1), choices=names, style=wx.CB_READONLY)
+        c.Bind(wx.EVT_COMBOBOX, self.on_size_changed)
+        self.size_ctrl = c
+        return [c]
+
+    def on_face_changed(self, event):
+        self.set_font()
+
+    def on_size_changed(self, event):
+        self.set_font()
+
+    def set_font(self):
+        index = self.ctrl.GetSelection()
+        face = fonts.get_font_name(index)
+        index = self.size_ctrl.GetSelection()
+        size = fonts.standard_font_sizes[index]
+        font = wx.Font(size, wx.DEFAULT, wx.NORMAL, wx.NORMAL, False, face)
+        setattr(self.prefs, self.attrib_name, font)
+
+
 known_fields = {
     "int": IntField,
     "bool": BoolField,
     "wx.Colour": ColorPickerField,
     "Color": ColorPickerField,
-    # "Font": FontField,
+    "wx.Font": FontField,
+    "Font": FontField,
 }
 
 

@@ -5,83 +5,7 @@ import inspect
 
 import wx
 
-if sys.platform == "darwin":
-    def_font = "10 point Monaco"
-elif sys.platform == "win32":
-    def_font = "10 point Lucida Console"
-else:
-    def_font = "10 point monospace"
-
-# Font conversion utilities from Traitsui
-
-def font_to_str(font):
-    """ Converts a wx.Font into a string description of itself.
-    """
-    weight = {wx.FONTWEIGHT_LIGHT: ' Light',
-              wx.FONTWEIGHT_BOLD: ' Bold'}.get(font.GetWeight(), '')
-    style = {wx.FONTSTYLE_SLANT: ' Slant',
-             wx.FONTSTYLE_ITALIC: ' Italic'}.get(font.GetStyle(), '')
-    underline = ''
-    if font.GetUnderlined():
-        underline = ' underline'
-    return '%s point %s%s%s%s' % (
-           font.GetPointSize(), font.GetFaceName(), style, weight, underline)
-
-# Mapping of strings to valid wxFont families
-font_families = {
-    'default': wx.FONTFAMILY_DEFAULT,
-    'decorative': wx.FONTFAMILY_DECORATIVE,
-    'roman': wx.FONTFAMILY_ROMAN,
-    'script': wx.FONTFAMILY_SCRIPT,
-    'swiss': wx.FONTFAMILY_SWISS,
-    'modern': wx.FONTFAMILY_MODERN
-}
-
-# Mapping of strings to wxFont styles
-font_styles = {
-    'slant': wx.FONTSTYLE_SLANT,
-    'italic': wx.FONTSTYLE_ITALIC
-}
-
-# Mapping of strings wxFont weights
-font_weights = {
-    'light': wx.FONTWEIGHT_LIGHT,
-    'bold': wx.FONTWEIGHT_BOLD
-}
-
-# Strings to ignore in text representations of fonts
-font_noise = ['pt', 'point', 'family']
-
-
-def str_to_font(value):
-    """ Create a TraitFont object from a string description.
-    """
-    point_size = None
-    family = wx.FONTFAMILY_DEFAULT
-    style = wx.FONTSTYLE_NORMAL
-    weight = wx.FONTWEIGHT_NORMAL
-    underline = 0
-    facename = []
-    for word in value.split():
-        lword = word.lower()
-        if lword in font_families:
-            family = font_families[lword]
-        elif lword in font_styles:
-            style = font_styles[lword]
-        elif lword in font_weights:
-            weight = font_weights[lword]
-        elif lword == 'underline':
-            underline = 1
-        elif lword not in font_noise:
-            if point_size is None:
-                try:
-                    point_size = int(lword)
-                    continue
-                except:
-                    pass
-            facename.append(word)
-    return wx.Font(point_size or 10, family, style, weight, underline,
-                      ' '.join(facename))
+from .ui import fonts
 
 class cached_property:
     """Decorator for read-only properties evaluated only once until invalidated.
@@ -141,7 +65,7 @@ class SawxPreferences:
     ]
 
     def __init__(self):
-        self.text_font = str_to_font(def_font)
+        self.text_font = fonts.str_to_font(fonts.default_font)
         self.background_color = wx.Colour(wx.WHITE)
         self.text_color = wx.Colour(wx.BLACK)
         self.empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
