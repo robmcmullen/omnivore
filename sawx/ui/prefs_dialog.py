@@ -49,15 +49,16 @@ class PreferencesDialog(wx.Dialog):
         self.book.AddPage(panel, panel.prefs.ui_name)
 
         editors = get_editors()
-        for e in editors:
+        for editor in editors:
             try:
-                panel = EditorPreferencesPanel(self.book, e, size=(500,500))
-            except RuntimeError:
+                panel = EditorPreferencesPanel(self.book, editor, size=(500,500))
+            except RuntimeError as e:
                 # this editor has no preferences or preferences are same as its
                 # superclass
+                log.error(f"Failed creating preference panel for {editor.ui_name}: {e}")
                 pass
             else:
-                self.book.AddPage(panel, e.ui_name)
+                self.book.AddPage(panel, editor.ui_name)
 
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:
@@ -336,12 +337,15 @@ class FontField(InfoField):
 
     def fill_data(self):
         font = self.get_value()
-        face = font.GetFaceName()
-        index = fonts.get_font_index(face)
-        self.ctrl.SetSelection(index)
-        size = font.GetPointSize()
-        index = fonts.standard_font_sizes.index(size)
-        self.size_ctrl.SetSelection(index)
+        try:
+            face = font.GetFaceName()
+            index = fonts.get_font_index(face)
+            self.ctrl.SetSelection(index)
+            size = font.GetPointSize()
+            index = fonts.standard_font_sizes.index(size)
+            self.size_ctrl.SetSelection(index)
+        except RuntimeError as e:
+            log.error(f"Failed setting font to {font}: {e}")
 
     def create_control(self, settings):
         names = fonts.get_font_names()
@@ -443,7 +447,7 @@ def find_field(field_type):
 
 def calc_field(parent, prefs, attrib_name, field_type, desc):
     field_cls, settings = find_field(field_type)
-    log.debug("calc_field: {field_type}: {field_cls.__class__.__name__}, {settings}")
+    log.debug(f"calc_field: {field_type}: {field_cls.__class__.__name__}, {settings}")
     field = field_cls(parent, settings, desc, prefs, attrib_name)
     field.fill_data()
     return field
@@ -495,6 +499,7 @@ class PreferencesPanel(PANELTYPE):
             if attrib_cls_name is None:
                 attrib = getattr(prefs, attrib_name)
                 attrib_cls_name = attrib.__class__.__name__
+            log.debug(f"{self.prefs._module_path}: {attrib_name}={attrib_cls_name}")
 
             try:
                 field = calc_field(self, prefs, attrib_name, attrib_cls_name, desc)
@@ -515,6 +520,7 @@ class ApplicationPreferencesPanel(PreferencesPanel):
 
     def accept_preferences(self):
         wx.GetApp().get_preferences().copy_from(self.prefs)
+        self.prefs.persist_user_settings()
 
 
 class EditorPreferencesPanel(PreferencesPanel):
@@ -530,3 +536,4 @@ class EditorPreferencesPanel(PreferencesPanel):
 
     def accept_preferences(self):
         self.editor.get_preferences().copy_from(self.prefs)
+        self.prefs.persist_user_settings()

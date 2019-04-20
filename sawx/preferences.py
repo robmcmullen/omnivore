@@ -3,6 +3,11 @@ import time
 import importlib
 import inspect
 
+from . import persistence
+
+import logging
+log = logging.getLogger(__name__)
+
 
 class cached_property:
     """Decorator for read-only properties evaluated only once until invalidated.
@@ -60,6 +65,7 @@ class SawxPreferences:
     def __init__(self, module_path):
         self._module_path = module_path
         self.set_defaults()
+        self.restore_user_settings()
 
     def set_defaults(self):
         pass
@@ -67,13 +73,36 @@ class SawxPreferences:
     def copy_from(self, other):
         for d in self.display_order:
             attrib_name = d[0]
-            value = getattr(other, attrib_name)
-            setattr(self, attrib_name, value)
+            try:
+                value = getattr(other, attrib_name)
+            except AttributeError:
+                try:
+                    value = other[attrib_name]
+                except KeyError:
+                    continue
+            try:
+                setattr(self, attrib_name, value)
+            except Exception:
+                log.error(f"{self._module_path}: failed setting {attrib_name} to {value}")
 
     def clone(self):
         other = self.__class__(self._module_path)
         other.copy_from(self)
         return other
+
+    def restore_user_settings(self):
+        settings = persistence.get_json_data(self._module_path)
+        print(f"restore_user_overrides: user data = {settings}")
+        if settings is not None:
+            settings_dict = dict(settings)
+            self.copy_from(settings_dict)
+
+    def persist_user_settings(self):
+        settings = [[d[0], getattr(self, d[0])] for d in self.display_order]
+        print(f"Saving settings: {settings}")
+        path = persistence.save_json_data(self._module_path, settings)
+        print(f"Saved settings to {path}")
+
 
 
 class SawxApplicationPreferences(SawxPreferences):

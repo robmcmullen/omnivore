@@ -119,6 +119,7 @@ def save_file_config_data(subdir, filename, data, mode='w'):
     file_path = get_config_dir_filename(subdir, filename)
     with open(file_path, mode) as fh:
         fh.write(data)
+    return file_path
 
 def get_json_data(json_name, default_on_error=None):
     raw = get_file_config_data("json", json_name)
@@ -141,7 +142,7 @@ def get_json_data(json_name, default_on_error=None):
 
 def save_json_data(json_name, data):
     encoded = jsonpickle.encode(data)
-    save_file_config_data("json", json_name, encoded)
+    return save_file_config_data("json", json_name, encoded)
 
 def get_bson_data(bson_name):
     import bson
