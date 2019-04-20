@@ -250,6 +250,29 @@ class BoolField(InfoField):
             setattr(self.prefs, self.attrib_name, value)
 
 
+class ChoiceField(InfoField):
+    def get_value(self, layer):
+        return ""
+
+    def fill_data(self):
+        default_choice = self.get_value()
+        self.ctrl.SetSelection(self.choices.index(default_choice))
+
+    def get_value(self):
+        state = getattr(self.prefs, self.attrib_name)
+        return state
+
+    def create_control(self, settings):
+        self.choices = settings
+        c = wx.Choice(self.container, choices=[str(c) for c in self.choices])
+        c.Bind(wx.EVT_CHOICE, self.drop_down_changed)
+        return c
+
+    def drop_down_changed(self, event):
+        index = self.ctrl.GetSelection()
+        setattr(self.prefs, self.attrib_name, self.choices[index])
+
+
 known_fields = {
     "int": IntField,
     "bool": BoolField,
@@ -263,6 +286,9 @@ def find_field(field_type):
     try:
         field_cls = known_fields[field_type]
         settings = None
+    except TypeError:
+        field_cls = ChoiceField
+        settings = field_type[:]
     except KeyError:
         log.error(f"Unknown preference type {field_type}")
         raise
