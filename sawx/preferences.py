@@ -55,22 +55,56 @@ class cached_property:
 
 
 class SawxPreferences:
+    display_title = None
+
+    display_order = [
+    ]
+
+    def __init__(self, module_path):
+        self._module_path = module_path
+        self.set_defaults()
+
+    def set_defaults(self):
+        pass
+
+    def copy_from(self, other):
+        for d in self.display_order:
+            attrib_name = d[0]
+            value = getattr(other, attrib_name)
+            setattr(self, attrib_name, value)
+
+    def clone(self):
+        other = self.__class__(self._module_path)
+        other.copy_from(self)
+        return other
+
+
+class SawxApplicationPreferences(SawxPreferences):
+    ui_name = "General"
+
+    display_order = [
+        ("num_open_recent", "int"),
+        ("confirm_before_close", "bool"),
+    ]
+
+    def set_defaults(self):
+        self.num_open_recent = 15
+        self.confirm_before_close = True
+
+
+class SawxEditorPreferences(SawxPreferences):
     display_order = [
         ("text_font", "wx.Font"),
         ("text_color", "wx.Colour"),
         ("background_color", "wx.Colour"),
         ("empty_background_color", "wx.Colour"),
-        ("num_open_recent", "int"),
-        ("confirm_before_close", "bool"),
     ]
 
-    def __init__(self):
+    def set_defaults(self):
         self.text_font = fonts.str_to_font(fonts.default_font)
         self.background_color = wx.Colour(wx.WHITE)
         self.text_color = wx.Colour(wx.BLACK)
         self.empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
-        self.num_open_recent = 15
-        self.confirm_before_close = True
 
     @property
     def text_font(self):
@@ -84,23 +118,22 @@ class SawxPreferences:
         self.text_font_char_width = dc.GetCharWidth()
         self.text_font_char_height = dc.GetCharHeight()
 
-    def copy_from(self, other):
-        for d in self.display_order:
-            attrib_name = d[0]
-            value = getattr(other, attrib_name)
-            setattr(self, attrib_name, value)
 
-    def clone(self):
-        other = self.__class__()
-        other.copy_from(self)
-        return other
-
-
-def find_preferences(prefs_module):
+def find_application_preferences(prefs_module):
     mod = importlib.import_module(prefs_module)
-    prefs_cls = SawxPreferences
+    prefs_cls = SawxApplicationPreferences
     for name, obj in inspect.getmembers(mod):
-        if inspect.isclass(obj) and SawxPreferences in obj.__mro__[1:]:
+        if inspect.isclass(obj) and SawxApplicationPreferences in obj.__mro__[1:]:
             prefs_cls = obj
             break
-    return prefs_cls()
+    return prefs_cls(prefs_module)
+
+
+def find_editor_preferences(prefs_module):
+    mod = importlib.import_module(prefs_module)
+    prefs_cls = SawxEditorPreferences
+    for name, obj in inspect.getmembers(mod):
+        if inspect.isclass(obj) and SawxEditorPreferences in obj.__mro__[1:]:
+            prefs_cls = obj
+            break
+    return prefs_cls(prefs_module)

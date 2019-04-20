@@ -6,6 +6,7 @@ import wx.lib.scrolledpanel
 
 from . import buttons
 from . import fonts
+from .. import preferences
 from ..editor import get_editors
 
 import logging
@@ -43,10 +44,13 @@ class PreferencesDialog(wx.Dialog):
         sizer.Fit(self)
 
     def add_pages(self):
+        panel = ApplicationPreferencesPanel(self.book)
+        self.book.AddPage(panel, panel.prefs.ui_name)
+
         editors = get_editors()
         for e in editors:
             print(e, e.get_preferences())
-            panel = PreferencesPanel(self.book, e, size=(500,500))
+            panel = EditorPreferencesPanel(self.book, e, size=(500,500))
             # text = wx.StaticText(panel, -1, f"{e.editor_id}: {e.preferences_module} {e.preferences}")
             # sizer = wx.BoxSizer(wx.VERTICAL)
             # panel.SetSizer(sizer)
@@ -431,14 +435,15 @@ class PreferencesPanel(PANELTYPE):
     """
     A panel for displaying and manipulating the properties of a layer.
     """
-    LABEL_SPACING = 0
+    LABEL_SPACING = 10
     VALUE_SPACING = 3
     SIDE_SPACING = 5
 
     window_name = "InfoPanel"
 
-    def __init__(self, parent, editor, size=(-1,-1)):
+    def __init__(self, parent, prefs, size=(-1,-1)):
         PANELTYPE.__init__(self, parent, name=self.window_name, size=size)
+        self.prefs = prefs
 
         # Mac/Win needs this, otherwise background color is black
         attr = self.GetDefaultAttributes()
@@ -447,15 +452,12 @@ class PreferencesPanel(PANELTYPE):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
 
-        self.display_panel_for_editor(editor)
+        self.display_panel_for_prefs()
 
-    def display_panel_for_editor(self, editor):
-        self.editor = editor
-        prefs = editor.preferences.clone()
-        self.preferences = prefs
-
+    def display_panel_for_prefs(self):
         self.sizer.AddSpacer(self.LABEL_SPACING)
 
+        prefs = self.prefs
         self.fields = []
         for field_info in prefs.display_order:
             attrib_cls = None
@@ -482,3 +484,16 @@ class PreferencesPanel(PANELTYPE):
                 pass
 
         self.sizer.Layout()
+
+
+class ApplicationPreferencesPanel(PreferencesPanel):
+    def __init__(self, parent, size=(-1,-1)):
+        prefs = preferences.find_application_preferences(wx.GetApp().preferences_module)
+        PreferencesPanel.__init__(self, parent, prefs, size=size)
+
+
+class EditorPreferencesPanel(PreferencesPanel):
+    def __init__(self, parent, editor, size=(-1,-1)):
+        self.editor = editor
+        prefs = editor.preferences.clone()
+        PreferencesPanel.__init__(self, parent, prefs, size=size)

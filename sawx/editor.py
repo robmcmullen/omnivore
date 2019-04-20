@@ -245,7 +245,7 @@ class SawxEditor:
     @classmethod
     def get_preferences(cls):
         if cls.preferences is None:
-            cls.preferences = preferences.find_preferences(cls.preferences_module)
+            cls.preferences = preferences.find_editor_preferences(cls.preferences_module)
         return cls.preferences
 
     def prepare_destroy(self):

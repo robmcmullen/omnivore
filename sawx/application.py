@@ -69,6 +69,8 @@ class SawxApp(wx.App):
         "last_window_size": [1000, 800],
     }
 
+    preferences_module = "sawx.preferences"
+
     #### Initialization
 
     def OnInit(self):
