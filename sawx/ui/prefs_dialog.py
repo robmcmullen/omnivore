@@ -225,6 +225,7 @@ class BoolField(InfoField):
     def create_control(self, settings):
         c = wx.CheckBox(self.container)
         c.Bind(wx.EVT_CHECKBOX, self.on_toggle_changed)
+        self.label.Bind(wx.EVT_LEFT_DOWN, self.on_label_clicked)
         return c
 
     def fill_data(self):
@@ -248,6 +249,10 @@ class BoolField(InfoField):
         if self.is_valid():
             value = self.parse_from_ctrl()
             setattr(self.prefs, self.attrib_name, value)
+
+    def on_label_clicked(self, evt):
+        self.ctrl.SetValue(not self.ctrl.GetValue())
+        self.on_toggle_changed(evt)
 
 
 class ChoiceField(InfoField):
