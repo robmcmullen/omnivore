@@ -3,6 +3,7 @@ import time
 
 import wx
 import wx.lib.scrolledpanel
+import wx.lib.filebrowsebutton as filebrowse
 
 from . import buttons
 from . import fonts
@@ -399,6 +400,24 @@ class IntRangeField(InfoField):
         setattr(self.prefs, self.attrib_name, self.ctrl.GetValue())
 
 
+class DirectoryField(InfoField):
+    same_line = True
+
+    default_width = 400
+
+    def fill_data(self):
+        path = self.get_value()
+        self.ctrl.SetValue(path, False)
+
+    def create_control(self, settings):
+        c = filebrowse.DirBrowseButton(self.container, -1, size=(self.default_width, -1), labelText="", changeCallback = self.on_directory_changed)
+        return c
+
+    def on_directory_changed(self, event):
+        path = event.GetString()
+        setattr(self.prefs, self.attrib_name, path)
+
+
 known_fields = {
     "int": IntField,
     "intrange": IntRangeField,
@@ -407,6 +426,7 @@ known_fields = {
     "Color": ColorPickerField,
     "wx.Font": FontField,
     "Font": FontField,
+    "directory": DirectoryField,
 }
 
 
