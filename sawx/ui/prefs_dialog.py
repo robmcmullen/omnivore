@@ -330,7 +330,6 @@ class FontComboBox(wx.adv.OwnerDrawnComboBox):
 class FontField(InfoField):
     default_width = 200
 
-
     def fill_data(self):
         font = self.get_value()
         face = font.GetFaceName()
@@ -368,8 +367,35 @@ class FontField(InfoField):
         setattr(self.prefs, self.attrib_name, font)
 
 
+class IntRangeField(InfoField):
+    default_width = 200
+
+    def fill_data(self):
+        value = self.get_value()
+        self.ctrl.SetValue(value)
+
+    def get_params(self, settings):
+        try:
+            lo, hi = settings.split("-")
+            lo = int(lo.strip())
+            hi = int(hi.strip())
+        except:
+            lo, hi = 0, 100
+        return lo, hi
+
+    def create_control(self, settings):
+        minval, maxval = self.get_params(settings)
+        c = wx.Slider(self.container, -1, minval, minval, maxval, size=(self.default_width, -1), style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
+        c.Bind(wx.EVT_SLIDER, self.slider_changed)
+        return c
+
+    def slider_changed(self, event):
+        setattr(self.prefs, self.attrib_name, self.ctrl.GetValue())
+
+
 known_fields = {
     "int": IntField,
+    "intrange": IntRangeField,
     "bool": BoolField,
     "wx.Colour": ColorPickerField,
     "Color": ColorPickerField,
@@ -379,11 +405,11 @@ known_fields = {
 
 
 def find_field(field_type):
+    settings = None
     if ":" in field_type:
-        field_cls, field_settings = field_type.split(":", 1)
+        field_type, settings = field_type.split(":", 1)
     try:
         field_cls = known_fields[field_type]
-        settings = None
     except TypeError:
         field_cls = ChoiceField
         settings = field_type[:]
@@ -394,6 +420,7 @@ def find_field(field_type):
 
 def calc_field(parent, prefs, attrib_name, field_type, desc):
     field_cls, settings = find_field(field_type)
+    log.debug("calc_field: {field_type}: {field_cls.__class__.__name__}, {settings}")
     field = field_cls(parent, settings, desc, prefs, attrib_name)
     field.fill_data()
     return field
