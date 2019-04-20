@@ -61,6 +61,8 @@ class open_file(SawxAction):
             frame.load_file(path, self.editor)
 
 class save_file(SawxAction):
+    ext_list = [("All Documents", ".*")]
+
     def calc_name(self, action_key):
         return "Save"
 
@@ -76,7 +78,7 @@ class save_file(SawxAction):
 
     def perform_prompt(self, action_key):
         e = self.editor
-        path = e.frame.prompt_local_file_dialog("Save As", save=True, default_filename=e.document.name, wildcard=get_file_dialog_wildcard("MapRoom Project Files", [".maproom"]))
+        path = e.frame.prompt_local_file_dialog("Save As", save=True, default_filename=e.document.name, wildcard=get_file_dialog_wildcard(self.ext_list))
         if path is not None:
             e.save_to_uri(path)
 
@@ -90,6 +92,8 @@ class save_as(save_file):
     perform = save_file.perform_prompt
 
 class save_as_image(save_as):
+    ext_list = [("PNG Images", ".png"), ("JPEG Images", ".jpg")]
+
     def calc_name(self, action_key):
         return "Save As Image"
 
@@ -100,7 +104,7 @@ class save_as_image(save_as):
         except RuntimeError:
             # cancelled
             return
-        path = e.frame.prompt_local_file_dialog("Save As Image", save=True, default_filename=e.document.root_name, wildcard=get_file_dialog_wildcard("Images", [".png", ".jpg"]))
+        path = e.frame.prompt_local_file_dialog("Save As Image", save=True, default_filename=e.document.root_name, wildcard=get_file_dialog_wildcard(self.ext_list))
         if path is not None:
             e.save_as_image(path, raw_data)
 

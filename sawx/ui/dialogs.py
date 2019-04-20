@@ -381,11 +381,12 @@ class ObjectEditDialog(DictEditDialog):
         setattr(d, key, value)
 
 
-def get_file_dialog_wildcard(name, extension_list):
-    # Using only the first extension
+def get_file_dialog_wildcard(extension_list):
     wildcards = []
-    if extension_list:
-        ext = ";".join(["*" + e for e in extension_list])
+    for item in extension_list:
+        name = item[0]
+        exts = item[1:]
+        ext = ";".join(["*" + e for e in exts])
         wildcards.append("%s (%s)|%s" % (name, ext, ext))
     return "|".join(wildcards)
 
