@@ -89,6 +89,10 @@ class SawxApp(wx.App):
         # Initialize dialog-based exception handler
         from .ui import exception_handler
 
+        # Initialize dialog-based progress logger
+        from .ui import progress_dialog
+        progress_dialog.attach_handler()
+
         return True
 
     def OnExit(self):

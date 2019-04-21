@@ -1,3 +1,5 @@
+import time
+
 import wx
 
 from ..action import SawxAction, SawxNameChangeAction, SawxListAction
@@ -269,3 +271,28 @@ class raise_exception(SawxAction):
 
     def perform(self, action_key):
         val = int("this will raise a ValueError")
+
+class test_progress(SawxAction):
+    def calc_name(self, action_key):
+        return "Test Progress Dialog"
+
+    def perform(self, action_key):
+        progress_log = logging.getLogger("progress")
+        progress_log.info("START=First Test")
+        try:
+            progress_log.info("TITLE=Starting timer")
+            for i in range(1000):
+                print(i)
+                progress_log.info("Trying %d" % i)
+                for j in range(10):
+                    time.sleep(.001)
+                    wx.Yield()
+                if i > 4:
+                    progress_log.info("TIME_DELTA=Finished trying %d" % i)
+                progress_log.info("PULSE")
+                wx.Yield()
+
+        except errors.ProgressCancelError as e:
+            error = str(e)
+        finally:
+            progress_log.info("END")

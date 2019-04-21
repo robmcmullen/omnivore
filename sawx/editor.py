@@ -130,7 +130,8 @@ class SawxEditor:
         ],
         ["Help",
             "about",
-            ["debug", "raise_exception"],
+            None,
+            ["debug", "raise_exception", "test_progress"],
         ],
     ]
 
