@@ -163,6 +163,7 @@ class SawxApp(wx.App):
     def get_preferences(cls):
         if cls._preferences is None:
             cls._preferences = find_application_preferences(cls.preferences_module)
+            cls._preferences.restore_user_settings()
         return cls._preferences
 
     @property

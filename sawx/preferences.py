@@ -65,7 +65,6 @@ class SawxPreferences:
     def __init__(self, module_path):
         self._module_path = module_path
         self.set_defaults()
-        self.restore_user_settings()
 
     def set_defaults(self):
         pass
