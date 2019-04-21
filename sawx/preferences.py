@@ -4,6 +4,7 @@ import importlib
 import inspect
 
 from . import persistence
+from .events import EventHandler
 
 import logging
 log = logging.getLogger(__name__)
@@ -65,6 +66,17 @@ class SawxPreferences:
     def __init__(self, module_path):
         self._module_path = module_path
         self.set_defaults()
+        self.preferences_changed_event = EventHandler(self)
+
+    def __eq__(self, other):
+        if hasattr(other, "display_order") and self.display_order == other.display_order:
+            for d in self.display_order:
+                attrib_name = d[0]
+                if getattr(self, attrib_name) != getattr(other, attrib_name):
+                    break
+            else:
+                return True
+        return False
 
     def set_defaults(self):
         pass
@@ -101,6 +113,7 @@ class SawxPreferences:
         log.debug(f"persist_user_settings: Saving {settings}")
         path = persistence.save_json_data(self._module_path, settings)
         log.debug(f"persist_user_settings: Saved to {path}")
+        self.preferences_changed_event(True)
 
 
 

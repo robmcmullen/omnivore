@@ -524,8 +524,15 @@ class PreferencesPanel(PANELTYPE):
 
         self.sizer.Layout()
 
-    def accept_preferences(self):
+    def get_source_preferences(self):
         pass
+
+    def accept_preferences(self):
+        source = self.get_source_preferences()
+        if source != self.prefs:
+            log.debug(f"preferences updated! {source._module_path}")
+            source.copy_from(self.prefs)
+            self.prefs.persist_user_settings()
 
 
 class ApplicationPreferencesPanel(PreferencesPanel):
@@ -533,9 +540,8 @@ class ApplicationPreferencesPanel(PreferencesPanel):
         prefs = wx.GetApp().get_preferences().clone()
         PreferencesPanel.__init__(self, parent, prefs, size=size)
 
-    def accept_preferences(self):
-        wx.GetApp().get_preferences().copy_from(self.prefs)
-        self.prefs.persist_user_settings()
+    def get_source_preferences(self):
+        return wx.GetApp().get_preferences()
 
 
 class EditorPreferencesPanel(PreferencesPanel):
@@ -549,6 +555,5 @@ class EditorPreferencesPanel(PreferencesPanel):
             raise RuntimeError("Unchanged preferences from superclass")
         PreferencesPanel.__init__(self, parent, prefs, size=size)
 
-    def accept_preferences(self):
-        self.editor.get_preferences().copy_from(self.prefs)
-        self.prefs.persist_user_settings()
+    def get_source_preferences(self):
+        return self.editor.get_preferences()
