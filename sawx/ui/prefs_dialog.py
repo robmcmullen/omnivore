@@ -495,7 +495,8 @@ class PreferencesPanel(PANELTYPE):
                         attrib_name, attrib_cls_name = field_info
                     except ValueError:
                         attrib_name = field_info[0]
-            desc = attrib_name.replace("_", " ").title()
+            if desc is None:
+                desc = attrib_name.replace("_", " ").capitalize()
             if attrib_cls_name is None:
                 attrib = getattr(prefs, attrib_name)
                 attrib_cls_name = attrib.__class__.__name__

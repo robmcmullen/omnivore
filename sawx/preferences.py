@@ -108,7 +108,7 @@ class SawxApplicationPreferences(SawxPreferences):
     ui_name = "General"
 
     display_order = [
-        ("num_open_recent", "int"),
+        ("num_open_recent", "int", "Number of files in Open Recent menu"),
         ("confirm_before_close", "bool"),
     ]
 
