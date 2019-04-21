@@ -55,7 +55,7 @@ class PreferencesDialog(wx.Dialog):
             except RuntimeError as e:
                 # this editor has no preferences or preferences are same as its
                 # superclass
-                log.error(f"Failed creating preference panel for {editor.ui_name}: {e}")
+                log.debug(f"Failed creating preference panel for {editor.ui_name}: {e}")
                 pass
             else:
                 self.book.AddPage(panel, editor.ui_name)
@@ -441,7 +441,7 @@ def find_field(field_type):
         field_cls = ChoiceField
         settings = field_type[:]
     except KeyError:
-        log.error(f"Unknown preference type {field_type}")
+        log.warning(f"Unknown preference type {field_type}")
         raise
     return field_cls, settings
 

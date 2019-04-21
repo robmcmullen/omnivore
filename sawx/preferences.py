@@ -91,16 +91,16 @@ class SawxPreferences:
 
     def restore_user_settings(self):
         settings = persistence.get_json_data(self._module_path)
-        print(f"restore_user_overrides: user data = {settings}")
+        log.debug(f"restore_user_overrides: user data = {settings}")
         if settings is not None:
             settings_dict = dict(settings)
             self.copy_from(settings_dict)
 
     def persist_user_settings(self):
         settings = [[d[0], getattr(self, d[0])] for d in self.display_order]
-        print(f"Saving settings: {settings}")
+        log.debug(f"persist_user_settings: Saving {settings}")
         path = persistence.save_json_data(self._module_path, settings)
-        print(f"Saved settings to {path}")
+        log.debug(f"persist_user_settings: Saved to {path}")
 
 
 

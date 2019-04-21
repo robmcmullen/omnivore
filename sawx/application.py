@@ -152,7 +152,7 @@ class SawxApp(wx.App):
         for frame in wx.GetTopLevelWindows():
             try:
                 if frame.is_dirty:
-                    print(f"frame {frame} has unsaved changes")
+                    log.warning(f"frame {frame} has unsaved changes")
             except AttributeError:
                 pass
         self.ExitMainLoop()

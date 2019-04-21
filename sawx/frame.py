@@ -342,17 +342,17 @@ class SawxFrame(wx.Frame):
 
     def on_char_hook(self, evt):
         key_id = (evt.GetModifiers(), evt.GetKeyCode())
-        print(f"on_char_hook: key: {key_id}")
+        log.debug(f"on_char_hook: key: {key_id}")
         try:
             action_key, action = self.keybindings.valid_key_map[key_id]
             try:
-                print(f"found action {action}")
+                log.debug(f"found action {action}")
                 action.perform_as_keystroke(action_key)
             except errors.ProcessKeystrokeNormally as e:
-                print(f"processing keystroke normally instead of action: {e}")
+                log.debug(f"processing keystroke normally instead of action: {e}")
                 evt.Skip()
         except KeyError as e:
-            print(f"key id {key_id} not found in {self.keybindings.valid_key_map}")
+            log.debug(f"key id {key_id} not found in {self.keybindings.valid_key_map}")
             evt.Skip()
 
     def on_size(self, evt):

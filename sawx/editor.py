@@ -197,7 +197,7 @@ class SawxEditor:
             # path of current file is the final try
             attempts.append(self.document.uri)
 
-        print(("attempts for best_file_save_dir: %s" % str(attempts)))
+        log.debug(("attempts for best_file_save_dir: %s" % str(attempts)))
         dirpath = ""
         for uri in attempts:
             uri_dir = os.path.dirname(uri)

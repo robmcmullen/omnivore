@@ -130,14 +130,14 @@ class KeyBindingControlMixin:
 
     def on_char(self, evt):
         key_id = (evt.GetModifiers(), evt.GetKeyCode())
-        print(f"on_char: key: {key_id}")
+        log.debug(f"on_char: key: {key_id}")
         try:
             action_key, action = self.keybindings.valid_key_map[key_id]
         except KeyError as e:
-            print(f"on_char: key id {key_id} not found in {self.keybindings}")
+            log.debug(f"on_char: key id {key_id} not found in {self.keybindings}")
             self.do_char_ordinary(evt)
         else:
-            print(f"on_char: calling action {action}")
+            log.debug(f"on_char: calling action {action}")
             self.do_char_action(evt, action)
 
     def do_char_action(self, evt, action):

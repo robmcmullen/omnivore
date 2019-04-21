@@ -97,7 +97,7 @@ class FileGuess:
             return False
         try:
             info = self.zipfile.getinfo(filename)
-            print(f"ZIPFILE INFO FOR {filename}: {info}")
+            log.debug(f"zipfile_contains: {filename}: {info}")
         except KeyError:
             return False
         return True
