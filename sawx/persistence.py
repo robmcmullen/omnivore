@@ -5,6 +5,10 @@ import json
 import pkg_resources
 
 import jsonpickle
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_numpy.register_handlers()
+from .ui import fonts  # register wxFont jsonpickle handler
+
 from datetime import datetime
 
 import appdirs

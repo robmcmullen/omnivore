@@ -3,6 +3,8 @@ import time
 import importlib
 import inspect
 
+import jsonpickle
+
 import wx
 
 # Mapping of strings to valid wxFont families
@@ -117,3 +119,15 @@ def get_font_index(face):
         return fonts.index(face)
     except ValueError:
         return 0
+
+
+class wxFontHandler(jsonpickle.handlers.BaseHandler):
+    def flatten(self, obj, data):
+        data["font"] = font_to_str(obj)
+        return data
+
+    def restore(self, obj):
+        font_str = obj["font"]
+        return str_to_font(font_str)
+
+jsonpickle.handlers.registry.register(wx.Font, wxFontHandler)
