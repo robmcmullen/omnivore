@@ -18,6 +18,24 @@ import logging
 log = logging.getLogger(__name__)
 
 
+# Custom jsonpickle handlers
+
+import wx
+
+class wxColorHandler(jsonpickle.handlers.BaseHandler):
+    def flatten(self, obj, data):
+        data["rgba"] = [obj.Red(), obj.Green(), obj.Blue(), obj.Alpha()]
+        return data
+
+    def restore(self, obj):
+        r, g, b, a = obj["rgba"]
+        return wx.Colour(r, g, b, a)
+
+jsonpickle.handlers.registry.register(wx.Colour, wxColorHandler)
+
+
+
+
 config_base_dir = None
 log_dir = None
 log_file_ext = None
