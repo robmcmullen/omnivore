@@ -431,6 +431,12 @@ known_fields = {
 }
 
 
+def register_preference_field(name, cls):
+    global known_fields
+
+    known_fields[name] = cls
+
+
 def find_field(field_type):
     settings = None
     if ":" in field_type:
