@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class PreferencesDialog(wx.Dialog):
     border = 3
 
-    def __init__(self, parent):
+    def __init__(self, parent, initial_page_name=None):
         wx.Dialog.__init__(self, parent, -1, "Preferences", size=(700, 400), pos=wx.DefaultPosition, style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
@@ -26,6 +26,8 @@ class PreferencesDialog(wx.Dialog):
         sizer.Add(self.book, 1, wx.ALL|wx.EXPAND, self.border)
 
         self.add_pages()
+        if initial_page_name:
+            self.show_page(initial_page_name)
 
         # self.Bind(wx.EVT_TREEBOOK_PAGE_CHANGED, self.OnPageChanged)
         # self.Bind(wx.EVT_TREEBOOK_PAGE_CHANGING, self.OnPageChanging)
@@ -59,6 +61,12 @@ class PreferencesDialog(wx.Dialog):
                 pass
             else:
                 self.book.AddPage(panel, editor.ui_name)
+
+    def show_page(self, name):
+        for index in range(self.book.GetPageCount()):
+            if name == self.book.GetPageText(index):
+                self.book.ChangeSelection(index)
+                break
 
     def on_button(self, evt):
         if evt.GetId() == wx.ID_OK:

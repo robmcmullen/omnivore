@@ -195,8 +195,8 @@ class SawxApp(wx.App):
 
         dialog = wx.adv.AboutBox(info)
 
-    def show_preferences_dialog(self, parent):
-        dialog = PreferencesDialog(parent)
+    def show_preferences_dialog(self, parent, page_name=None):
+        dialog = PreferencesDialog(parent, page_name)
         dialog.ShowModal()
 
     #### Convenience functions

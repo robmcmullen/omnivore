@@ -226,7 +226,7 @@ class prefs(SawxAction):
         return "Preferences"
 
     def perform(self, action_key):
-        wx.GetApp().show_preferences_dialog(self.editor.frame)
+        wx.GetApp().show_preferences_dialog(self.editor.frame, self.editor.ui_name)
 
 class about(SawxAction):
     def calc_name(self, action_key):
