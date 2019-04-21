@@ -130,6 +130,7 @@ class SawxEditor:
         ],
         ["Help",
             "about",
+            ["debug", "raise_exception"],
         ],
     ]
 
@@ -231,6 +232,16 @@ class SawxEditor:
     @property
     def is_transient(self):
         return self.transient or self.__class__ == SawxEditor
+
+    @property
+    def editor_summary(self):
+        lines = []
+        lines.append(f"name: {self.name}")
+        lines.append(f"document: {self.document}" % self.document)
+        lines.append(f"flags: is_dirty: {self.is_dirty}\n  can_cut: {self.can_cut}\n  can_copy: {self.can_copy}\n  can_paste: {self.can_paste}" )
+        lines.append(f"last saved: {self.last_saved_uri}")
+        lines.append(f"last loaded: {self.last_loaded_uri}")
+        return "\n".join(lines)
 
     def __init__(self, document, action_factory_lookup=None):
         self.frame = None

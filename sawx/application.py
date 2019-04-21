@@ -35,6 +35,8 @@ class SawxApp(wx.App):
 
     app_icon = "icon://omnivore.ico"
 
+    app_error_email_to = "feedback@playermissile.com"
+
     about_uri = "about://app"  # for Help->About menu item
 
     about_image = "icon://omnivore256.png"  # for Help->About menu item
@@ -83,6 +85,10 @@ class SawxApp(wx.App):
         self.remember = persistence.restore_from_last_time()
         self.keybindings_changed_event = EventHandler(self)
         self.init_subprocesses()
+
+        # Initialize dialog-based exception handler
+        from .ui import exception_handler
+
         return True
 
     def OnExit(self):
@@ -131,6 +137,7 @@ class SawxApp(wx.App):
         else:
             frame = self.new_frame()
         frame.Show()
+        self.active_frame = None
 
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon

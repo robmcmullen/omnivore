@@ -209,6 +209,7 @@ class SawxFrame(wx.Frame):
     def make_active(self, editor, force=False):
         last = self.active_editor
         self.active_editor = editor
+        wx.GetApp().active_frame = self
         if force or last != editor or self.raw_menubar.GetMenuCount() == 0:
             self.create_menubar()
             self.sync_menubar()

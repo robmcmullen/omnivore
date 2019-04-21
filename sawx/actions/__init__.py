@@ -262,3 +262,10 @@ class next_char(SawxAction):
 
     def perform(self, action_key):
         print("Right!")
+
+class raise_exception(SawxAction):
+    def calc_name(self, action_key):
+        return "Raise Exception"
+
+    def perform(self, action_key):
+        val = int("this will raise a ValueError")
