@@ -290,6 +290,12 @@ class SawxEditor:
     def create_event_bindings(self):
         pass
 
+    def idle_when_active(self):
+        """Called during idle events when this editor is the one active editor
+        in the entire application, i.e. the active tab in the active frame.
+        """
+        pass
+
     #### file load/save
 
     def can_load_file(self, file_metadata):

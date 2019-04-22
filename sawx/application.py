@@ -93,6 +93,8 @@ class SawxApp(wx.App):
         from .ui import progress_dialog
         progress_dialog.attach_handler()
 
+        self.active_frame = None
+        self.Bind(wx.EVT_IDLE, self.on_idle)
         return True
 
     def OnExit(self):
@@ -142,7 +144,6 @@ class SawxApp(wx.App):
         else:
             frame = self.new_frame()
         frame.Show()
-        self.active_frame = None
         if options.show_prefs:
             wx.CallAfter(self.show_preferences_dialog, frame)
 
@@ -158,6 +159,12 @@ class SawxApp(wx.App):
                 self.tasks_application.load_file(filename, None)
         else:
             log.debug(f"MacOpenFiles: skipping {filenames} because it's a command line argument")
+
+    #### Event handlers
+
+    def on_idle(self, evt):
+        if self.active_frame is not None:
+            self.active_frame.active_editor.idle_when_active()
 
     #### Shutdown
 
