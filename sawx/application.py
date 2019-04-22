@@ -106,6 +106,7 @@ class SawxApp(wx.App):
         parser.add_argument("-d", "--debug_loggers", action="append", nargs=1, help="Comma separated list of debug loggers to enable")
         parser.add_argument("--show_editors", "--show-editors", action="store_true", default=False, help="List all task ids")
         parser.add_argument("--show_focused", "--show-focused", action="store_true", default=False, help="Show the focused window at every idle processing ")
+        parser.add_argument("--show_prefs", "--show-prefs", action="store_true", default=False, help="Show the preferences dialog at start time")
         parser.add_argument("--build_docs", "--build-docs", action="store_true", default=False, help="Build documentation from the menubar")
         options, extra_args = parser.parse_known_args(args)
         if options.show_editors:
@@ -142,6 +143,8 @@ class SawxApp(wx.App):
             frame = self.new_frame()
         frame.Show()
         self.active_frame = None
+        if options.show_prefs:
+            wx.CallAfter(self.show_preferences_dialog, frame)
 
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon
