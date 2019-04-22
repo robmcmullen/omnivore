@@ -293,7 +293,9 @@ class wxLogHandler(logging.Handler):
 
 def attach_handler():
     log = logging.getLogger("progress")
-    log.setLevel(logging.INFO)
+    level = log.getEffectiveLevel()
+    if level > logging.INFO:
+        log.setLevel(logging.INFO)
     log.propagate = False
     handler = wxLogHandler("Progress")
     log.addHandler(handler)

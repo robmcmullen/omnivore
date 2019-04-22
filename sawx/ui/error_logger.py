@@ -56,6 +56,11 @@ def enable_loggers(text):
         debug_log.debug(f"setting {match} to DEBUG")
         log = logging.getLogger(match)
         log.setLevel(logging.DEBUG)
+        if match == "progress":
+            # special case: normally progress logger swallows its messages
+            # so nothing gets printed to the screen regardless of level. This
+            # forces printing
+            log.propagate = True
 
     return count
 
