@@ -138,7 +138,7 @@ class SawxApp(wx.App):
             frame = self.new_frame(uri=self.about_uri)
             while len(extra_args) > 0:
                 path = extra_args.pop(0)
-                frame.load_file(path, default_editor, task_arguments)
+                frame.load_file(path, default_editor, task_arguments, show_progress_bar=False)
         else:
             frame = self.new_frame()
         frame.Show()

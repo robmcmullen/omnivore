@@ -14,11 +14,13 @@ from . import clipboard
 from .ui import dialogs
 from .document import identify_document
 from .filesystem import fsopen as open
+from . import filesystem
 
 
 import logging
 log = logging.getLogger(__name__)
 sync_log = logging.getLogger("sync")
+progress_log = logging.getLogger("progress")
 
 
 class SawxFrame(wx.Frame):
@@ -181,7 +183,16 @@ class SawxFrame(wx.Frame):
         wx.CallAfter(self.find_active_editor)
         del editor
 
-    def load_file(self, path, current_editor=None, args=None):
+    def load_file(self, path, current_editor=None, args=None, show_progress_bar=True):
+        try:
+            filesystem.filesystem_path(path)
+        except FileNotFoundError:
+            show_progress_bar = False
+        if show_progress_bar:
+            # usually True except when loading a file before the Frame is shown
+            # (as in app startup). It uses Yield and can cause refresh events
+            # to happen before the editor is finished loading.
+            progress_log.info(f"START=Loading {path}...")
         try:
             file_metadata = loader.identify_file(path)
             if current_editor is not None and current_editor.can_load_file(file_metadata):
@@ -204,6 +215,9 @@ class SawxFrame(wx.Frame):
             new_editor.load_success(document.uri)
             index = self.find_index_of_editor(new_editor)
             self.notebook.SetPageText(index, new_editor.tab_name)
+        finally:
+            if show_progress_bar:
+                wx.CallAfter(progress_log.info, f"END")
         self.set_title()
 
     def make_active(self, editor, force=False):

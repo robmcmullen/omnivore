@@ -291,6 +291,10 @@ class wxLogHandler(logging.Handler):
                 d.tick(m)
 
 
+def is_active():
+    return wxLogHandler.get_dialog_if_open() is not None
+
+
 def attach_handler():
     log = logging.getLogger("progress")
     level = log.getEffectiveLevel()
