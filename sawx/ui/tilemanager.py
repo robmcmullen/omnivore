@@ -400,6 +400,7 @@ class TileManager(wx.Window):
         self.footer = None
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_MOTION, self.on_motion)
+        self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_kill_focus)
@@ -407,6 +408,7 @@ class TileManager(wx.Window):
         self.previous_leaf_focus = None
         self.dock_handler = DockTarget.DockingRectangleHandler()
         self.menu_popdown_mode = False
+        self.menu_to_dismiss = None
         self.menu_hit_test = None
         self.menu_currently_displayed = None
         self.dock_target_mode = "swap"  # or "split" to split target window on drop
@@ -857,6 +859,20 @@ class TileManager(wx.Window):
             menu_item.open_menu()
         self.CaptureMouse()
 
+    def on_left_down(self, evt):
+        pos = evt.GetPosition()
+        menu_item = self.menu_hit_test.in_rect(pos)
+        if self.menu_popdown_mode and menu_item is not None:
+            # in mouse-up menu mode, pressing the left button again on a menu
+            # item will dismiss the popup if the mouse stays in that menu item
+            self.menu_to_dismiss = self.menu_currently_displayed
+        else:
+            # the mouse is pressed elsewhere, which will either focus or
+            # dismiss the popup depending where the button is clicked: inside
+            # or outside the popup
+            self.menu_to_dismiss = None
+        evt.Skip()
+
     def on_motion(self, evt):
         if self.dock_handler.is_active:
             pos = evt.GetPosition()
@@ -889,9 +905,11 @@ class TileManager(wx.Window):
             menu_item = self.menu_currently_displayed
             if menu_item is not None:
                 pos = evt.GetPosition()
-                if self.menu_hit_test.in_rect(pos) is not None:
-                    log.debug("FINISH IN MENU ITEM! change to popdown mode that doesn't need the mouse button down!")
-                    # return  # FIXME: disabled mouse up menu mode for now
+                if self.menu_to_dismiss == menu_item:
+                    leave_open = False
+                elif self.menu_hit_test.in_rect(pos) is not None:
+                    log.debug("FINISH IN MENU ITEM! changing to popdown mode that doesn't need the mouse button down!")
+                    return
                 elif menu_item.actual_popup.GetScreenRect().Contains(self.ClientToScreen(pos)):
                     log.debug("FINISH IN MENU! leave open!")
                     leave_open = True
@@ -900,6 +918,7 @@ class TileManager(wx.Window):
                 self.ReleaseMouse()
             self.menu_popdown_mode = False
             self.menu_hit_test = None
+            self.menu_to_dismiss = None
             if leave_open:
                 log.debug(f"setting focus to menu {menu_item}")
                 #menu_item.client.on_set_focus(None)
