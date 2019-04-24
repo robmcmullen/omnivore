@@ -154,13 +154,22 @@ class DiskImage(MediaType):
         start, size = self.get_contiguous_sectors_offsets(start, count)
         return Segment(self, start, length=size)
 
-    def get_sector_list_offsets(self, sector_numbers):
-        offsets = np.empty(len(sector_numbers) * self.sector_size, dtype=np.uint32)
+    def get_sector_list_offsets(self, sector_numbers, sector_size_override=None):
+        if sector_size_override is not None:
+            sector_size = sector_size_override
+        else:
+            sector_size = self.sector_size
+        offsets = np.empty(len(sector_numbers) * sector_size, dtype=np.uint32)
         i = 0
         for num in sector_numbers:
             index, size = self.get_index_of_sector(num)
+            size = min(size, sector_size)
             offsets[i:i+size] = np.arange(index, index + size)
             i += size
+        if i < len(offsets):
+            # can happen in Atari DD disks; 1st 3 sectors are 128 bytes, not
+            # 256
+            offsets = np.copy(offsets[0:i])
         return offsets
 
     def get_sector_list(self, sector_numbers):

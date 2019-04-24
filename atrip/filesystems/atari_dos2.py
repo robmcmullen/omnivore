@@ -339,7 +339,12 @@ class AtariDos2Directory(Directory):
     def find_segment_location(self):
         media = self.media
         if media.is_sector_valid(361):
-            return media.get_contiguous_sectors_offsets(361, 8)
+            if media.sector_size == 256:
+                # uses only first 128 bytes
+                offsets = media.get_sector_list_offsets(range(361,369), 128)
+                return offsets, 0
+            else:
+                return media.get_contiguous_sectors_offsets(361, 8)
         else:
             raise errors.FilesystemError("Disk image too small to contain a directory")
 
