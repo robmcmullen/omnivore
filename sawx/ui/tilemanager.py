@@ -871,7 +871,6 @@ class TileManager(wx.Window):
             # dismiss the popup depending where the button is clicked: inside
             # or outside the popup
             self.menu_to_dismiss = None
-        evt.Skip()
 
     def on_motion(self, evt):
         if self.dock_handler.is_active:
