@@ -404,6 +404,7 @@ class TileManager(wx.Window):
         self.Bind(wx.EVT_LEFT_UP, self.on_left_up)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_kill_focus)
+        self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, self.on_mouse_capture_lost)
         self.current_leaf_focus = None
         self.previous_leaf_focus = None
         self.dock_handler = DockTarget.DockingRectangleHandler()
@@ -843,6 +844,10 @@ class TileManager(wx.Window):
         else:
             log.debug("Skipping kill focus because we're in a menu event")
         evt.Skip()
+
+    def on_mouse_capture_lost(self, evt):
+        # FIXME: Only Windows gets this event. (Maybe unnecessary on other platforms?)
+        self.force_clear_sidebar()
 
     def on_start_menu(self, menu_item, evt):
         self.menu_popdown_mode = True
