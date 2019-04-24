@@ -3,6 +3,7 @@
 import os
 import time
 import urllib.request, urllib.error, urllib.parse
+import ssl
 import tempfile
 
 import wx
@@ -85,7 +86,8 @@ class DownloadURLRequest(BaseRequest):
     def get_data_from_server(self):
         try:
             request = urllib.request.Request(self.url)
-            response = urllib.request.urlopen(request)
+            context = ssl._create_unverified_context()
+            response = urllib.request.urlopen(request, context=context)
             headers = response.info()
             if "Content-Length" in headers:
                 self.expected_size = int(headers['Content-Length'])
