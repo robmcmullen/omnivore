@@ -72,7 +72,7 @@ class Collection:
             container.guess_media_type()
             container.media.guess_filesystem()
             self.containers.append(container)
-            container.name = f"Container #{len(self.containers)}"
+            container.name = f"D{len(self.containers)}"
 
     def iter_archive(self, byte_data):
         """Return a list of `Container` objects for each item in the archive.
