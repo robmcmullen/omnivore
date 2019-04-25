@@ -25,7 +25,7 @@ class Filesystem:
     auxiliary segments include a `VTOC` and a list of 'dirent's that point to
     files.
     """
-    pretty_name = "Filesystem"
+    ui_name = "Filesystem"
 
     extra_serializable_attributes = []
 
@@ -399,14 +399,14 @@ def find_filesystems():
 
 def guess_filesystem(segment):
     for f in find_filesystems():
-        log.debug(f"trying filesystem {f.pretty_name}")
+        log.debug(f"trying filesystem {f.ui_name}")
         try:
             found = f(segment)
         except errors.FilesystemError as e:
             log.debug(f"found error: {e}")
             continue
         else:
-            log.info(f"found filesystem {f.pretty_name}")
+            log.info(f"found filesystem {f.ui_name}")
             return found
     log.info(f"No recognized filesystem.")
     return None

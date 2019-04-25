@@ -21,7 +21,7 @@ class MediaType(Segment):
     describing the type of media the data represents: floppy disk image,
     cassette image, cartridge, etc.
     """
-    pretty_name = "Non-standard media"
+    ui_name = "Non-standard media"
     can_resize_default = False
 
     extra_serializable_attributes = []
@@ -31,14 +31,14 @@ class MediaType(Segment):
         self.header = self.calc_header(container)
         self.header_length = len(self.header) if self.header else 0
         size = len(container) - self.header_length
-        Segment.__init__(self, container, self.header_length, name=self.pretty_name, length=size)
+        Segment.__init__(self, container, self.header_length, name=self.ui_name, length=size)
         if self.header is not None:
             self.check_header()
         self.check_media_size()
         self.check_magic()
 
     def __str__(self):
-        desc = f"{self.pretty_name}, "
+        desc = f"{self.ui_name}, "
         if len(self.segments) == 1:
             desc += str(self.segments[0])
         else:
@@ -99,7 +99,7 @@ class MediaType(Segment):
 
 
 class DiskImage(MediaType):
-    pretty_name = "Disk Image"
+    ui_name = "Disk Image"
     sector_size = 128
     expected_size = 0
     starting_sector_label = 1
@@ -109,7 +109,7 @@ class DiskImage(MediaType):
         MediaType.__init__(self, container)
 
     # def __str__(self):
-    #     return f"{self.pretty_name}, size={len(self)} ({self.num_sectors}x{self.sector_size}B)"
+    #     return f"{self.ui_name}, size={len(self)} ({self.num_sectors}x{self.sector_size}B)"
 
     #### verification
 
@@ -120,12 +120,12 @@ class DiskImage(MediaType):
     def check_disk_size(self):
         size = len(self)
         if size != self.expected_size:
-            raise errors.InvalidMediaSize(f"{self.pretty_name} expects size {self.expected_size}; found {size}")
+            raise errors.InvalidMediaSize(f"{self.ui_name} expects size {self.expected_size}; found {size}")
 
     def calc_num_sectors(self):
         size = len(self)
         if size % self.sector_size != 0:
-            raise errors.InvalidMediaSize("{self.pretty_name} requires integer number of sectors")
+            raise errors.InvalidMediaSize("{self.ui_name} requires integer number of sectors")
         return size // self.sector_size
 
     #### sector operations
@@ -185,11 +185,11 @@ class DiskImage(MediaType):
 
 
 class CartImage(MediaType):
-    pretty_name = "Cart Image"
+    ui_name = "Cart Image"
     expected_size = 0
 
     # def __str__(self):
-    #     return f"{len(self) // 1024}K {self.pretty_name}"
+    #     return f"{len(self) // 1024}K {self.ui_name}"
 
     def check_media_size(self):
         size = len(self)
@@ -199,7 +199,7 @@ class CartImage(MediaType):
         if self.expected_size == 0:
             raise errors.InvalidMediaSize(f"Possible cart image, but unable to identify specifically")
         if size != self.expected_size:
-            raise errors.InvalidMediaSize(f"{self.pretty_name} expects size {self.expected_size}; found {size}")
+            raise errors.InvalidMediaSize(f"{self.ui_name} expects size {self.expected_size}; found {size}")
 
 
 ignore_base_class_media_types = set([DiskImage, CartImage])
@@ -229,14 +229,14 @@ def guess_media_type(container):
     if signature:
         log.info(f"found signature {signature}")
     for m in find_media_types():
-        log.debug(f"trying media_type {m.pretty_name}")
+        log.debug(f"trying media_type {m.ui_name}")
         try:
             found = m(container)
         except errors.MediaError as e:
             log.debug(f"found error: {e}")
             continue
         else:
-            log.info(f"found media_type {m.pretty_name}")
+            log.info(f"found media_type {m.ui_name}")
             return found
     log.info(f"No recognized media type.")
     return MediaType(container)

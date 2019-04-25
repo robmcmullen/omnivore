@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class FileType(Segment):
     """Base class for a file contained in a filesystem.
     """
-    pretty_name = "Unknown file type"
+    ui_name = "Unknown file type"
     can_resize_default = False
 
     extra_serializable_attributes = []
@@ -29,7 +29,7 @@ class FileType(Segment):
         self.style_segments()
 
     def __str__(self):
-        s = Segment.__str__(self) + " " + self.pretty_name
+        s = Segment.__str__(self) + " " + self.ui_name
         return s
 
     def calc_segments(self):
@@ -74,14 +74,14 @@ def find_file_types():
 
 def guess_file_type(media, filename, offset, length=0):
     for m in find_file_types():
-        log.debug(f"trying file_type {m.pretty_name}")
+        log.debug(f"trying file_type {m.ui_name}")
         try:
             found = m(media, filename, offset, length)
         except errors.FileError as e:
             log.debug(f"found error: {e}")
             continue
         else:
-            log.info(f"found file_type {m.pretty_name} for {filename}")
+            log.info(f"found file_type {m.ui_name} for {filename}")
             return found
     log.info(f"No recognized file type for {filename}")
     return FileType(media, filename, offset, length)

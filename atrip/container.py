@@ -33,7 +33,7 @@ class Container:
     to be used in the disk image parsing.
 
     """
-    pretty_name = "Uncompressed"
+    ui_name = "Uncompressed"
     compression_algorithm = "uncompressed"
     can_resize_default = False
 
@@ -145,7 +145,7 @@ class Container:
         if self.media:
             desc = str(self.media)
         else:
-            desc = f"{self.pretty_name}, size={len(self)}"
+            desc = f"{self.ui_name}, size={len(self)}"
         return desc
 
     def __len__(self):

@@ -22,7 +22,7 @@ class Collection:
     `Container`s, each of which will have its own media type and filesystem
     structure, independent of the other disk images.
     """
-    pretty_name = "Collection"
+    ui_name = "Collection"
 
     def __init__(self, pathname, data):
         self.pathname = pathname

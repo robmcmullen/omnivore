@@ -51,20 +51,20 @@ class AtrHeader(Segment):
 
     def check_media(self, media):
         if self.sector_size != media.sector_size:
-            raise errors.InvalidHeader("ExpectedMismatch between sector sizes: header claims {self.sector_size}, expected {media.sector_size} for {media.pretty_name}")
+            raise errors.InvalidHeader("ExpectedMismatch between sector sizes: header claims {self.sector_size}, expected {media.sector_size} for {media.ui_name}")
         media_size = len(media) - 16
         if self.image_size != media_size:
-            raise errors.InvalidHeader("Invalid media size: header claims {self.image_size}, expected {media_size} for {media.pretty_name}")
+            raise errors.InvalidHeader("Invalid media size: header claims {self.image_size}, expected {media_size} for {media.ui_name}")
 
 
 class AtariSingleDensity(DiskImage):
-    pretty_name = "Atari SD (90K) Floppy Disk Image"
+    ui_name = "Atari SD (90K) Floppy Disk Image"
     sector_size = 128
     expected_size = 92160
 
     def check_header(self):
         if self.header.sector_size != self.sector_size:
-            raise errors.InvalidMediaSize(f"Sector size {self.header.sector_size} invalid for {self.pretty_name}")
+            raise errors.InvalidMediaSize(f"Sector size {self.header.sector_size} invalid for {self.ui_name}")
 
     def calc_header(self, container):
         header_data = container[0:16]
@@ -74,17 +74,17 @@ class AtariSingleDensity(DiskImage):
             except errors.InvalidHeader:
                 header = None
         else:
-            raise errors.InvalidHeader(f"file size {len(header_data)} small to be {self.pretty_name}")
+            raise errors.InvalidHeader(f"file size {len(header_data)} small to be {self.ui_name}")
         return header
 
 
 class AtariSingleDensityShortImage(AtariSingleDensity):
-    pretty_name = "Atari SD Non-Standard Image"
+    ui_name = "Atari SD Non-Standard Image"
 
     def check_disk_size(self):
         size = len(self)
         if size >= self.expected_size:
-            raise errors.InvalidMediaSize(f"{self.pretty_name} must be less than size {self.expected_size}")
+            raise errors.InvalidMediaSize(f"{self.ui_name} must be less than size {self.expected_size}")
 
     def check_magic(self):
         # Must have an ATR header for this to be a disk image
@@ -96,19 +96,19 @@ class AtariSingleDensityShortImage(AtariSingleDensity):
 
 
 class AtariEnhancedDensity(AtariSingleDensity):
-    pretty_name = "Atari ED (130K) Floppy Disk Image"
+    ui_name = "Atari ED (130K) Floppy Disk Image"
     sector_size = 128
     expected_size = 133120
 
 
 class AtariDoubleDensity(AtariSingleDensity):
-    pretty_name = "Atari DD (180K) Floppy Disk Image"
+    ui_name = "Atari DD (180K) Floppy Disk Image"
     sector_size = 256
     expected_size = 184320
 
 
 class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
-    pretty_name = "Atari DD (180K) Floppy Disk Image (Short Boot Sectors)"
+    ui_name = "Atari DD (180K) Floppy Disk Image (Short Boot Sectors)"
     expected_size = 183936
     initial_sector_size = 128
     num_initial_sectors = 3
@@ -135,11 +135,11 @@ class AtariDoubleDensityShortBootSectors(AtariDoubleDensity):
 
 
 class AtariDoubleDensityHardDriveImage(AtariDoubleDensity):
-    pretty_name = "Atari DD Hard Drive Image"
+    ui_name = "Atari DD Hard Drive Image"
 
     def check_disk_size(self):
         size = len(self)
         if size <= self.expected_size:
-            raise errors.InvalidMediaSize(f"{self.pretty_name} must be greater than size {self.expected_size}")
+            raise errors.InvalidMediaSize(f"{self.ui_name} must be greater than size {self.expected_size}")
 
 

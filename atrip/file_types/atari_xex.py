@@ -55,7 +55,7 @@ class AtariObjectFile(FileType):
     
     Ref: http://www.atarimax.com/jindroush.atari.org/afmtexe.html
     """
-    pretty_name = "Atari 8-bit Object File"
+    ui_name = "Atari 8-bit Object File"
 
     def calc_segments(self):
         segments = []

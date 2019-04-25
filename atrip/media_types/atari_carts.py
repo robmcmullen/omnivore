@@ -154,7 +154,7 @@ class A8CartHeader:
 
 
 class Atari8bitCart(CartImage):
-    pretty_name = "Atari 8bit Cart"
+    ui_name = "Atari 8bit Cart"
 
     def calc_header(self, container):
         header_data = container[0:16]

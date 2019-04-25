@@ -46,7 +46,7 @@ class KBootDirent(Dirent):
 
 
 class KBoot(AtariDos2):
-    pretty_name = "Atari KBoot"
+    ui_name = "Atari KBoot"
     default_executable_extension = "XEX"
 
     def calc_vtoc_segment(self):

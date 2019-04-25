@@ -8,6 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class Apple16SectorDiskImage(DiskImage):
-    pretty_name = "Apple ][ Floppy Disk Image (16 sector tracks)"
+    ui_name = "Apple ][ Floppy Disk Image (16 sector tracks)"
     sector_size = 256
     expected_size = 143360
