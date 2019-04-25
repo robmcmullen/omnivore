@@ -17,4 +17,6 @@ class LZMAContainer(Container):
                 unpacked = f.read()
         except lzma.LZMAError as e:
             raise errors.InvalidContainer(e)
+        if len(unpacked) == 0:
+            raise errors.InvalidContainer("Unpacked to zero size")
         return unpacked
