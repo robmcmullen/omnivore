@@ -74,7 +74,7 @@ class AtariSingleDensity(DiskImage):
             except errors.InvalidHeader:
                 header = None
         else:
-            raise errors.InvalidHeader(f"file size {len(data)} small to be {self.pretty_name}")
+            raise errors.InvalidHeader(f"file size {len(header_data)} small to be {self.pretty_name}")
         return header
 
 
