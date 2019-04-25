@@ -100,6 +100,7 @@ def find_container(filename, verbose=False):
 
 def find_collection(filename, verbose=False):
     sample_data = np.fromfile(filename, dtype=np.uint8)
+    log.info(f"loaded {len(sample_data)} bytes from {filename}")
     return Collection(filename, sample_data)
 
 
@@ -210,17 +211,17 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             asm = pyatasm.Assemble(name)
         except SyntaxError as e:
             raise errors.AtrError("Assembly error: %s" % e.msg)
-        log.debug("Assembled %s into:" % name)
+        log.info("Assembled %s into:" % name)
         for first, last, object_code in asm.segments:
             s = segments.add_segment(object_code, first)
-            log.debug("  %s" % s.name)
+            log.info("  %s" % s.name)
             print("adding %s from %s assembly" % (s, name))
     for name in data_files:
         if "@" not in name:
             raise errors.AtrError("Data files must include a load address specified with the @ char")
         name, addr = name.rsplit("@", 1)
         first = text_to_int(addr)
-        log.debug("Adding data file %s at $%04x" % (name, first))
+        log.info("Adding data file %s at $%04x" % (name, first))
         subset = slice(0, sys.maxsize)
         if "[" in name and "]" in name:
             name, slicetext = name.rsplit("[", 1)
@@ -243,22 +244,21 @@ def assemble_segments(source_files, data_files, obj_files, run_addr=""):
             log.debug("read data for %s" % s.name)
     for name in obj_files:
         try:
-            parser, _ = find_diskimage(name, options.verbose)
+            parser, _ = find_diskimage(name)
         except errors.AtrError as e:
-            print(f"skipping {name}: {e}")
+            log.warning(f"skipping {name}: {e}")
         else:
             for s in parser.segments:
                 if hasattr(s, 'run_address'):
                     if not run_addr:
                         run_addr = s.run_address()
                     else:
-                        print(f"already have run address {run_addr}; skipping {s.run_address()}")
+                        log.warning(f"already have run address {run_addr}; skipping {s.run_address()}")
                 elif s.origin > 0:
-                    print(f"adding {s} from {name}")
+                    log.info(f"adding {s} from {name}")
                     segments.add_segment(s.data, s.origin)
-    if options.verbose:
-        for s in segments:
-            print("%s - %04x)" % (str(s)[:-1], s.origin + len(s)))
+    for s in segments:
+        log.info("(%s - %04x)" % (str(s)[:-1], s.origin + len(s)))
     if run_addr:
         try:
             run_addr = text_to_int(run_addr)
@@ -284,7 +284,7 @@ def boot_image(image_name, source_files, data_files, obj_files, run_addr=""):
     try:
         image_cls = parsers_for_filename(image_name)[0]
     except errors.InvalidDiskImage as e:
-        print("%s: %s" % (image_name, e))
+        log.warning("%s: %s" % (image_name, e))
         return None
     segments, run_addr = assemble_segments(source_files, data_files, obj_files, run_addr)
     if segments:
@@ -397,7 +397,7 @@ def create_image(template, name):
         else:
             with open(name, "wb") as fh:
                 fh.write(data)
-            parser, _ = find_diskimage(name, options.verbose)
+            parser, _ = find_diskimage(name)
             print("created %s: %s" % (name, str(parser.image)))
             list_files(parser.image, [])
     else:
@@ -587,12 +587,13 @@ def run():
     command = reverse_aliases[options.command]
 
     # Turn off debug messages by default
-    logging.basicConfig(level=logging.WARNING)
+    level = logging.WARNING
+    if options.verbose >= 1:
+        level = logging.INFO
+    if options.verbose >= 2:
+        level = logging.DEBUG
+    logging.basicConfig(level=level)
     log = logging.getLogger("atrip")
-    if options.verbose:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
 
     if command == "create":
         create_image(options.template[0], disk_image_name)
@@ -603,7 +604,7 @@ def run():
         boot_image(disk_image_name, asm, data, obj, options.run_addr)
     else:
         try:
-            collection = find_collection(disk_image_name, options.verbose)
+            collection = find_collection(disk_image_name)
         except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
             print(f"{disk_image_name}: {e}")
         else:

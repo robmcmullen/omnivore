@@ -397,18 +397,16 @@ def find_filesystems():
         _filesystems = _find_filesystems()
     return _filesystems
 
-def guess_filesystem(segment, verbose=False):
+def guess_filesystem(segment):
     for f in find_filesystems():
-        if verbose:
-            log.info(f"trying filesystem {f}")
+        log.debug(f"trying filesystem {f.pretty_name}")
         try:
             found = f(segment)
         except errors.FilesystemError as e:
             log.debug(f"found error: {e}")
             continue
         else:
-            if verbose:
-                log.info(f"found filesystem {f}")
+            log.info(f"found filesystem {f.pretty_name}")
             return found
     log.info(f"No recognized filesystem.")
     return None

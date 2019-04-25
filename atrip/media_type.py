@@ -224,21 +224,19 @@ def find_media_types():
         _media_types = _find_media_types()
     return _media_types
 
-def guess_media_type(container, verbose=False):
-    signature = guess_signature_by_size(container, verbose)
+def guess_media_type(container):
+    signature = guess_signature_by_size(container)
     if signature:
         log.info(f"found signature {signature}")
     for m in find_media_types():
-        if verbose:
-            log.info(f"trying media_type {m}")
+        log.debug(f"trying media_type {m.pretty_name}")
         try:
             found = m(container)
         except errors.MediaError as e:
             log.debug(f"found error: {e}")
             continue
         else:
-            if verbose:
-                log.info(f"found media_type {m}")
+            log.info(f"found media_type {m.pretty_name}")
             return found
     log.info(f"No recognized media type.")
     return MediaType(container)

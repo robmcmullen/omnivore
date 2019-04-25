@@ -13,7 +13,7 @@ from . import filesystem
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+
 
 class Container:
     """Media storage container and packer/unpacker for disk image compression.
@@ -40,7 +40,7 @@ class Container:
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, data, style=None, origin=0, name="All", error=None, verbose_name=None, memory_map=None):
+    def __init__(self, data, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None):
 
         self.segments = []
         self.header = None
@@ -328,22 +328,19 @@ def find_containers():
         _containers = _find_containers()
     return _containers
 
-def guess_container(raw_data, verbose=False):
+def guess_container(raw_data):
     container = None
     for c in find_containers():
-        if verbose:
-            log.info(f"trying container {c.compression_algorithm}")
+        log.debug(f"trying container {c.compression_algorithm}")
         try:
             container = c(raw_data)
         except errors.InvalidContainer as e:
             continue
         else:
-            if verbose:
-                log.info(f"found container {c.compression_algorithm}")
+            log.info(f"found container {c.compression_algorithm}")
             break
     else:
-        if verbose:
-            log.info(f"image does not appear to be compressed.")
+        log.info(f"image does not appear to be compressed.")
         container = Container(raw_data)
     return container
 

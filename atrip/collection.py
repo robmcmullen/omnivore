@@ -13,7 +13,7 @@ from .filesystem import Dirent
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+
 
 class Collection:
     """Parent object for single file archive collection of multiple disk images
@@ -68,11 +68,13 @@ class Collection:
         """
         self.archiver, item_data_list = find_container_items_in_archive(self.pathname, byte_data)
         for item_data in item_data_list:
+            log.info(f"container size: {len(item_data)}")
             container = guess_container(item_data)
             container.guess_media_type()
             container.media.guess_filesystem()
             self.containers.append(container)
             container.name = f"D{len(self.containers)}"
+            log.info(f"container: {container}")
 
     def iter_archive(self, byte_data):
         """Return a list of `Container` objects for each item in the archive.

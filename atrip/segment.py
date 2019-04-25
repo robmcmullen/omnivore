@@ -59,7 +59,8 @@ class Segment:
         # container.
         offset_list = self.calc_offset_list(offset_or_offset_list, length)
         if hasattr(container_or_segment, 'container_offset'):
-            log.debug(f"creating {name}\n  container: {container_or_segment}, {offset_list}")
+            log.debug(f"creating {name},  {len(offset_list)} bytes from {container_or_segment}")
+            # log.debug(f"  offset_list = {offset_list}")
             offset_list = container_or_segment.container_offset[offset_list]
             container_or_segment = container_or_segment.container
 

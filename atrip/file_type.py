@@ -72,18 +72,16 @@ def find_file_types():
         _file_types = _find_file_types()
     return _file_types
 
-def guess_file_type(media, filename, offset, length=0, verbose=False):
+def guess_file_type(media, filename, offset, length=0):
     for m in find_file_types():
-        if verbose:
-            log.info(f"trying file_type {m}")
+        log.debug(f"trying file_type {m.pretty_name}")
         try:
             found = m(media, filename, offset, length)
         except errors.FileError as e:
             log.debug(f"found error: {e}")
             continue
         else:
-            if verbose:
-                log.info(f"found file_type {m}")
+            log.info(f"found file_type {m.pretty_name} for {filename}")
             return found
-    log.info(f"No recognized file type.")
+    log.info(f"No recognized file type for {filename}")
     return FileType(media, filename, offset, length)

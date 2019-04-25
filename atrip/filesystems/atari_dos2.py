@@ -365,6 +365,7 @@ class AtariDos2Directory(Directory):
 
 
 class AtariDos2(Filesystem):
+    pretty_name = "Atari DOS 2"
     default_executable_extension = "XEX"
 
     def check_media(self, media):
