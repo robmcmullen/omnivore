@@ -1,4 +1,4 @@
-mime = 'application/vnd.atari5200.cart'
+mime = 'application/x.atari5200.cart'
 
 sha1_signatures = {
 2048: {

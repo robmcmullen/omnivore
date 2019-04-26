@@ -1,4 +1,4 @@
-mime = 'application/vnd.vectrex'
+mime = 'application/x.vectrex'
 
 sha1_signatures = {
 90: {

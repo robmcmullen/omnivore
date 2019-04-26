@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 
 
 magic = [
-    {'mime': "application/vnd.atari8bit.atr.getaway_pd",
+    {'mime': "application/x.atari8bit.atr;getaway_pd",
      'name': "Getaway Public Domain ATR",
      'signature': [
          (slice(8, 10), [0x82, 0x39]),
@@ -13,21 +13,21 @@ magic = [
          ],
     },
 
-    {'mime': "application/vnd.atari8bit.xex.getaway",
+    {'mime': "application/x.atari8bit.xex;getaway",
      'name': "Getaway XEX",
      'signature': [
          (slice(0, 6), [0xff, 0xff, 0x80, 0x2a, 0xff, 0x8a]),
          ],
     },
 
-    {'mime': "application/vnd.atari8bit.atr.getaway",
+    {'mime': "application/x.atari8bit.atr.getaway",
      'name': "Getaway ATR",
      'signature': [
          (slice(0x10, 0x19), [0x00, 0xc1, 0x80, 0x0f, 0xcc, 0x22, 0x18, 0x60, 0x0e]),
          ],
     },
 
-    {'mime': "application/vnd.atari8bit.atr.jumpman_level_tester",
+    {'mime': "application/x.atari8bit.atr;jumpman_level_tester",
      'name': "Jumpman Level Tester from Omnivore",
      'signature': [
          (slice(0, 5), [0x96, 0x02 , 0xd0 , 0x05 , 0x80]),
@@ -38,7 +38,7 @@ magic = [
          ],
     },
 
-    {'mime': "application/vnd.atari8bit.atr.jumpman",
+    {'mime': "application/x.atari8bit.atr;jumpman",
      'name': "Jumpman",
      'signature': [
          (slice(0, 5), [0x96, 0x02 , 0x80 , 0x16 , 0x80]),

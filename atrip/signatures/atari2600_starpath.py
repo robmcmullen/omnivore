@@ -1,4 +1,4 @@
-mime = 'application/vnd.atari2600.starpath'
+mime = 'application/x.atari2600.starpath'
 
 sha1_signatures = {
 8448: {
