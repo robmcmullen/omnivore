@@ -125,7 +125,7 @@ class DiskImage(MediaType):
     def calc_num_sectors(self):
         size = len(self)
         if size % self.sector_size != 0:
-            raise errors.InvalidMediaSize("{self.ui_name} requires integer number of sectors")
+            raise errors.InvalidMediaSize(f"{self.ui_name} requires integer number of sectors")
         return size // self.sector_size
 
     #### sector operations
