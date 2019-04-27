@@ -65,8 +65,8 @@ class Segment:
             container_or_segment = container_or_segment.container
 
         self.container = container_or_segment
-        self.container_offset = offset_list
-        self.verify_offsets()
+        self.container_offset = self.enforce_offset_bounds(offset_list)
+        self._reverse_offset = None
 
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
         self.error = error
@@ -90,6 +90,12 @@ class Segment:
     @property
     def style(self):
         return ArrayWrapper(self.container._style, self.container_offset)
+
+    @property
+    def reverse_offset(self):
+        if self._reverse_offset is None:
+            self._reverse_offset = self.calc_reverse_offsets()
+        return self._reverse_offset
 
     def __len__(self):
         return np.alen(self.container_offset)
@@ -138,12 +144,8 @@ class Segment:
             offset_list = np.arange(offset_or_offset_list, offset_or_offset_list + length, dtype=np.uint32)
         return offset_list
 
-    def verify_offsets(self):
-        self.enforce_offset_bounds()
-        self.reverse_offset = self.calc_reverse_offsets()
-
-    def enforce_offset_bounds(self):
-        self.container_offset = self.container_offset[self.container_offset < len(self.container)]
+    def enforce_offset_bounds(self, offset_list):
+        return offset_list[offset_list < len(self.container)]
 
     def calc_reverse_offsets(self):
         # Initialize array to out of range
