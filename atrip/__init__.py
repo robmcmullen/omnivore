@@ -404,6 +404,31 @@ def create_image(template, name):
         print("creating %s" % name)
 
 
+def trace_calls(frame, event, arg):
+    # global last_trace_was_system_call
+
+    if event != 'call':
+        return
+    co = frame.f_code
+    func_name = co.co_name
+    if func_name == 'write':
+        # Ignore write() calls from print statements
+        return
+    func_line_no = frame.f_lineno
+    func_filename = co.co_filename
+    caller = frame.f_back
+    caller_line_no = caller.f_lineno
+    caller_filename = caller.f_code.co_filename
+    if "/python3" in caller_filename or "/logging/" in func_filename or "/sre_" in caller_filename or "/logging/" in caller_filename:
+        # if not last_trace_was_system_call:
+        #     print('  <system calls>')
+        #     last_trace_was_system_call = True
+        return
+    last_trace_was_system_call = False
+    print('%s:%s -> %s %s:%s' % (caller_filename, caller_line_no, func_name, func_filename, func_line_no))
+    return
+
+
 def run():
     import argparse
 
@@ -466,6 +491,7 @@ def run():
     parser.register('action', 'parsers', AliasedSubParsersAction)
     parser.add_argument("-v", "--verbose", default=0, action="count")
     parser.add_argument("--dry-run", action="store_true", default=False, help="don't perform operation, just show what would have happened")
+    parser.add_argument("--trace", action="store_true", default=False, help="trace program flow (debugging only)")
 
     subparsers = parser.add_subparsers(dest='command', help='', metavar="COMMAND")
 
@@ -594,6 +620,9 @@ def run():
         level = logging.DEBUG
     logging.basicConfig(level=level)
     log = logging.getLogger("atrip")
+
+    if options.trace:
+        sys.settrace(trace_calls)
 
     if command == "create":
         create_image(options.template[0], disk_image_name)
