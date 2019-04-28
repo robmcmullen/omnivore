@@ -60,19 +60,21 @@ class AtariDos1SectorVTOC(VTOC):
 
     def find_segment_location(self):
         media = self.media
-        values = media[0:5].view(dtype=self.vtoc_type)[0]
+        if not media.is_sector_valid(360):
+            raise errors.FilesystemError(f"Media ends before sector 360")
+        return media.get_contiguous_sectors_offsets(360, 1)
+
+    def verify_vtoc(self):
+        values = self[0:5].view(dtype=self.vtoc_type)[0]
         code = values[0]
         if code == 0 or code == 2:
             pass
         else:
             raise errors.FilesystemError(f"Invalid VTOC code {code}")
-        if not media.is_sector_valid(360):
-            raise errors.FilesystemError(f"Media ends before sector 360")
         self.total_sectors = values[1]
         if self.total_sectors > self.max_sector:
             raise errors.FilesystemError(f"Invalid number of sectors {self.total_sectors}")
         self.unused_sectors = values[2]
-        return media.get_contiguous_sectors_offsets(360, 1)
 
     def unpack_vtoc(self):
         bits = np.unpackbits(self[0x0a:0x64])
@@ -97,7 +99,6 @@ class AtariDos2SectorVTOC(AtariDos1SectorVTOC):
     def find_segment_location(self):
         if self.media.num_sectors < 1024:
             raise errors.FilesystemError(f"Not enhanced density disk")
-        AtariDos1SectorVTOC.find_segment_location(self)  # throw away its return value
         return self.media.get_sector_list_offsets([360, 1024]), 0
 
     def unpack_vtoc(self):
