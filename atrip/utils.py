@@ -150,39 +150,6 @@ class BaseSectorList:
         self.sectors.extend(sectors)
 
 
-class Dirent:
-    """Abstract base class for a directory entry
-
-    """
-
-    def __init__(self, file_num=0):
-        self.file_num = file_num
-
-    def __eq__(self, other):
-        raise errors.NotImplementedError
-
-    def extra_metadata(self, image):
-        raise errors.NotImplementedError
-
-    def mark_deleted(self):
-        raise errors.NotImplementedError
-
-    def parse_raw_dirent(self, image, bytes):
-        raise errors.NotImplementedError
-
-    def encode_dirent(self):
-        raise errors.NotImplementedError
-
-    def get_sectors_in_vtoc(self, image):
-        raise errors.NotImplementedError
-
-    def start_read(self, image):
-        raise errors.NotImplementedError
-
-    def read_sector(self, image):
-        raise errors.NotImplementedError
-
-
 class Directory(BaseSectorList):
     def __init__(self, header, num_dirents=-1, sector_class=WriteableSector):
         BaseSectorList.__init__(self, header)

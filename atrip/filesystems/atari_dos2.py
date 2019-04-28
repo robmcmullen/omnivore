@@ -125,9 +125,8 @@ class AtariDosDirent(Dirent):
         ('EXT','S3'),
         ])
 
-    def __init__(self, filesystem, parent, file_num, start):
-        self.file_num = file_num
-        Dirent.__init__(self, filesystem, parent, file_num, start, 16)
+    def __init__(self, directory, file_num, start):
+        Dirent.__init__(self, directory, file_num, start, 16)
         self.flag = 0
         self.opened_output = False
         self.dos_2 = False
@@ -277,41 +276,6 @@ class AtariDosDirent(Dirent):
             return False
         return True
 
-    def get_sectors_in_vtoc(self, image):
-        sector_list = BaseSectorList(image.header)
-        self.start_read(image)
-        while True:
-            sector = WriteableSector(image.header.sector_size, None, self.current_sector)
-            sector_list.append(sector)
-            _, last, _, _ = self.read_sector(image)
-            if last:
-                break
-        return sector_list
-
-    def start_read(self, image):
-        if not self.is_sane:
-            raise errors.InvalidDirent("Invalid directory entry '%s'" % str(self))
-        self.current_sector = self.starting_sector
-        self.current_read = self.num_sectors
-        self.sectors_seen = set()
-
-    def read_sector(self, image):
-        raw, pos, size = image.get_raw_bytes(self.current_sector)
-        bytes, num_data_bytes = self.process_raw_sector(image, raw)
-        return bytes, self.current_sector == 0, pos, num_data_bytes
-
-    def process_raw_sector(self, image, raw):
-        file_num = raw[-3] >> 2
-        if file_num != self.file_num:
-            raise errors.FileNumberMismatchError164("Expecting file %d, found %d" % (self.file_num, file_num))
-        self.sectors_seen.add(self.current_sector)
-        next_sector = ((raw[-3] & 0x3) << 8) + raw[-2]
-        if next_sector in self.sectors_seen:
-            raise errors.FileStructureError("Bad sector pointer data: attempting to reread sector %d" % next_sector)
-        self.current_sector = next_sector
-        num_bytes = raw[-1]
-        return raw[0:num_bytes], num_bytes
-
     def set_values(self, filename, filetype, index):
         if type(filename) is not bytes:
             filename = filename.encode("latin1")
@@ -352,7 +316,7 @@ class AtariDos2Directory(Directory):
         segments = []
         index = 0
         for filenum in range(64):
-            dirent = AtariDosDirent(self.filesystem, self, filenum, index)
+            dirent = AtariDosDirent(self, filenum, index)
             if dirent.in_use:
                 dirent.set_comment_at(0x00, "FILE #%d: Flag" % filenum)
                 dirent.set_comment_at(0x01, "FILE #%d: Number of sectors in file" % filenum)

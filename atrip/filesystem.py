@@ -118,13 +118,15 @@ class Dirent(Segment):
 
     """
 
-    def __init__(self, filesystem, parent, file_num, start, length):
-        self.filesystem = filesystem
+    def __init__(self, directory, file_num, start, length, parent=None):
+        self.directory = directory
         self.file_num = file_num
+        if parent is None:
+            parent = directory
         Segment.__init__(self, parent, start, name=f"Dirent {file_num}", length=length)
 
     def __eq__(self, other):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def __str__(self):
         return "File #%-2d %s %s" % (self.file_num, f"({self.status})" if self.status else "", self.catalog_entry)
@@ -138,29 +140,31 @@ class Dirent(Segment):
         return self.filename
 
     @property
+    def filesystem(self):
+        return self.directory.filesystem
+
+    @property
+    def media(self):
+        return self.directory.filesystem.media
+
+    @property
     def in_use(self):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def extra_metadata(self, image):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def mark_deleted(self):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def parse_raw_dirent(self, image, bytes):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def encode_dirent(self):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
-    def get_sectors_in_vtoc(self, image):
-        raise errors.NotImplementedError
-
-    def start_read(self, image):
-        raise errors.NotImplementedError
-
-    def read_sector(self, image):
-        raise errors.NotImplementedError
+    def get_file(self):
+        raise NotImplementedError
 
 
 class Directory(Segment):
@@ -235,7 +239,7 @@ class Directory(Segment):
 
     @property
     def dirent_class(self):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def calc_sectors(self, image):
         self.sectors = []
@@ -261,10 +265,10 @@ class Directory(Segment):
         return self.sector_class(self.sector_size)
 
     def encode_empty(self):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def encode_dirent(self, dirent):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def store_encoded(self, data):
         while True:
@@ -282,7 +286,7 @@ class Directory(Segment):
         self.set_sector_numbers(image)
 
     def set_sector_numbers(self, image):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
 
 class VTOC(Segment):
@@ -369,7 +373,7 @@ class VTOC(Segment):
         raise errors.NotEnoughSpaceOnDisk("No space left in VTOC")
 
     def calc_bitmap(self):
-        raise errors.NotImplementedError
+        raise NotImplementedError
 
     def free_sector_list(self, sector_list):
         for sector in sector_list:

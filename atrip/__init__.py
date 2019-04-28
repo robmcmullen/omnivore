@@ -104,28 +104,30 @@ def find_collection(filename, verbose=False):
     return Collection(filename, sample_data)
 
 
-def extract_files(image, files):
-    if options.all:
-        files = image.files
-    for name in files:
-        try:
-            dirent = image.find_dirent(name)
-        except errors.FileNotFound:
-            print("%s not in %s" % (name, image))
-            continue
-        output = dirent.filename
-        if options.lower:
-            output = output.lower()
-        if not options.dry_run:
-            data = image.get_file(dirent)
-            if os.path.exists(output) and not options.force:
-                print("skipping %s, file exists. Use -f to overwrite" % output)
-                continue
-            print("extracting %s -> %s" % (name, output))
-            with open(output, "wb") as fh:
-                fh.write(data)
-        else:
-            print("extracting %s -> %s" % (name, output))
+def extract_files(collection, files):
+    files = set(files)
+    for dirent in collection.iter_dirents():
+        if not files or dirent.filename in files:
+            output = dirent.filename
+            if options.lower:
+                output = output.lower()
+            if not options.dry_run:
+                segment = dirent.get_file()
+                if os.path.exists(output) and not options.force:
+                    print("skipping %s, file exists. Use -f to overwrite" % output)
+                else:
+                    print("extracting %s -> %s" % (dirent.filename, output))
+                    with open(output, "wb") as fh:
+                        fh.write(segment[:])
+            else:
+                print("extracting %s -> %s" % (dirent.filename, output))
+            if dirent.filename in files:
+                files.remove(dirent.filename)
+                if not files:
+                    break
+    if files:
+        for filename in sorted(files):
+            print(f"not found: {filename}")
 
 
 def save_file(image, name, filetype, data):
@@ -630,7 +632,7 @@ def run():
             elif command == "delete":
                 remove_files(container, options.files)
             elif command == "extract":
-                extract_files(container, options.files)
+                extract_files(collection, options.files)
             elif command == "assemble":
                 asm = options.asm[0] if options.asm else []
                 data = options.data[0] if options.data else []

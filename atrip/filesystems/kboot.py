@@ -8,7 +8,7 @@ from ..file_type import guess_file_type
 
 class KBootDirent(Dirent):
     def __init__(self, filesystem):
-        Dirent.__init__(self, filesystem, filesystem.media, 0, 0, 0)
+        Dirent.__init__(self, filesystem, 0, 0, 0, filesystem.media)
         self.starting_sector = 4
         self.basename = self.container.basename
         if not self.basename:
