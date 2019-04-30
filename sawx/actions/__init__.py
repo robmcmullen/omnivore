@@ -6,6 +6,7 @@ from ..action import SawxAction, SawxNameChangeAction, SawxListAction
 from ..persistence import iter_templates
 from ..ui.dialogs import prompt_for_dec, get_file_dialog_wildcard
 from ..ui.prefs_dialog import PreferencesDialog
+from ..ui.error_logger import show_logging_frame
 from .. import errors
 
 import logging
@@ -296,3 +297,10 @@ class test_progress(SawxAction):
             error = str(e)
         finally:
             progress_log.info("END")
+
+class show_debug_log(SawxAction):
+    def calc_name(self, action_key):
+        return "View Error Log"
+
+    def perform(self, action_key):
+        show_logging_frame()
