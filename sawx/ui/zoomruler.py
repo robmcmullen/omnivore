@@ -487,10 +487,6 @@ class VirtualLabeledRuler(LabeledRuler):
         self._minorfont = wx.Font(fontsize, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self._majorfont = wx.Font(fontsize, wx.SWISS, wx.NORMAL, wx.BOLD)
 
-        if wx.Platform == "__WXMAC__":
-            self._minorfont.SetNoAntiAliasing(True)
-            self._majorfont.SetNoAntiAliasing(True)
-
         self._bits = BitSink()
         self._userbits = []
         self._userbitlen = 0
