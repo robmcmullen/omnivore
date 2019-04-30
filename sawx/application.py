@@ -170,11 +170,14 @@ class SawxApp(wx.App):
 
     def quit(self):
         for frame in wx.GetTopLevelWindows():
+            log.debug(f"closing frame {frame}")
             try:
                 if frame.is_dirty:
                     log.warning(f"frame {frame} has unsaved changes")
-            except AttributeError:
-                pass
+            except AttributeError as e:
+                log.error(f"error {e} closing {frame}")
+            else:
+                frame.close_all_tabs()
         self.ExitMainLoop()
 
     #### Application information

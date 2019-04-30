@@ -83,6 +83,13 @@ class SawxFrame(wx.Frame):
             control = self.notebook.GetPage(index)
             yield control.editor
 
+    @property
+    def is_dirty(self):
+        state = False
+        for e in self.editors:
+            state |= e.is_dirty
+        return state
+
     def create_icon(self):
         data = open(wx.GetApp().app_icon, 'rb')
         image = wx.Image(data)
@@ -172,7 +179,7 @@ class SawxFrame(wx.Frame):
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
 
-    def close_editor(self, editor, remove=True):
+    def close_editor(self, editor, remove=True, quit=False):
         control = editor.control
         if remove:
             index = self.find_index_of_editor(editor)
@@ -180,7 +187,8 @@ class SawxFrame(wx.Frame):
             control.Destroy()
         control.editor = None
         editor.control = None
-        wx.CallAfter(self.find_active_editor)
+        if not quit:
+            wx.CallAfter(self.find_active_editor)
         del editor
 
     def load_file(self, path, current_editor=None, args=None, show_progress_bar=True):
@@ -244,6 +252,13 @@ class SawxFrame(wx.Frame):
             control = self.notebook.GetPage(index)
             log.debug(f"index={index}, control={control}, editor={control.editor}")
             yield index, control, control.editor
+
+    def close_all_tabs(self):
+        self.activate_timer(False)
+        editors = list(self.editors)
+        for editor in editors:
+            log.debug(f"Closing {editor}")
+            self.close_editor(editor, quit=True)
 
     def find_index_of_editor(self, editor):
         return self.find_index_of_control(editor.control)
@@ -346,13 +361,16 @@ class SawxFrame(wx.Frame):
         evt.Skip()
         wx.CallAfter(self.sync_active_tab)
 
-    def on_activate(self, evt):
-        if evt.GetActive():
+    def activate_timer(self, start=True):
+        if start:
             log.debug("restarting toolbar timer")
             self.toolbar_timer.Start(wx.GetApp().clipboard_check_interval * 1000)
         else:
             log.debug("halting toolbar timer")
             self.toolbar_timer.Stop()
+
+    def on_activate(self, evt):
+        self.activate_timer(evt.GetActive())
         wx.CallAfter(self.sync_active_tab)
 
     def on_char_hook(self, evt):
