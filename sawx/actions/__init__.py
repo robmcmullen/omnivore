@@ -1,6 +1,7 @@
 import time
 
 import wx
+import wx.lib.inspection
 
 from ..action import SawxAction, SawxNameChangeAction, SawxListAction
 from ..persistence import iter_templates
@@ -304,3 +305,10 @@ class show_debug_log(SawxAction):
 
     def perform(self, action_key):
         show_logging_frame()
+
+class widget_inspector(SawxAction):
+    def calc_name(self, action_key):
+        return "View Widget Inspector"
+
+    def perform(self, action_key):
+        wx.lib.inspection.InspectionTool().Show()
