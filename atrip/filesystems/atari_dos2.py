@@ -125,8 +125,9 @@ class AtariDosDirent(Dirent):
         ('EXT','S3'),
         ])
 
-    def __init__(self, directory, file_num, start):
-        Dirent.__init__(self, directory, file_num, start, 16)
+    def __init__(self, directory, file_num):
+        start = file_num * self.format.itemsize
+        Dirent.__init__(self, directory, file_num, start, self.format.itemsize)
         self.flag = 0
         self.opened_output = False
         self.dos_2 = False
@@ -314,9 +315,8 @@ class AtariDos2Directory(Directory):
 
     def calc_dirents(self):
         segments = []
-        index = 0
         for filenum in range(64):
-            dirent = AtariDosDirent(self, filenum, index)
+            dirent = AtariDosDirent(self, filenum)
             if dirent.in_use:
                 dirent.set_comment_at(0x00, "FILE #%d: Flag" % filenum)
                 dirent.set_comment_at(0x01, "FILE #%d: Number of sectors in file" % filenum)
@@ -324,7 +324,6 @@ class AtariDos2Directory(Directory):
                 dirent.set_comment_at(0x05, "FILE #%d: Filename" % filenum)
                 dirent.set_comment_at(0x0d, "FILE #%d: Extension" % filenum)
                 segments.append(dirent)
-            index += 16
         return segments
 
 
