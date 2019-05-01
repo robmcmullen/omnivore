@@ -290,14 +290,14 @@ class Directory(Segment):
 
 
 class VTOC(Segment):
+    ui_name = "VTOC"
+
     def __init__(self, filesystem):
         self.filesystem = filesystem
         offset, length = self.find_segment_location()
-        Segment.__init__(self, filesystem.media, offset, name="VTOC", length=length)
-        self.verify_vtoc()
-
-        # sector map: 1 is free, 0 is allocated
-        self.sector_map = np.zeros([filesystem.media.num_sectors], dtype=np.uint8)
+        Segment.__init__(self, filesystem.media, offset, name=self.ui_name, length=length)
+        self.addressable_sectors = self.calc_sector_map_size()
+        self.create_sector_map()
         self.unpack_vtoc()
 
     @property
@@ -313,8 +313,12 @@ class VTOC(Segment):
     # def __str__(self):
     #     return "%s\n (%d free)" % ("\n".join(["track %02d: %s" % (i, line) for i, line in enumerate(str(self.sector_map[self.header.starting_sector_label:(self.header.tracks_per_disk*self.header.sectors_per_track) + self.header.starting_sector_label].reshape([self.header.tracks_per_disk,self.header.sectors_per_track])).splitlines())]), self.num_free_sectors)
 
-    def verify_vtoc(self):
-        raise NotImplementedError
+    def calc_sector_map_size(self):
+        return self.media.num_sectors
+
+    def create_sector_map(self):
+        # sector map: 1 is free, 0 is allocated
+        self.sector_map = np.zeros([self.addressable_sectors], dtype=np.uint8)
 
     def unpack_vtoc(self):
         """Using the bit-encoded data, unpack it into the sector_map array

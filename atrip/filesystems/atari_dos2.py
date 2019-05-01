@@ -50,6 +50,8 @@ class AtariDosBootSegment(Segment):
 
 
 class AtariDos1SectorVTOC(VTOC):
+    ui_name = "DOS2 SD VTOC"
+
     vtoc_type = np.dtype([
         ('code', 'u1'),
         ('total','<u2'),
@@ -64,7 +66,7 @@ class AtariDos1SectorVTOC(VTOC):
             raise errors.FilesystemError(f"Media ends before sector 360")
         return media.get_contiguous_sectors_offsets(360, 1)
 
-    def verify_vtoc(self):
+    def calc_sector_map_size(self):
         values = self[0:5].view(dtype=self.vtoc_type)[0]
         code = values[0]
         if code == 0 or code == 2:
@@ -75,6 +77,7 @@ class AtariDos1SectorVTOC(VTOC):
         if self.total_sectors > self.max_sector:
             raise errors.FilesystemError(f"Invalid number of sectors {self.total_sectors}")
         self.unused_sectors = values[2]
+        return self.max_sector
 
     def unpack_vtoc(self):
         bits = np.unpackbits(self[0x0a:0x64])
@@ -88,16 +91,12 @@ class AtariDos1SectorVTOC(VTOC):
 
 
 class AtariDos2SectorVTOC(AtariDos1SectorVTOC):
-    vtoc_type = np.dtype([
-        ('code', 'u1'),
-        ('total','<u2'),
-        ('unused','<u2'),
-        ])
+    ui_name = "DOS2 ED VTOC"
 
-    max_sector = 1024
+    max_sector = 1040
 
     def find_segment_location(self):
-        if self.media.num_sectors < 1024:
+        if self.media.num_sectors != 1040:
             raise errors.FilesystemError(f"Not enhanced density disk")
         return self.media.get_sector_list_offsets([360, 1024]), 0
 
