@@ -63,7 +63,8 @@ class Dos33VTOC(VTOC):
         print(self.container_offset)
         print(values)
         media = self.media
-        media.first_directory = media.sector_from_track(values['cat_track'], values['cat_sector'])
+        media.first_directory_track = int(values['cat_track'])
+        media.first_directory_sector = int(values['cat_sector'])
         media.sector_size = int(values['sector_size'])
         media.max_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
         media.ts_pairs = int(values['max_pairs'])
@@ -150,6 +151,12 @@ class Dos33Dirent(Dirent):
         self.sectors_seen = None
         self.sector_map = None
         self.parse_raw_dirent()
+        if self.in_use:
+            try:
+                self.get_file()
+            except errors.FileError as e:
+                self.is_sane = False
+                self.error = e
 
     def __str__(self):
         return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
@@ -191,18 +198,11 @@ class Dos33Dirent(Dirent):
 
     @property
     def in_use(self):
-        return not self.deleted and self.track != 0
+        return self.is_sane and not self.deleted and self.track != 0
 
     @property
     def flag(self):
         return 0xff if self.deleted else self._file_type | (0x80 * int(self.locked))
-
-    def extra_metadata(self, image):
-        lines = []
-        ts = self.get_track_sector_list(image)
-        lines.append("track/sector list at: " + str(ts))
-        lines.append("sector map: " + str(self.sector_map))
-        return "\n".join(lines)
 
     def parse_raw_dirent(self):
         data = self.data[0:self.format.itemsize]
@@ -237,26 +237,6 @@ class Dos33Dirent(Dirent):
     def mark_deleted(self):
         self.deleted = True
 
-    def update_sector_info(self, sector_list):
-        self.num_sectors = sector_list.num_sectors
-        self.starting_sector = sector_list.first_sector
-
-    def add_metadata_sectors(self, vtoc, sector_list, header):
-        """Add track/sector list
-        """
-        tslist = BaseSectorList(header)
-        for start in range(0, len(sector_list), header.ts_pairs):
-            end = min(start + header.ts_pairs, len(sector_list))
-            if _xd: log.debug("ts: %d-%d" % (start, end))
-            s = Dos33TSSector(header, sector_list, start, end)
-            s.ts_start, s.ts_end = start, end
-            tslist.append(s)
-        self.num_tslists = len(tslist)
-        vtoc.assign_sector_numbers(self, tslist)
-        sector_list.extend(tslist)
-        self.track, self.sector = header.track_from_sector(tslist[0].sector_num)
-        if _xd: log.debug("track/sector lists:\n%s" % str(tslist))
-
     def sanity_check(self):
         media = self.filesystem.media
         if self.deleted:
@@ -270,55 +250,28 @@ class Dos33Dirent(Dirent):
             return False
         return True
 
-    def get_track_sector_list(self, image):
-        tslist = BaseSectorList(image.header)
-        sector_num = image.header.sector_from_track(self.track, self.sector)
-        sector_map = []
-        while sector_num > 0:
-            image.assert_valid_sector(sector_num)
-            if _xd: log.debug("reading track/sector list at %d for %s" % (sector_num, self))
-            data, _ = image.get_sectors(sector_num)
-            sector = Dos33TSSector(image.header, data=data)
-            sector.sector_num = sector_num
-            sector_map.extend(sector.get_tslist())
-            tslist.append(sector)
-            sector_num = sector.next_sector_num
-        self.sector_map = sector_map[0:self.num_sectors - len(tslist)]
-        self.track_sector_list = tslist
-        return tslist
+    def get_file(self):
+        media = self.filesystem.media
+        tslist = self.get_track_sector_list()
+        offsets = media.follow_track_sector_list(tslist)
+        if len(offsets) > 0:
+            file_segment = guess_file_type(media, self.filename, offsets)
+            self.segments = [tslist, file_segment]
+            return file_segment
+
+    def get_track_sector_list(self):
+        media = self.filesystem.media
+        offsets = media.follow_track_sector_pointers(self.track, self.sector, 0xc, 2 * 122)
+        return Segment(media, offsets, 0, "Track/Sector List")
 
     def get_sectors_in_vtoc(self, image):
         self.get_track_sector_list(image)
-        sectors = BaseSectorList(image.header)
+        sectors = BaseSectorList(media)
         sectors.extend(self.track_sector_list)
         for sector_num in self.sector_map:
-            sector = WriteableSector(image.header.sector_size, None, sector_num)
+            sector = WriteableSector(media.sector_size, None, sector_num)
             sectors.append(sector)
         return sectors
-
-    def start_read(self, image):
-        if not self.is_sane:
-            raise errors.InvalidDirent("Invalid directory entry '%s'" % str(self))
-        self.get_track_sector_list(image)
-        if _xd: log.debug("start_read: %s, t/s list: %s" % (str(self), str(self.sector_map)))
-        self.current_sector_index = 0
-        self.current_read = self.num_sectors
-
-    def read_sector(self, image):
-        try:
-            sector = self.sector_map[self.current_sector_index]
-        except IndexError:
-            sector = -1  # force ByteNotInFile166 error at next read
-        if _xd: log.debug("read_sector: index %d=%d in %s" % (self.current_sector_index,sector, str(self)))
-        last = (self.current_sector_index == len(self.sector_map) - 1)
-        raw, pos, size = image.get_raw_bytes(sector)
-        bytes, num_data_bytes = self.process_raw_sector(image, raw)
-        return bytes, last, pos, num_data_bytes
-
-    def process_raw_sector(self, image, raw):
-        self.current_sector_index += 1
-        num_bytes = len(raw)
-        return raw[0:num_bytes], num_bytes
 
     def get_filename(self):
         return self.filename
@@ -347,23 +300,8 @@ class Dos33Directory(Directory):
 
     def find_segment_location(self):
         media = self.media
-        sector = media.first_directory
-        offsets = np.empty(100*256, dtype=np.int32)
-        offset_count = 0
-        entry_count = 7 * 0x23
-        print(f"starting at sector {sector}")
-        while sector > 0:
-            pos, count = media.get_index_of_sector(sector)
-            offsets[offset_count:offset_count + entry_count] = np.arange(pos + 0xb, pos + 0xb + entry_count, dtype=np.int32)
-            offset_count += entry_count
-            t = media[pos + 1]
-            s = media[pos + 2]
-            next_sector = media.sector_from_track(t, s)
-            print(f"sector: {sector}, pos={pos}, next={next_sector}")
-            sector = next_sector
-        subset = offsets[0:offset_count].copy()
-        print(subset)
-        return subset, 0
+        offsets = media.follow_track_sector_pointers(media.first_directory_track, media.first_directory_sector, 0x0b, 7 * 0x23)
+        return offsets, 0
 
     def calc_dirents(self):
         segments = []
