@@ -105,8 +105,11 @@ class DiskImage(MediaType):
     starting_sector_label = 1
 
     def __init__(self, container):
-        self.num_sectors = 0
+        self.init_media_params()
         MediaType.__init__(self, container)
+
+    def init_media_params(self):
+        self.num_sectors = 0
 
     # def __str__(self):
     #     return f"{self.ui_name}, size={len(self)} ({self.num_sectors}x{self.sector_size}B)"

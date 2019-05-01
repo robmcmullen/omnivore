@@ -51,6 +51,7 @@ setup(name="atrip",
             "atrip.filesystems": [
                 'atari_dos = atrip.filesystems.atari_dos2',
                 'kboot = atrip.filesystems.kboot',
+                'apple_dos33 = atrip.filesystems.apple_dos33',
             ],
 
             "atrip.file_types": [
