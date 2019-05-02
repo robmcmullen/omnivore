@@ -23,8 +23,9 @@ def get_loaders():
             mod = entry_point.load()
         except Exception as e:
             log.error(f"Failed importing loader {entry_point.name}: {e}")
-            import traceback
-            traceback.print_exc()
+            if log.isEnabledFor(logging.DEBUG):
+                import traceback
+                traceback.print_exc()
         else:
             log.debug(f"get_loaders: Found loader {entry_point.name}")
             loaders.append(mod)
