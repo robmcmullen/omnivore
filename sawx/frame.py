@@ -163,9 +163,10 @@ class SawxFrame(wx.Frame):
         self.active_editor_can_paste = clipboard.can_paste(self.active_editor.supported_clipboard_data)
 
     def sync_active_tab(self):
-        self.sync_name()
-        self.sync_toolbar()
-        self.sync_can_paste()
+        if self.notebook.GetPageCount() > 0:
+            self.sync_name()
+            self.sync_toolbar()
+            self.sync_can_paste()
 
     def add_editor(self, editor):
         editor.frame = self
