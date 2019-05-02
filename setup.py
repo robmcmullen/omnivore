@@ -15,7 +15,7 @@ install_requires = [
     'pyparsing',
     'pytz',
     'wxpython',
-    # 'fleep',  # not actually required
+    'fleep',  # not actually required
     'appdirs',
     'python-slugify',  # really for omnivore, but needs it installed before its setup.py can be run
     ]
