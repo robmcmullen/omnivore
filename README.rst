@@ -111,31 +111,58 @@ Other Supported Formats
 +----------+----------------------------------+---------+-------+-----------------+
 | BSAVE    | Apple ][ ``BSAVE`` data          | Yes     | Yes   | Fully supported |
 +----------+----------------------------------+---------+-------+-----------------+
-| ``.zip`` | MAME ROM zipfiles                | Partial | No    | Experimental    |
-+----------+----------------------------------+---------+-------+-----------------+
 
 **Note:** Atari ROM cartridges are supported in both both plain binary and
 atari800 ``.car`` format
 
 
-Supported Compression/Container Formats
+Archives
+-----------------
+
+Archives containing multiple disk images are supported, where each disk image
+can be addressed individually. Each image will be given a disk number and can
+be addressed using that prefix.
+
++---------------------+----------+------+-------+------------------------------+
+| Container           | File Ext | Read | Write | Status                       |
++=====================+==========+======+=======+==============================+
+| Zip File            | .zip     | Yes  | No    | Read only                    |
++---------------------+----------+------+-------+------------------------------+
+
+
+Supported Compression Formats
 ---------------------------------------
 
-Compressed disk images are supported transparently, so any type of disk image
-compressed with one of the supported container formats can be used directly,
-without first decompressing it before running ``ATRip``.
+Compression is supported transparently, so any type of disk image compressed
+with any of the following formats can be used directly, without first
+decompressing it before running ``ATRip``.
 
-+--------------------+----------+------+-------+------------------------------+
-| Container          | File Ext | Read | Write | Status                       |
-+====================+==========+======+=======+==============================+
-| gzip               | .gz      | Yes  | No    | Read only                    |
-+--------------------+----------+------+-------+------------------------------+
-| bzip2              | .bz2     | Yes  | No    | Read only                    |
-+--------------------+----------+------+-------+------------------------------+
-| lzma               | .xz      | Yes  | No    | Read only                    |
-+--------------------+----------+------+-------+------------------------------+
-| Disk Communicator  | .dcm     | No   | No    | Recognized but unimplemented |
-+--------------------+----------+------+-------+------------------------------+
+Chaining is supported to an arbitrary depth, meaning that one compression
+algorithm can be applied to the output of another. This is not practical except
+in limited cases, as in a Disk Communicator image that is subsequently gzipped
+(image.dcm.gz). But cases that actually make compression worse will be handled
+as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
+
+
++---------------------+------------+------+-------+------------------------------+
+| Compression Format  | File Ext   | Read | Write | Status                       |
++=====================+============+======+=======+==============================+
+| gzip                | .gz        | Yes  | No    | Read only                    |
++---------------------+------------+------+-------+------------------------------+
+| bzip2               | .bz2       | Yes  | No    | Read only                    |
++---------------------+------------+------+-------+------------------------------+
+| lzma                | .xz, .lzma | Yes  | No    | Read only                    |
++---------------------+------------+------+-------+------------------------------+
+| lzw (Unix compress) | .Z         | Yes  | No    | Read only [#]_               |
++---------------------+------------+------+-------+------------------------------+
+| lz4                 | .lz4       | Yes  | No    | Read only [#]_               |
++---------------------+------------+------+-------+------------------------------+
+| Disk Communicator   | .dcm       | Yes  | No    | Read only                    |
++---------------------+------------+------+-------+------------------------------+
+
+.. [#] Requires optional library unlzw
+
+.. [#] Requires optional library lz4
 
 
 References
