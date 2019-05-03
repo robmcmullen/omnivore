@@ -39,6 +39,7 @@ setup(name="atrip",
                 'bzip = atrip.compressors.bzip',
                 'lzma = atrip.compressors.lzma',
                 'lzw = atrip.compressors.lzw',
+                'lz4 = atrip.compressors.lz4',
                 'dcm = atrip.compressors.dcm',
             ],
 
