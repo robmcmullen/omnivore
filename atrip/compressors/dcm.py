@@ -1,13 +1,13 @@
 import numpy as np
 
 from .. import errors
-from ..container import Container
+from ..compressor import Compressor
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class DCMContainer(Container):
+class DCMCompressor(Compressor):
     compression_algorithm = "dcm"
 
     valid_densities = {
@@ -20,12 +20,12 @@ class DCMContainer(Container):
         try:
             data = self.raw[self.index]
         except IndexError:
-            raise errors.InvalidContainer("Incomplete DCM file")
+            raise errors.InvalidCompressor("Incomplete DCM file")
         else:
             self.index += 1
         return data
 
-    def calc_unpacked_bytes(self, data):
+    def calc_unpacked_data(self, data):
         self.sector_size = 0
         self.num_sectors = 0
         self.current_sector = 0
@@ -46,17 +46,17 @@ class DCMContainer(Container):
                 log.debug(f"index {self.index-1}: pass number={pass_num} last={last_pass}")
                 if archive_flags & 0x1f != expected_pass:
                     if archive_type == 0xf9:
-                        raise errors.InvalidContainer("DCM multi-file archive combined in the wrong order")
+                        raise errors.InvalidCompressor("DCM multi-file archive combined in the wrong order")
                     else:
-                        raise errors.InvalidContainer("Expected pass one of DCM archive first")
+                        raise errors.InvalidCompressor("Expected pass one of DCM archive first")
                 density_flag = (archive_flags >> 5) & 3
                 try:
                     self.num_sectors, self.sector_size = self.valid_densities[density_flag]
                 except KeyError:
-                    raise errors.InvalidContainer(f"Unsupported density flag {density_flag} in DCM")
+                    raise errors.InvalidCompressor(f"Unsupported density flag {density_flag} in DCM")
                 log.debug(f"sectors: {self.num_sectors}x{self.sector_size}B")
             else:
-                raise errors.InvalidContainer("Not a DCM file")
+                raise errors.InvalidCompressor("Not a DCM file")
             self.get_current_sector()
 
             while True:
@@ -72,9 +72,9 @@ class DCMContainer(Container):
                     func = self.block_type_func[block_type & 0x7f]
                 except KeyError:
                     if block_type == 0xfa or block_type == 0xf9:
-                        raise errors.InvalidContainer(f"Found section start byte but previous section never ended")
+                        raise errors.InvalidCompressor(f"Found section start byte but previous section never ended")
                     else:
-                        raise errors.InvalidContainer(f"Unsupported block type {block_type} in DCM")
+                        raise errors.InvalidCompressor(f"Unsupported block type {block_type} in DCM")
                 func(self)
                 self.copy_current_to_sector()
 

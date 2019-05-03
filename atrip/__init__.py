@@ -613,7 +613,7 @@ def run():
     else:
         try:
             collection = find_collection(disk_image_name)
-        except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
+        except (errors.UnsupportedCompressor, errors.UnsupportedDiskImage, IOError) as e:
             print(f"{disk_image_name}: {e}")
         else:
             if command not in skip_diskimage_summary:

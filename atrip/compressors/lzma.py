@@ -4,19 +4,19 @@ import io
 import numpy as np
 
 from .. import errors
-from ..container import Container
+from ..compressor import Compressor
 
 
-class LZMAContainer(Container):
+class LZMACompressor(Compressor):
     compression_algorithm = "lzma"
 
-    def calc_unpacked_bytes(self, byte_data):
+    def calc_unpacked_data(self, byte_data):
         try:
             buf = io.BytesIO(byte_data)
             with lzma.LZMAFile(buf, mode='rb') as f:
                 unpacked = f.read()
         except lzma.LZMAError as e:
-            raise errors.InvalidContainer(e)
+            raise errors.InvalidCompressor(e)
         if len(unpacked) == 0:
-            raise errors.InvalidContainer("Unpacked to zero size")
+            raise errors.InvalidCompressor("Unpacked to zero size")
         return unpacked

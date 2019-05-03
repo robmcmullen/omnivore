@@ -4,17 +4,17 @@ import io
 import numpy as np
 
 from .. import errors
-from ..container import Container
+from ..compressor import Compressor
 
 
-class GZipContainer(Container):
+class GZipCompressor(Compressor):
     compression_algorithm = "gzip"
 
-    def calc_unpacked_bytes(self, byte_data):
+    def calc_unpacked_data(self, byte_data):
         try:
             buf = io.BytesIO(byte_data)
             with gzip.GzipFile(mode='rb', fileobj=buf) as f:
                 unpacked = f.read()
         except OSError as e:
-            raise errors.InvalidContainer(e)
+            raise errors.InvalidCompressor(e)
         return unpacked

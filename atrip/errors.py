@@ -31,7 +31,7 @@ class InvalidSegmentParser(AtrError):
     pass
 
 
-class UnsupportedContainer(AtrError):
+class UnsupportedCompressor(AtrError):
     pass
 
 
@@ -49,7 +49,7 @@ class InvalidArchiver(ArchiverError):
 
 
 
-class InvalidContainer(AtrError):
+class InvalidCompressor(AtrError):
     pass
 
 # Errors when trying to determine media type

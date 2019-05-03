@@ -10,6 +10,7 @@ from . import style_bits
 from .utils import to_numpy, to_numpy_list, uuid
 from . import media_type
 from . import filesystem
+from .compressor import guess_compressor
 
 import logging
 log = logging.getLogger(__name__)
@@ -27,20 +28,23 @@ class Container:
     other segments.
 
     In their native data format, disk images may be stored as raw data or can
-    be compressed by any number of techniques. Subclasses of Container
-    implement the `unpack_bytes` method which examines the byte_data argument
-    for the supported compression type, and if valid returns the unpacked bytes
-    to be used in the disk image parsing.
+    be compressed by any number of techniques. Subclasses of `Compressor`
+    are used to transform compressed data into uncompressed bytes.
 
+    Compressors may be chained, so the output of one compressor may become the
+    input to the next. The order will be reversed upon saving, for example: a
+    `dcm.gz` image will first be decompressed with the `gzip` algorithm, and
+    that output will be in turn decompressed with the `DCM` algorithm. When
+    writing the disk image back out to a file, it will be compressed with `DCM`
+    before being `gzip`ped.
     """
-    ui_name = "Uncompressed"
-    compression_algorithm = "uncompressed"
+    ui_name = "Raw Data"
     can_resize_default = False
 
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, data, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None):
+    def __init__(self, data, decompression_order, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None):
 
         self.segments = []
         self.header = None
@@ -52,6 +56,7 @@ class Container:
         self._style = None
         self.data = data
         self.style = style
+        self.decompression_order = decompression_order
 
         self.pathname = ""
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
@@ -78,14 +83,9 @@ class Container:
         return self._data
 
     @data.setter
-    def data(self, value):
+    def data(self, unpacked):
         if self._data is not None:
             raise errors.ReadOnlyContainer("container already populated with data")
-        raw = value.tobytes()
-        try:
-            unpacked = self.calc_unpacked_bytes(raw)
-        except EOFError as e:
-            raise errors.InvalidContainer(e)
         self._data = to_numpy(unpacked)
 
     @property
@@ -126,9 +126,7 @@ class Container:
     def container_info(self, indent=""):
         lines = []
         name = self.verbose_name or self.name
-        desc = f"{indent}{name}: {len(self)} bytes"
-        if self.compression_algorithm != Container.compression_algorithm:
-           desc += f" (uncompressed using {self.compression_algorithm})"
+        desc = f"{indent}{name}: {len(self)} bytes, compression={','.join([c.compression_algorithm for c in self.decompression_order])}"
         lines.append(desc)
         for s in self.segments:
             v = s.segment_info(indent + "    ")
@@ -308,40 +306,19 @@ class Container:
         style_base[comment_text_indexes] |= comment_style
 
 
-_containers = None
-
-def _find_containers():
-    containers = []
-    for entry_point in pkg_resources.iter_entry_points('atrip.containers'):
-        mod = entry_point.load()
-        log.debug(f"find_container: Found module {entry_point.name}={mod.__name__}")
-        for name, obj in inspect.getmembers(mod):
-            if inspect.isclass(obj) and Container in obj.__mro__[1:]:
-                log.debug(f"find_containers:   found container class {name}")
-                containers.append(obj)
-    return containers
-
-def find_containers():
-    global _containers
-
-    if _containers is None:
-        _containers = _find_containers()
-    return _containers
-
 def guess_container(raw_data):
-    container = None
-    for c in find_containers():
-        log.debug(f"trying container {c.compression_algorithm}")
-        try:
-            container = c(raw_data)
-        except errors.InvalidContainer as e:
-            continue
-        else:
-            log.info(f"found container {c.compression_algorithm}")
+    data = to_numpy(raw_data)
+    compressors = []
+    while True:  # loop until reach an uncompressed state
+        c = guess_compressor(data)
+        data = c.unpacked
+        if not c.is_compressed:
+            if not compressors:
+                # save the null compressor only if it's the only one
+                compressors.append(c.__class__)
             break
-    else:
-        log.info(f"image does not appear to be compressed.")
-        container = Container(raw_data)
+        compressors.append(c.__class__)
+    container = Container(data, compressors)
     return container
 
 

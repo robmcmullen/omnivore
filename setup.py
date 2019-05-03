@@ -33,13 +33,13 @@ setup(name="atrip",
                 'zip = atrip.archivers.zip',
             ],
 
-            "atrip.containers": [
-                'zlib = atrip.containers.zlib',
-                'gzip = atrip.containers.gzip',
-                'bzip = atrip.containers.bzip',
-                'lzma = atrip.containers.lzma',
-                'lzw = atrip.containers.lzw',
-                'dcm = atrip.containers.dcm',
+            "atrip.compressors": [
+                'zlib = atrip.compressors.zlib',
+                'gzip = atrip.compressors.gzip',
+                'bzip = atrip.compressors.bzip',
+                'lzma = atrip.compressors.lzma',
+                'lzw = atrip.compressors.lzw',
+                'dcm = atrip.compressors.dcm',
             ],
 
             "atrip.media_types": [
