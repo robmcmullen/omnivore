@@ -53,6 +53,7 @@ class KBoot(AtariDos2):
         pass
 
     def calc_directory_segment(self):
+        self.filesystem = self
         return KBootDirent(self)
 
     @classmethod
