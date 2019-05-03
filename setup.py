@@ -31,6 +31,7 @@ setup(name="atrip",
 
             "atrip.archivers": [
                 'zip = atrip.archivers.zip',
+                'tar = atrip.archivers.tar',
             ],
 
             "atrip.compressors": [
