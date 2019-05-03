@@ -315,6 +315,7 @@ def guess_container(raw_data):
         if not c.is_compressed:
             if not compressors:
                 # save the null compressor only if it's the only one
+                log.info(f"image does not appear to be compressed.")
                 compressors.append(c.__class__)
             break
         compressors.append(c.__class__)

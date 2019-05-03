@@ -105,6 +105,6 @@ def guess_compressor(raw_data):
             log.info(f"found compressor {c.compression_algorithm}")
             break
     else:
-        log.info(f"image does not appear to be compressed.")
+        log.debug(f"image does not appear to be compressed.")
         compressor = Compressor(raw_data)
     return compressor
