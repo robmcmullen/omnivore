@@ -167,6 +167,28 @@ as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
 .. [#] Requires optional library lz4
 
 
+Segment Structure
+==================
+
+```
+Collection:      example.atr: plain file
+Container:          D1: 92176 bytes, compression=none
+Header:                 ATR Header (16 bytes)
+DiskImage:              Atari SD (90K) Floppy Disk Image, size=92160, filesystem=Atari DOS 2
+BootSegment:                Boot Sectors (384 bytes)
+Segment:                        Boot Header (6 bytes)
+Segment:                        Boot Code (378 bytes @ 0006)
+VTOC:                       DOS2 SD VTOC (128 bytes)
+Directory:                  Directory (1024 bytes)
+Dirent:                         File #0  (.2.u. ) 004 DOS     SYS  035
+FileType:                           DOS.SYS (4375 bytes) Unknown file type
+Dirent:                         File #1  (.2.u. ) 039 DUP     SYS  054
+AtariObjectFile:                    DUP.SYS (6708 bytes) Atari 8-bit Object File
+ObjSegment:                             Segment #1 (6706 bytes)
+Segment:                                    [$2949-$4376] (6702 bytes)
+```
+
+
 References
 ==========
 

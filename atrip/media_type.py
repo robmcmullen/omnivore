@@ -38,11 +38,13 @@ class MediaType(Segment):
         self.check_magic()
 
     def __str__(self):
-        desc = f"{self.ui_name}, "
+        desc = f"{self.ui_name}"
         if len(self.segments) == 1:
-            desc += str(self.segments[0])
+            desc += " " + str(self.segments[0])
         else:
-            desc += f"size={len(self)}"
+            desc += f", size={len(self)}"
+        if self.filesystem is not None:
+            desc += f", filesystem={self.filesystem.ui_name}"
         return desc
 
     #### initialization
