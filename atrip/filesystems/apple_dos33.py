@@ -145,21 +145,13 @@ class Dos33Dirent(Dirent):
         self.sector = 0
         self.filename = ""
         self.num_sectors = 0
-        self.is_sane = True
         self.current_sector_index = 0
         self.current_read = 0
         self.sectors_seen = None
         self.sector_map = None
-        self.parse_raw_dirent()
-        if self.in_use:
-            try:
-                self.get_file()
-            except errors.FileError as e:
-                self.is_sane = False
-                self.error = e
 
     def __str__(self):
-        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.summary, self.num_sectors, self.filename, self.track, self.sector)
+        return "File #%-2d (%s) %03d %-30s %03d %03d" % (self.file_num, self.verbose_info, self.num_sectors, self.filename, self.track, self.sector)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.track == other.track and self.sector == other.sector and self.num_sectors == other.num_sectors
@@ -182,7 +174,7 @@ class Dos33Dirent(Dirent):
         return self.type_to_text.get(self._file_type, "?")
 
     @property
-    def summary(self):
+    def verbose_info(self):
         if self.deleted:
             locked = "D"
             file_type = " "
@@ -191,14 +183,6 @@ class Dos33Dirent(Dirent):
             file_type = self.file_type
         flag = "%s%s" % (locked, file_type)
         return flag
-
-    @property
-    def verbose_info(self):
-        return self.summary
-
-    @property
-    def in_use(self):
-        return self.is_sane and not self.deleted and self.track != 0
 
     @property
     def flag(self):
@@ -233,9 +217,6 @@ class Dos33Dirent(Dirent):
             data[0x20] = self.track
         values[4] = self.num_sectors
         return data
-
-    def mark_deleted(self):
-        self.deleted = True
 
     def sanity_check(self):
         media = self.filesystem.media

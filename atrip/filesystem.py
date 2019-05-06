@@ -121,15 +121,38 @@ class Dirent(Segment):
     def __init__(self, directory, file_num, start, length, parent=None):
         self.directory = directory
         self.file_num = file_num
+        self.error = None
+        self.in_use = True
+        self.is_sane = True
         if parent is None:
             parent = directory
         Segment.__init__(self, parent, start, name=f"Dirent {file_num}", length=length)
+        self.init_dirent()
+
+    def init_dirent(self):
+        self.parse_raw_dirent()
+        if self.sanity_check():
+            self.is_sane = True
+        else:
+            self.is_sane = False
+            self.in_use = False
+        if self.in_use:
+            try:
+                self.get_file()
+            except errors.FileError as e:
+                self.in_use = False
+                self.is_sane = False
+                self.error = e
 
     def __eq__(self, other):
         raise NotImplementedError
 
     def __str__(self):
         return "File #%-2d %s %s" % (self.file_num, f"({self.status})" if self.status else "", self.catalog_entry)
+
+    @property
+    def verbose_info(self):
+        return ""
 
     @property
     def status(self):
@@ -147,17 +170,17 @@ class Dirent(Segment):
     def media(self):
         return self.directory.filesystem.media
 
-    @property
-    def in_use(self):
-        raise NotImplementedError
+    def sanity_check(self):
+        return True
 
     def extra_metadata(self, image):
-        raise NotImplementedError
+        return self.verbose_info
 
     def mark_deleted(self):
-        raise NotImplementedError
+        self.deleted = True
+        self.in_use = False
 
-    def parse_raw_dirent(self, image, bytes):
+    def parse_raw_dirent(self):
         raise NotImplementedError
 
     def encode_dirent(self):

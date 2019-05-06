@@ -134,27 +134,14 @@ class AtariDosDirent(Dirent):
         self.mydos = False
         self.is_dir = False
         self.locked = False
-        self._in_use = False
         self.deleted = False
         self.num_sectors = 0
         self.starting_sector = 0
         self.basename = b''
         self.ext = b''
-        self.is_sane = True
-        self.parse_raw_dirent()
-        if self.in_use:
-            try:
-                self.get_file()
-            except errors.FileError as e:
-                self.is_sane = False
-                self.error = e
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
-
-    @property
-    def in_use(self):
-        return self.is_sane and self._in_use
 
     @property
     def filename(self):
@@ -170,7 +157,7 @@ class AtariDosDirent(Dirent):
         output = "o" if self.opened_output else "."
         dos2 = "2" if self.dos_2 else "."
         mydos = "m" if self.mydos else "."
-        in_use = "u" if self._in_use else "."
+        in_use = "u" if self.in_use else "."
         deleted = "d" if self.deleted else "."
         locked = "*" if self.locked else " "
         flags = "%s%s%s%s%s%s" % (output, dos2, mydos, in_use, deleted, locked)
@@ -182,13 +169,10 @@ class AtariDosDirent(Dirent):
         if self.opened_output: flags.append("OUT")
         if self.dos_2: flags.append("DOS2")
         if self.mydos: flags.append("MYDOS")
-        if self._in_use: flags.append("IN_USE")
+        if self.in_use: flags.append("IN_USE")
         if self.deleted: flags.append("DEL")
         if self.locked: flags.append("LOCK")
         return "flags=[%s]" % ", ".join(flags)
-
-    def extra_metadata(self, image):
-        return self.verbose_info
 
     def parse_raw_dirent(self):
         data = self.data[0:16]
@@ -200,28 +184,23 @@ class AtariDosDirent(Dirent):
         self.mydos = (flag&0x04) > 0
         self.is_dir = (flag&0x10) > 0
         self.locked = (flag&0x20) > 0
-        self._in_use = (flag&0x40) > 0
+        self.in_use = (flag&0x40) > 0
         self.deleted = (flag&0x80) > 0
         self.num_sectors = int(values[1])
         self.starting_sector = int(values[2])
         self.basename = bytes(values[3]).rstrip()
         self.ext = bytes(values[4]).rstrip()
-        self.is_sane = self.sanity_check()
 
     def encode_dirent(self):
         data = np.zeros([self.format.itemsize], dtype=np.uint8)
         values = data.view(dtype=self.format)[0]
-        flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self._in_use)) | (0x80 * int(self.deleted))
+        flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.deleted))
         values[0] = flag
         values[1] = self.num_sectors
         values[2] = self.starting_sector
         values[3] = self.basename
         values[4] = self.ext
         return data
-
-    def mark_deleted(self):
-        self.deleted = True
-        self._in_use = False
 
     def get_file(self):
         media = self.filesystem.media
@@ -269,7 +248,7 @@ class AtariDosDirent(Dirent):
 
     def sanity_check(self):
         media = self.filesystem.media
-        if not self._in_use:
+        if not self.in_use:
             return True
         if not media.is_sector_valid(self.starting_sector):
             return False
@@ -335,7 +314,7 @@ class AtariDos2(Filesystem):
         try:
             media.get_contiguous_sectors
         except AttributeError:
-            raise errors.IncompatibleMediaError("Atari DOS needs sector access")
+            raise errors.IncompatibleMediaError(f"{self.ui_name} needs sector access")
 
     def calc_boot_segment(self):
         return AtariDosBootSegment(self)

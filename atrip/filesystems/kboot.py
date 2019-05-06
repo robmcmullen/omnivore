@@ -9,6 +9,8 @@ from ..file_type import guess_file_type
 class KBootDirent(Dirent):
     def __init__(self, filesystem):
         Dirent.__init__(self, filesystem, 0, 0, 0, filesystem.media)
+
+    def parse_raw_dirent(self):
         self.starting_sector = 4
         self.basename = self.container.basename
         if not self.basename:
@@ -17,7 +19,7 @@ class KBootDirent(Dirent):
             self.ext = b"XEX"
         else:
             self.ext = b"xex"
-        media = filesystem.media
+        media = self.filesystem.media
         start, size = media.get_index_of_sector(4)
         i = 9
         count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
@@ -27,7 +29,6 @@ class KBootDirent(Dirent):
             self.exe_size = count
             self.exe_start = start
         self.num_sectors = count // 128 + 1
-        self.get_file()
 
     @property
     def filename(self):
