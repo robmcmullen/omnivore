@@ -191,10 +191,12 @@ class Dirent(Segment):
 
 
 class Directory(Segment):
+    ui_name = "Directory"
+
     def __init__(self, filesystem):
         self.filesystem = filesystem
         offset, length = self.find_segment_location()
-        Segment.__init__(self, filesystem.media, offset, name="Directory", length=length)
+        Segment.__init__(self, filesystem.media, offset, name=self.ui_name, length=length)
 
         # Each segment is a dirent
         self.segments = self.calc_dirents()
