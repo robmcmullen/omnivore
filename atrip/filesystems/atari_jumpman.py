@@ -88,6 +88,13 @@ class AtariJumpmanDirent(Dirent):
 class AtariJumpmanDirectory(Directory):
     ui_name = "Jumpman Levels"
 
+    def __str__(self):
+        num_entries = len(self) // AtariJumpmanDirent.dirent_size
+        s = "%s (%d levels)" % (self.name, num_entries)
+        if self.error:
+            s += " " + self.error
+        return s
+
     def find_segment_location(self):
         media = self.media
         index, size = media.get_contiguous_sectors_offsets(17, 16 * 32)
