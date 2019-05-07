@@ -5,12 +5,35 @@ from ..segment import Segment
 from ..filesystem import VTOC, Dirent, Directory, Filesystem
 from ..file_type import guess_file_type
 from ..char_mapping import internal_to_atascii, atascii_to_internal
-from .atari_dos2 import AtariDos2
+from .atari_dos2 import AtariDos2, AtariDosBootSegment
 
 try:  # Expensive debugging
     _xd = _expensive_debugging
 except NameError:
     _xd = False
+
+
+class AtariJumpmanBootSegment(AtariDosBootSegment):
+    def find_segment_location(self, media):
+        self.bldadr = 0x700
+        try:
+            sectors = list(range(1, 8))  # sectors 1 - 7
+            sectors.extend(range(560, 720))  # sectors 560 - 719
+            indexes = media.get_sector_list_offsets(sectors)
+        except errors.MediaError as e:
+            raise errors.IncompatibleMediaError(f"Invalid boot sector: {e}")
+        return indexes, 0
+
+    def calc_boot_segments(self):
+        header = Segment(self, 0, 0x700, "Boot Header", length=6)
+        code = Segment(self, 6, 0x706, name="Boot Code", length=0x380 - 6)
+        game = Segment(self, 0x380, 0x2000, name="Game Code", length=0x5000)
+        game.segments = [
+            Segment(game, 0, 0x2000, name="Game Code, Part 1", length=0x800),
+            Segment(game, 0x800, 0x2800, name="Level Definition", length=0x800),
+            Segment(game, 0x1000, 0x4000, name="Game Code, Part 2", length=0x4000),
+        ]
+        return [header, code, game]
 
 
 class AtariJumpmanDirent(Dirent):
@@ -101,6 +124,9 @@ class AtariJumpman(AtariDos2):
         AtariDos2.check_media(self, media)
         if media.sector_size != 128:
             raise errors.IncompatibleMediaError(f"{self.ui_name} requires SD")
+
+    def calc_boot_segment(self):
+        return AtariJumpmanBootSegment(self)
 
     def calc_vtoc_segment(self):
         return None
