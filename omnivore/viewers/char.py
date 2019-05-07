@@ -9,7 +9,7 @@ from sawx.ui import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..arch.fonts import AnticFont, valid_fonts
-from ..arch.font_mappings import valid_font_mappings
+from atrip.char_mapping import valid_font_mappings
 from ..arch.font_renderers import valid_font_renderers
 from .antic import AnticColorViewer
 
