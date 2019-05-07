@@ -3,12 +3,12 @@ import numpy as np
 from .. import errors
 from ..segment import Segment
 from ..filesystem import VTOC, Dirent, Directory, Filesystem
-from .atari_dos2 import AtariDos2, AtariDosBootSegment
+from .atari_dos2 import AtariDos2, AtariDos2Directory
 from ..file_type import guess_file_type
 
 class KBootDirent(Dirent):
-    def __init__(self, filesystem):
-        Dirent.__init__(self, filesystem, 0, 0, 0, filesystem.media)
+    def __init__(self, directory):
+        Dirent.__init__(self, directory, 0, 0, 0)
 
     def parse_raw_dirent(self):
         self.starting_sector = 4
@@ -46,6 +46,16 @@ class KBootDirent(Dirent):
         return file_segment
 
 
+class KBootDirectory(AtariDos2Directory):
+    def find_segment_location(self):
+        media = self.media
+        return 0, 0
+
+    def calc_dirents(self):
+        segments = [KBootDirent(self)]
+        return segments
+
+
 class KBoot(AtariDos2):
     ui_name = "Atari KBoot"
     default_executable_extension = "XEX"
@@ -54,8 +64,7 @@ class KBoot(AtariDos2):
         pass
 
     def calc_directory_segment(self):
-        self.filesystem = self
-        return KBootDirent(self)
+        return KBootDirectory(self)
 
     @classmethod
     def create_boot_image(cls, segments, run_addr=None):
