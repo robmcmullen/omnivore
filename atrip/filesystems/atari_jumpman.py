@@ -4,16 +4,13 @@ from .. import errors
 from ..segment import Segment
 from ..filesystem import VTOC, Dirent, Directory, Filesystem
 from ..file_type import guess_file_type
+from ..char_mapping import internal_to_atascii, atascii_to_internal
 from .atari_dos2 import AtariDos2
 
 try:  # Expensive debugging
     _xd = _expensive_debugging
 except NameError:
     _xd = False
-
-
-internal_to_atascii = np.hstack([np.arange(32, 96, dtype=np.uint8),np.arange(32, dtype=np.uint8),np.arange(96, 128, dtype=np.uint8)])
-internal_to_atascii = np.hstack([internal_to_atascii, internal_to_atascii + 128])
 
 
 class AtariJumpmanDirent(Dirent):
