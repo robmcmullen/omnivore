@@ -127,7 +127,6 @@ class AtariDosDirent(Dirent):
 
     def __init__(self, directory, file_num):
         start = file_num * self.format.itemsize
-        Dirent.__init__(self, directory, file_num, start, self.format.itemsize)
         self.flag = 0
         self.opened_output = False
         self.dos_2 = False
@@ -139,6 +138,7 @@ class AtariDosDirent(Dirent):
         self.starting_sector = 0
         self.basename = b''
         self.ext = b''
+        Dirent.__init__(self, directory, file_num, start, self.format.itemsize)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
