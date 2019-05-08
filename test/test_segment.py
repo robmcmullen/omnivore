@@ -9,6 +9,7 @@ import pytest
 
 from atrip.container import Container
 from atrip.segment import Segment
+import atrip.style_bits as style_bits
 import atrip.errors as errors
 from functools import reduce
 
@@ -65,20 +66,51 @@ class TestSegment:
 
     def test_comments(self):
         s = self.segment
+        s100 = self.seg100
+        s1000 = self.seg1000
         s.set_comment_at(4, "test4")
         s.set_comment_at(100, "test100")
         s.set_comment_at(400, "test400")
         s.set_comment_at(1000, "test1000")
 
         assert s.get_comment_at(4) == "test4"
+        assert s.style[4] & style_bits.comment_bit_mask
         assert s.get_comment_at(100) == "test100"
+        assert s.style[100] & style_bits.comment_bit_mask
         assert s.get_comment_at(400) == "test400"
+        assert s.style[400] & style_bits.comment_bit_mask
         assert s.get_comment_at(1000) == "test1000"
+        assert s.style[1000] & style_bits.comment_bit_mask
 
-        assert self.seg100.get_comment_at(1) == "test100"
-        assert self.seg100.get_comment_at(4) == "test400"
-        assert self.seg100.get_comment_at(10) == "test1000"
-        assert self.seg1000.get_comment_at(1) == "test1000"
+        assert s100.get_comment_at(1) == "test100"
+        assert s100.style[1] & style_bits.comment_bit_mask
+        assert s100.get_comment_at(4) == "test400"
+        assert s100.style[4] & style_bits.comment_bit_mask
+        assert s100.get_comment_at(10) == "test1000"
+        assert s100.style[10] & style_bits.comment_bit_mask
+        assert s1000.get_comment_at(1) == "test1000"
+        assert s1000.style[1] & style_bits.comment_bit_mask
+
+        s100.set_comment_at(4, "new400")
+        s100.set_comment_at(10, "new1000")
+        s1000.set_comment_at(2, "new2000")
+
+        assert s.get_comment_at(400) == "new400"
+        assert s.get_comment_at(1000) == "new1000"
+        assert s.get_comment_at(2000) == "new2000"
+        assert s100.get_comment_at(10) == "new1000"
+        assert s100.get_comment_at(20) == "new2000"
+
+        s.set_comment_at(150, "test150")
+        s100.clear_comment_ranges([[1,5]])
+        assert s.get_comment_at(100) == ""
+        assert s.style[100] & style_bits.comment_bit_mask == 0
+        assert s.get_comment_at(150) == "test150"
+        assert s.style[150] & style_bits.comment_bit_mask
+        assert s.get_comment_at(400) == ""
+        assert s.style[400] & style_bits.comment_bit_mask == 0
+        assert s.get_comment_at(1000) == "new1000"
+        assert s.style[1000] & style_bits.comment_bit_mask
 
 #         s.set_style_ranges([[2,100]], comment=True)
 #         s.set_style_ranges([[200, 299]], data=True)

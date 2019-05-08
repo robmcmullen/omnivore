@@ -160,6 +160,13 @@ class Segment:
             raise errors.InvalidSegmentOrder
         return r
 
+    def calc_offsets_of_range(self, start, end):
+        in_here = np.arange(start, end, dtype=np.int32)
+        in_container = self.container_offset[in_here]
+        return in_container
+
+    #### creation
+
     def calc_segments(self):
         """Convenience method used by subclasses to create any sub-segments
         within this segment.
@@ -446,10 +453,11 @@ class Segment:
 
     def set_comment_at(self, index, text):
         rawindex = self.container_offset[index]
-        self.container.comments[rawindex] = text
+        c = self.container
+        c.comments[rawindex] = text
+        c.style[rawindex] |= style_bits.comment_bit_mask
 
-    def set_comment(self, ranges, text):
-        self.set_style_ranges(ranges, comment=True)
+    def set_comment_ranges(self, ranges, text):
         for start, end in ranges:
             self.set_comment_at(start, text)
 
@@ -459,26 +467,18 @@ class Segment:
 
     def remove_comment_at(self, index):
         rawindex = self.container_offset[index]
-        try:
-            del self.container.comments[rawindex]
-        except KeyError:
-            pass
+        self.container.clear_comments([rawindex])
 
     def get_first_comment(self, ranges):
         start = reduce(min, [r[0] for r in ranges])
         rawindex = self.get_raw_index(start)
         return self.container.comments.get(rawindex, "")
 
-    def clear_comment(self, ranges):
-        self.clear_style_ranges(ranges, comment=True)
+    def clear_comment_ranges(self, ranges):
+        c = self.container
         for start, end in ranges:
-            for i in range(start, end):
-                rawindex = self.get_raw_index(i)
-                if rawindex in self.container.comments:
-                    del self.container.comments[rawindex]
-
-    def get_sorted_comments(self):
-        return sorted([[k, v] for k, v in self.container.comments.items()])
+            offsets = self.calc_offsets_of_range(start, end)
+            c.clear_comments(offsets)
 
     def iter_comments_in_segment(self):
         start = self.origin

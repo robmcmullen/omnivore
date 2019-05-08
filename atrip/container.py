@@ -287,6 +287,21 @@ class Container:
         matches = (self._style & style_bits) == style_bits
         return self.bool_to_ranges(matches)
 
+    #### comments
+
+    def clear_comments(self, indexes):
+        mask = style_bits.get_style_mask(comment=True)
+        style = self.style
+        subset = style[indexes]
+        comment_subset_indexes = np.where(subset & style_bits.comment_bit_mask)[0]
+        print(f"clear_comments: deleting comments at {indexes}")
+        style[indexes] &= mask
+        for subset_index in comment_subset_indexes:
+            del self.comments[indexes[subset_index]]
+
+    def get_sorted_comments(self):
+        return sorted([[k, v] for k, v in self.comments.items()])
+
     def fixup_comments(self):
         """Remove any style bytes that are marked as commented but have no
         comment, and add any style bytes where there's a comment but it isn't
