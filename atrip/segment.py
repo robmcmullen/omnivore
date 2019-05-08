@@ -92,6 +92,10 @@ class Segment:
         return ArrayWrapper(self.container._style, self.container_offset)
 
     @property
+    def disasm_type(self):
+        return ArrayWrapper(self.container._disasm_type, self.container_offset)
+
+    @property
     def reverse_offset(self):
         if self._reverse_offset is None:
             self._reverse_offset = self.calc_reverse_offsets()
@@ -280,6 +284,14 @@ class Segment:
         bits = style_bits.get_style_bits(**kwargs)
         matches = (self.style & bits) == bits
         return style_bits.bool_to_ranges(matches)
+
+    #### disassembly type
+
+    def set_disasm_ranges(self, ranges, value):
+        indexes = self.calc_source_indexes_from_ranges(ranges)
+        self.container.disasm_type[indexes] = value
+
+    #### comment convenience functions
 
     def get_comment_locations(self, **kwargs):
         bits = style_bits.get_style_bits(**kwargs)

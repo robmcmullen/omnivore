@@ -112,7 +112,6 @@ class TestSegment:
         assert s.get_comment_at(1000) == "new1000"
         assert s.style[1000] & style_bits.comment_bit_mask
 
-
     def test_style(self):
         s = self.segment
         s100 = self.seg100
@@ -126,6 +125,42 @@ class TestSegment:
         assert s1000.style[0] == 0
         assert s1000.style[1] == s100.style[10]
         assert s1000.style[2] == s100.style[20]
+
+    def test_disasm_type(self):
+        s = self.segment
+        s100 = self.seg100
+        s1000 = self.seg1000
+        s.set_disasm_ranges([[200, 4000]], 2)
+        s.set_disasm_ranges([[1200, 3000]], 50)
+        assert s.disasm_type[0] == 0
+        assert s100.disasm_type[1] == 0
+        assert s100.disasm_type[10] == 2
+        assert s100.disasm_type[20] == 50
+        assert s1000.disasm_type[0] == 0
+        assert s1000.disasm_type[1] == s100.disasm_type[10]
+        assert s1000.disasm_type[2] == s100.disasm_type[20]
+
+        c = s.container
+        assert c.disasm_type[2000] == 50
+
+        ranges = c.calc_disasm_ranges()
+        assert ranges == [(0, 0, 200), (2, 200, 1200), (50, 1200, 3000), (2, 3000, 4000), (0, 4000, 4096)]
+
+        c.disasm_type[:] = 0
+        assert c.disasm_type[2000] == 0
+
+        c.restore_disasm_ranges(ranges)
+        assert s.disasm_type[0] == 0
+        assert s100.disasm_type[1] == 0
+        assert s100.disasm_type[10] == 2
+        assert s100.disasm_type[20] == 50
+        assert s1000.disasm_type[0] == 0
+        assert s1000.disasm_type[1] == s100.disasm_type[10]
+        assert s1000.disasm_type[2] == s100.disasm_type[20]
+        assert c.disasm_type[2000] == 50
+
+        r2 = c.calc_disasm_ranges()
+        assert ranges == r2
 
 #         s2 = self.sub_segment
 #         print(len(s2))

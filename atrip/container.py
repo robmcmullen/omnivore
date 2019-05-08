@@ -44,7 +44,7 @@ class Container:
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None):
+    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=0):
 
         self.segments = []
         self.header = None
@@ -54,8 +54,11 @@ class Container:
 
         self._data = None
         self._style = None
+        self._disasm_type = None
         self.data = data
         self.style = style
+        self.disasm_type = disasm_type
+        self.default_disasm_type = default_disasm_type
         self.decompression_order = decompression_order
 
         self.pathname = ""
@@ -94,6 +97,16 @@ class Container:
         if value is None:
             value = np.zeros(len(self._data), dtype=np.uint8)
         self._style = to_numpy(value)
+
+    @property
+    def disasm_type(self):
+        return self._disasm_type
+
+    @disasm_type.setter
+    def disasm_type(self, value):
+        if value is None:
+            value = np.zeros(len(self._data), dtype=np.uint8)
+        self._disasm_type = to_numpy(value)
 
     @property
     def sha1(self):
@@ -226,6 +239,9 @@ class Container:
         # json serialization doesn't allow int keys, so convert to list of
         # pairs
         state['comments'] = self.get_sorted_comments()
+
+        state['disasm_type'] = self.calc_disasm_ranges()
+        state['default_disasm_type'] = self.default_disasm_type
         return state
 
     def __setstate__(self, state):
@@ -256,6 +272,8 @@ class Container:
             slot = "user style %d" % i
             if slot in e:
                 self.set_style_ranges(e[slot], user=i)
+        self.restore_disasm_ranges(state.pop('disasm_type', {}))
+        self.default_disasm_type = state.pop('default_disasm_type', 0)
         self.restore_missing_serializable_defaults()
         self.__dict__.update(state)
         self.restore_renamed_serializable_attributes()
@@ -276,6 +294,27 @@ class Container:
         bits = style_bits.get_style_bits(**kwargs)
         matches = (self.style & bits) == bits
         return self.bool_to_ranges(matches)
+
+    #### disassembly type
+
+    def calc_disasm_ranges(self):
+        d = self._disasm_type
+        changes = np.where(np.diff(d) > 0)[0]
+        index = 0
+        ranges = []
+        for end in changes:
+            end = end + 1
+            ranges.append((d[index], index, end))
+            index = end
+        if index < len(self):
+            ranges.append((d[index], index, len(self)))
+        return ranges
+
+    def restore_disasm_ranges(self, ranges):
+        d = self._disasm_type
+        for value, start, end in ranges:
+            d[start:end] = value
+
 
     #### comments
 
