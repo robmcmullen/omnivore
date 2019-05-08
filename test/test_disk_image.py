@@ -60,6 +60,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         images = sys.argv[1:]
     else:
-        images = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../test_data/", "*")))
+        images = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../samples/", "*")))
     for pathname in images:
         check(pathname)
