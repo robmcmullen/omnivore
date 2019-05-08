@@ -44,7 +44,7 @@ class Container:
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, data, decompression_order, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None):
+    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None):
 
         self.segments = []
         self.header = None
@@ -296,7 +296,7 @@ class Container:
         that uses this base data.
         """
         style_base = self.rawdata.style_base
-        comment_text_indexes = np.asarray(list(self.rawdata.extra.comments.keys()), dtype=np.uint32)
+        comment_text_indexes = np.asarray(list(self.comments.keys()), dtype=np.uint32)
         comment_mask = self.get_style_mask(comment=True)
         has_comments = np.where(style_base & style_bits.comment_bit_mask > 0)[0]
         both = np.intersect1d(comment_text_indexes, has_comments)

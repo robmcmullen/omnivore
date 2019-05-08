@@ -51,13 +51,13 @@ class Segment:
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
     extra_serializable_attributes = []
 
-    def __init__(self, container_or_segment, offset_or_offset_list, origin=0, name="All", error=None, verbose_name=None, length=None):
+    def __init__(self, container_or_segment, offset_or_offset_list=None, origin=0, name="All", error=None, verbose_name=None, length=None):
 
         # the container may be specified as the actual container or a segment
         # of the container. If a segment is specified, the offset list is
         # calculated relative to the segment to get the real offset into the
         # container.
-        offset_list = self.calc_offset_list(offset_or_offset_list, length)
+        offset_list = self.calc_offset_list(container_or_segment, offset_or_offset_list, length)
         if hasattr(container_or_segment, 'container_offset'):
             log.debug(f"creating {name},  {len(offset_list)} bytes from {container_or_segment}")
             # log.debug(f"  offset_list = {offset_list}")
@@ -135,12 +135,16 @@ class Segment:
 
     #### offsets
 
-    def calc_offset_list(self, offset_or_offset_list, length):
+    def calc_offset_list(self, container_or_segment, offset_or_offset_list=None, length=None):
+        if offset_or_offset_list is None:
+            offset_or_offset_list = 0
         try:
             start_offset = int(offset_or_offset_list)
         except TypeError:
             offset_list = to_numpy_list(offset_or_offset_list)
         else:
+            if length is None:
+                length = len(container_or_segment)
             offset_list = np.arange(offset_or_offset_list, offset_or_offset_list + length, dtype=np.uint32)
         return offset_list
 
@@ -282,7 +286,7 @@ class Segment:
         #print len(r.style)
         #print len(r.style_base)
         r.style_base[:] &= style_bits
-        comment_indexes = np.asarray(list(self.rawdata.extra.comments.keys()), dtype=np.uint32)
+        comment_indexes = np.asarray(list(self.container.comments.keys()), dtype=np.uint32)
         #print comment_indexes
         r.style_base[comment_indexes] |= style_bits.comment_bit_mask
         return r.unindexed_style[:]
@@ -326,7 +330,7 @@ class Segment:
                 self.rawdata.extra.user_data[user_index][rawindex] = user_data
 
     def get_user_data(self, index, user_index):
-        rawindex = self.get_raw_index(index)
+        rawindex = self.container_offset[index]
         try:
             return self.rawdata.extra.user_data[user_index][rawindex]
         except KeyError:
@@ -360,10 +364,10 @@ class Segment:
             rawindex = self.get_raw_index(where_index)
             if comment:
                 log.debug("  restoring comment: rawindex=%d, '%s'" % (rawindex, comment))
-                self.rawdata.extra.comments[rawindex] = comment
+                self.container.comments[rawindex] = comment
             else:
                 try:
-                    del self.rawdata.extra.comments[rawindex]
+                    del self.container.comments[rawindex]
                     log.debug("  no comment in original data, removed comment in current data at rawindex=%d" % rawindex)
                 except KeyError:
                     log.debug("  no comment in original data or current data at rawindex=%d" % rawindex)
@@ -377,7 +381,7 @@ class Segment:
         for where_index in has_comments:
             raw = self.get_raw_index(indexes[where_index])
             try:
-                comment = self.rawdata.extra.comments[raw]
+                comment = self.container.comments[raw]
             except KeyError:
                 comment = None
             comments.append(comment)
@@ -395,7 +399,7 @@ class Segment:
             for i in range(start, end):
                 rawindex = self.get_raw_index(i)
                 try:
-                    comment = self.rawdata.extra.comments[rawindex]
+                    comment = self.container.comments[rawindex]
                     log.debug("  index: %d rawindex=%d '%s'" % (i, rawindex, comment))
                     items[i] = (rawindex, comment)
                 except KeyError:
@@ -415,11 +419,11 @@ class Segment:
                 rawindex, comment = items[i]
                 if comment:
                     log.debug("  restoring comment: rawindex=%d, '%s'" % (rawindex, comment))
-                    self.rawdata.extra.comments[rawindex] = comment
+                    self.container.comments[rawindex] = comment
                 else:
                     # no comment in original data, remove any if exists
                     try:
-                        del self.rawdata.extra.comments[rawindex]
+                        del self.container.comments[rawindex]
                         log.debug("  no comment in original data, removed comment in current data at rawindex=%d" % rawindex)
                     except KeyError:
                         log.debug("  no comment in original data or current data at rawindex=%d" % rawindex)
@@ -431,7 +435,7 @@ class Segment:
 
         # Naive way, but maybe it's fast enough: loop over all comments
         # gathering those within the bounds
-        for rawindex, comment in self.rawdata.extra.comments.items():
+        for rawindex, comment in self.container.comments.items():
             try:
                 index = self.get_index_from_base_index(rawindex)
             except IndexError:
@@ -449,38 +453,38 @@ class Segment:
         for start, end in ranges:
             self.set_comment_at(start, text)
 
-    def get_comment(self, index):
-        rawindex = self.get_raw_index(index)
-        return self.rawdata.extra.comments.get(rawindex, "")
+    def get_comment_at(self, index):
+        rawindex = self.container_offset[index]
+        return self.container.comments.get(rawindex, "")
 
-    def remove_comment(self, index):
-        rawindex = self.get_raw_index(index)
+    def remove_comment_at(self, index):
+        rawindex = self.container_offset[index]
         try:
-            del self.rawdata.extra.comments[rawindex]
+            del self.container.comments[rawindex]
         except KeyError:
             pass
 
     def get_first_comment(self, ranges):
         start = reduce(min, [r[0] for r in ranges])
         rawindex = self.get_raw_index(start)
-        return self.rawdata.extra.comments.get(rawindex, "")
+        return self.container.comments.get(rawindex, "")
 
     def clear_comment(self, ranges):
         self.clear_style_ranges(ranges, comment=True)
         for start, end in ranges:
             for i in range(start, end):
                 rawindex = self.get_raw_index(i)
-                if rawindex in self.rawdata.extra.comments:
-                    del self.rawdata.extra.comments[rawindex]
+                if rawindex in self.container.comments:
+                    del self.container.comments[rawindex]
 
     def get_sorted_comments(self):
-        return sorted([[k, v] for k, v in self.rawdata.extra.comments.items()])
+        return sorted([[k, v] for k, v in self.container.comments.items()])
 
     def iter_comments_in_segment(self):
         start = self.origin
         start_index = self.get_raw_index(0)
         end_index = self.get_raw_index(len(self.rawdata))
-        for k, v in self.rawdata.extra.comments.items():
+        for k, v in self.container.comments.items():
             if k >= start_index and k < end_index:
                 yield self.rawdata.get_reverse_index(k), v
 
