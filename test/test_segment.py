@@ -112,20 +112,20 @@ class TestSegment:
         assert s.get_comment_at(1000) == "new1000"
         assert s.style[1000] & style_bits.comment_bit_mask
 
-#         s.set_style_ranges([[2,100]], comment=True)
-#         s.set_style_ranges([[200, 299]], data=True)
-#         for i in range(1,4):
-#             for j in range(1, 4):
-#                 # create some with overlapping regions, some without
-#                 r = [500*j, 500*j + 200*i + 200]
-#                 s.set_style_ranges([r], user=i)
-#                 s.set_user_data([r], i, i*10 + j)
-#         r = [100, 200]
-#         s.set_style_ranges([r], user=4)
-#         s.set_user_data([r], 4, 99)
-#         r = [3100, 3200]
-#         s.set_style_ranges([r], user=4)
-#         s.set_user_data([r], 4, 99)
+
+    def test_style(self):
+        s = self.segment
+        s100 = self.seg100
+        s1000 = self.seg1000
+        s.set_style_ranges([[200, 4000]], selected=True)
+        s.set_style_ranges([[1200, 3000]], match=True)
+        assert s.style[0] == 0
+        assert s100.style[1] == 0
+        assert s100.style[10] == style_bits.selected_bit_mask
+        assert s100.style[20] == style_bits.selected_bit_mask | style_bits.match_bit_mask
+        assert s1000.style[0] == 0
+        assert s1000.style[1] == s100.style[10]
+        assert s1000.style[2] == s100.style[20]
 
 #         s2 = self.sub_segment
 #         print(len(s2))

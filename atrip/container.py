@@ -68,9 +68,6 @@ class Container:
             memory_map = {}
         self.memory_map = memory_map
         self.comments = dict()
-        self.user_data = dict()
-        for i in range(1, style_bits.user_bit_mask):
-            self.user_data[i] = dict()
 
         # Some segments may be resized to contain additional segments not
         # present when the segment was created.
@@ -219,7 +216,6 @@ class Container:
             state[key] = getattr(self, key)
         r = self.rawdata
         state['memory_map'] = sorted([list(i) for i in self.memory_map.items()])
-        state['comment ranges'] = [list(a) for a in self.get_style_ranges(comment=True)]
         state['data ranges'] = [list(a) for a in self.get_style_ranges(data=True)]
         for i in range(1, style_bits.user_bit_mask):
             r = [list(a) for a in self.get_style_ranges(user=i)]
@@ -243,19 +239,13 @@ class Container:
         self.memory_map = dict(state.pop('memory_map', []))
         self.uuid = state.pop('uuid', uuid())
         self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
-        comments = state.pop('comments', {})
-        for k, v in e['comments']:
-            self.comments[k] = v
-        ranges = state.pop('comment ranges')
-        if 'comment ranges' in e:
-            self.set_style_ranges(e['comment ranges'], comment=True)
+        self.restore_comments(state.pop('comments', {}))
         if 'data ranges' in e:
             self.set_style_ranges(e['data ranges'], user=data_style)
         if 'display list ranges' in e:
             # DEPRECATED, but supported on read. Converts display list to
             # disassembly type 0 for user index 1
             self.set_style_ranges(e['display list ranges'], data=True, user=1)
-            self.set_user_data(e['display list ranges'], 1, 0)
         if 'user ranges 1' in e:
             # DEPRECATED, but supported on read. Converts user extra data 0
             # (antic dl), 1 (jumpman level), and 2 (jumpman harvest) to user
@@ -273,18 +263,18 @@ class Container:
     #### style
 
     def set_style_at_indexes(self, indexes, **kwargs):
-        style_bits = get_style_bits(**kwargs)
-        self._style[indexes] |= style_bits
+        bits = style_bits.get_style_bits(**kwargs)
+        self._style[indexes] |= bits
 
     def clear_style_at_indexes(self, indexes, **kwargs):
-        style_mask = get_style_mask(**kwargs)
+        style_mask = style_bits.get_style_mask(**kwargs)
         self.style[indexes] &= style_mask
 
-    def get_style_at_indexes(self, **kwargs):
+    def get_style_ranges(self, **kwargs):
         """Return a list of start, end pairs that match the specified style
         """
-        style_bits = self.get_style_bits(**kwargs)
-        matches = (self._style & style_bits) == style_bits
+        bits = style_bits.get_style_bits(**kwargs)
+        matches = (self.style & bits) == bits
         return self.bool_to_ranges(matches)
 
     #### comments
@@ -301,6 +291,13 @@ class Container:
 
     def get_sorted_comments(self):
         return sorted([[k, v] for k, v in self.comments.items()])
+
+    def restore_comments(self, comments_list):
+        bits = style_bits.get_style_bits(comment=True)
+        style = self.style
+        for k, v in comments_list:
+            self.comments[k] = v
+            style[k] |= bits
 
     def fixup_comments(self):
         """Remove any style bytes that are marked as commented but have no

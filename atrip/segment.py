@@ -253,12 +253,6 @@ class Segment:
     def tobytes(self):
         return self.container._data[self.container_offset].tobytes()
 
-    def get_style_bits(self, **kwargs):
-        return style_bits.get_style_bits(**kwargs)
-
-    def get_style_mask(self, **kwargs):
-        return style_bits.get_style_mask(**kwargs)
-
     def calc_source_indexes_from_ranges(self, ranges):
         source_indexes = np.zeros(len(self.container), dtype=np.uint8)
         offsets = self.container_offset
@@ -283,30 +277,20 @@ class Segment:
     def get_style_ranges(self, **kwargs):
         """Return a list of start, end pairs that match the specified style
         """
-        style_bits = self.get_style_bits(**kwargs)
-        matches = (self.style & style_bits) == style_bits
-        return self.bool_to_ranges(matches)
+        bits = style_bits.get_style_bits(**kwargs)
+        matches = (self.style & bits) == bits
+        return style_bits.bool_to_ranges(matches)
 
     def get_comment_locations(self, **kwargs):
-        style_bits = self.get_style_bits(**kwargs)
+        bits = style_bits.get_style_bits(**kwargs)
         r = self.rawdata.copy()
         #print len(r.style)
         #print len(r.style_base)
-        r.style_base[:] &= style_bits
+        r.style_base[:] &= bits
         comment_indexes = np.asarray(list(self.container.comments.keys()), dtype=np.uint32)
         #print comment_indexes
         r.style_base[comment_indexes] |= style_bits.comment_bit_mask
         return r.unindexed_style[:]
-
-    def bool_to_ranges(self, matches):
-        w = np.where(matches == True)[0]
-        # split into groups with consecutive numbers
-        groups = np.split(w, np.where(np.diff(w) != 1)[0] + 1)
-        ranges = []
-        for group in groups:
-            if np.alen(group) > 0:
-                ranges.append((int(group[0]), int(group[-1]) + 1))
-        return ranges
 
     def find_next(self, index, **kwargs):
         ranges = self.get_style_ranges(**kwargs)
@@ -328,39 +312,6 @@ class Segment:
                 match_index = len(ranges) - 1
             return ranges[match_index][0]
         return None
-
-    def set_user_data(self, ranges, user_index, user_data):
-        for start, end in ranges:
-            # FIXME: this is slow
-            for i in range(start, end):
-                rawindex = self.get_raw_index(i)
-                self.rawdata.extra.user_data[user_index][rawindex] = user_data
-
-    def get_user_data(self, index, user_index):
-        rawindex = self.container_offset[index]
-        try:
-            return self.rawdata.extra.user_data[user_index][rawindex]
-        except KeyError:
-            return 0
-
-    def get_sorted_user_data(self, user_index):
-        d = self.rawdata.extra.user_data[user_index]
-        indexes = sorted(d.keys())
-        ranges = []
-        start, end, current = None, None, None
-        for i in indexes:
-            if start is None:
-                start = i
-                current = d[i]
-            else:
-                if d[i] != current or i != end:
-                    ranges.append([[start, end], current])
-                    start = i
-                    current = d[i]
-            end = i + 1
-        if start is not None:
-            ranges.append([[start, end], current])
-        return ranges
 
     def remove_comments_at_indexes(self, indexes):
         for where_index in indexes:
@@ -487,15 +438,6 @@ class Segment:
         for k, v in self.container.comments.items():
             if k >= start_index and k < end_index:
                 yield self.rawdata.get_reverse_index(k), v
-
-    def copy_user_data(self, source, index_offset=0):
-        """Copy comments and other user data from the source segment to this
-        segment.
-
-        The index offset is the offset into self based on the index of source.
-        """
-        for index, comment in source.iter_comments_in_segment():
-            self.set_comment_at(index + index_offset, comment)
 
     def label(self, index, lower_case=True):
         if lower_case:
