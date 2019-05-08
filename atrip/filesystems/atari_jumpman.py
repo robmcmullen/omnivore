@@ -90,14 +90,21 @@ class AtariJumpmanDirectory(Directory):
 
     def __str__(self):
         num_entries = len(self) // AtariJumpmanDirent.dirent_size
-        s = "%s (%d levels)" % (self.name, num_entries)
+        s = f"{self.name} ({num_entries} level"
+        if num_entries != 1:
+            s += "s"
+        s += ")"
         if self.error:
             s += " " + self.error
         return s
 
+    def find_first_level(self, media):
+        index, size = media.get_contiguous_sectors_offsets(17, 16 * 32)
+        return index, size
+
     def find_segment_location(self):
         media = self.media
-        index, size = media.get_contiguous_sectors_offsets(17, 16 * 32)
+        index, size = self.find_first_level(media)
         level_count = size // 0x800
         indexes = np.empty(AtariJumpmanDirent.dirent_size * level_count, dtype=np.int32)
         data_index = index
@@ -140,3 +147,62 @@ class AtariJumpman(AtariDos2):
 
     def calc_directory_segment(self):
         return AtariJumpmanDirectory(self)
+
+
+
+class AtariJumpmanLevelTesterBootSegment(AtariDosBootSegment):
+    def find_segment_location(self, media):
+        self.bldadr = 0x700
+        start, size = media.get_index_of_sector(4)
+        i = 9
+        count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
+        if start + count > len(media) or start + count < len(media) - 128:
+            raise errors.NotEnoughSpaceOnDisk(f"KBoot header reports size {count}; media only {len(media)}")
+        else:
+            self.exe_size = count
+            self.exe_start = start
+        return 0, len(media)
+
+    def calc_boot_segments(self):
+        header = Segment(self, 0, 0x700, "Boot Header", length=6)
+        code = Segment(self, 6, 0x706, name="Boot Code", length=0x180 - 6)
+
+        file_segment = guess_file_type(self, "Jumpman Level", self.exe_start, self.exe_size)
+        return [header, code, file_segment]
+
+
+class AtariJumpmanLevelTesterDirectory(AtariJumpmanDirectory):
+    def find_first_level(self, media):
+        start, size = media.get_index_of_sector(4)
+        i = 9
+        count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
+        if start + count > len(media) or start + count < len(media) - 128:
+            raise errors.NotEnoughSpaceOnDisk(f"Jumpman Level Tester header reports size {count}; media only {len(media)}")
+        else:
+            exe_size = count
+            exe_start = start
+        file_segment = guess_file_type(media, "Jumpman Level Tester", exe_start, exe_size)
+        index = None
+        if len(file_segment.segments) > 0:
+            s = file_segment.segments[0].segments[0]
+            if s.origin == 0x8800:
+                # Jumpman level tester loads initial level at $8800, then the
+                # code moves it down
+                #
+                # Need index relative to media; container_offset is absolute
+                # position in source file and media is at some offset from the
+                # beginning of the container.
+                index = s.container_offset[0] - media.container_offset[0]
+        if index is None:
+            raise errors.FilesystemError("Not recognized as a Jumpman Level Tester image")
+        return index, 0x800
+
+
+class AtariJumpmanLevelTester(AtariJumpman):
+    ui_name = "Atari Jumpman Level Tester"
+
+    def calc_boot_segment(self):
+        return AtariJumpmanLevelTesterBootSegment(self)
+
+    def calc_directory_segment(self):
+        return AtariJumpmanLevelTesterDirectory(self)

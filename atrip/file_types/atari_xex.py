@@ -40,12 +40,12 @@ class ObjSegment(Segment):
         count = end - start + 1
         if start == 0x2e0:
             target = self[4] + 256 * self[5]
-            s = RunAddressSegment(self, 4, name=f"RUNAD: JMP ${target:04x}", length=2)
+            s = RunAddressSegment(self, 4, origin=start, name=f"RUNAD: JMP ${target:04x}", length=2)
         elif start == 0x2e2:
             target = self[4] + 256 * self[5]
-            s = InitAddressSegment(self, 4, name=f"INITAD: JSR ${target:04x}", length=2)
+            s = InitAddressSegment(self, 4, origin=start, name=f"INITAD: JSR ${target:04x}", length=2)
         else:
-            s = Segment(self, 4, name=f"[${start:04x}-${end:04x}]", length=count)
+            s = Segment(self, 4, name=f"[${start:04x}-${end:04x}]", origin=start, length=count)
         return [s]
 
 
