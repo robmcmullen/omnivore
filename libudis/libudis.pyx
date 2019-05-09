@@ -79,12 +79,12 @@ cdef class TextStorage:
             count = info.line_length
             yield self.text_buffer[start:start + count].tostring()
 
-    def clear(self):
+    cdef clear(self):
         self.num_lines = 0
         self.text_index = 0
         self.text_ptr = self.text_buffer_data
 
-    def store(self, int count):
+    cdef store(self, int count):
         cdef label_info_t *info
         cdef int i
 
@@ -236,7 +236,7 @@ cdef class LabelStorage(TextStorage):
                 self[i] = (other.text_buffer[start:start + count], info.num_bytes, info.item_count, info.type_code)
             info += 1
 
-    def clear(self):
+    cdef clear(self):
         cdef label_info_t *info
         cdef int i
 
@@ -309,7 +309,7 @@ cdef class StringifiedDisassembly:
         for i in range(len(self)):
             yield self.disasm_text[i]
 
-    def clear(self):
+    cdef clear(self):
         self.origin = 0
         self.last_pc = 0
         self.disasm_text.clear()
@@ -438,6 +438,8 @@ cdef class DisassemblyConfig:
         self.default_disasm_type = def_disasm_type
 
     def get_parser(self, num_entries, origin, num_bytes):
+        # has to be a python function because it can be overridden in
+        # subclasses
         return ParsedDisassembly(num_entries, origin, num_bytes)
 
     @cython.boundscheck(False)
@@ -452,7 +454,7 @@ cdef class DisassemblyConfig:
         cdef np.uint8_t *c_style = <np.uint8_t *>style_copy
         disasm_type_copy = segment.disasm_type.tobytes()
         cdef np.uint8_t *c_disasm_type = <np.uint8_t *>disasm_type_copy
-        cdef num_bytes = len(src_copy)
+        cdef int num_bytes = len(src_copy)
 
         cdef int origin = segment.origin
         cdef int end_addr = origin + len(segment)
@@ -463,15 +465,14 @@ cdef class DisassemblyConfig:
         cdef ParsedDisassembly parsed = self.get_parser(num_entries, origin, num_bytes)
 
         cdef int first_index = 0
-        cdef np.uint8_t current_disasm_type = disasm_type_copy[0]
+        cdef np.uint8_t current_disasm_type = c_disasm_type[0]
         cdef int start_index, end_index
         cdef history_entry_t *h = parsed.history_entries
         cdef int count
         # print "CYTHON FAST_GET_ENTIRE", style_copy
-        ranges = []
         for end_index in range(1, num_bytes):
-            s = style_copy[end_index]
-            t = disasm_type_copy[end_index]
+            s = c_style[end_index]
+            t = c_disasm_type[end_index]
             if t > 127:
                 t = self.default_disasm_type
             # print "%04x" % i, s, s2,
@@ -563,7 +564,7 @@ cdef class StringifiedHistory:
         for i in range(len(self)):
             yield self.history_text[i], self.result_text[i]
 
-    def clear(self):
+    cdef clear(self):
         self.history_text.clear()
         self.result_text.clear()
 
@@ -651,7 +652,7 @@ cdef class HistoryStorage:
     def cumulative_count(self):
         return self.history.cumulative_count
 
-    def clear(self):
+    cdef clear(self):
         self.history.first_entry_index = 0
         self.history.latest_entry_index = -1
         self.history.num_entries = 0
