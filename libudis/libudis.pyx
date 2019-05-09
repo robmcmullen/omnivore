@@ -6,11 +6,10 @@ cimport numpy as np
 
 from libudis.libudis cimport history_entry_t, emulator_history_t, parse_func_t, string_func_t
 
-from libudis.declarations cimport find_parse_function, find_string_function
-
 from omnivore.disassembler.dtypes import HISTORY_ENTRY_DTYPE
 
 cdef extern:
+    parse_func_t parser_map[]
     string_func_t stringifier_map[]
 
 
@@ -411,13 +410,10 @@ cdef class ParsedDisassembly:
                 #    print "  disasm_info: added label at %04x" % (pc + i)
                 jmp_target[(pc + i) & 0xffff] = old_label
 
-    def parse_test(self, cpu_type, np.ndarray[np.uint8_t, ndim=1] src):
+    def parse_test(self, np.uint8_t disasm_type, np.ndarray[np.uint8_t, ndim=1] src):
         cdef parse_func_t processor
-        cdef char *c_cpu_type
 
-        cpu_type_bytes = cpu_type.encode('utf-8')
-        c_cpu_type = cpu_type_bytes
-        processor = find_parse_function(c_cpu_type)
+        processor = parser_map[disasm_type]
         # printf("processor = %lx\n", processor)
         self.parse_next(processor, <unsigned char *>src.data, len(src))
 
@@ -428,28 +424,18 @@ cdef class ParsedDisassembly:
         return output
 
 
-cdef int data_style = 1
+cdef int data_style = 0
 
 cdef class DisassemblyConfig:
-    cdef np.uint8_t c_split_comments[8]
-    cdef parse_func_t segment_parsers[8]
+    cdef np.uint8_t c_split_comments[256]
+    cdef parse_func_t segment_parsers[256]
+    cdef np.uint8_t default_disasm_type
 
-    def __init__(self, split_comments=[data_style]):
-        for i in range(8):
+    def __init__(self, def_disasm_type=0, split_comments=[data_style]):
+        cdef int i
+        for i in range(256):
             self.c_split_comments[i] = 1 if i in split_comments else 0
-            self.segment_parsers[i] = NULL
-
-    def register_parser(self, cpu, id):
-        tmp_cpu = cpu.encode('utf-8')
-        cdef char *search_name = tmp_cpu
-        cdef parse_func_t f
-        f = find_parse_function(search_name)
-        if f != NULL:
-            self.segment_parsers[id] = f
-        else:
-            raise RuntimeError(f"No disassembler available for {cpu}")
-        # for i in range(8):
-        #     printf("segment_parsers[%d] = %lx\n", i, self.segment_parsers[i])
+        self.default_disasm_type = def_disasm_type
 
     def get_parser(self, num_entries, origin, num_bytes):
         return ParsedDisassembly(num_entries, origin, num_bytes)
@@ -457,15 +443,16 @@ cdef class DisassemblyConfig:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def parse(self, segment, num_entries):
-        cdef np.uint8_t s, s2
-        cdef int user_bit_mask = 0x7
+        cdef np.uint8_t s, t
         cdef int comment_bit_mask = 0x40
 
         src_copy = segment.data.tobytes()
         cdef np.uint8_t *src = <np.uint8_t *>src_copy
-        cdef np.ndarray style_copy = segment.get_comment_locations(user=user_bit_mask)
-        cdef np.uint8_t *c_style = <np.uint8_t *>style_copy.data
-        cdef num_bytes = len(style_copy)
+        style_copy = segment.style.tobytes()
+        cdef np.uint8_t *c_style = <np.uint8_t *>style_copy
+        disasm_type_copy = segment.disasm_type.tobytes()
+        cdef np.uint8_t *c_disasm_type = <np.uint8_t *>disasm_type_copy
+        cdef num_bytes = len(src_copy)
 
         cdef int origin = segment.origin
         cdef int end_addr = origin + len(segment)
@@ -476,42 +463,42 @@ cdef class DisassemblyConfig:
         cdef ParsedDisassembly parsed = self.get_parser(num_entries, origin, num_bytes)
 
         cdef int first_index = 0
-        cdef int base_style = c_style[0] & user_bit_mask
-        cdef int start_index, end_index, chunk_type
+        cdef np.uint8_t current_disasm_type = disasm_type_copy[0]
+        cdef int start_index, end_index
         cdef history_entry_t *h = parsed.history_entries
         cdef int count
-        cdef char *temp[256]
         # print "CYTHON FAST_GET_ENTIRE", style_copy
         ranges = []
         for end_index in range(1, num_bytes):
             s = style_copy[end_index]
-            s2 = s & user_bit_mask
+            t = disasm_type_copy[end_index]
+            if t > 127:
+                t = self.default_disasm_type
             # print "%04x" % i, s, s2,
             if s & comment_bit_mask:
-                if s2 == base_style and not self.c_split_comments[s2]:
+                if t == current_disasm_type and not self.c_split_comments[t]:
                     # print "same w/skippable comment"
                     continue
-            elif s2 == base_style:
+            elif t == current_disasm_type:
                 # print "same"
                 continue
 
             # process chuck here:
             start_index = first_index
             count = end_index - start_index
-            chunk_type = base_style
             # print("break here -> %x:%x = %s" % (start_index, end_index, chunk_type))
-            processor = self.segment_parsers[chunk_type]
+            processor = parser_map[current_disasm_type]
             parsed.parse_next(processor, src, count)
             src += count
             first_index = end_index
-            base_style = s2
+            current_disasm_type = t
 
         # process last chunk
         start_index = first_index
         end_index += 1  # i is last byte tested, need +1 to include it in the range
         count = end_index - start_index
         # print("final break here -> %x:%x = %s, count=%x" % (start_index, end_index, base_style, num_bytes))
-        processor = self.segment_parsers[base_style]
+        processor = parser_map[current_disasm_type]
         parsed.parse_next(processor, src, count)
 
         parsed.fix_offset_labels()

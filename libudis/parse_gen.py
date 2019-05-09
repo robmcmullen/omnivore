@@ -759,7 +759,8 @@ def gen_pyx(filename, parsers, stringifiers):
         stringlist.append(stringtemplate.replace("$CPU", p.cpu_name).replace("$IF", iftext).replace("$FUNC", p.function_name))
         iftext = "elif"
 
-    header = """
+    ret = "\n"
+    header = f"""
 from libc.string cimport strcmp
 import cython
 import numpy as np
@@ -768,12 +769,12 @@ cimport numpy as np
 from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
 
 cdef extern:
-$EXTERNLIST
+{ret.join(externlist)}
 
 cdef parse_func_t find_parse_function(char *cpu):
     cdef parse_func_t parse_func
 
-$PARSELIST
+{ret.join(parselist)}
     else:
         parse_func = NULL
     return parse_func
@@ -781,33 +782,55 @@ $PARSELIST
 cdef string_func_t find_string_function(char *cpu):
     cdef string_func_t string_func
 
-$STRINGLIST
+{ret.join(stringlist)}
     else:
         string_func = NULL
     return string_func
 
-cdef string_func_t stringifier_map[$TYPEMAX]
-$TYPELIST
-""".replace("$EXTERNLIST", "\n".join(externlist)).replace("$PARSELIST", "\n".join(parselist)).replace("$STRINGLIST", "\n".join(stringlist)).replace("$TYPELIST", "\n".join(typelist)).replace("$TYPEMAX", str(disassembler_type_max))
+cdef string_func_t parser_map[{disassembler_type_max + 1}]
+cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
+{ret.join(typelist)}
+"""
+
+    parser_lookup = {}
+    for p in parsers + custom_parsers:
+        parser_lookup[disassembler_type[p.cpu_name]] = p.cpu_name
+    header = f"""
+from libc.string cimport strcmp
+import cython
+import numpy as np
+cimport numpy as np
+
+from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
+
+parser_lookup = {repr(parser_lookup)}
+
+cdef string_func_t parser_map[{disassembler_type_max + 1}]
+cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
+{ret.join(typelist)}
+"""
 
     with open(filename, "w") as fh:
         fh.write(py_disclaimer)
         fh.write(header)
 
-def gen_map(fh, stringifiers):
-    all_stringifiers = stringifiers + custom_stringifiers
-    cpu_order = sorted(all_stringifiers, key=lambda p: disassembler_type[p.cpu_name])
+def gen_map(fh, history, custom_history, map_name, default_history):
+    all_history = history + custom_history
+    cpu_order = sorted(all_history, key=lambda p: disassembler_type[p.cpu_name])
     if fh is not None:
-        for p in custom_stringifiers:
+        for p in custom_history:
             fh.write(f"extern {p.function_return_type} {p.function_name}({p.function_signature});\n")
-        fh.write("\nvoid *stringifier_map[] = {\n")
+        fh.write("\nvoid *" + map_name + "[] = {\n")
         expected = 0
         for p in cpu_order:
             i = disassembler_type[p.cpu_name]
             while i > expected:
-                fh.write("stringify_entry_unknown_disassembler, /* %d */\n" % expected)
+                fh.write(f"{default_history}, /* {expected} */\n")
                 expected += 1
             fh.write("%s, /* %d */\n" % (p.function_name, i))
+            expected += 1
+        while expected < 256:
+            fh.write(f"{default_history}, /* {expected} */\n")
             expected += 1
         fh.write("};\n")
 
@@ -866,6 +889,9 @@ if __name__ == "__main__":
         for h in generated_parsers:
             fh.write(h.text)
 
+        fh.write("\n\n")
+        gen_map(fh, generated_parsers, custom_parsers, "parser_map", "parse_entry_data")
+
     generated_stringifiers = []
     c_includes = set()
     with open(destdir + "stringify_udis_cpu.c", "w") as fh:
@@ -881,7 +907,7 @@ if __name__ == "__main__":
             fh.write(s.text)
 
         fh.write("\n\n")
-        gen_map(fh, generated_stringifiers)
+        gen_map(fh, generated_stringifiers, custom_stringifiers, "stringifier_map", "stringify_entry_unknown_disassembler")
 
     filename = destdir + "stringify_udis_cpu.h"
     with open(filename, "w") as fh:

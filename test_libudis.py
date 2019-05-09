@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 
-from atrcopy import find_diskimage, DefaultSegment, SegmentData
+from atrip import Container, Segment
 
 import omnivore.disassembler.dtypes as ud
 from omnivore.disassembler import ParsedDisassembly, DisassemblyConfig
@@ -23,9 +23,12 @@ if __name__ == "__main__":
             data = data.astype(dtype=np.uint8)  # prevents data.base from being a 'bytes' object
     else:
         data = repeat_test
-    print(type(data), data)
-    d2 = SegmentData(data)
-    segment = DefaultSegment(d2, 0x6000)
+    print("raw data: ", type(data), data)
+    d2 = Container(data)
+    segment = Segment(d2, origin=0x6000)
+    print("data", segment.data, segment.data.tobytes())
+    print("style", segment.style, segment.style.tobytes())
+    print("disasm_type", segment.disasm_type, segment.disasm_type.tobytes())
 
     if False:
         p = ParsedDisassembly(1000, 0x6000)
@@ -53,12 +56,8 @@ if __name__ == "__main__":
             print(f"text[{start}:{start + count}] = {text}, {e[i]}")
 
     driver = DisassemblyConfig()
-    driver.register_parser("6502", 0)
-    driver.register_parser("data", 1)
-    driver.register_parser("antic_dl", 2)
-    driver.register_parser("jumpman_level", 3)
-    driver.register_parser("jumpman_harvest", 4)
     segment.style[:] = 0
+    segment.disasm_type[:] = 10
     p = driver.parse(segment, 8000)
     e = p.entries
     print(p)
@@ -69,12 +68,8 @@ if __name__ == "__main__":
 
     t = p.stringify(0,100)
     print(t)
-    d = t.disasm_text
-    for i in range(len(t)):
-        start = d.text_starts[i]
-        count = d.line_lengths[i]
-        text = d.text_buffer[start:start + count].tostring()
-        print(f"text[{start}:{start + count}] = {text}, {e[i+100]}")
+    for line in t:
+        print(line)
 
     del p
     print("deleted")

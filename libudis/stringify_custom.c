@@ -525,9 +525,10 @@ int stringify_entry_blank(history_entry_t *entry, char *t, char *hexdigits, int 
 
 extern string_func_t stringifier_map[];
 
-int stringify_entry_next_instruction(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_next_instruction(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
-    string_func_t stringifier = stringifier_map[entry->cycles];
+    history_breakpoint_t *entry = (history_frame_t *)h_entry;
+    string_func_t stringifier = stringifier_map[entry->disassembler_type_cpu];
 
     return stringifier(entry, t, hexdigits, lc, jmp_targets);
 }
