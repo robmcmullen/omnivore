@@ -217,6 +217,9 @@ class SawxFrame(wx.Frame):
             self.add_editor(new_editor)
             new_editor.show(args)
         except Exception as e:
+            # force close the progress bar so the error dialog doesn't get lost
+            # under the progress bar dialog
+            progress_log.info("END")
             import traceback
             traceback.print_exc()
             self.error(str(e))
