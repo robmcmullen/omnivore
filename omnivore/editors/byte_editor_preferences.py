@@ -2,7 +2,8 @@ import sys
 
 import wx
 
-from sawx.preferences import SawxPreferences, str_to_font, def_font, cached_property
+from sawx.preferences import SawxPreferences
+from sawx.ui.fonts import str_to_font, default_font
 
 
 def byte2hex(val):
@@ -35,7 +36,7 @@ class ByteEditorPreferences(SawxPreferences):
         # )
 
         self.image_caches = {}
-        self.header_font = str_to_font(def_font + "bold")
+        self.header_font = str_to_font(default_font + "bold")
         self.hex_grid_lower_case = True
         self.assembly_lower_case = False
         self.disassembly_column_widths = (0, 0, 0)
