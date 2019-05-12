@@ -66,14 +66,16 @@ disassembler_type = {
 }
 disassembler_type_max = max(disassembler_type.values())
 
-CustomEntry = namedtuple('CustomStringifier', ['cpu_name', 'function_name', 'function_return_type', 'function_signature'])
+CustomEntry = namedtuple('CustomParser', ['cpu_name', 'function_name', 'function_return_type', 'function_signature', 'cpu_description'])
 
 parser_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, jmp_targets_t *jmp_targets"
 custom_parsers = [
-    CustomEntry('data', 'parse_entry_data', 'int', parser_signature),
-    CustomEntry('antic_dl', 'parse_entry_antic_dl', 'int', parser_signature),
-    CustomEntry('jumpman_harvest', 'parse_entry_jumpman_harvest', 'int', parser_signature),
+    CustomEntry('data', 'parse_entry_data', 'int', parser_signature, 'Data'),
+    CustomEntry('antic_dl', 'parse_entry_antic_dl', 'int', parser_signature, 'Antic Display List'),
+    CustomEntry('jumpman_harvest', 'parse_entry_jumpman_harvest', 'int', parser_signature, 'Jumpman Harvest Table'),
 ]
+
+CustomEntry = namedtuple('CustomStringifier', ['cpu_name', 'function_name', 'function_return_type', 'function_signature'])
 
 stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets"
 custom_stringifiers = [
@@ -213,6 +215,7 @@ class CPU:
         c = cputables.processors[name]
         self.address_modes = {}
         self.argorder = {}
+        self.description = c['description']
         table = c['addressModeTable']
         for mode, fmt in list(table.items()):
             fmt, argorder = convert_fmt(fmt)
@@ -336,6 +339,10 @@ truncated2:
     @property
     def cpu_name(self):
         return self.cpu.name
+
+    @property
+    def cpu_description(self):
+        return self.cpu.description
 
     @property
     def text(self):
@@ -739,62 +746,16 @@ case 0x%x:
 
 
 def gen_pyx(filename, parsers, stringifiers):
-    externlist = []
-    for p in parsers + custom_parsers + stringifiers + custom_stringifiers:
-        externlist.append(f"    {p.function_return_type} {p.function_name}({p.function_signature})")
-
-    parsetemplate = """    $IF strcmp(cpu, "$CPU") == 0:
-        parse_func = $FUNC"""
-    stringtemplate = """    $IF strcmp(cpu, "$CPU") == 0:
-        string_func = $FUNC"""
-    parselist = []
-    stringlist = []
-    iftext = "if"
-    typelist = []
-    for p in parsers + custom_parsers:
-        parselist.append(parsetemplate.replace("$CPU", p.cpu_name).replace("$IF", iftext).replace("$FUNC", p.function_name))
-        iftext = "elif"
-    iftext = "if"
-    for p in stringifiers + custom_stringifiers:
-        stringlist.append(stringtemplate.replace("$CPU", p.cpu_name).replace("$IF", iftext).replace("$FUNC", p.function_name))
-        iftext = "elif"
-
     ret = "\n"
-    header = f"""
-from libc.string cimport strcmp
-import cython
-import numpy as np
-cimport numpy as np
-
-from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
-
-cdef extern:
-{ret.join(externlist)}
-
-cdef parse_func_t find_parse_function(char *cpu):
-    cdef parse_func_t parse_func
-
-{ret.join(parselist)}
-    else:
-        parse_func = NULL
-    return parse_func
-
-cdef string_func_t find_string_function(char *cpu):
-    cdef string_func_t string_func
-
-{ret.join(stringlist)}
-    else:
-        string_func = NULL
-    return string_func
-
-cdef string_func_t parser_map[{disassembler_type_max + 1}]
-cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
-{ret.join(typelist)}
-"""
-
     parser_lookup = {}
     for p in parsers + custom_parsers:
-        parser_lookup[disassembler_type[p.cpu_name]] = p.cpu_name
+        parser_lookup[disassembler_type[p.cpu_name]] = p.cpu_description
+
+    # get list of CPUs out of entire list of parsers. CPU parsers are assumed
+    # to be any parser that has a NOP instruction
+    cpus_with_nop = sorted([(k, p) for (k, p) in cputables.processors.items() if p['nop'] >= 0])
+    valid_cpus = [disassembler_type[k] for (k, p) in cpus_with_nop if disassembler_type[k] in parser_lookup]
+
     header = f"""
 from libc.string cimport strcmp
 import cython
@@ -805,9 +766,10 @@ from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_t
 
 parser_lookup = {repr(parser_lookup)}
 
+valid_cpus = {repr(valid_cpus)}
+
 cdef string_func_t parser_map[{disassembler_type_max + 1}]
 cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
-{ret.join(typelist)}
 """
 
     with open(filename, "w") as fh:
