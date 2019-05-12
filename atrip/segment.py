@@ -44,6 +44,9 @@ class ArrayWrapper:
     def __setitem__(self, index, value):
         self.np_data[self.order[index]] = value
 
+    def tobytes(self):
+        return self.np_data[self.order].tobytes()
+
 
 class Segment:
     can_resize_default = False
