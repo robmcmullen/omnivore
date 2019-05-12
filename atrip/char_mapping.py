@@ -27,6 +27,7 @@ class ATASCIIFontMapping(object):
         return id(self)
 
     def wx_char_to_byte(self, char, mods, control):
+        import wx
         byte = None
 
         if mods == wx.MOD_RAW_CONTROL:
