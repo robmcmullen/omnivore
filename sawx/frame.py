@@ -213,6 +213,7 @@ class SawxFrame(wx.Frame):
             else:
                 editor_cls = editor_module.find_editor_class_for_document(document)
             new_editor = editor_cls(document)
+            log.debug(f"load_file: Created editor {new_editor}")
             # have to add before load so the control exists
             self.add_editor(new_editor)
             new_editor.show(args)

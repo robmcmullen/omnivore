@@ -169,11 +169,43 @@ class SawxEditor:
 
     preferences_module = "sawx.preferences"
 
-    _preferences = None
+    # each editor class uses a single preferences object for all instances, but
+    # can't use normal class inheritance because subclasses will find an
+    # already existing preference object if one in its superclass hierarchy
+    # exists. So, we keep track of preference objects by class
+    _preferences = {}
 
     # if an editor is marked as transient, it will be replaced if it's the
     # active frame when a new frame is added.
     transient = False
+
+    #### class methods
+
+    @classmethod
+    def get_preferences(cls):
+        if cls not in cls._preferences:
+            prefs = find_editor_preferences(cls.preferences_module)
+            prefs.restore_user_settings()
+            log.debug(f"get_preferences: creating preferences: {prefs}")
+            cls._preferences[cls] = prefs
+        return cls._preferences[cls]
+
+    #### dunder methods
+
+    def __init__(self, document, action_factory_lookup=None):
+        self.frame = None
+        if action_factory_lookup is None:
+            action_factory_lookup = {}
+        self.action_factory_lookup = action_factory_lookup
+        self.document = document
+        self.last_loaded_uri = document.uri
+        self.last_saved_uri = None
+
+
+    def __str__(self):
+        return f"{self.__class__.__name__}: document={self.document}, prefs={self.get_preferences()}"
+
+    #### properties
 
     @property
     def is_dirty(self):
@@ -248,22 +280,6 @@ class SawxEditor:
         lines.append(f"last saved: {self.last_saved_uri}")
         lines.append(f"last loaded: {self.last_loaded_uri}")
         return "\n".join(lines)
-
-    def __init__(self, document, action_factory_lookup=None):
-        self.frame = None
-        if action_factory_lookup is None:
-            action_factory_lookup = {}
-        self.action_factory_lookup = action_factory_lookup
-        self.document = document
-        self.last_loaded_uri = document.uri
-        self.last_saved_uri = None
-
-    @classmethod
-    def get_preferences(cls):
-        if cls._preferences is None:
-            cls._preferences = find_editor_preferences(cls.preferences_module)
-            cls._preferences.restore_user_settings()
-        return cls._preferences
 
     @property
     def preferences(self):
