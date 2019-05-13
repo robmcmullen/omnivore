@@ -3,8 +3,11 @@ import time
 import importlib
 import inspect
 
+import wx
+
 from . import persistence
 from .events import EventHandler
+from .ui import fonts
 
 import logging
 log = logging.getLogger(__name__)
@@ -131,7 +134,30 @@ class SawxApplicationPreferences(SawxPreferences):
 
 
 class SawxEditorPreferences(SawxPreferences):
-    pass
+    display_order = [
+        ("text_font", "wx.Font"),
+        ("text_color", "wx.Colour"),
+        ("background_color", "wx.Colour"),
+        ("empty_background_color", "wx.Colour"),
+    ]
+
+    def set_defaults(self):
+        self.text_font = fonts.str_to_font(fonts.default_font)
+        self.background_color = wx.Colour(wx.WHITE)
+        self.text_color = wx.Colour(wx.BLACK)
+        self.empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
+
+    @property
+    def text_font(self):
+        return self._text_font
+
+    @text_font.setter
+    def text_font(self, value):
+        self._text_font = value
+        dc = wx.MemoryDC()
+        dc.SetFont(self._text_font)
+        self.text_font_char_width = dc.GetCharWidth()
+        self.text_font_char_height = dc.GetCharHeight()
 
 
 def find_application_preferences(prefs_module):
