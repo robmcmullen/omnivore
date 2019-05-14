@@ -1387,6 +1387,7 @@ class MouseEventMixin:
     def commit_change(self, flags):
         mode_log.debug(("commit before:", self.caret_handler.carets))
         self.mouse_mode.refresh_ranges(self.caret_handler)
+        self.send_caret_event(flags)
         # self.caret_handler.sync_caret_event = flags
         # self.caret_handler.ensure_visible_event = flags
         # self.caret_handler.refresh_event = flags
