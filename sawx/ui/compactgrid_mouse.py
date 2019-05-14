@@ -1330,7 +1330,7 @@ class MouseEventMixin:
         if self.select_extend_mode == "top anchor":
             if mouse_at < caret.anchor_initial_start:
                 caret.rc = mouse_at
-                caret.anchor_start = rc
+                caret.anchor_start = mouse_at
                 caret.anchor_end = caret.anchor_initial_start
                 update = True
             else:
