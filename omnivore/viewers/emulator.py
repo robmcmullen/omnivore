@@ -287,8 +287,7 @@ class LabelTable(cg.VariableWidthHexTable):
         self.items_per_row = items_per_row
         self.last_valid_index = index
 
-    def get_row_label_text(self, start_line, num_lines, step=1):
-        last_line = min(start_line + num_lines, self.num_rows)
+    def get_row_label_text(self, start_line, last_line, step=1):
         for line in range(start_line, last_line, step):
             yield self.labels[self.row_to_label_number[line]][0]
 

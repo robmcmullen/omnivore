@@ -57,8 +57,7 @@ class DisassemblyTable(SegmentTable):
         row, _ = self.index_to_row_col(index)
         return str(self.current.entries[row]['pc'])
 
-    def get_row_label_text(self, start_line, num_lines, step=1):
-        last_line = min(start_line + num_lines, self.num_rows)
+    def get_row_label_text(self, start_line, last_line, step=1):
         entries = self.current.entries
         for line in range(start_line, last_line, step):
             yield "%04x" % (entries[line]['pc'])
