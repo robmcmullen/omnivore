@@ -1344,7 +1344,8 @@ class RowLabelWindow(AuxWindow):
                 # remain fixed to their respective rows, not always starting
                 # from the first visible row and skipping rows from there.
                 row = (row // self.row_skip) * self.row_skip
-            for header in s.table.get_row_label_text(row, s.main.visible_rows, self.row_skip):
+            last_row = min(row + s.main.visible_rows, s.table.num_rows)
+            for header in s.table.get_row_label_text(row, last_row, self.row_skip):
                 self.draw_row_label_text(header, row, dc, self.row_skip)
                 row += self.row_skip
             if debug_refresh:
