@@ -880,7 +880,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     def handle_user_caret(self, input_row, input_cell, flags):
         row, cell, offscreen = self.calc_desired_cell(input_row, input_cell)
-        print(f"handle_user_caret: input={input_row},{input_cell}, desired={row},{cell} offscreen={offscreen} flags={flags}")
+        caret_log.debug(f"handle_user_caret: input={input_row},{input_cell}, desired={row},{cell} offscreen={offscreen} flags={flags}")
         if not offscreen or self.can_scroll():
             self.process_motion_scroll(row, cell, flags)
 
@@ -1662,7 +1662,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         action[wx.WXK_HOME]  = self.caret_move_start_of_line
         action[wx.WXK_END]   = self.caret_move_end_of_line
         key = evt.GetKeyCode()
-        print(("Trying %d" % key))
+        log.debug(f"on_char: trying {key}")
         try:
             action[key](evt, None)
             self.caret_handler.validate_carets()
@@ -1673,7 +1673,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
                 self.Refresh()
             #self.UpdateView()
         except KeyError:
-            print(("Error! %d not recognized" % key))
+            log.debug(f"on_char: Error! {key} not recognized")
             evt.Skip()
 
     ##### redrawing
