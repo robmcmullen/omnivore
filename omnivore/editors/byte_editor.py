@@ -15,7 +15,6 @@ from sawx.filesystem import fsopen
 from sawx.utils.processutil import run_detach
 
 from .linked_base import LinkedBase
-from .byte_editor_preferences import ByteEditorPreferences
 
 import logging
 log = logging.getLogger(__name__)
@@ -264,8 +263,8 @@ class ByteEditor(TileManagerBase):
 
     #### Initialization
 
-    def __init__(self, action_factory_lookup=None):
-        TileManagerBase.__init__(self, action_factory_lookup)
+    def __init__(self, document, action_factory_lookup=None):
+        TileManagerBase.__init__(self, document, action_factory_lookup)
         self.center_base = None
         self.linked_bases = {}
 

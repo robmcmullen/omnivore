@@ -2,7 +2,7 @@ import sys
 
 import wx
 
-from sawx.preferences import SawxPreferences
+from sawx.preferences import SawxEditorPreferences
 from sawx.ui.fonts import str_to_font, default_font
 
 
@@ -19,9 +19,9 @@ byte2str = byte2hex
 word2str = word2hex
 int2str = int2hex
 
-class ByteEditorPreferences(SawxPreferences):
-    def __init__(self):
-        SawxPreferences.__init__(self)
+class ByteEditorPreferences(SawxEditorPreferences):
+    def set_defaults(self):
+        SawxEditorPreferences.set_defaults(self)
 
         # int_display_format = Enum(
         #     "Hexadecimal",
@@ -40,6 +40,7 @@ class ByteEditorPreferences(SawxPreferences):
         self.hex_grid_lower_case = True
         self.assembly_lower_case = False
         self.disassembly_column_widths = (0, 0, 0)
+        self.default_cpu = "6502"
         self.map_width_low = 1
         self.map_width_high = 256
         self.map_width = 40
