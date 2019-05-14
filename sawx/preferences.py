@@ -82,7 +82,15 @@ class SawxPreferences:
         return False
 
     def set_defaults(self):
-        pass
+        self._image_caches = {}
+
+    def calc_image_cache(self, cache_cls):
+        try:
+            c = self._image_caches[cache_cls]
+        except KeyError:
+            c = cache_cls(self)
+            self._image_caches[cache_cls] = c
+        return c
 
     def copy_from(self, other):
         for d in self.display_order:
@@ -129,6 +137,7 @@ class SawxApplicationPreferences(SawxPreferences):
     ]
 
     def set_defaults(self):
+        SawxPreferences.set_defaults(self)
         self.num_open_recent = 15
         self.confirm_before_close = True
 
@@ -137,15 +146,58 @@ class SawxEditorPreferences(SawxPreferences):
     display_order = [
         ("text_font", "wx.Font"),
         ("text_color", "wx.Colour"),
+        ("diff_text_color", "wx.Colour"),
+
         ("background_color", "wx.Colour"),
+        ("highlight_background_color", "wx.Colour"),
+        ("data_background_color", "wx.Colour"),
+        ("match_background_color", "wx.Colour"),
+        ("comment_background_color", "wx.Colour"),
+        ("error_background_color", "wx.Colour"),
         ("empty_background_color", "wx.Colour"),
+
+        ("unfocused_caret_color", "wx.Colour"),
+
+        ("header_font", "wx.Font"),
+        ("row_header_bg_color", "wx.Colour"),
+        ("row_label_border_width", "int"),
+        ("row_height_extra_padding", "int"),
+        ("col_header_bg_color", "wx.Colour"),
+        ("col_label_border_width", "int"),
+        ("cell_padding_width", "int"),
     ]
 
     def set_defaults(self):
+        SawxPreferences.set_defaults(self)
         self.text_font = fonts.str_to_font(fonts.default_font)
         self.background_color = wx.Colour(wx.WHITE)
         self.text_color = wx.Colour(wx.BLACK)
         self.empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
+        self.header_font = fonts.str_to_font(fonts.default_font + "bold")
+        self.row_header_bg_color = wx.Colour(224, 224, 224)
+        self.col_header_bg_color = wx.Colour(224, 224, 224)
+        self.col_label_border_width = 3
+        self.row_label_border_width = 3
+        self.row_height_extra_padding = -3
+        self.base_cell_width_in_chars = 2
+        self.cell_padding_width = 2
+
+        self.unfocused_caret_color = wx.Colour(128, 128, 128)
+        self.highlight_background_color = wx.Colour(100, 200, 230)
+        self.data_background_color = wx.Colour(224, 224, 224)
+        self.match_background_color = wx.Colour(255, 255, 180)
+        self.comment_background_color = wx.Colour(255, 180, 200)
+        self.error_background_color = wx.Colour(255, 128, 128)
+        self.diff_text_color = wx.Colour(255, 0, 0)
+
+        self.caret_pen = wx.Pen(self.unfocused_caret_color, 1, wx.SOLID)
+
+        self.selected_brush = wx.Brush(self.highlight_background_color, wx.SOLID)
+        self.normal_brush = wx.Brush(self.background_color, wx.SOLID)
+        self.data_brush = wx.Brush(self.data_background_color, wx.SOLID)
+        self.match_brush = wx.Brush(self.match_background_color, wx.SOLID)
+        self.comment_brush = wx.Brush(self.comment_background_color, wx.SOLID)
+        self.empty_brush = wx.Brush(self.empty_background_color, wx.SOLID)
 
     @property
     def text_font(self):
@@ -158,6 +210,14 @@ class SawxEditorPreferences(SawxPreferences):
         dc.SetFont(self._text_font)
         self.text_font_char_width = dc.GetCharWidth()
         self.text_font_char_height = dc.GetCharHeight()
+
+    def calc_cell_size_in_pixels(self, chars_per_cell):
+        width = self.cell_padding_width * 2 + self.text_font_char_width * chars_per_cell
+        height = self.row_height_extra_padding + self.text_font_char_height
+        return width, height
+
+    def calc_text_width(self, text):
+        return self.text_font_char_width * len(text)
 
 
 def find_application_preferences(prefs_module):

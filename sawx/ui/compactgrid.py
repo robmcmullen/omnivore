@@ -126,7 +126,7 @@ class DrawTextImageCache(object):
         self.prepare_dc_style(parent, dc, 0)
         dc.SetClippingRegion(rect)
         dc.DrawRectangle(rect)
-        rect.x += v.pixel_width_padding
+        rect.x += v.cell_padding_width
         caret_x = rect.x + (insertion_point_index * v.text_font_char_width)
         if before:
             dc.DrawText(before, rect.x, rect.y)
@@ -175,7 +175,7 @@ class HexByteImageCache(DrawTextImageCache):
             mdc = wx.MemoryDC()
             mdc.SelectObject(bmp)
             t = "%02x" % text
-            padding = parent.view_params.pixel_width_padding
+            padding = parent.view_params.cell_padding_width
             r = wx.Rect(padding, 0, rect.width - (padding * 2), rect.height)
             bg_rect = wx.Rect(0, 0, rect.width, rect.height)
             self.draw_text_to_dc(parent, mdc, bg_rect, r, t, style)
@@ -197,7 +197,7 @@ class TableViewParams(object):
         self.row_label_border_width = 3
         self.row_height_extra_padding = -3
         self.base_cell_width_in_chars = 2
-        self.pixel_width_padding = 2
+        self.cell_padding_width = 2
         self.background_color = wx.WHITE
         self.text_color = wx.BLACK
         self.row_header_bg_color = wx.Colour(224, 224, 224)
@@ -233,7 +233,7 @@ class TableViewParams(object):
         self.image_caches = {}
 
     def calc_cell_size_in_pixels(self, chars_per_cell):
-        width = self.pixel_width_padding * 2 + self.text_font_char_width * chars_per_cell
+        width = self.cell_padding_width * 2 + self.text_font_char_width * chars_per_cell
         height = self.row_height_extra_padding + self.text_font_char_height
         return width, height
 
