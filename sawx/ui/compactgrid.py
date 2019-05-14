@@ -1240,6 +1240,9 @@ class VirtualTable(HexTable):
     def calc_last_valid_index(self):
         raise NotImplementedError
 
+    def get_value_style(self, row, col):
+        raise NotImplementedError
+
 
 class AuxWindow(wx.ScrolledCanvas):
     def __init__(self, parent):

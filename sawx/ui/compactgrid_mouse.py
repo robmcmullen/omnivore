@@ -1243,6 +1243,7 @@ class MouseEventMixin:
         if c < 0 or flags.selecting_rows or not inside:
             c = 0
             selecting_rows = True
+            c_end_of_row = self.table.get_items_in_row(r)
         else:
             selecting_rows = False
         mouse_at = (r, c)
