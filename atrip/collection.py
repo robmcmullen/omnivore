@@ -70,8 +70,9 @@ class Collection:
         for item_data in item_data_list:
             log.info(f"container size: {len(item_data)}")
             container = guess_container(item_data)
+            container.pathname = self.pathname
             container.guess_media_type()
-            container.media.guess_filesystem()
+            container.guess_filesystem()
             self.containers.append(container)
             container.name = f"D{len(self.containers)}"
             log.info(f"container: {container}")

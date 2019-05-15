@@ -37,10 +37,11 @@ class Filesystem:
         self.boot = self.calc_boot_segment()
         self.vtoc = self.calc_vtoc_segment()
         self.directory = self.calc_directory_segment()
+        media.segments = list(self.filesystem_metadata_segments())
 
     #### initialization
 
-    def check_media(self):
+    def check_media(self, media):
         """Subclasses should override this method to verify the media type is
         supported by the filesystem.
 
@@ -100,7 +101,7 @@ class Filesystem:
 
     #### iterators
 
-    def iter_segments(self):
+    def filesystem_metadata_segments(self):
         if self.boot is not None:
             yield self.boot
         if self.vtoc is not None:
@@ -113,6 +114,15 @@ class Filesystem:
             if isinstance(segment, Dirent):
                 yield segment
             yield from segment.yield_for_segment(Dirent)
+
+
+class NoFilesystem(Filesystem):
+    ui_name = "No Filesystem"
+
+    def filesystem_metadata_segments(self):
+        media = self.media
+        segment = guess_file_type(media, media.container.basename, 0, len(media))
+        yield segment
 
 
 class Dirent(Segment):
@@ -448,4 +458,4 @@ def guess_filesystem(segment):
             log.info(f"found filesystem {f.ui_name}")
             return found
     log.info(f"No recognized filesystem.")
-    return None
+    return NoFilesystem(segment)

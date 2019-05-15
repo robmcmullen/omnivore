@@ -8,12 +8,55 @@ import numpy as np
 from . import errors
 from . import style_bits
 from .utils import to_numpy, to_numpy_list, uuid
+from .segment import Segment
 from . import media_type
 from . import filesystem
 from .compressor import guess_compressor
 
 import logging
 log = logging.getLogger(__name__)
+
+
+
+class ContainerHeader(Segment):
+    format = np.dtype([])
+    file_format = "No"
+
+    def __init__(self, container):
+        self.sector_size = 0
+        self.image_size = 0
+        Segment.__init__(self, container, 0, name=f"{self.file_format} Header", length=self.header_length)
+        self.decode()
+
+    @property
+    def header_length(self):
+        return self.format.itemsize
+
+    def decode(self):
+        size = self.header_length
+        header = self.container[0:size]
+        if len(header) == size:
+            self.decode_from_bytes(header)
+        else:
+            raise errors.InvalidHeader(f"incorrect header size {len(header)} for {self.container_format}; should be {size}")
+
+    def decode_from_bytes(self, raw):
+        """Parse raw bytes and populate object attributes
+        """
+        raise NotImplementedError(f"decode_from_bytes not implemented for {self.file_format}")
+
+    def encode_to_bytes(self, raw):
+        """Convert values stored in header object into raw bytes in the
+        container
+        """
+        raise NotImplementedError(f"encode_to_bytes not implemented for {self.file_format}")
+
+    def check_media(self, media):
+        if self.sector_size > 0 and self.sector_size != media.sector_size:
+            raise errors.InvalidHeader("ExpectedMismatch between sector sizes: header claims {self.sector_size}, expected {media.sector_size} for {media.ui_name}")
+        media_size = len(media) - self.header_length
+        if self.image_size > 0 and self.image_size != media_size:
+            raise errors.InvalidHeader("Invalid media size: header claims {self.image_size}, expected {media_size} for {media.ui_name}")
 
 
 class Container:
@@ -66,7 +109,7 @@ class Container:
     def init_empty(self):
         self.segments = []
         self.header = None
-        self.filesystem = None
+        self._filesystem = None
         self._media = None
         self.mime = "application/octet-stream"
         self.pathname = ""
@@ -129,11 +172,19 @@ class Container:
     @media.setter
     def media(self, value):
         self._media = value
+        self._filesystem = None
+
+    @property
+    def filesystem(self):
+        return self._filesystem
+
+    @filesystem.setter
+    def filesystem(self, value):
+        self._filesystem = value
         self.segments = []
-        if value.header:
-            self.header = value.header
+        if self.header:
             self.segments.append(self.header)
-        self.segments.append(value)
+        self.segments.append(self.media)
 
     @property
     def verbose_info(self):
@@ -212,8 +263,8 @@ class Container:
         self.media = media
 
     def guess_filesystem(self):
-        self.media.guess_filesystem()
-        self.filesystem = self.media.filesystem
+        fs = filesystem.guess_filesystem(self.media)
+        self.filesystem = fs
 
     #### serialization
 

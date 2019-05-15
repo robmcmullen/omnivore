@@ -3,12 +3,13 @@ import numpy as np
 from .. import errors
 from ..media_type import DiskImage
 from ..segment import Segment
+from ..container import ContainerHeader
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class AtrHeader(Segment):
+class AtrHeader(ContainerHeader):
     # ATR Format described in http://www.atarimax.com/jindroush.atari.org/afmtatr.html
     format = np.dtype([
         ('wMagic', '<u2'),
@@ -21,22 +22,17 @@ class AtrHeader(Segment):
         ])
     file_format = "ATR"
 
-    def __init__(self, container):
-        Segment.__init__(self, container, 0, name="ATR Header", length=16)
-        header = container[0:16]
-        if len(header) == 16:
-            values = header.view(dtype=self.format)[0]
-            if values[0] != 0x296:
-                raise errors.InvalidHeader("no ATR header magic value")
-            self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
-            self.sector_size = int(values[2])
-            self.crc = int(values[4])
-            self.unused = int(values[5])
-            self.flags = int(values[6])
-        else:
-            raise errors.InvalidHeader("incorrect AHC header size of %d" % len(bytes))
+    def decode_from_bytes(self, header):
+        values = header.view(dtype=self.format)[0]
+        if values[0] != 0x296:
+            raise errors.InvalidHeader("no ATR header magic value")
+        self.image_size = (int(values[3]) * 256 * 256 + int(values[1])) * 16
+        self.sector_size = int(values[2])
+        self.crc = int(values[4])
+        self.unused = int(values[5])
+        self.flags = int(values[6])
 
-    def encode(self, raw):
+    def encode_to_bytes(self, raw):
         values = raw.view(dtype=self.format)[0]
         values[0] = 0x296
         paragraphs = self.image_size // 16
@@ -47,14 +43,6 @@ class AtrHeader(Segment):
         values[4] = self.crc
         values[5] = self.unused
         values[6] = self.flags
-        return raw
-
-    def check_media(self, media):
-        if self.sector_size != media.sector_size:
-            raise errors.InvalidHeader("ExpectedMismatch between sector sizes: header claims {self.sector_size}, expected {media.sector_size} for {media.ui_name}")
-        media_size = len(media) - 16
-        if self.image_size != media_size:
-            raise errors.InvalidHeader("Invalid media size: header claims {self.image_size}, expected {media_size} for {media.ui_name}")
 
 
 class AtariSingleDensity(DiskImage):
@@ -62,9 +50,9 @@ class AtariSingleDensity(DiskImage):
     sector_size = 128
     expected_size = 92160
 
-    def check_header(self):
-        if self.header.sector_size != self.sector_size:
-            raise errors.InvalidMediaSize(f"Sector size {self.header.sector_size} invalid for {self.ui_name}")
+    def check_header(self, header):
+        if header.sector_size != self.sector_size:
+            raise errors.InvalidMediaSize(f"Sector size {header.sector_size} invalid for {self.ui_name}")
 
     def calc_header(self, container):
         header_data = container[0:16]
@@ -88,7 +76,7 @@ class AtariSingleDensityShortImage(AtariSingleDensity):
 
     def check_magic(self):
         # Must have an ATR header for this to be a disk image
-        if self.header is None:
+        if self.container.header is None:
             raise errors.InvalidHeader("Must have an ATR header for a non-standard image size")
         flag = self[0:2].view(dtype='<u2')
         if flag == 0xffff:

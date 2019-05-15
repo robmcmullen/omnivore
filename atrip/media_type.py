@@ -25,31 +25,29 @@ class Media(Segment):
     from the container into segments to represent each logical section in the
     filesystem (i.e. boot sectors, VTOC, directory structure, files, etc.)
     """
-    ui_name = "Non-standard media"
+    ui_name = "Unknown media"
     can_resize_default = False
 
     extra_serializable_attributes = []
 
     def __init__(self, container):
-        self.filesystem = None
-        self.header = self.calc_header(container)
-        self.header_length = len(self.header) if self.header else 0
-        size = len(container) - self.header_length
-        Segment.__init__(self, container, self.header_length, name=self.ui_name, length=size)
-        if self.header is not None:
-            self.check_header()
+        container.header = self.calc_header(container)
+        size = len(container) - container.header_length
+        Segment.__init__(self, container, container.header_length, name=self.ui_name, length=size)
+        if container.header is not None:
+            self.check_header(container.header)
         self.check_media_size()
         self.check_magic()
 
     def __str__(self):
-        desc = f"{self.ui_name}"
-        if len(self.segments) == 1:
-            desc += " " + str(self.segments[0])
-        else:
-            desc += f", size={len(self)}"
+        desc = f"{self.ui_name}, size={len(self)}"
         if self.filesystem is not None:
             desc += f", filesystem={self.filesystem.ui_name}"
         return desc
+
+    @property
+    def filesystem(self):
+        return self.container.filesystem
 
     #### initialization
 
@@ -65,7 +63,7 @@ class Media(Segment):
         """
         pass
 
-    def check_header(self):
+    def check_header(self, header):
         """Subclasses should override this method to verify that header data is
         consistent with the media segment.
 
@@ -93,15 +91,6 @@ class Media(Segment):
         incompatible with this media type.
         """
         pass
-
-    def guess_filesystem(self):
-        fs = filesystem.guess_filesystem(self)
-        if fs:
-            self.filesystem = fs
-            self.segments = list(fs.iter_segments())
-        else:
-            log.info("Checking for file without filesystem")
-            self.segments = [guess_file_type(self, self.container.name, 0, len(self))]
 
 
 class DiskImage(Media):
