@@ -10,6 +10,7 @@ jsonpickle = pytest.importorskip("jsonpickle")
 import numpy as np
 
 from atrip import Container, Segment
+from atrip.container import guess_container, load
 
 
 class TestJsonPickle:
@@ -73,10 +74,42 @@ class TestJsonPickle:
 
         assert np.array_equal(s.container_offset, s2.container_offset)
 
+    def test_file(self):
+        filename = "dos_sd_test1.atr"
+        pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
+        container = load(pathname)
+        j = jsonpickle.dumps(container)
+        print(j)
+        
+        c = jsonpickle.loads(j)
+        j2 = jsonpickle.dumps(c)
+        print(j2)
+
+        assert j == j2
+        print(c.segments)
+
+    def test_file_with_filesytem(self):
+        filename = "dos_sd_test1.atr"
+        pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
+        container = load(pathname)
+        container.guess_media_type()
+        container.guess_filesystem()
+        j = jsonpickle.dumps(container)
+        print(j)
+        
+        c = jsonpickle.loads(j)
+        j2 = jsonpickle.dumps(c)
+        print(j2)
+
+        assert j == j2
+        print(c.segments)
+
 if __name__ == "__main__":
     t = TestJsonPickle()
     t.setup()
     # t.test_simple_container()
     # t.test_simple_segment()
     # t.test_ordered_segment()
-    t.test_sparse_segment()
+    # t.test_sparse_segment()
+    # t.test_file()
+    t.test_file_with_filesytem()

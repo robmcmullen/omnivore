@@ -83,8 +83,6 @@ class Container:
     """
     ui_name = "Raw Data"
 
-    simple_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'decompression_order', 'default_disasm_type']
-
     def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=0):
 
         self.init_empty()
@@ -276,8 +274,13 @@ class Container:
         """
         state = dict()
         state['__size__'] = len(self)
-        for key in self.simple_serializable_attributes:
-            state[key] = getattr(self, key)
+        state['origin'] = int(self.origin)
+        state['name'] = self.name
+        state['verbose_name'] = self.verbose_name
+        state['uuid'] = self.uuid
+        state['error'] = self.error
+        state['decompression_order'] = self.decompression_order
+        state['default_disasm_type'] = int(self.default_disasm_type)
         state['memory_map'] = sorted([list(i) for i in self.memory_map.items()])
 
         # json serialization doesn't allow int keys, so convert to list of
@@ -305,10 +308,13 @@ class Container:
         self._data = raw
         self.style = None
         self.disasm_type = None
-        for key in self.simple_serializable_attributes:
-            if key in state:
-                setattr(self, key, state.pop(key))
-
+        self.origin = state.pop('origin', 0)
+        self.name = state.pop('name', "")
+        self.verbose_name = state.pop('verbose_name', "")
+        self.uuid = state.pop('uuid', utils.uuid())
+        self.error = state.pop('error', "")
+        self.decompression_order = state.pop('decompression_order', [])
+        self.default_disasm_type = state.pop('default_disasm_type')
         self.memory_map = dict(state.pop('memory_map', []))
         self.restore_comments(state.pop('comments', []))
         utils.restore_values(self._disasm_type, state.pop('disasm_type', []))
@@ -398,7 +404,7 @@ class Container:
             del self.comments[indexes[subset_index]]
 
     def get_sorted_comments(self):
-        return sorted([[k, v] for k, v in self.comments.items()])
+        return sorted([[int(k), str(v)] for k, v in self.comments.items()])
 
     def restore_comments(self, comments_list):
         self.comments = {}
