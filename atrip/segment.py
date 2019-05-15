@@ -134,9 +134,9 @@ class Segment:
 
     #### iterator utilities
 
-    def yield_for_segment(self, segment_type):
+    def yield_for_segment(self, segment_type=None):
         for segment in self.segments:
-            if isinstance(segment, segment_type):
+            if segment_type is None or isinstance(segment, segment_type):
                 yield segment
             segment.yield_for_segment(segment_type)
 

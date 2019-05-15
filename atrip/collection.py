@@ -98,6 +98,12 @@ class Collection:
 
     #### iterators
 
+    def iter_segments(self):
+        for container in self.containers:
+            for segment in container.media.segments:
+                yield segment
+                yield from segment.yield_for_segment()
+
     def iter_dirents(self):
         for container in self.containers:
             for segment in container.media.segments:
