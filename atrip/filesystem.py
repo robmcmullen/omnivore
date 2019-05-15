@@ -22,8 +22,10 @@ except NameError:
 class Filesystem:
     """Base class for a "filesystem", which takes a source segment and
     subdivides it into a set of segments where each represents a file. Some
-    auxiliary segments include a `VTOC` and a list of 'dirent's that point to
+    auxiliary segments include a `VTOC` and a list of `Dirent`s that point to
     files.
+
+    It is used to fill a `Media` instance with segments.
     """
     ui_name = "Filesystem"
 

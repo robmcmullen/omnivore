@@ -98,14 +98,6 @@ class Collection:
 
     #### iterators
 
-    def iter_segments(self):
-        if self.boot is not None:
-            yield self.boot
-        if self.vtoc is not None:
-            yield self.vtoc
-        if self.directory is not None:
-            yield self.directory
-
     def iter_dirents(self):
         for container in self.containers:
             for segment in container.media.segments:

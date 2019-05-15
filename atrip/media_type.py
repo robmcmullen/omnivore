@@ -16,10 +16,14 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class MediaType(Segment):
+class Media(Segment):
     """Base class for what is typically the root segment in a Container,
     describing the type of media the data represents: floppy disk image,
     cassette image, cartridge, etc.
+
+    Media can contain a filesystem, which is used to further subdivide the data
+    from the container into segments to represent each logical section in the
+    filesystem (i.e. boot sectors, VTOC, directory structure, files, etc.)
     """
     ui_name = "Non-standard media"
     can_resize_default = False
@@ -100,7 +104,7 @@ class MediaType(Segment):
             self.segments = [guess_file_type(self, self.container.name, 0, len(self))]
 
 
-class DiskImage(MediaType):
+class DiskImage(Media):
     ui_name = "Disk Image"
     sector_size = 128
     expected_size = 0
@@ -108,7 +112,7 @@ class DiskImage(MediaType):
 
     def __init__(self, container):
         self.init_media_params()
-        MediaType.__init__(self, container)
+        Media.__init__(self, container)
 
     def init_media_params(self):
         self.num_sectors = 0
@@ -189,7 +193,7 @@ class DiskImage(MediaType):
             i += 1
 
 
-class CartImage(MediaType):
+class CartImage(Media):
     ui_name = "Cart Image"
     expected_size = 0
 
@@ -217,7 +221,7 @@ def _find_media_types():
         mod = entry_point.load()
         log.debug(f"find_media_type: Found module {entry_point.name}={mod.__name__}")
         for name, obj in inspect.getmembers(mod):
-            if inspect.isclass(obj) and MediaType in obj.__mro__[1:] and obj not in ignore_base_class_media_types:
+            if inspect.isclass(obj) and Media in obj.__mro__[1:] and obj not in ignore_base_class_media_types:
                 log.debug(f"find_media_types:   found media_type class {name}")
                 media_types.append(obj)
     return media_types
@@ -244,4 +248,4 @@ def guess_media_type(container):
             log.info(f"found media_type {m.ui_name}")
             return found
     log.info(f"No recognized media type.")
-    return MediaType(container)
+    return Media(container)
