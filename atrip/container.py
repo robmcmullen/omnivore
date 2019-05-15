@@ -41,40 +41,46 @@ class Container:
     ui_name = "Raw Data"
     can_resize_default = False
 
-    base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
-    extra_serializable_attributes = []
+    simple_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'decompression_order', 'default_disasm_type']
 
     def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=0):
 
-        self.segments = []
-        self.header = None
-        self.filesystem = None
-        self._media = None
-        self.mime = "application/octet-stream"
-
-        self._data = None
-        self._style = None
-        self._disasm_type = None
+        self.init_empty()
         self.data = data
         self.style = style
         self.disasm_type = disasm_type
         self.default_disasm_type = default_disasm_type
         self.decompression_order = decompression_order
 
-        self.pathname = ""
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
         self.error = error
         self.name = name
         self.verbose_name = verbose_name
-        self.uuid = uuid()
-        if memory_map is None:
-            memory_map = {}
-        self.memory_map = memory_map
-        self.comments = dict()
+        if memory_map is not None:
+            self.memory_map = memory_map
 
         # Some segments may be resized to contain additional segments not
         # present when the segment was created.
         self.can_resize = self.__class__.can_resize_default
+
+    def init_empty(self):
+        self.segments = []
+        self.header = None
+        self.filesystem = None
+        self._media = None
+        self.mime = "application/octet-stream"
+        self.pathname = ""
+        self.origin = 0
+        self.error = ""
+        self.name = ""
+        self.verbose_name = ""
+        self.memory_map = {}
+        self.comments = {}
+        self.uuid = uuid()
+
+        self._data = None
+        self._style = None
+        self._disasm_type = None
 
     #### properties
 
@@ -223,25 +229,16 @@ class Container:
         json.
         """
         state = dict()
-        for key in self.base_serializable_attributes:
+        state['__size__'] = len(self)
+        for key in self.simple_serializable_attributes:
             state[key] = getattr(self, key)
-        for key in self.extra_serializable_attributes:
-            state[key] = getattr(self, key)
-        r = self.rawdata
         state['memory_map'] = sorted([list(i) for i in self.memory_map.items()])
-        state['data ranges'] = [list(a) for a in self.get_style_ranges(data=True)]
-        for i in range(1, style_bits.user_bit_mask):
-            r = [list(a) for a in self.get_style_ranges(user=i)]
-            if r:
-                slot = "user style %d" % i
-                state[slot] = r
 
         # json serialization doesn't allow int keys, so convert to list of
         # pairs
         state['comments'] = self.get_sorted_comments()
 
         state['disasm_type'] = self.calc_disasm_ranges()
-        state['default_disasm_type'] = self.default_disasm_type
         return state
 
     def __setstate__(self, state):
@@ -252,31 +249,60 @@ class Container:
         json. Once a version gets out in the wild and additional attributes are
         added to a segment, a default value should be applied here.
         """
+        self.init_empty()
+        size = state.pop('__size__')
+        raw = np.zeros(size, dtype=np.uint8)
+        self._data = raw
+        self.style = None
+        self.disasm_type = None
+        for key in self.simple_serializable_attributes:
+            if key in state:
+                setattr(self, key, state.pop(key))
+
         self.memory_map = dict(state.pop('memory_map', []))
-        self.uuid = state.pop('uuid', uuid())
-        self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
-        self.restore_comments(state.pop('comments', {}))
-        if 'data ranges' in e:
-            self.set_style_ranges(e['data ranges'], user=data_style)
-        if 'display list ranges' in e:
+        self.restore_comments(state.pop('comments', []))
+        self.restore_disasm_ranges(state.pop('disasm_type', []))
+        self.restore_backward_compatible_state(state)
+        self.restore_missing_state()
+        self.__dict__.update(state)
+        self.restore_renamed_attributes()
+
+    def restore_backward_compatible_state(self, state):
+        # convert old atrcopy stuff
+        if 'data ranges' in state:
+            self.set_style_ranges(state['data ranges'], user=data_style)
+        if 'display list ranges' in state:
             # DEPRECATED, but supported on read. Converts display list to
             # disassembly type 0 for user index 1
-            self.set_style_ranges(e['display list ranges'], data=True, user=1)
-        if 'user ranges 1' in e:
+            self.set_style_ranges(state['display list ranges'], data=True, user=1)
+        if 'user ranges 1' in state:
             # DEPRECATED, but supported on read. Converts user extra data 0
             # (antic dl), 1 (jumpman level), and 2 (jumpman harvest) to user
             # styles 2, 3, and 4. Data is now user style 1.
-            for r, val in e['user ranges 1']:
+            for r, val in state['user ranges 1']:
                 self.set_style_ranges([r], user=val + 2)
         for i in range(1, style_bits.user_bit_mask):
             slot = "user style %d" % i
-            if slot in e:
-                self.set_style_ranges(e[slot], user=i)
-        self.restore_disasm_ranges(state.pop('disasm_type', {}))
-        self.default_disasm_type = state.pop('default_disasm_type', 0)
-        self.restore_missing_serializable_defaults()
-        self.__dict__.update(state)
-        self.restore_renamed_serializable_attributes()
+            if slot in state:
+                self.set_style_ranges(state[slot], user=i)
+
+    def restore_missing_state(self):
+        """Hook for the future when extra serializable attributes are added to
+        subclasses so new versions of the code can restore old saved files by
+        providing defaults to any missing attributes.
+        """
+        pass
+
+    def restore_renamed_attributes(self):
+        """Hook for the future if attributes have been renamed. The old
+        attribute names will have been restored in the __dict__.update in
+        __setstate__, so this routine should move attribute values to their new
+        names.
+        """
+        if hasattr(self, 'start_addr'):
+            self.origin = self.start_addr
+            log.debug(f"moving start_addr to origin: {self.start_addr}")
+            delattr(self, 'start_addr')
 
     #### style
 
@@ -304,10 +330,10 @@ class Container:
         ranges = []
         for end in changes:
             end = end + 1
-            ranges.append((d[index], index, end))
+            ranges.append([int(d[index]), int(index), int(end)])
             index = end
         if index < len(self):
-            ranges.append((d[index], index, len(self)))
+            ranges.append([int(d[index]), int(index), len(self)])
         return ranges
 
     def restore_disasm_ranges(self, ranges):
@@ -332,6 +358,7 @@ class Container:
         return sorted([[k, v] for k, v in self.comments.items()])
 
     def restore_comments(self, comments_list):
+        self.comments = {}
         bits = style_bits.get_style_bits(comment=True)
         style = self.style
         for k, v in comments_list:

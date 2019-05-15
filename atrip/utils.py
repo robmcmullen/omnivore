@@ -16,13 +16,9 @@ except NameError:
 def uuid():
     u = stdlib_uuid.uuid4()
 
-    # Force it to use unicode(py2) or str(py3) so it isn't serialized as
-    # future.types.newstr.newstr on py2
-    try:
-        u = unicode(u)
-    except:
-        u = str(u)
-    return u
+    # Force it into a str type so it isn't serialized as something weird
+    # through jsonpickle
+    return str(u)
 
 
 def to_numpy(value):

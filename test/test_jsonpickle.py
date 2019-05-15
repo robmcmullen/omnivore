@@ -9,43 +9,32 @@ jsonpickle = pytest.importorskip("jsonpickle")
 
 import numpy as np
 
-from atrip import DefaultSegment, SegmentData
+from atrip import Container, Segment
 
 
 class TestJsonPickle:
     def setup(self):
-        data = np.arange(2048, dtype=np.uint8)
-        self.segment = DefaultSegment(SegmentData(data))
+        data = np.arange(4096, dtype=np.uint8)
+        data[1::2] = np.repeat(np.arange(16, dtype=np.uint8), 128)
+        data[::100] = 0x7f
+        self.container = Container(data)
+        self.container.disasm_type[100:200] = 10
+        self.container.disasm_type[200:300] = 30
+        self.container.disasm_type[1200:3000] = 10
+        self.segment = Segment(self.container)
+        index_by_100 = np.arange(40, dtype=np.int32) * 100
+        self.seg100 = Segment(self.segment, index_by_100)
+        self.seg1000 = Segment(self.seg100, [0,10,20,30])
 
     def test_simple(self):
-        print(self.segment.byte_bounds_offset(), len(self.segment))
-        r2 = self.segment.rawdata[100:400]
-        s2 = DefaultSegment(r2)
-        print(s2.byte_bounds_offset(), len(s2), s2.__getstate__())
-        r3 = s2.rawdata[100:200]
-        s3 = DefaultSegment(r3)
-        print(s3.byte_bounds_offset(), len(s3), s3.__getstate__())
-        order = list(reversed(list(range(700, 800))))
-        r4 = self.segment.rawdata.get_indexed(order)
-        s4 = DefaultSegment(r4)
-        print(s4.byte_bounds_offset(), len(s4), s4.__getstate__())
-        
-        slist = [s2, s3, s4]
-        for s in slist:
-            print(s)
-        j = jsonpickle.dumps(slist)
+        j = jsonpickle.dumps(self.container)
         print(j)
         
-        slist2 = jsonpickle.loads(j)
-        print(slist2)
-        for s in slist2:
-            s.reconstruct_raw(self.segment.rawdata)
-            print(s)
-        
-        for orig, rebuilt in zip(slist, slist2):
-            print("orig", orig.data[:])
-            print("rebuilt", rebuilt.data[:])
-            assert np.array_equal(orig[:], rebuilt[:])
+        c = jsonpickle.loads(j)
+        j2 = jsonpickle.dumps(c)
+        print(j2)
+
+        assert j == j2
 
 if __name__ == "__main__":
     t = TestJsonPickle()
