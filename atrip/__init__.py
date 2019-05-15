@@ -17,6 +17,7 @@ from . import errors
 from .container import Container, guess_container
 from .collection import Collection
 from .segment import Segment
+from . import style_bits
 # from .ataridos import AtrHeader, AtariDosDiskImage, BootDiskImage, AtariDosFile, XexContainerSegment, get_xex, add_atr_header
 # from .dos33 import Dos33DiskImage
 # from .segments import SegmentData, SegmentSaver, DefaultSegment, EmptySegment, ObjSegment, RawSectorsSegment, SegmentedFileSegment, interleave_segments, SegmentList
