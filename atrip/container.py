@@ -7,7 +7,7 @@ import numpy as np
 
 from . import errors
 from . import style_bits
-from .utils import to_numpy, to_numpy_list, uuid
+from . import utils
 from .segment import Segment
 from . import media_type
 from . import filesystem
@@ -82,7 +82,6 @@ class Container:
     before being `gzip`ped.
     """
     ui_name = "Raw Data"
-    can_resize_default = False
 
     simple_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'decompression_order', 'default_disasm_type']
 
@@ -102,10 +101,6 @@ class Container:
         if memory_map is not None:
             self.memory_map = memory_map
 
-        # Some segments may be resized to contain additional segments not
-        # present when the segment was created.
-        self.can_resize = self.__class__.can_resize_default
-
     def init_empty(self):
         self.segments = []
         self.header = None
@@ -119,7 +114,7 @@ class Container:
         self.verbose_name = ""
         self.memory_map = {}
         self.comments = {}
-        self.uuid = uuid()
+        self.uuid = utils.uuid()
 
         self._data = None
         self._style = None
@@ -135,7 +130,7 @@ class Container:
     def data(self, unpacked):
         if self._data is not None:
             raise errors.ReadOnlyContainer("container already populated with data")
-        self._data = to_numpy(unpacked)
+        self._data = utils.to_numpy(unpacked)
 
     @property
     def style(self):
@@ -145,7 +140,7 @@ class Container:
     def style(self, value):
         if value is None:
             value = np.zeros(len(self._data), dtype=np.uint8)
-        self._style = to_numpy(value)
+        self._style = utils.to_numpy(value)
 
     @property
     def disasm_type(self):
@@ -155,7 +150,7 @@ class Container:
     def disasm_type(self, value):
         if value is None:
             value = np.zeros(len(self._data), dtype=np.uint8)
-        self._disasm_type = to_numpy(value)
+        self._disasm_type = utils.to_numpy(value)
 
     @property
     def sha1(self):
@@ -289,7 +284,11 @@ class Container:
         # pairs
         state['comments'] = self.get_sorted_comments()
 
-        state['disasm_type'] = self.calc_disasm_ranges()
+        state['disasm_type'] = utils.collapse_values(self._disasm_type)
+
+        state['header'] = self.header
+        # state['filesystem'] = self.filesystem
+        # state['media'] = self.media
         return state
 
     def __setstate__(self, state):
@@ -312,11 +311,24 @@ class Container:
 
         self.memory_map = dict(state.pop('memory_map', []))
         self.restore_comments(state.pop('comments', []))
-        self.restore_disasm_ranges(state.pop('disasm_type', []))
+        utils.restore_values(self._disasm_type, state.pop('disasm_type', []))
+
+        self.header = state.pop('header')
+        if self.header is not None:
+            self.header.container = self
+        self.restore_media(state)
+        self.restore_filesystem(state)
+
         self.restore_backward_compatible_state(state)
         self.restore_missing_state()
         self.__dict__.update(state)
         self.restore_renamed_attributes()
+
+    def restore_media(self, state):
+        pass
+
+    def restore_filesystem(self, state):
+        pass
 
     def restore_backward_compatible_state(self, state):
         # convert old atrcopy stuff
@@ -370,27 +382,7 @@ class Container:
         """
         bits = style_bits.get_style_bits(**kwargs)
         matches = (self.style & bits) == bits
-        return self.bool_to_ranges(matches)
-
-    #### disassembly type
-
-    def calc_disasm_ranges(self):
-        d = self._disasm_type
-        changes = np.where(np.diff(d) > 0)[0]
-        index = 0
-        ranges = []
-        for end in changes:
-            end = end + 1
-            ranges.append([int(d[index]), int(index), int(end)])
-            index = end
-        if index < len(self):
-            ranges.append([int(d[index]), int(index), len(self)])
-        return ranges
-
-    def restore_disasm_ranges(self, ranges):
-        d = self._disasm_type
-        for value, start, end in ranges:
-            d[start:end] = value
+        return utils.bool_to_ranges(matches)
 
 
     #### comments
@@ -436,7 +428,7 @@ class Container:
 
 
 def guess_container(raw_data):
-    data = to_numpy(raw_data)
+    data = utils.to_numpy(raw_data)
     compressors = []
     while True:  # loop until reach an uncompressed state
         c = guess_compressor(data)

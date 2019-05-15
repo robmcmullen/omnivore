@@ -26,7 +26,6 @@ class Media(Segment):
     filesystem (i.e. boot sectors, VTOC, directory structure, files, etc.)
     """
     ui_name = "Unknown media"
-    can_resize_default = False
 
     extra_serializable_attributes = []
 

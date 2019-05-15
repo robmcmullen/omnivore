@@ -49,14 +49,3 @@ def get_style_mask(**kwargs):
     else:
         bits &= (0xff ^ user_bit_mask)
     return 0xff ^ bits
-
-
-def bool_to_ranges(matches):
-    w = np.where(matches == True)[0]
-    # split into groups with consecutive numbers
-    groups = np.split(w, np.where(np.diff(w) != 1)[0] + 1)
-    ranges = []
-    for group in groups:
-        if np.alen(group) > 0:
-            ranges.append((int(group[0]), int(group[-1]) + 1))
-    return ranges

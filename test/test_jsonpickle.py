@@ -21,12 +21,8 @@ class TestJsonPickle:
         self.container.disasm_type[100:200] = 10
         self.container.disasm_type[200:300] = 30
         self.container.disasm_type[1200:3000] = 10
-        self.segment = Segment(self.container)
-        index_by_100 = np.arange(40, dtype=np.int32) * 100
-        self.seg100 = Segment(self.segment, index_by_100)
-        self.seg1000 = Segment(self.seg100, [0,10,20,30])
 
-    def test_simple(self):
+    def test_simple_container(self):
         j = jsonpickle.dumps(self.container)
         print(j)
         
@@ -36,7 +32,35 @@ class TestJsonPickle:
 
         assert j == j2
 
+    def test_simple_segment(self):
+        s = Segment(self.container)
+        j = jsonpickle.dumps(s)
+        print(j)
+        
+        c = jsonpickle.loads(j)
+        j2 = jsonpickle.dumps(c)
+        print(j2)
+
+        assert j == j2
+
+    def test_ordered_segment(self):
+        order = np.arange(200, 500, dtype=np.uint32)
+        order[100:200] = np.arange(0, 100, dtype=np.uint32)
+        s = Segment(self.container, order)
+        j = jsonpickle.dumps(s)
+        print(j)
+        
+        c = jsonpickle.loads(j)
+        j2 = jsonpickle.dumps(c)
+        print(j2)
+
+        assert j == j2
+
+        assert np.array_equal(s.container_offset, c.container_offset)
+
 if __name__ == "__main__":
     t = TestJsonPickle()
     t.setup()
-    t.test_simple()
+    # t.test_simple_container()
+    # t.test_simple_segment()
+    t.test_ordered_segment()

@@ -18,7 +18,6 @@ class FileType(Segment):
     """Base class for a file contained in a filesystem.
     """
     ui_name = "Unknown file type"
-    can_resize_default = False
 
     extra_serializable_attributes = []
 

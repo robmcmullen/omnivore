@@ -4,7 +4,7 @@ import io
 import numpy as np
 
 from . import errors
-from .utils import to_numpy, to_numpy_list, uuid
+from . import utils
 from . import style_bits
 from functools import reduce
 
@@ -49,13 +49,11 @@ class ArrayWrapper:
 
 
 class Segment:
-    can_resize_default = False
-
-    base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid', 'can_resize']
+    base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid']
     extra_serializable_attributes = []
 
     def __init__(self, container_or_segment, offset_or_offset_list=None, origin=0, name="All", error=None, verbose_name=None, length=None):
-
+        self.init_empty()
         # the container may be specified as the actual container or a segment
         # of the container. If a segment is specified, the offset list is
         # calculated relative to the segment to get the real offset into the
@@ -69,20 +67,23 @@ class Segment:
 
         self.container = container_or_segment
         self.container_offset = self.enforce_offset_bounds(offset_list)
-        self._reverse_offset = None
 
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
         self.error = error
         self.name = name
         self.verbose_name = verbose_name
-        self.uuid = uuid()
-
-        # Some segments may be resized to contain additional segments not
-        # present when the segment was created.
-        self.can_resize = self.__class__.can_resize_default
 
         # Child segments
         self.segments = self.calc_segments()
+
+    def init_empty(self):
+        self.origin = 0
+        self.error = ""
+        self.name = ""
+        self.verbose_name = ""
+        self.uuid = utils.uuid()
+        self._reverse_offset = None
+        self.segments = []
 
     #### properties
 
@@ -148,7 +149,7 @@ class Segment:
         try:
             start_offset = int(offset_or_offset_list)
         except TypeError:
-            offset_list = to_numpy_list(offset_or_offset_list)
+            offset_list = utils.to_numpy_list(offset_or_offset_list)
         else:
             if length is None:
                 length = len(container_or_segment)
@@ -195,12 +196,12 @@ class Segment:
         json.
         """
         state = dict()
+        state['__size__'] = len(self)
         for key in self.base_serializable_attributes:
             state[key] = getattr(self, key)
         for key in self.extra_serializable_attributes:
             state[key] = getattr(self, key)
-        r = self.rawdata
-        state['container_offset'] = self.calc_serialized_container_offset()
+        state['container_offset'] = utils.collapse_to_ranges(self.container_offset)
         return state
 
     def __setstate__(self, state):
@@ -211,9 +212,23 @@ class Segment:
         json. Once a version gets out in the wild and additional attributes are
         added to a segment, a default value should be applied here.
         """
-        self.memory_map = dict(state.pop('memory_map', []))
-        self.uuid = state.pop('uuid', uuid())
-        self.can_resize = state.pop('can_resize', self.__class__.can_resize_default)
+        self.init_empty()
+        size = state.pop('__size__')
+        raw = np.arange(size, dtype=np.uint32)
+        self.container_offset = raw
+        utils.restore_from_ranges(self.container_offset, state.pop('container_offset', []))
+
+        # Can't restore here because it would result in many unrelated copies
+        # of the container object. After all the segments are loaded, will have
+        # to loop through and set container attributes for each one.
+        self.container = None
+
+        for key in self.base_serializable_attributes:
+            if key in state:
+                setattr(self, key, state.pop(key))
+        for key in self.extra_serializable_attributes:
+            if key in state:
+                setattr(self, key, state.pop(key))
         self.restore_missing_serializable_defaults()
         self.__dict__.update(state)
         self.restore_renamed_serializable_attributes()
