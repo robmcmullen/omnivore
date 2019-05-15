@@ -750,6 +750,7 @@ def gen_pyx(filename, parsers, stringifiers):
     parser_lookup = {}
     for p in parsers + custom_parsers:
         parser_lookup[disassembler_type[p.cpu_name]] = p.cpu_description
+    parser_name_map = {v: k for k, v in parser_lookup.items()}
 
     # get list of CPUs out of entire list of parsers. CPU parsers are assumed
     # to be any parser that has a NOP instruction
@@ -765,6 +766,8 @@ cimport numpy as np
 from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
 
 parser_lookup = {repr(parser_lookup)}
+
+parser_name_map = {repr(parser_name_map)}
 
 valid_cpus = {repr(valid_cpus)}
 
