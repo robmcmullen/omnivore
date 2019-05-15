@@ -98,22 +98,39 @@ def restore_values(dest, ranges):
         dest[start:end] = value
 
 
-def collapse_to_ranges(src): 
+def collapse_to_ranges(src, compact=False):
     """Given a list of integers, return a list of lists that represent groups
     of monotonically increasing integers.
 
-    For example, the list [0, 1, 2, 3, 4, 5, 10, 11, 99, 500, 501, 502]
+    For example, the list [0, 1, 2, 3, 4, 5, 7, 10, 11, 99, 500, 501, 502, 892]
     would return:
 
     [
         [0, 6],
+        [7, 8],
         [10, 12],
         [99, 100],
         [500, 503],
+        [892, 893],
     ]
 
     Note that ranges are returned in python slice notation; that is, the 2nd
     entry is one beyond the end value.
+
+    if compact is True, one element ranges are stored as a single integer, so
+    the above example would instead produce:
+
+    [
+        [0, 6],
+        7,
+        [10, 12],
+        99,
+        [500, 503],
+        892,
+    ]
+
+    potentially saving space if there are a large number of entries with no
+    neighbors.
     """
     groups = np.split(src, np.where(np.diff(src) != 1)[0] + 1)
     ranges = []
@@ -121,13 +138,23 @@ def collapse_to_ranges(src):
         if np.alen(group) > 0:
             start = int(group[0])
             end = int(group[-1]) + 1
-            ranges.append([start, end])
+            if compact and end == start + 1:
+                ranges.append(start)
+            else:
+                ranges.append([start, end])
     return ranges
 
 
 def restore_from_ranges(dest, ranges):
     index = 0
-    for start, end in ranges:
-        count = end - start
-        dest[index:index + count] = np.arange(start, end, dtype=np.uint32)
+    for item in ranges:
+        try:
+            single = int(item)
+        except TypeError:
+            start, end = item
+            count = end - start
+            dest[index:index + count] = np.arange(start, end, dtype=np.uint32)
+        else:
+            count = 1
+            dest[index:index + count] = single
         index += count

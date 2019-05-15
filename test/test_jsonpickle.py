@@ -58,9 +58,25 @@ class TestJsonPickle:
 
         assert np.array_equal(s.container_offset, c.container_offset)
 
+    def test_sparse_segment(self):
+        offsets = np.arange(40, dtype=np.int32) * 100
+        offsets[10:20] = np.arange(70, 80, dtype=np.uint32)
+        s = Segment(self.container, offsets)
+        j = jsonpickle.dumps(s)
+        print(j)
+        
+        s2 = jsonpickle.loads(j)
+        j2 = jsonpickle.dumps(s2)
+        print(j2)
+
+        assert j == j2
+
+        assert np.array_equal(s.container_offset, s2.container_offset)
+
 if __name__ == "__main__":
     t = TestJsonPickle()
     t.setup()
     # t.test_simple_container()
     # t.test_simple_segment()
-    t.test_ordered_segment()
+    # t.test_ordered_segment()
+    t.test_sparse_segment()

@@ -22,3 +22,27 @@ class TestTextToInt:
         ])
     def test_text_to_int(self, text, expected, default_base):
         assert expected == utils.text_to_int(text, default_base)
+
+class TestRanges:
+    def setup(self):
+        pass
+
+    def test_normal(self):
+        values = [0, 1, 2, 3, 4, 5, 7, 10, 11, 99, 500, 501, 502, 892]
+        ranges = utils.collapse_to_ranges(values)
+        print(ranges)
+        assert ranges == [[0, 6], [7, 8], [10, 12], [99, 100], [500, 503], [892, 893]]
+
+
+    def test_compact(self):
+        values = [0, 1, 2, 3, 4, 5, 7, 10, 11, 99, 500, 501, 502, 892]
+        ranges = utils.collapse_to_ranges(values, True)
+        print(ranges)
+        assert ranges == [[0, 6], 7, [10, 12], 99, [500, 503], 892]
+
+
+if __name__ == "__main__":
+    t = TestRanges()
+    t.setup()
+    t.test_normal()
+    t.test_compact()

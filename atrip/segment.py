@@ -201,7 +201,7 @@ class Segment:
             state[key] = getattr(self, key)
         for key in self.extra_serializable_attributes:
             state[key] = getattr(self, key)
-        state['container_offset'] = utils.collapse_to_ranges(self.container_offset)
+        state['container_offset'] = utils.collapse_to_ranges(self.container_offset, compact=True)
         return state
 
     def __setstate__(self, state):
