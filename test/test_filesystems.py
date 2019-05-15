@@ -5,7 +5,7 @@ import numpy as np
 from mock import *
 
 from atrip.container import guess_container
-from atrip.media_type import MediaType, guess_media_type
+from atrip.media_type import Media, guess_media_type
 from atrip import errors
 
 from atrip.media_types.atari_disks import *
@@ -29,8 +29,8 @@ class TestAtariDos2:
     base_path = None
     expected_mime = ""
 
-    @pytest.mark.parametrize("pathname", sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../test_data/", "*"))))
-    def test_test_data_dir(self, pathname):
+    @pytest.mark.parametrize("pathname", sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../samples/", "*"))))
+    def test_samples_dir(self, pathname):
         wrapped, ext = os.path.splitext(pathname)
         print(f"checking {pathname}")
         sample_data = np.fromfile(pathname, dtype=np.uint8)
@@ -42,7 +42,7 @@ class TestAtariDos2:
         if ext in ext_to_valid_types:
             assert container.media.__class__ in ext_to_valid_types[ext]
         else:
-            assert container.media.__class__ == MediaType
+            assert container.media.__class__ == Media
 
 
 if __name__ == "__main__":
@@ -67,6 +67,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         images = sys.argv[1:]
     else:
-        images = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../test_data/", "*")))
+        images = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "../samples/", "*")))
     for pathname in images:
         check(pathname)

@@ -31,17 +31,17 @@ class BaseContainerTest:
             assert container.compression_algorithm == mod_name
 
 class TestContainerAtariDosSDImage(BaseContainerTest):
-    base_path = "../test_data/container_dos_sd_test1.atr"
+    base_path = "../samples/container_dos_sd_test1.atr"
     expected_mime = "application/vnd.atari8bit.atr"
     num_files_in_sample = 5
 
 class TestContainerAtariDosEDImage(BaseContainerTest):
-    base_path = "../test_data/container_dos_ed_test1.atr"
+    base_path = "../samples/container_dos_ed_test1.atr"
     expected_mime = "application/vnd.atari8bit.atr"
     num_files_in_sample = 5
 
 class TestContainerAtariDosDDImage(BaseContainerTest):
-    base_path = "../test_data/container_dos_dd_test1.atr"
+    base_path = "../samples/container_dos_dd_test1.atr"
     expected_mime = "application/vnd.atari8bit.atr"
     num_files_in_sample = 5
 

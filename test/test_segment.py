@@ -26,7 +26,7 @@ class TestSegment:
         self.seg100 = Segment(self.segment, index_by_100)
         self.seg1000 = Segment(self.seg100, [0,10,20,30])
 
-    def test_data(self):
+    def samples(self):
         assert self.segment[100] == 0x7f
         assert self.container.data[100] == self.segment[100]
         assert self.segment[100] == self.seg100[1]

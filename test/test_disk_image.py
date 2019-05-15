@@ -5,7 +5,7 @@ import numpy as np
 from mock import *
 
 from atrip.container import guess_container, load
-from atrip.media_type import MediaType, guess_media_type
+from atrip.media_type import Media, guess_media_type
 from atrip import errors
 
 from atrip.media_types.atari_disks import *
@@ -18,7 +18,7 @@ class TestDiskImage:
         ("dos_ed_test1.atr", 128, [(1,3), (360,1), (361,8)]),
     ])
     def test_contiguous_sectors(self, filename, sector_size, sectors):
-        pathname = os.path.join(os.path.dirname(__file__), "../test_data", filename)
+        pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
         container = load(pathname)
         media = container.media
 
@@ -29,7 +29,7 @@ class TestDiskImage:
             assert np.array_equal(segment.container_offset, np.arange(16 + (start - 1) * sector_size, 16 + (start + count - 1)*sector_size))
 
     def test_ed_sectors(self):
-        pathname = os.path.join(os.path.dirname(__file__), "../test_data/dos_ed_test1.atr")
+        pathname = os.path.join(os.path.dirname(__file__), "../samples/dos_ed_test1.atr")
         container = load(pathname)
         media = container.media
 

@@ -141,22 +141,22 @@ class BaseFilesystemModifyTest:
 
 class TestAtariDosSDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
-    sample_data = np.fromfile("../test_data/dos_sd_test1.atr", dtype=np.uint8)
+    sample_data = np.fromfile("../samples/dos_sd_test1.atr", dtype=np.uint8)
     num_files_in_sample = 5
 
 class TestAtariDosEDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
-    sample_data = np.fromfile("../test_data/dos_ed_test1.atr", dtype=np.uint8)
+    sample_data = np.fromfile("../samples/dos_ed_test1.atr", dtype=np.uint8)
     num_files_in_sample = 5
 
 class TestAtariDosDDImage(BaseFilesystemModifyTest):
     diskimage_type = AtariDosDiskImage
-    sample_data = np.fromfile("../test_data/dos_dd_test1.atr", dtype=np.uint8)
+    sample_data = np.fromfile("../samples/dos_dd_test1.atr", dtype=np.uint8)
     num_files_in_sample = 5
 
 class TestDos33Image(BaseFilesystemModifyTest):
     diskimage_type = Dos33DiskImage
-    sample_data = np.fromfile("../test_data/dos33_master.dsk", dtype=np.uint8)
+    sample_data = np.fromfile("../samples/dos33_master.dsk", dtype=np.uint8)
     num_files_in_sample = 19
 
 

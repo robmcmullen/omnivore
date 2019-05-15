@@ -39,9 +39,9 @@ class TestKbootHeader:
             self.check_size(data)
     
     def test_real(self):
-        data = np.fromfile("../test_data/air_defense_v18.xex", dtype=np.uint8)
+        data = np.fromfile("../samples/air_defense_v18.xex", dtype=np.uint8)
         image = self.check_size(data)
-        with open("../test_data/air_defense_v18.atr", "wb") as fh:
+        with open("../samples/air_defense_v18.atr", "wb") as fh:
             txt = image.tostring()
             fh.write(txt)
 

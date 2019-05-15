@@ -48,7 +48,7 @@ class BaseCreateTest:
             print(file_data, filetype)
             assert len(file_data) == expected
 
-@pytest.mark.parametrize("sample_file", ["../test_data/dos_sd_test1.atr"])
+@pytest.mark.parametrize("sample_file", ["../samples/dos_sd_test1.atr"])
 class TestAtariDosSDImage(BaseCreateTest):
     diskimage_type = AtariDosDiskImage
 
@@ -63,7 +63,7 @@ class TestAtariDosSDImage(BaseCreateTest):
         self.check_exe(sample_file, self.diskimage_type, run_addr, expected)
 
 
-@pytest.mark.parametrize("sample_file", ["../test_data/dos33_master.dsk"])
+@pytest.mark.parametrize("sample_file", ["../samples/dos33_master.dsk"])
 class TestDos33Image(BaseCreateTest):
     diskimage_type = Dos33DiskImage
 
