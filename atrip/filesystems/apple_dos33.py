@@ -68,9 +68,9 @@ class Dos33VTOC(VTOC):
         media.sector_size = int(values['sector_size'])
         media.max_sectors = int(values['num_tracks']) * int(values['sectors_per_track'])
         media.ts_pairs = int(values['max_pairs'])
-        media.dos_release = values['dos_release']
-        media.last_track_num = values['last_track']
-        media.track_alloc_dir = values['track_dir']
+        media.dos_release = int(values['dos_release'])
+        media.last_track_num = int(values['last_track'])
+        media.track_alloc_dir = int(values['track_dir'])
         return self.max_sector
 
     def unpack_vtoc(self):

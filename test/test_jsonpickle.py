@@ -85,8 +85,8 @@ class TestJsonPickle:
         assert j == j2
         print(c.segments)
 
-    def test_file_with_filesytem(self):
-        filename = "dos_sd_test1.atr"
+    @pytest.mark.parametrize("filename", ["dos_sd_test1.atr", "dos_ed_test1.atr", "dos_dd_test1.atr", "dos33_master.dsk"])
+    def test_file_with_filesytem(self, filename):
         pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
         container = load(pathname)
         container.guess_media_type()
@@ -109,4 +109,4 @@ if __name__ == "__main__":
     # t.test_ordered_segment()
     # t.test_sparse_segment()
     # t.test_file()
-    t.test_file_with_filesytem()
+    t.test_file_with_filesytem("dos33_master.dsk")

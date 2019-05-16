@@ -14,7 +14,10 @@ class Apple16SectorDiskImage(DiskImage):
     sectors_per_track = 16
     starting_sector_label = 0
 
-    def init_media_params(self):
+    extra_serializable_attributes = ['num_sectors:int', 'first_directory:int', 'max_sectors:int', 'ts_pairs:int', 'dos_release:int', 'last_track_num:int', 'track_alloc_dir:int']
+
+    def init_empty(self):
+        super().init_empty()
         self.num_sectors = 0
         self.first_directory = -1
         self.max_sectors = 34 * 16
