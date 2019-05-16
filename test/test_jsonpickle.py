@@ -109,4 +109,5 @@ if __name__ == "__main__":
     # t.test_ordered_segment()
     # t.test_sparse_segment()
     # t.test_file()
-    t.test_file_with_filesytem("dos33_master.dsk")
+    # t.test_file_with_filesytem("dos33_master.dsk")
+    t.test_file_with_filesytem("dos_sd_test1.atr")

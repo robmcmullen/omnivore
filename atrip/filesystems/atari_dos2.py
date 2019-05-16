@@ -19,25 +19,32 @@ class AtariDosBootSegment(Segment):
         ('BWTARR', '<u2'),
         ])
 
+    extra_serializable_attributes = ['bflag:int', 'brcnt:int', 'bldadr:int']
+
     def __init__(self, filesystem):
         media = filesystem.media
         indexes, size = self.find_segment_location(media)
         Segment.__init__(self, media, indexes, self.bldadr, name="Boot Sectors", length=size)
         self.segments = self.calc_boot_segments()
 
+    def init_empty(self):
+        super().init_empty()
+        self.bflag = 0
+        self.brcnt = 0
+        self.bldadr = 0
+
     def find_segment_location(self, media):
         try:
-            self.first_sector = media.get_contiguous_sectors(1)
-            self.values = media[0:6].view(dtype=self.boot_record_type)[0]
-            self.bflag = self.values['BFLAG']
+            values = media[0:6].view(dtype=self.boot_record_type)[0]
+            self.bflag = values['BFLAG']
             if self.bflag == 0:
                 # possible boot sector
-                self.brcnt = self.values['BRCNT']
+                self.brcnt = values['BRCNT']
                 if self.brcnt == 0:
                     self.brcnt = 3
             else:
                 self.brcnt = 3
-            self.bldadr = self.values['BLDADR']
+            self.bldadr = values['BLDADR']
             index, _ = media.get_index_of_sector(1 + self.brcnt)
         except errors.MediaError as e:
             raise errors.IncompatibleMediaError(f"Invalid boot sector: {e}")
@@ -59,6 +66,8 @@ class AtariDos1SectorVTOC(VTOC):
         ])
 
     max_sector = 720
+
+    extra_serializable_attributes = ['total_sectors:int', 'unused_sectors:int']
 
     def find_segment_location(self):
         media = self.media
