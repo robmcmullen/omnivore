@@ -163,7 +163,12 @@ class SawxFrame(wx.Frame):
         self.active_editor_can_paste = clipboard.can_paste(self.active_editor.supported_clipboard_data)
 
     def sync_active_tab(self):
-        if self.notebook.GetPageCount() > 0:
+        # This function is called by a timer, so it's possible the frame has
+        # been destroyed before the timer calls this. Checking for the truth
+        # value of the wx object is supposed to fail if the C++ part has been
+        # destroyed. We'll see how well it works. Otherwise, it will take a
+        # try/except on RuntimeError
+        if self.notebook and self.notebook.GetPageCount() > 0:
             self.sync_name()
             self.sync_toolbar()
             self.sync_can_paste()
