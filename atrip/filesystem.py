@@ -329,6 +329,8 @@ class Directory(Segment):
 class VTOC(Segment):
     ui_name = "VTOC"
 
+    extra_serializable_attributes = ['addressable_sectors', 'sector_map']
+
     def __init__(self, filesystem):
         self.filesystem = filesystem
         offset, length = self.find_segment_location()
