@@ -103,11 +103,11 @@ class Collection:
         for container in self.containers:
             for segment in container.media.segments:
                 yield segment
-                yield from segment.yield_for_segment()
+                yield from segment.iter_segments()
 
     def iter_dirents(self):
         for container in self.containers:
             for segment in container.media.segments:
                 if isinstance(segment, Dirent):
                     yield segment
-                yield from segment.yield_for_segment(Dirent)
+                yield from segment.iter_segments(Dirent)

@@ -177,7 +177,8 @@ class Container:
         self.segments = []
         if self.header:
             self.segments.append(self.header)
-        self.segments.append(self.media)
+        if self.media:
+            self.segments.append(self.media)
 
     @property
     def verbose_info(self):
@@ -221,6 +222,13 @@ class Container:
 
     def __setitem__(self, index, value):
         self._data[index] = value
+
+    #### iterators
+
+    def iter_segments(self):
+        for segment in self.segments:
+            yield segment
+            yield from segment.iter_segments()
 
     #### compression
 
@@ -290,8 +298,8 @@ class Container:
         state['disasm_type'] = utils.collapse_values(self._disasm_type)
 
         state['header'] = self.header
-        # state['filesystem'] = self.filesystem
-        # state['media'] = self.media
+        state['media'] = self.media
+        state['filesystem'] = self.filesystem
         return state
 
     def __setstate__(self, state):
@@ -324,6 +332,7 @@ class Container:
             self.header.container = self
         self.restore_media(state)
         self.restore_filesystem(state)
+        self.restore_containers()
 
         self.restore_backward_compatible_state(state)
         self.restore_missing_state()
@@ -331,10 +340,16 @@ class Container:
         self.restore_renamed_attributes()
 
     def restore_media(self, state):
-        pass
+        self.media = state.pop('media')
 
     def restore_filesystem(self, state):
-        pass
+        self.filesystem = state.pop('filesystem')
+
+    def restore_containers(self):
+        if self.media:
+            self.media.container = self
+        for segment in self.iter_segments():
+            segment.container = self
 
     def restore_backward_compatible_state(self, state):
         # convert old atrcopy stuff

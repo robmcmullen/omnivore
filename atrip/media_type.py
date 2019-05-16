@@ -97,12 +97,12 @@ class DiskImage(Media):
     sector_size = 128
     expected_size = 0
     starting_sector_label = 1
+    first_sector = 1
 
-    def __init__(self, container):
-        self.init_media_params()
-        Media.__init__(self, container)
+    extra_serializable_attributes = ['num_sectors']
 
-    def init_media_params(self):
+    def init_empty(self):
+        super().init_empty()
         self.num_sectors = 0
 
     # def __str__(self):

@@ -116,6 +116,8 @@ class AtariDos2SectorVTOC(AtariDos1SectorVTOC):
 
 
 class AtariDosDirent(Dirent):
+    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'flag:int', 'num_sectors', 'starting_sector', 'basename', 'ext']
+
     # ATR Dirent structure described at http://atari.kensclassics.org/dos.htm
     format = np.dtype([
         ('FLAG', 'u1'),

@@ -135,11 +135,11 @@ class Segment:
 
     #### iterator utilities
 
-    def yield_for_segment(self, segment_type=None):
+    def iter_segments(self, segment_type=None):
         for segment in self.segments:
             if segment_type is None or isinstance(segment, segment_type):
                 yield segment
-            segment.yield_for_segment(segment_type)
+            yield from segment.iter_segments(segment_type)
 
     #### offsets
 
@@ -197,11 +197,27 @@ class Segment:
         """
         state = dict()
         state['__size__'] = len(self)
+
+        def get_value(key):
+            if ":" in key:
+                key, converter = key.split(":", 1)
+                value = getattr(self, key)
+                if converter == "int":
+                    value = int(value)
+                elif converter == "str":
+                    value = str(value)
+            else:
+                value = getattr(self, key)
+            return key, value
+
         for key in self.base_serializable_attributes:
-            state[key] = getattr(self, key)
+            key, value = get_value(key)
+            state[key] = value
         for key in self.extra_serializable_attributes:
-            state[key] = getattr(self, key)
+            key, value = get_value(key)
+            state[key] = value
         state['container_offset'] = utils.collapse_to_ranges(self.container_offset, compact=True)
+        state['segments'] = self.segments
         return state
 
     def __setstate__(self, state):
@@ -217,6 +233,7 @@ class Segment:
         raw = np.arange(size, dtype=np.uint32)
         self.container_offset = raw
         utils.restore_from_ranges(self.container_offset, state.pop('container_offset', []))
+        self.segments = state.pop('segments')
 
         # Can't restore here because it would result in many unrelated copies
         # of the container object. After all the segments are loaded, will have

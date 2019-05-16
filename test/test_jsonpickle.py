@@ -1,11 +1,8 @@
-from __future__ import print_function
-from builtins import zip
-from builtins import range
-from builtins import object
 import os
 
 import pytest
 jsonpickle = pytest.importorskip("jsonpickle")
+jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
 
 import numpy as np
 

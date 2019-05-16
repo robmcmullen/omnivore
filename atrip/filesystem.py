@@ -129,11 +129,11 @@ class Dirent(Segment):
     """Abstract base class for a directory entry
 
     """
+    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane']
 
     def __init__(self, directory, file_num, start, length, parent=None):
         self.directory = directory
         self.file_num = file_num
-        self.error = None
         self.in_use = True
         self.is_sane = True
         if parent is None:
