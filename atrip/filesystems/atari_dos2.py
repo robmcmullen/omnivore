@@ -125,23 +125,64 @@ class AtariDosDirent(Dirent):
         ('EXT','S3'),
         ])
 
+    FLAG_OPENED_OUTPUT = 0x01
+    FLAG_DOS_2 = 0x02
+    FLAG_MYDOS = 0x04
+    FLAG_IS_DIR = 0x10
+    FLAG_LOCKED = 0x20
+    FLAG_IN_USE = 0x40
+    FLAG_DELETED = 0x80
+
     def __init__(self, directory, file_num):
         start = file_num * self.format.itemsize
+        self.flag = 0  # self.flag needs to have a value, but don't want to got through init_empty twice
+        Dirent.__init__(self, directory, file_num, start, self.format.itemsize)
+
+    def init_empty(self):
+        super().init_empty()
         self.flag = 0
-        self.opened_output = False
-        self.dos_2 = False
-        self.mydos = False
-        self.is_dir = False
-        self.locked = False
-        self.deleted = False
         self.num_sectors = 0
         self.starting_sector = 0
         self.basename = b''
         self.ext = b''
-        Dirent.__init__(self, directory, file_num, start, self.format.itemsize)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.filename == other.filename and self.starting_sector == other.starting_sector and self.num_sectors == other.num_sectors
+
+    @property
+    def opened_output(self):
+        return bool(self.flag & self.FLAG_OPENED_OUTPUT)
+
+    @property
+    def dos_2(self):
+        return bool(self.flag & self.FLAG_DOS_2)
+
+    @property
+    def mydos(self):
+        return bool(self.flag & self.FLAG_MYDOS)
+
+    @property
+    def is_dir(self):
+        return bool(self.flag & self.FLAG_IS_DIR)
+
+    @property
+    def locked(self):
+        return bool(self.flag & self.FLAG_LOCKED)
+
+    @property
+    def in_use(self):
+        return bool(self.flag & self.FLAG_IN_USE)
+
+    @in_use.setter
+    def in_use(self, value):
+        if value:
+            self.flag |= self.FLAG_IN_USE
+        else:
+            self.flag &= 0xff ^ self.FLAG_IN_USE
+
+    @property
+    def deleted(self):
+        return bool(self.flag & self.FLAG_DELETED)
 
     @property
     def filename(self):
@@ -177,15 +218,7 @@ class AtariDosDirent(Dirent):
     def parse_raw_dirent(self):
         data = self.data[0:16]
         values = data.view(dtype=self.format)[0]
-        flag = values[0]
-        self.flag = flag
-        self.opened_output = (flag&0x01) > 0
-        self.dos_2 = (flag&0x02) > 0
-        self.mydos = (flag&0x04) > 0
-        self.is_dir = (flag&0x10) > 0
-        self.locked = (flag&0x20) > 0
-        self.in_use = (flag&0x40) > 0
-        self.deleted = (flag&0x80) > 0
+        self.flag = values[0]
         self.num_sectors = int(values[1])
         self.starting_sector = int(values[2])
         self.basename = bytes(values[3]).rstrip()
@@ -194,8 +227,7 @@ class AtariDosDirent(Dirent):
     def encode_dirent(self):
         data = np.zeros([self.format.itemsize], dtype=np.uint8)
         values = data.view(dtype=self.format)[0]
-        flag = (1 * int(self.opened_output)) | (2 * int(self.dos_2)) | (4 * int(self.mydos)) | (0x10 * int(self.is_dir)) | (0x20 * int(self.locked)) | (0x40 * int(self.in_use)) | (0x80 * int(self.deleted))
-        values[0] = flag
+        values[0] = self.flag
         values[1] = self.num_sectors
         values[2] = self.starting_sector
         values[3] = self.basename
@@ -266,8 +298,7 @@ class AtariDosDirent(Dirent):
         self.basename = b'%-8s' % filename[0:8]
         self.ext = ext
         self.file_num = index
-        self.dos_2 = True
-        self._in_use = True
+        self.flag |= self.FLAG_DOS_2 | self.FLAG_IN_USE
         if _xd: log.debug("set_values: %s" % self)
 
 
