@@ -47,11 +47,13 @@ setup(name="atrip",
             "atrip.media_types": [
                 'atari_disks = atrip.media_types.atari_disks',
                 'atari_carts = atrip.media_types.atari_carts',
+                'atari_tapes = atrip.media_types.atari_tapes',
                 'apple_disks = atrip.media_types.apple_disks',
             ],
 
             "atrip.filesystems": [
                 'atari_dos = atrip.filesystems.atari_dos2',
+                'atari_cas = atrip.filesystems.atari_cas',
                 'atari_jumpman = atrip.filesystems.atari_jumpman',
                 'kboot = atrip.filesystems.kboot',
                 'apple_dos33 = atrip.filesystems.apple_dos33',

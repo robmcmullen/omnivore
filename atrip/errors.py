@@ -70,6 +70,10 @@ class InvalidSectorNumber(MediaError):
     pass
 
 
+class UnsupportedSectorType(MediaError):
+    pass
+
+
 # Errors when trying to determine filesystem. Raising one of these errors
 # during filesystem detection will abort the process and report failure for
 # that filesystem.
