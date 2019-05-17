@@ -456,6 +456,9 @@ def guess_filesystem(segment):
         except errors.FilesystemError as e:
             log.debug(f"found error: {e}")
             continue
+        except errors.MediaError as e:
+            log.debug(f"found media error: {e}")
+            continue
         else:
             log.info(f"found filesystem {f.ui_name}")
             return found
