@@ -75,6 +75,8 @@ class TestJsonPickle:
         filename = "dos_sd_test1.atr"
         pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
         container = load(pathname)
+        container.guess_media_type()
+        container.guess_filesystem()
         j = jsonpickle.dumps(container)
         print(j)
         
@@ -108,6 +110,6 @@ if __name__ == "__main__":
     # t.test_simple_segment()
     # t.test_ordered_segment()
     # t.test_sparse_segment()
-    # t.test_file()
+    t.test_file()
     # t.test_file_with_filesytem("dos33_master.dsk")
-    t.test_file_with_filesytem("dos_sd_test1.atr")
+    # t.test_file_with_filesytem("dos_sd_test1.atr")

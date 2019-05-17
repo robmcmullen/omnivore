@@ -12,6 +12,7 @@ from .segment import Segment
 from . import media_type
 from . import filesystem
 from .compressor import guess_compressor
+from .filesystem import Dirent
 
 import logging
 log = logging.getLogger(__name__)
@@ -230,6 +231,12 @@ class Container:
             yield segment
             yield from segment.iter_segments()
 
+    def iter_dirents(self):
+        for segment in self.media.segments:
+            if isinstance(segment, Dirent):
+                yield segment
+            yield from segment.iter_segments(Dirent)
+
     #### compression
 
     def calc_unpacked_bytes(self, byte_data):
@@ -447,6 +454,25 @@ class Container:
         comment_style = self.get_style_bits(comment=True)
         style_base[comment_text_indexes] |= comment_style
 
+    #### search utilities
+
+    def find_dirent(self, filename, match_case=False):
+        for dirent in self.iter_dirents():
+            dirent_name = dirent.filename
+            if not match_case:
+                dirent_name = dirent_name.lower()
+                filename = filename.lower()
+            print(f"checking {dirent_name} for {filename}")
+            if dirent_name == filename:
+                return dirent
+        return None
+
+    def find_uuid(self, uuid):
+        for segment in self.iter_segments():
+            if uuid == segment.uuid:
+                return segment
+        else:
+            raise errors.InvalidSegment(f"No segment with uuid={uuid}")
 
 def guess_container(raw_data):
     data = utils.to_numpy(raw_data)

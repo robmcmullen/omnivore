@@ -56,10 +56,8 @@ if __name__ == "__main__":
         sample_data = np.fromfile(pathname, dtype=np.uint8)
         container = guess_container(sample_data)
         container.guess_media_type()
-        print(container.verbose_info)
-        media = container.media
-        media.guess_filesystem()
-        print(media.filesystem)
+        container.guess_filesystem()
+        print(container.media.filesystem)
         print(container.verbose_info)
 
     import sys

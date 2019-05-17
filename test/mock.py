@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 
 # Include maproom directory so that maproom modules can be imported normally

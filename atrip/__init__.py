@@ -88,7 +88,7 @@ def find_diskimage_from_data(data, verbose=False):
 
 
 def find_container_from_data(name, data, verbose=False):
-    container = guess_container(data, verbose)
+    container = guess_container(data)
     container.name = name
     container.guess_media_type()
     container.guess_filesystem()

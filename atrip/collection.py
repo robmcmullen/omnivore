@@ -101,13 +101,39 @@ class Collection:
 
     def iter_segments(self):
         for container in self.containers:
-            for segment in container.media.segments:
-                yield segment
-                yield from segment.iter_segments()
+            yield from container.iter_segments()
 
     def iter_dirents(self):
         for container in self.containers:
-            for segment in container.media.segments:
-                if isinstance(segment, Dirent):
-                    yield segment
-                yield from segment.iter_segments(Dirent)
+            yield from container.iter_dirents()
+
+    #### search utilities
+
+    def find_dirent(self, filename, match_case=False):
+        try:
+            disk_input, pathname = filename.split(":", 1)
+        except ValueError:
+            disk_input = "D1"
+            pathname = filename
+        disk = disk_input.upper()
+        try:
+            if disk.startswith("D"):
+                disk = disk[1:]
+            disk_num = int(disk)
+        except ValueError:
+            raise errors.FileNotFound(f"Invalid disk specifier {disk_input}")
+        try:
+            container = self.containers[disk_num - 1]  # disk numbers 1 based
+        except IndexError:
+            raise errors.FileNotFound(f"Disk {disk_input} doesn't exist")
+        return container.find_dirent(pathname, match_case)
+
+    def find_uuid(self, uuid):
+        for container in self.containers:
+            try:
+                segment = container.find_uuid(uuid)
+            except errors.InvalidSegment:
+                pass
+            else:
+                return segment
+        raise errors.InvalidSegment(f"No segment in any disk with uuid={uuid}")

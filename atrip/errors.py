@@ -27,7 +27,7 @@ class UnsupportedDiskImage(AtrError):
     pass
 
 
-class InvalidSegmentParser(AtrError):
+class InvalidSegment(AtrError):
     pass
 
 
