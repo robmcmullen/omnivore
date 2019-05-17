@@ -281,7 +281,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         if self.table.is_index_valid(index):
             s = self.segment_viewer.linked_base.segment
             msg = get_style_name(s, index)
-            comments = s.get_comment(index)
+            comments = s.get_comment_at(index)
             return "%s  %s" % (msg, comments)
         return ""
 

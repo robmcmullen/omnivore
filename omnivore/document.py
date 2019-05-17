@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 import jsonpickle
 
-from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, errors, iter_parsers
+from atrip import Collection, Container, Segment, errors
 
 from sawx.document import SawxDocument
 from sawx.utils.nputil import to_numpy
@@ -93,11 +93,7 @@ class DiskImageDocument(SawxDocument):
     def disassembler(self):
         if self._disassembler is None:
             driver = DisassemblyConfig()
-            driver.register_parser(self._cpu, 0)
-            driver.register_parser("data", 1)
-            driver.register_parser("antic_dl", 2)
-            driver.register_parser("jumpman_level", 3)
-            driver.register_parser("jumpman_harvest", 4)
+            # driver.register_parser(self._cpu, 0)
             self._disassembler = driver
         return self._disassembler
 
@@ -105,7 +101,7 @@ class DiskImageDocument(SawxDocument):
 
     def __str__(self):
         lines = []
-        lines.append(f"Document: uuid={self.uuid}, mime={self.mime}, {self.uri}")
+        lines.append(f"DiskImageDocument: uuid={self.uuid}, mime={self.mime}, {self.uri}")
         if log.isEnabledFor(logging.DEBUG):
             lines.append("parser: %s" % self.segment_parser)
             lines.append("segments:")
@@ -120,22 +116,16 @@ class DiskImageDocument(SawxDocument):
 
     def load_session(self):
         super().load_session()
-        self.style = np.zeros(len(self), dtype=np.uint8)
-        r = SegmentData(self.raw_data, self.style)
-        self.segments = list([DefaultSegment(r, 0)])
+        self.collection = Collection(self.uri, self.raw_data)
+        self.segments = list(self.collection.iter_segments())
         self.user_segments = []
 
-        if "atrcopy_parser" in self.file_metadata:
-            self.load_from_atrcopy_parser()
-        else:
-            self.load_from_raw_data()
-        self.restore_session(self.last_session)
+        # if "atrcopy_parser" in self.file_metadata:
+        #     self.load_from_atrcopy_parser()
+        # else:
+        #     self.load_from_raw_data()
+        # self.restore_session(self.last_session)
         print(f"load_session: segments: {self.segments}")
-
-        # FIXME: raw_data and the segment raw data sometimes don't end up
-        # pointing to the same place, so force that now. A better way will be
-        # to have atrcopy not create a duplicate.
-        self.raw_data = self.container_segment.rawdata.data
 
     def load_from_atrcopy_parser(self):
         # make sure a parser exists; it probably does in most cases, but

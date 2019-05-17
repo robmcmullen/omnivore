@@ -5,7 +5,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import DefaultSegment, not_user_bit_mask
+from atrip.style_bits import not_user_bit_mask
 
 from sawx.ui import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
@@ -57,7 +57,8 @@ class DisassemblyTable(SegmentTable):
         row, _ = self.index_to_row_col(index)
         return str(self.current.entries[row]['pc'])
 
-    def get_row_label_text(self, start_line, last_line, step=1):
+    def get_row_label_text(self, start_line, num_lines, step=1):
+        last_line = min(start_line + num_lines, self.num_rows)
         entries = self.current.entries
         for line in range(start_line, last_line, step):
             yield "%04x" % (entries[line]['pc'])
@@ -85,7 +86,7 @@ class DisassemblyTable(SegmentTable):
             elif col == 2:
                 comments = []
                 for i in range(index, index + e[row]['num_bytes']):
-                    comments.append(s.get_comment(i))
+                    comments.append(s.get_comment_at(i))
                 if comments:
                     text = " ".join([str(c) for c in comments])
                 else:
@@ -109,7 +110,7 @@ class DisassemblyTable(SegmentTable):
         self.current = self.linked_base.document.disassembler.parse(segment, self.max_num_entries)
         self.parsed = None
         self.init_boundaries()
-        print(f"new num_rows: {self.num_rows}")
+        print(f"new num_rows: {self.num_rows}, {segment}")
 
 
 class DisassemblyControl(SegmentGridControl):

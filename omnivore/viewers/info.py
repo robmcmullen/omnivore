@@ -264,7 +264,14 @@ class CommentsPanel(wx.VListBox):
         self.items.append(CommentItem._make((segment, index, "  %s: %s" % (label, item[1]), font, self.COMMENT_ENTRY)))
 
     def recalc_view(self):
-        comments = self.segment_viewer.document.segments[0].get_sorted_comments()
+        v = self.segment_viewer
+        segment = v.segment
+        try:
+            container = v.segment.container
+        except AttributeError:
+            comments = []
+        else:
+            comments = container.get_sorted_comments()
         # print(("COMMENTS!", str(comments)))
         self.set_items(comments)
 

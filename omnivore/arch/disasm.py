@@ -243,7 +243,7 @@ class BaseDisassembler(object):
             _, c = c.split(";", 1)
             comments.append(c)
         for i in range(line.num_bytes):
-            c = self.segment.get_comment(index + i)
+            c = self.segment.get_comment_at(index + i)
             if c:
                 comments.append(c)
         if comments:
@@ -361,7 +361,7 @@ class BaseDisassembler(object):
             _, c = c.split(b";", 1)
             comments.append(c.decode('utf-8'))
         for i in range(line.num_bytes):
-            c = self.segment.get_comment(index + i)
+            c = self.segment.get_comment_at(index + i)
             if c:
                 comments.append(c)
         if comments:

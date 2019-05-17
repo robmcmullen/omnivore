@@ -8,6 +8,8 @@ import wx
 import numpy as np
 import json
 
+from atrip import Container, Segment
+
 from sawx.utils.command import DisplayFlags
 from sawx.events import EventHandler
 
@@ -18,6 +20,10 @@ from ..jumpman import playfield as jp
 import logging
 log = logging.getLogger(__name__)
 
+
+blank_data = np.zeros([1], dtype=np.uint8)
+blank_container = Container(blank_data)
+blank_segment = Segment(blank_container)
 
 class LinkedBase:
     """Model for the state of a set of viewers. A ByteEditor can have an
@@ -42,8 +48,7 @@ class LinkedBase:
         self.uuid = str(uuid.uuid4())
         self.editor = editor
 
-        rawdata = SegmentData([])
-        self.segment = DefaultSegment(rawdata)
+        self.segment = blank_segment
         self.segment_number = 0
         self.restore_session_segment_number = -1
         self.has_origin = False
@@ -263,9 +268,6 @@ class LinkedBase:
         # find byte index of view into master array
         g = self.document.container_segment
         s = self.segment
-        global_offset = g.get_raw_index(0)
-        new_offset = s.get_raw_index(0)
-        old_offset = old_segment.get_raw_index(0)
 
         self.restore_segment_view_params(s)
         if False:  # select same bytes in new segment, if possible

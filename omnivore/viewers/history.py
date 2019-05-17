@@ -51,7 +51,8 @@ class InstructionHistoryTable(cg.VirtualTable):
         except IndexError:
             return "----"
 
-    def get_row_label_text(self, start_line, last_line, step=1):
+    def get_row_label_text(self, start_line, num_lines, step=1):
+        last_line = min(start_line + num_lines, self.num_rows)
         emu = self.virtual_linked_base.emulator
         for line in range(start_line, last_line, step):
             h = emu.cpu_history[line]
