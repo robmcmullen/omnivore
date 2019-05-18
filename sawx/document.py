@@ -110,7 +110,7 @@ class SawxDocument:
 
     def create_empty(self):
         self.raw_data = np.zeros(0, dtype=np.uint8)
-        self.file_metadata = {'uri': ''}
+        self.file_metadata = {'uri': '', 'mime': "application/octet-stream"}
 
     @property
     def can_revert(self):
@@ -190,6 +190,7 @@ class SawxDocument:
         last = self.load_last_session()
         d.update(last)
         self.last_session = d
+        self.restore_session(d)
 
     def calc_default_session(self):
         mime = self.mime

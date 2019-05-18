@@ -209,6 +209,7 @@ class SawxFrame(wx.Frame):
             progress_log.info(f"START=Loading {path}...")
         try:
             file_metadata = loader.identify_file(path)
+            log.debug(f"load_file: file_metadata={file_metadata}")
             if current_editor is not None and current_editor.can_load_file(file_metadata):
                 current_editor.load_file(file_metadata)
                 return

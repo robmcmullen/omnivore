@@ -131,20 +131,14 @@ def identify_file(uri, match_multiple=False):
     file_guess = FileGuess(uri)
     for loader in loaders:
         log.debug(f"identify_file: trying loader {loader}")
-        try:
-            loader.identify_loader
-        except AttributeError:
-            log.warning(f"identify_file: attempting to call identify_mime from {loader} with old style parameters")
-            file_metadata = loader.identify_mime(file_guess.sample_data, file_guess.fh)
-        else:
-            file_metadata = loader.identify_loader(file_guess)
+        file_metadata = loader.identify_loader(file_guess)
         if file_metadata:
             file_metadata['uri'] = uri
             mime_type = file_metadata['mime']
             if mime_type == "application/octet-stream" or mime_type == "text/plain":
                 log.debug(f"identify_file: identified as generic type {mime_type}")
                 if not fallback:
-                    fallback = mime_type
+                    fallback = file_metadata
             else:
                 log.debug(f"identify_file: identified: {file_metadata}")
                 if not match_multiple:
@@ -157,6 +151,6 @@ def identify_file(uri, match_multiple=False):
         return hits[0]
     else:
         if not fallback:
-            fallback = "application/octet-stream"
+            fallback = dict(mime="application/octet-stream", uri=uri)
         log.debug(f"identify_file: identified only as the generic {fallback}")
-        return dict(mime=fallback, uri=uri)
+        return fallback
