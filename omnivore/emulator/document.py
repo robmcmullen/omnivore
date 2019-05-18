@@ -3,7 +3,7 @@ import time
 
 import wx
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment, DefaultSegmentParser, SegmentParser
+from atrip import SegmentData, DefaultSegment, DefaultSegmentParser, SegmentParser
 
 # Enthought library imports.
 from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float, Undefined

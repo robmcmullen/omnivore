@@ -3,7 +3,7 @@ import tempfile
 
 import numpy as np
 
-from atrcopy import find_diskimage
+from atrip import find_diskimage
 
 from ..debugger import Debugger
 from ..debugger.dtypes import FRAME_STATUS_DTYPE

@@ -361,7 +361,7 @@ class DiskImageDocument(SawxDocument):
 
     @classmethod
     def can_load_file_exact(cls, file_metadata):
-        return "atrcopy_parser" in file_metadata
+        return "atrip_identified" in file_metadata
  
     @classmethod
     def can_load_file_generic(cls, file_metadata):

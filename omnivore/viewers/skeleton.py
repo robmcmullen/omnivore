@@ -5,7 +5,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import DefaultSegment
+from atrip import Container, Segment
 
 from sawx.ui import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
@@ -50,7 +50,8 @@ class SampleVirtualTable(cg.VirtualTable):
         old_size = v.document_length
         size = old_size + 1
         old_segment = v.segment
-        segment = DefaultSegment(np.arange(size, dtype=np.uint8))
+        container = Container(np.arange(size, dtype=np.uint8))
+        segment = Segment(container)
         segment.style[0:old_size] = old_segment.style[0:old_size]
         v.segment = segment
         self.init_boundaries()

@@ -2,7 +2,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
+from atrip import style_bits
 
 from sawx.utils.permute import bit_reverse_table
 from sawx.utils.nputil import intscale, intwscale, intwscale_font
@@ -23,7 +23,7 @@ class BaseRenderer(object):
     scale_height = 1
     pixels_per_byte = 8
     bitplanes = 1
-    ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
+    ignore_mask = style_bits.not_user_bit_mask & (0xff ^ style_bits.diff_bit_mask)
 
     def __str__(self):
         return self.name
@@ -108,10 +108,10 @@ class BaseRenderer(object):
         if style_per_pixel is None:
             style_per_pixel = self.calc_style_per_pixel_2bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr * bytes_per_row, 4, 3), dtype=np.uint8)
@@ -135,10 +135,10 @@ class BaseRenderer(object):
         if style_per_pixel is None:
             style_per_pixel = self.calc_style_per_pixel_4bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr * bytes_per_row, 2, 3), dtype=np.uint8)
@@ -177,10 +177,10 @@ class BaseRenderer(object):
         s = self.get_bitplane_style(style)
         style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         color_registers, h_colors, m_colors, c_colors, d_colors = colors
         bitimage = np.empty((nr, pixels_per_row, 3), dtype=np.uint8)
@@ -217,10 +217,10 @@ class OneBitPerPixelB(BaseRenderer):
         if style_per_pixel is None:
             style_per_pixel = self.calc_style_per_pixel_1bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         bitimage = np.empty((nr * bytes_per_row, 8, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
@@ -301,10 +301,10 @@ class OneBitPerPixelApple2Linear(BaseRenderer):
         if style_per_pixel is None:
             style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
@@ -361,10 +361,10 @@ class OneBitPerPixelApple2FullScreen(OneBitPerPixelApple2Linear):
         if style_per_pixel is None:
             style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         bitimage = np.empty((192 * 40, 7, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
@@ -444,10 +444,10 @@ class OneBitPerPixelApple2Artifacting(OneBitPerPixelApple2Linear):
         if style_per_pixel is None:
             style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
-        data = (style_per_pixel & user_bit_mask) > 0
-        comment = (style_per_pixel & comment_bit_mask) == comment_bit_mask
-        match = (style_per_pixel & match_bit_mask) == match_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         bitimage = np.empty((nr * bytes_per_row, 7, 3), dtype=np.uint8)
         bitimage[background & normal] = bw_colors[0]
@@ -716,10 +716,10 @@ class BaseBytePerPixelRenderer(BaseRenderer):
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, style_per_pixel=None):
         normal = style == 0
-        highlight = (style & selected_bit_mask) == selected_bit_mask
-        comment = (style & comment_bit_mask) == comment_bit_mask
-        data = (style & user_bit_mask) > 0
-        match = (style & match_bit_mask) == match_bit_mask
+        highlight = (style & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        comment = (style & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        data = (style & style_bits.user_bit_mask) > 0
+        match = (style & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, list(range(16)))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)
@@ -760,7 +760,7 @@ def get_numpy_memory_map_image(segment_viewer, bytes_per_row, nr, count, byte_va
         for i in range(bytes_per_row):
             c = byte_values[j * 256 + i] ^ 0xff
             s = style[j * 256 + i]
-            if s & selected_bit_mask:
+            if s & style_bits.selected_bit_mask:
                 r = selected_color[0] * c >> 8
                 g = selected_color[1] * c >> 8
                 b = selected_color[2] * c >> 8
@@ -803,7 +803,7 @@ def get_numpy_memory_access_image(segment_viewer, bytes_per_row, nr, count, byte
             s = style[j, i]
 
             rgb = ((np.asarray(dd.default_access_type_colors[s])*c)/256).astype(np.uint8)
-            if s & selected_bit_mask:
+            if s & style_bits.selected_bit_mask:
                 rgb = rgb >> 8
             array[j,i,:] = rgb
     return array

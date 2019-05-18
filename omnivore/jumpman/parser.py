@@ -1,6 +1,6 @@
 import numpy as np
 
-from atrcopy import selected_bit_mask, match_bit_mask, comment_bit_mask
+from atrip import style_bits
 
 from sawx.utils.runtime import get_all_subclasses
 
@@ -194,9 +194,9 @@ class PixelList(object):
                 screen2d[y:y+self.h,x:x+self.w] &= self.mask
                 screen2d[y:y+self.h,x:x+self.w] |= self.pixels
                 if highlight:
-                    style2d[y:y+self.h,x:x+self.w] = selected_bit_mask
+                    style2d[y:y+self.h,x:x+self.w] = style_bits.selected_bit_mask
                 if has_trigger_function:
-                    style2d[y:y+self.h,x:x+self.w] |= match_bit_mask
+                    style2d[y:y+self.h,x:x+self.w] |= style_bits.match_bit_mask
                 if pick2d is not None:
                     pick2d[y:y+self.h,x:x+self.w] = obj.pick_index
             x += obj.dx
@@ -698,7 +698,7 @@ class ScreenState(LevelDef):
 
     # The following commented out code generates the text string
     #circle = np.zeros((7, 8), dtype=np.uint8)
-    #circle[0,2:6] = circle[6,2:6] = circle[2:5,0] = circle[2:5,7] = circle[1,1] = circle[1,6] = circle[5,6] = circle[5,1] = match_bit_mask
+    #circle[0,2:6] = circle[6,2:6] = circle[2:5,0] = circle[2:5,7] = circle[1,1] = circle[1,6] = circle[5,6] = circle[5,1] = style_bits.match_bit_mask
     trigger_circle = np.fromstring('\x00\x00    \x00\x00\x00 \x00\x00\x00\x00 \x00 \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00 \x00 \x00\x00\x00\x00 \x00\x00\x00    \x00\x00', dtype=np.uint8).reshape((7,8))
 
     def draw_object(self, obj, highlight=False):

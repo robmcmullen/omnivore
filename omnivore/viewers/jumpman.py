@@ -3,7 +3,7 @@ import sys
 
 import wx
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
+from atrip import Segment, style_bits
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
@@ -46,10 +46,10 @@ class JumpmanPlayfieldRenderer(BaseRenderer):
 
     def get_image(self, segment_viewer, bytes_per_row, nr, count, pixels, style):
         normal = style == 0
-        highlight = (style & selected_bit_mask) == selected_bit_mask
-        comment = (style & comment_bit_mask) == comment_bit_mask
-        data = (style & user_bit_mask) > 0
-        match = (style & match_bit_mask) == match_bit_mask
+        highlight = (style & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
+        comment = (style & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
+        data = (style & style_bits.user_bit_mask) > 0
+        match = (style & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, list(range(32)))
         bitimage = np.empty((nr * bytes_per_row, 3), dtype=np.uint8)

@@ -4,7 +4,7 @@ import os
 
 # Major package imports.
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment, comment_bit_mask
+from atrip import style_bits
 
 # Local imports.
 from sawx.utils.command import Overlay
@@ -89,10 +89,10 @@ class JumpmanSelectMode(NormalSelectMode):
 #        s[:] = 0
         for x in range(startx, startx + 8):
             x = x & 0x1f
-            s[0:h:, x::32] |= comment_bit_mask
+            s[0:h:, x::32] |= style_bits.comment_bit_mask
         for y in range(starty, starty + 4):
             y = y & 0xf
-            s[y:h:16,:] |= comment_bit_mask
+            s[y:h:16,:] |= style_bits.comment_bit_mask
 
     def get_xy(self, evt):
         c = self.control

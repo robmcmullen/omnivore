@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import wx
 
-from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
+from atrip import style_bits
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg

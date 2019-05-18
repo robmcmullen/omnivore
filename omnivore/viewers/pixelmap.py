@@ -5,7 +5,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import selected_bit_mask
+from atrip import style_bits
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
@@ -76,7 +76,7 @@ class PixelLineRenderer(b.BitmapLineRenderer):
         end_row = min(caret.anchor_end[0] - first_row + 1, last_row - first_row + 1)
         s2d = style_per_pixel.reshape((-1, (last_byte - first_byte) * style_per_pixel.shape[-1]))
         print("OETUSHNTOEHUSROEHU rectangular selection", start_row, left_col, end_row, right_col, style_per_pixel.shape, s2d.shape)
-        s2d[start_row:end_row, left_col:right_col] |= selected_bit_mask
+        s2d[start_row:end_row, left_col:right_col] |= style_bits.selected_bit_mask
 
     def draw_grid(self, grid_control, dc, first_row, visible_rows, first_cell, visible_cells):
         t = grid_control.table

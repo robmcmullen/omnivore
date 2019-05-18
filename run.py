@@ -76,10 +76,10 @@ def main(argv):
     from sawx.application import SawxApp
     from sawx.filesystem import get_image_path
     import omnivore
-    import atrcopy
+    import atrip
 
     image_paths = [get_image_path("icons", omnivore)]
-    template_paths = [get_image_path("templates", omnivore), atrcopy.get_template_path()]
+    template_paths = [get_image_path("templates", omnivore), atrip.get_template_path()]
 
     from omnivore._version import __version__
     OmnivoreApp = SawxApp

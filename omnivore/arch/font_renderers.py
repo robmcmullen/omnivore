@@ -2,7 +2,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
+from atrip import style_bits
 
 from sawx.utils.permute import bit_reverse_table
 from sawx.utils.nputil import intscale, intwscale, intwscale_font
@@ -314,13 +314,13 @@ def get_numpy_font_map_image(segment_viewer, antic_font, byte_values, style, sta
             else:
                 c = mapping[byte_values[j, i]]
                 s = style[j, i]
-                if s & selected_bit_mask:
+                if s & style_bits.selected_bit_mask:
                     array[y:y+char_h,x:x+char_w,:] = fh[c]
-                elif s & match_bit_mask:
+                elif s & style_bits.match_bit_mask:
                     array[y:y+char_h,x:x+char_w,:] = fm[c]
-                elif s & comment_bit_mask:
+                elif s & style_bits.comment_bit_mask:
                     array[y:y+char_h,x:x+char_w,:] = fc[c]
-                elif s & user_bit_mask:
+                elif s & style_bits.user_bit_mask:
                     array[y:y+char_h,x:x+char_w,:] = fd[c]
                 else:
                     array[y:y+char_h,x:x+char_w,:] = f[c]

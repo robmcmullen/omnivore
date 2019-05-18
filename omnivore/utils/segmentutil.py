@@ -1,11 +1,11 @@
 import numpy as np
 
-from atrcopy import SegmentData, SegmentParser, DefaultSegment, iter_known_segment_parsers
+from atrip import Segment
 
 
-class AnticFontSegment(DefaultSegment):
+class AnticFontSegment(Segment):
     def __init__(self, *args, **kwargs):
-        DefaultSegment.__init__(self, *args, **kwargs)
+        Segment.__init__(self, *args, **kwargs)
         if np.alen(self.data) != 1024:
             raise RuntimeError("ANTIC Fonts must be 1024 bytes; have %d bytes" % (np.alen(self.data)))
 

@@ -11,8 +11,6 @@ import wx.lib.dialogs
 from traits.api import on_trait_change, Any, Int, Bool
 from pyface.api import YES, NO
 
-from atrcopy import user_bit_mask, data_style, add_xexboot_header, add_atr_header, BootDiskImage, SegmentData, interleave_segments, get_xex
-
 from sawx.framework.enthought_api import Action, ActionItem, EditorAction, NameChangeAction, TaskDynamicSubmenuGroup
 from sawx.utils.command import StatusFlags
 from sawx.framework import loader

@@ -5,7 +5,7 @@ import numpy as np
 
 import wx
 
-from atrcopy import DefaultSegment
+from atrip import DefaultSegment
 
 from ..disassembler import flags
 from ..disassembler import dtypes as dd

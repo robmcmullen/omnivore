@@ -5,8 +5,6 @@ import numpy as np
 
 import wx
 
-from atrip.style_bits import not_user_bit_mask
-
 from sawx.ui import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase
 
@@ -95,8 +93,8 @@ class DisassemblyTable(SegmentTable):
                 text = str(e[row]['disassembler_type'])
             else:
                 text = f"r{row}c{col}"
-            for i in range(index, index + e[row]['num_bytes']):
-                style |= (s.style[i] & not_user_bit_mask)
+            # for i in range(index, index + e[row]['num_bytes']):
+            #     style |= (s.style[i] & not_user_bit_mask)
         else:
             text = ""
         # print(f"get_value_style: {row},{col} = {index} {self.last_valid_index} {self.is_index_valid(index)} ; {text}, {style}, {self.linked_base.segment}")

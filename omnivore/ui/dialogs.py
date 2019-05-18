@@ -7,7 +7,7 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
-from atrcopy import get_xex
+from atrip import get_xex
 
 from sawx.utils.processutil import which
 from sawx.utils.textutil import text_to_int

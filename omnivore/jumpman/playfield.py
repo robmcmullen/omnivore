@@ -3,7 +3,7 @@ import os
 import wx
 
 import numpy as np
-from atrcopy import SegmentData, DefaultSegment, selected_bit_mask, comment_bit_mask, user_bit_mask, match_bit_mask
+from atrip import Segment, Container, style_bits
 
 from . import parser as ju
 from . import commands as jc
@@ -86,8 +86,8 @@ class JumpmanPlayfieldModel(object):
     def get_playfield_segment(self, playfield=None):
         if playfield is None:
             playfield = self.get_playfield()
-        r = SegmentData(playfield)
-        return DefaultSegment(r, 0x7000)
+        c = Container(playfield)
+        return Segment(c, origin=0x7000)
 
     def clear_playfield(self, playfield=None):
         if playfield is None:
@@ -160,9 +160,9 @@ class JumpmanPlayfieldModel(object):
             self.level_builder.draw_objects(screen, root, self.segment, highlight=root, pick_buffer=self.pick_buffer)
             # change highlight to comment color for selected trigger coin so
             # you don't get confused with any objects actually selected
-            old_highlight = np.where(screen.style == selected_bit_mask)
-            screen.style[old_highlight] |= comment_bit_mask
-            screen.style[:] &= (0xff ^ (match_bit_mask|selected_bit_mask))
+            old_highlight = np.where(screen.style == style_bits.selected_bit_mask)
+            screen.style[old_highlight] |= style_bits.comment_bit_mask
+            screen.style[:] &= (0xff ^ (style_bits.match_bit_mask|style_bits.selected_bit_mask))
 
             # replace screen state so that the only pickable objects are
             # those in the triggered layer
@@ -194,8 +194,8 @@ class JumpmanPlayfieldModel(object):
         self.playfield.style[:] = 0
         self.force_refresh = True
         s = self.playfield.style.reshape((self.antic_lines, -1))
-        s[::2,::2] = comment_bit_mask
-        s[1::2,1::2] = comment_bit_mask
+        s[::2,::2] = style_bits.comment_bit_mask
+        s[1::2,1::2] = style_bits.comment_bit_mask
         self.set_current_screen()
         return
 

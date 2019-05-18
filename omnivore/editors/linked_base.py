@@ -14,7 +14,7 @@ from sawx.utils.command import DisplayFlags
 from sawx.events import EventHandler
 
 from ..commands import CoalescingChangeByteCommand
-from ..utils.segmentutil import SegmentData, DefaultSegment
+from ..utils.segmentutil import Segment
 from ..jumpman import playfield as jp
 
 import logging

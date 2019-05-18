@@ -28,8 +28,8 @@ This conversion is device independent; the code that displays pixels on screen w
 """
 import numpy as np
 
-from atrcopy import match_bit_mask, comment_bit_mask, selected_bit_mask, diff_bit_mask, user_bit_mask, not_user_bit_mask
-ignore_mask = not_user_bit_mask & (0xff ^ diff_bit_mask)
+from atrip import style_bits
+ignore_mask = style_bits.not_user_bit_mask & (0xff ^ style_bits.diff_bit_mask)
 invalid_style = 0xff
 
 from sawx.utils.permute import bit_reverse_table
@@ -233,13 +233,13 @@ def calc_rgb_from_color_indexes_python(color_indexes, style_per_pixel, colors, e
             flat_image[i] = empty_color
         elif style & ignore_mask == 0:
             flat_image[i] = color_registers[color_index]
-        elif style & selected_bit_mask:
+        elif style & style_bits.selected_bit_mask:
             flat_image[i] = h_colors[color_index]
-        elif (style & user_bit_mask) > 0:
+        elif (style & style_bits.user_bit_mask) > 0:
             flat_image[i] = d_colors[color_index]
-        elif style & comment_bit_mask:
+        elif style & style_bits.comment_bit_mask:
             flat_image[i] = h_colors[color_index]
-        elif style & match_bit_mask:
+        elif style & style_bits.match_bit_mask:
             flat_image[i] = h_colors[color_index]
         else:
             flat_image[i] = (0xff, 0, 0xee)  # not any of the above?
