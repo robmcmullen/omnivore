@@ -62,7 +62,11 @@ class AtariCasDirent(Dirent):
         offset_index = 0
         keep_reading = True
         while keep_reading:
-            chunk = media.get_chunk(index)
+            try:
+                chunk = media.get_chunk(index)
+            except errors.InvalidSectorNumber:
+                # EOF; maybe it's a tape without the 0xfe record?
+                break
             log.debug(f"Reading chunk {chunk}")
             if chunk.chunk_type == "FUJI":
                 # somehow encountered another start chunk; previous was missing
