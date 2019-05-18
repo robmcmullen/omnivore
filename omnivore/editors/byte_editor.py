@@ -270,7 +270,7 @@ class ByteEditor(TileManagerBase):
 
     @classmethod
     def can_edit_document_exact(cls, document):
-        return "atrip_identified" in document.file_metadata
+        return "atrip_collection" in document.file_metadata
 
     @classmethod
     def can_edit_document_generic(cls, document):

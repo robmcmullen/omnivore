@@ -112,49 +112,41 @@ class DiskImageDocument(SawxDocument):
                 lines.append("  %s" % s)
         return "\n---- ".join(lines)
 
+    def __len__(self):
+        # different that superclass; reports number of containers in collection
+        return len(self.collection)
+
     #### loaders
 
-    def load_session(self):
-        super().load_session()
-        self.collection = Collection(self.uri, self.raw_data)
+    def load(self, file_metadata):
+        log.debug(f"load: file_metadata={file_metadata}")
+        try:
+            self.collection = file_metadata["atrip_collection"]
+        except (KeyError, TypeError):
+            super().load(file_metadata)
+        else:
+            log.debug(f"load: found collection {self.collection}")
+            self.file_metadata = file_metadata
+            self.load_session()
         self.segments = list(self.collection.iter_segments())
         self.user_segments = []
-
-        # if "atrcopy_parser" in self.file_metadata:
-        #     self.load_from_atrcopy_parser()
-        # else:
-        #     self.load_from_raw_data()
-        # self.restore_session(self.last_session)
-        print(f"load_session: segments: {self.segments}")
-
-    def load_from_atrcopy_parser(self):
-        # make sure a parser exists; it probably does in most cases, but
-        # emulators use a source document to create the EmulationDocument, and
-        # the EmulationDocument won't have a parser assigned if it isn't being
-        # restored from a .omnivore file
-        self.set_segments(self.file_metadata["atrcopy_parser"])
-        print(f"load_from_atrcopy_parser: segments: {self.segments}")
-
-    def load_from_raw_data(self, data, file_metadata, last_session):
-        self.parse_segments([])
 
     #### serialization methods
 
     def serialize_session(self, s):
         SawxDocument.serialize_session(self, s)
+        s2 = {}
+        self.collection.serialize_session(s2)
+        s["atrip_session"] = s2
 
-        s["segment parser"] = self.segment_parser
         s["serialized user segments"] = list(self.user_segments)
-        self.container_segment.serialize_session(s)
         s["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
 
     def restore_session(self, e):
         SawxDocument.restore_session(self, e)
-
-        if 'segment parser' in e:
-            parser = e['segment parser']
-            parser.reconstruct_segments(self.container_segment.rawdata)
-            self.set_segments(parser)
+        s2 = e.get("atrip_session", None)
+        if s2 is not None:
+            self.collection.restore_session(s2)
         if 'user segments' in e:
             # Segment objects created by the utils.extra_metadata module
             for s in e['user segments']:
@@ -164,13 +156,8 @@ class DiskImageDocument(SawxDocument):
             for s in e['serialized user segments']:
                 s.reconstruct_raw(self.container_segment.rawdata)
                 self.add_user_segment(s, replace=True)
-        self.container_segment.restore_session(e)
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
-
-        # One-time call to enforce the new requirement that bytes marked with
-        # the comment style must have text associated with them.
-        self.container_segment.fixup_comments()
 
     #### convenience methods
 
