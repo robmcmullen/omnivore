@@ -25,9 +25,9 @@ setup(name="atrip",
         include_package_data=True,
         scripts=scripts,
         entry_points={
-            # "sawx.loaders": [
-            #     'atrip = atrip.omnivore_loader',
-            # ],
+            "sawx.loaders": [
+                'atrip = atrip.omnivore_loader',
+            ],
 
             "atrip.archivers": [
                 'zip = atrip.archivers.zip',

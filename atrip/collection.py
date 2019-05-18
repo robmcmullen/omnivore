@@ -24,13 +24,12 @@ class Collection:
     """
     ui_name = "Collection"
 
-    def __init__(self, pathname, data):
+    def __init__(self, pathname, data, session=None):
         self.pathname = pathname
-        self.filename = os.path.basename(pathname)
         self.name = ""
         self.containers = []
         self.archiver = None
-        self.unarchive(data)
+        self.unarchive(data, session)
 
     @property
     def verbose_info(self):
@@ -44,6 +43,10 @@ class Collection:
     @property
     def basename(self):
         return os.path.basename(self.pathname)
+
+    @property
+    def mime_type(self):
+        return "application/octet-stream"
 
     #### dunder methods
 
@@ -59,7 +62,7 @@ class Collection:
 
     #### compression
 
-    def unarchive(self, byte_data):
+    def unarchive(self, byte_data, session=None):
         """Attempt to unpack `byte_data` using this archive unpacker.
 
         Calls `find_containers` to loop through each container found. The order
@@ -67,15 +70,18 @@ class Collection:
         done here.
         """
         self.archiver, item_data_list = find_container_items_in_archive(self.pathname, byte_data)
-        for item_data in item_data_list:
-            log.info(f"container size: {len(item_data)}")
-            container = guess_container(item_data)
-            container.pathname = self.pathname
-            container.guess_media_type()
-            container.guess_filesystem()
-            self.containers.append(container)
-            container.name = f"D{len(self.containers)}"
-            log.info(f"container: {container}")
+        if session is not None:
+            self.restore_session(session, item_data_list)
+        else:
+            for item_data in item_data_list:
+                log.info(f"container size: {len(item_data)}")
+                container = guess_container(item_data)
+                container.pathname = self.pathname
+                container.guess_media_type()
+                container.guess_filesystem()
+                self.containers.append(container)
+                container.name = f"D{len(self.containers)}"
+                log.info(f"container: {container}")
 
     def iter_archive(self, byte_data):
         """Return a list of `Container` objects for each item in the archive.
@@ -137,3 +143,28 @@ class Collection:
             else:
                 return segment
         raise errors.InvalidSegment(f"No segment in any disk with uuid={uuid}")
+
+    #### session
+
+    def serialize_session(self, e):
+        """Save session information to a dict so that it can be serialized.
+
+        Note that only the structure of the containers is saved, not the byte
+        data. Styling and disassembler info is saved, however.
+        """
+        e["pathname"] = self.pathname
+        e["name"] = self.name
+        e["archiver"] = self.archiver
+        e["containers"] = self.containers
+
+    def restore_session(self, e, item_data_list):
+        # log.debug("restoring sesssion data: %s" % str(e))
+        self.pathname = e["pathname"]
+        self.name = e["name"]
+        self.archiver = e["archiver"]
+
+        # containers will not contain the byte data here, only empty arreys of
+        # the correct size. Must copy the actual data into the containers.
+        self.containers = e["containers"]
+        for c, d in zip(self.containers, item_data_list):
+            c._data[:] = d
