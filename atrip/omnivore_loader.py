@@ -21,7 +21,7 @@ def identify_loader(file_guess):
 
         if collection.mime_type:
             log.debug(f"atrip loader: identified {collection.mime_type}")
-            return dict(mime=collection.mime_type, ext="", atrip_identified=collection)
+            return dict(mime=collection.mime_type, ext="", atrip_collection=collection)
         else:
             log.debug(f"atrip loader: not recognized")
     return None
