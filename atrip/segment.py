@@ -141,6 +141,11 @@ class Segment:
                 yield segment
             yield from segment.iter_segments(segment_type)
 
+    def iter_menu(self, level):
+        for segment in self.segments:
+            yield (segment, level)
+            yield from segment.iter_menu(level + 1)
+
     #### offsets
 
     def calc_offset_list(self, container_or_segment, offset_or_offset_list=None, length=None):

@@ -202,11 +202,7 @@ class Container:
     #### dunder methods
 
     def __str__(self):
-        if self.media:
-            desc = str(self.media)
-        else:
-            desc = f"{self.ui_name}, size={len(self)}"
-        return desc
+        return f"{self.basename}, size={len(self)}"
 
     def __len__(self):
         return np.alen(self._data)
@@ -230,6 +226,11 @@ class Container:
         for segment in self.segments:
             yield segment
             yield from segment.iter_segments()
+
+    def iter_menu(self, level):
+        for segment in self.segments:
+            yield (segment, level)
+            yield from segment.iter_menu(level + 1)
 
     def iter_dirents(self):
         for segment in self.media.segments:

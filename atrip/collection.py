@@ -109,6 +109,11 @@ class Collection:
         for container in self.containers:
             yield from container.iter_segments()
 
+    def iter_menu(self):
+        for container in self.containers:
+            yield (container, 0)
+            yield from container.iter_menu(1)
+
     def iter_dirents(self):
         for container in self.containers:
             yield from container.iter_dirents()

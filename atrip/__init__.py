@@ -481,6 +481,7 @@ def run():
         "delete": ["rm", "del"],
         "vtoc": ["v"],
         "segments": [],
+        "menu": [],
     }
     # reverse aliases does the inverse mapping of command aliases, including
     # the identity mapping of "command" to "command"
@@ -570,6 +571,10 @@ def run():
     p = subparsers.add_parser(command, help="Show the list of parsed segments in the disk image", aliases=command_aliases[command])
     p.add_argument("disk_image", metavar="DISK_IMAGE", nargs=1, help="disk image")
 
+    command = "menu"
+    p = subparsers.add_parser(command, help="Show the segment hierarchy in the disk image", aliases=command_aliases[command])
+    p.add_argument("disk_image", metavar="DISK_IMAGE", nargs=1, help="disk image")
+
 
     # argparse doesn't seem to allow a default command, so if the first
     # argument isn't recognized, use the "list" command
@@ -642,3 +647,6 @@ def run():
                 assemble(container, asm, data, obj, options.run_addr)
             elif command == "segments":
                 print(collection.verbose_info)
+            elif command == "menu":
+                for item, level in collection.iter_menu():
+                    print(f"{level}: {item}")
