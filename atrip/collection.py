@@ -34,7 +34,7 @@ class Collection:
     @property
     def verbose_info(self):
         lines = []
-        name = self.name or self.filename
+        name = self.name or self.pathname
         lines.append(f"{name}: {self}")
         for c in self.containers:
             lines.append(c.container_info("    "))
@@ -157,14 +157,19 @@ class Collection:
         e["archiver"] = self.archiver
         e["containers"] = self.containers
 
-    def restore_session(self, e, item_data_list):
+    def restore_session(self, e, item_data_list=None):
         # log.debug("restoring sesssion data: %s" % str(e))
         self.pathname = e["pathname"]
         self.name = e["name"]
         self.archiver = e["archiver"]
 
-        # containers will not contain the byte data here, only empty arreys of
-        # the correct size. Must copy the actual data into the containers.
+        if item_data_list is None:
+            item_data_list = [c._data for c in self.containers]
+
+        # unless restoring a session over top of existing containers, the
+        # containers will have been initialized with zeros from the jsonpickle
+        # restore. The arrays will be the correct size, so all we have to do is
+        # copy the actual data into the containers.
         self.containers = e["containers"]
         for c, d in zip(self.containers, item_data_list):
             c._data[:] = d
