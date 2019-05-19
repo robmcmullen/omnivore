@@ -2,6 +2,7 @@ import os
 import hashlib
 import inspect
 import pkg_resources
+import weakref
 
 import numpy as np
 
@@ -28,6 +29,7 @@ class Collection:
         self.pathname = pathname
         self.name = ""
         self.containers = []
+        self._uuid_map = None
         self.archiver = None
         self.unarchive(data, session)
 
@@ -48,6 +50,15 @@ class Collection:
     def mime_type(self):
         return "application/octet-stream"
 
+    @property
+    def uuid_map(self):
+        if self._uuid_map is None:
+            self._uuid_map = {}
+            for segment in self.iter_segments():
+                self._uuid_map[segment.uuid] = weakref.ref(segment)
+            log.debug(f"created uuid map: {self._uuid_map}")
+        return self._uuid_map
+
     #### dunder methods
 
     def __str__(self):
@@ -59,6 +70,13 @@ class Collection:
 
     def __len__(self):
         return np.alen(self.containers)
+
+    def __getitem__(self, index):
+        """Returns segment given the uuid, raising KeyError if not found
+        """
+        ref = self.uuid_map[index]
+        segment = ref()
+        return segment
 
     #### compression
 
@@ -82,6 +100,7 @@ class Collection:
                 self.containers.append(container)
                 container.name = f"D{len(self.containers)}"
                 log.info(f"container: {container}")
+        self._uuid_map = None
 
     def iter_archive(self, basename, byte_data):
         """Return a list of `Container` objects for each item in the archive.
@@ -140,14 +159,11 @@ class Collection:
         return container.find_dirent(pathname, match_case)
 
     def find_uuid(self, uuid):
-        for container in self.containers:
-            try:
-                segment = container.find_uuid(uuid)
-            except errors.InvalidSegment:
-                pass
-            else:
-                return segment
-        raise errors.InvalidSegment(f"No segment in any disk with uuid={uuid}")
+        try:
+            segment = self.uuid_map[uuid]
+        except KeyError:
+            raise errors.InvalidSegment(f"No segment in any disk with uuid={uuid}")
+        return segment
 
     #### session
 
