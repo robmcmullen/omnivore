@@ -15,12 +15,14 @@ log = logging.getLogger(__name__)
 
 
 class SegmentEntry:
-    def __init__(self, segment, segment_number):
+    spaces_per_level = 4
+
+    def __init__(self, segment, level):
         self.segment = segment
-        self.segment_number = segment_number
+        self.indent_level = level * self.spaces_per_level
 
     def __str__(self):
-        return str(self.segment)
+        return (" " * self.indent_level) + str(self.segment)
 
 
 class segment_select(SawxRadioListAction):
@@ -34,21 +36,23 @@ class segment_select(SawxRadioListAction):
     def calc_list_items(self):
         valid_segments = []
         doc = self.editor.document
-        if doc is not None and doc.segments is not None and doc.segments:
-            for i, segment in enumerate(doc.segments):
+        if doc is not None and doc.collection is not None:
+            for segment, level in doc.collection.iter_menu():
                 if self.is_valid_segment(segment):
-                    valid_segments.append(SegmentEntry(segment, i))
+                    valid_segments.append(SegmentEntry(segment, level))
         return valid_segments
 
     def calc_checked_list_item(self, action_key, index, item):
-        doc = self.editor.document
-        if item.segment_number >= len(doc.segments) or item.segment != doc.segments[item.segment_number]:
+        collection = self.editor.document.collection
+        try:
+            segment = collection[item.segment.uuid]
+        except KeyError:
             raise errors.RecreateDynamicMenuBar
-        return self.editor.segment_number == item.segment_number
+        return self.editor.segment_uuid == item.segment.uuid
 
     def perform(self, action_key):
         item = self.get_item(action_key)
-        self.editor.view_segment_number(item.segment_number)
+        self.editor.view_segment_uuid(item.segment.uuid)
 
 
 def prompt_for_comment(e, s, ranges, desc):

@@ -31,8 +31,8 @@ class SegmentList(wx.ListBox):
             # interfere with the normal Ctrl-F find processing
             self.ui_action = wx.UIActionSimulator()
             self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook_find_hack)
-        self.index_to_segment_number = []
-        self.segment_number_to_index = {}
+        self.index_to_segment_uuid = []
+        self.segment_uuid_to_index = {}
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size
@@ -48,8 +48,8 @@ class SegmentList(wx.ListBox):
         return best
 
     def recalc_view(self):
-        d = self.linked_base.document
-        self.set_segments(d.segments, self.linked_base.segment_number)
+        c = self.linked_base.document.collection
+        self.set_segments(c, self.linked_base.segment_uuid)
 
     def refresh_view(self):
         self.Refresh()
@@ -57,22 +57,22 @@ class SegmentList(wx.ListBox):
     def show_segment_in_list(self, segment):
         return True
 
-    def filter_segments(self, segments, selected=0):
-        self.index_to_segment_number = []
-        self.segment_number_to_index = {}
+    def filter_segments(self, collection, selected=None):
+        self.index_to_segment_uuid = []
+        self.segment_uuid_to_index = {}
         names = []
         found = 0
-        for segment_index, s in enumerate(segments):
-            if self.show_segment_in_list(s):
-                if selected == segment_index:
-                    found = len(self.index_to_segment_number)
-                self.index_to_segment_number.append(segment_index)
-                self.segment_number_to_index[segment_index] = len(names)
-                names.append(str(s))
+        for segment_index, (segment, level) in enumerate(collection.iter_menu()):
+            if self.show_segment_in_list(segment):
+                if selected == segment.uuid:
+                    found = len(self.index_to_segment_uuid)
+                self.index_to_segment_uuid.append(segment.uuid)
+                self.segment_uuid_to_index[segment.uuid] = len(names)
+                names.append(str(segment))
         return names, found
 
-    def set_segments(self, segments, selected=0):
-        items, selected = self.filter_segments(segments, selected)
+    def set_segments(self, collection, selected=0):
+        items, selected = self.filter_segments(collection, selected)
         if len(items) != self.GetCount():
             self.SetItems(items)
         else:
@@ -114,9 +114,9 @@ class SegmentList(wx.ListBox):
         event.Skip()
 
     def process_segment_change(self, index):
-        segment_number = self.index_to_segment_number[index]
-        if segment_number != self.linked_base.segment_number:
-            wx.CallAfter(self.linked_base.view_segment_number, segment_number)
+        segment_uuid = self.index_to_segment_uuid[index]
+        if segment_uuid != self.linked_base.segment_uuid:
+            wx.CallAfter(self.linked_base.view_segment_uuid, segment_uuid)
 
     def on_dclick(self, event):
         event.Skip()
@@ -142,16 +142,15 @@ class SegmentList(wx.ListBox):
             None,
             ]
         if selected > 0:
-            actions.append(SelectSegmentInAllAction(segment_number=selected, task=t))
-            actions.append(ParseSubSegmentsAction(segment_number=selected, task=t))
-            if segment != d.container_segment:
-                actions.append(SetSegmentOriginAction(segment_number=selected, task=t))
-                actions.append(DeleteUserSegmentAction(segment_number=selected, task=t))
+            actions.append(SelectSegmentInAllAction(segment_uuid=selected, task=t))
+            actions.append(ParseSubSegmentsAction(segment_uuid=selected, task=t))
+            actions.append(SetSegmentOriginAction(segment_uuid=selected, task=t))
+            actions.append(DeleteUserSegmentAction(segment_uuid=selected, task=t))
             actions.append(None)
         savers = e.get_extra_segment_savers(segment)
         savers.extend(segment.savers)
         for saver in savers:
-            action = SaveSegmentAsFormatAction(saver=saver, segment_number=selected, task=t, name="Save as %s" % saver.export_data_name)
+            action = SaveSegmentAsFormatAction(saver=saver, segment_uuid=selected, task=t, name="Save as %s" % saver.export_data_name)
             actions.append(action)
         if actions:
             e.popup_context_menu_from_actions(self, actions)
@@ -182,7 +181,7 @@ class SegmentList(wx.ListBox):
             index = max(index - 1, 0)
             moved = True
         elif key == wx.WXK_DOWN:
-            index = min(index + 1, len(self.index_to_segment_number) - 1)
+            index = min(index + 1, len(self.index_to_segment_uuid) - 1)
             moved = True
         # elif key == wx.WXK_PAGEUP:
         #     index = self.table.get_page_index(e.caret_index, e.segment.page_size, -1, self)
@@ -210,9 +209,9 @@ class SegmentList(wx.ListBox):
             self.task.on_hide_minibuffer_or_cancel(evt)
         evt.Skip()
 
-    def move_caret(self, segment_number):
+    def move_caret(self, segment_uuid):
         try:
-            index = self.segment_number_to_index[segment_number]
+            index = self.segment_uuid_to_index[segment_uuid]
         except KeyError:
             return
         self.SetSelection(index)

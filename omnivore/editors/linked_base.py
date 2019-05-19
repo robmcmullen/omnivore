@@ -49,8 +49,8 @@ class LinkedBase:
         self.editor = editor
 
         self.segment = blank_segment
-        self.segment_number = 0
-        self.restore_session_segment_number = -1
+        self.segment_uuid = None
+        self.restore_session_segment_uuid = None
         self.has_origin = False
         self.segment_view_params = {}
 
@@ -110,8 +110,8 @@ class LinkedBase:
             self.diff_highlight = bool(e['diff highlight'])
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
-        if 'segment number' in e:
-            self.restore_session_segment_number = e['segment number']
+        if 'segment_uuid' in e:
+            self.restore_session_segment_uuid = e['segment_uuid']
 
     def serialize_session(self, mdict):
         # make sure to save latest values of currently viewed segment
@@ -119,7 +119,7 @@ class LinkedBase:
 
         mdict['uuid'] = self.uuid
         mdict['segment view params'] = self.segment_view_params
-        mdict['segment number'] = self.segment_number
+        mdict['segment_uuid'] = self.segment_uuid
 
     def save_segment_view_params(self, segment):
         d = {}
@@ -153,61 +153,51 @@ class LinkedBase:
                 except AttributeError:
                     continue
 
-    def find_segment_parser(self, parsers, segment_name=None):
-        self.document.parse_segments(parsers)
-        self.find_segment(segment_name)
-
-    def find_first_valid_segment_index(self):
-        return 0
+    def find_first_valid_segment_uuid(self):
+        uuid = self.document.collection.containers[0].segments[0].uuid
+        return uuid
 
     def find_segment(self, segment, refresh=False, data_model_changed=True):
         if segment is not None:
-            index = self.document.find_segment_index(segment)
-        elif self.segment_number == 0:
-            index = self.find_first_valid_segment_index()
+            uuid = segment.uuid
+        elif self.segment_uuid == None:
+            uuid = self.find_first_valid_segment_uuid()
         else:
-            index = self.segment_number
-        log.debug("find_segment: changing from %d to %d, input=%s" % (self.segment_number, index, segment))
-        if index < 0:
-            index = 0
-        self.segment_parser = self.document.segment_parser
+            uuid = self.segment_uuid
+        log.debug("find_segment: changing from %d to %d, input=%s" % (self.segment_uuid, uuid, segment))
 
         if refresh:
-            self.view_segment_number(index)
+            self.view_segment_uuid(uuid)
             data_model_changed = False
         else:
-            self.segment_number = index
-            self.segment_parser = self.document.segment_parser
-            self.segment = self.document.segments[index]
+            self.segment_uuid = uuid
+            self.segment = self.document.collection[uuid]
 
         if data_model_changed:
             self.force_data_model_update()
             self.restore_segment_view_params(self.segment)
-            self.task.segments_changed = self.document.segments
-            self.segment_selected_event(self.segment_number)
+            self.task.segments_changed = self.document.segments  # FIXME
+            self.segment_selected_event(self.segment_uuid)
 
-    def set_segment_parser(self, parser):
-        self.find_segment_parser([parser])
-        self.rebuild_ui()
-
-    def view_segment_number(self, number):
-        log.debug("view_segment_number: changing to %d from %d" % (number, self.segment_number))
+    def view_segment_uuid(self, uuid):
+        log.debug(f"view_segment_uuid: changing to {uuid} from {self.segment_uuid}")
         doc = self.document
-        num = number if number < len(doc.segments) else len(doc.segments) - 1
-        if num != self.segment_number or len(self.segment) == 0:
+        if uuid is None:
+            uuid = self.find_first_valid_segment_uuid()
+        if uuid != self.segment_uuid:
             old_segment = self.segment
             if old_segment is not None:
                 self.save_segment_view_params(old_segment)
-            self.segment = doc.segments[num]
-            self.segment_number = num
+            self.segment = doc.collection[uuid]
+            self.segment_uuid = uuid
             self.recalc_event(True)
             self.adjust_selection(old_segment)
 
             #self.show_trace()
-            self.segment_selected_event(self.segment_number)
+            self.segment_selected_event(self.segment_uuid)
             #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
             #self.task.update_window_title()
-        log.debug(f"view_segment_number: changed to {self.segment_number}")
+        log.debug(f"view_segment_uuid: changed to {self.segment_uuid}")
 
     def force_refresh(self):
         flags = DisplayFlags()
@@ -218,11 +208,6 @@ class LinkedBase:
 
     def process_flags(self, flags):
         self.editor.process_flags(flags)
-
-    def rebuild_ui(self):
-        self.segment = self.document.segments[self.segment_number]
-        self.reconfigure_panes()
-        self.update_segments_ui()
 
     #### convenience functions
 
@@ -246,8 +231,8 @@ class LinkedBase:
     #     if number < 0:
     #         log.error("tried to restore caret to a deleted segment? %s" % segment)
     #     else:
-    #         if number != self.segment_number:
-    #             self.view_segment_number(number)
+    #         if number != self.segment_uuid:
+    #             self.view_segment_uuid(number)
     #         CaretHandler.restore_caret_state(self, carets)
     #     log.debug(self.caret_history)
 
@@ -266,7 +251,7 @@ class LinkedBase:
         all the selection indexes will be set to zero.
         """
         # find byte index of view into master array
-        g = self.document.container_segment
+        g = old_segment.container
         s = self.segment
 
         self.restore_segment_view_params(s)
@@ -357,17 +342,11 @@ class VirtualTableLinkedBase(LinkedBase):
     def document_length(self):
         return self.table.last_valid_index + 1
 
-    def find_segment_parser(self, parsers, segment_name=None):
-        log.debug("segment change operations ignored on VirtualLinkedBase")
-
-    def find_first_valid_segment_index(self):
+    def find_first_valid_segment_uuid(self):
         log.debug("segment change operations ignored on VirtualLinkedBase")
 
     def find_segment(self, segment, refresh=False, data_model_changed=True):
         log.debug("segment change operations ignored on VirtualLinkedBase")
 
-    def set_segment_parser(self, parser):
-        log.debug("segment change operations ignored on VirtualLinkedBase")
-
-    def view_segment_number(self, number):
+    def view_segment_uuid(self, uuid):
         log.debug("segment change operations ignored on VirtualLinkedBase")

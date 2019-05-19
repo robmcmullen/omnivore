@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 class DummyLinkedBase(object):
     segment = None
-    segment_number = 0
+    segment_uuid = 0
 
 class DummyFocusedViewer(object):
     linked_base = DummyLinkedBase
@@ -52,7 +52,7 @@ class ByteEditor(TileManagerBase):
                 "viewers": [
                     ...
                 ],
-                "linked_base_view_segment_number" {
+                "linked_base_view_segment_uuid" {
                     "uuid1": 0,
                     "uuid2": 3,
                 }.
@@ -250,8 +250,8 @@ class ByteEditor(TileManagerBase):
         return self.focused_viewer.linked_base
 
     @property
-    def segment_number(self):
-        return self.focused_viewer.linked_base.segment_number
+    def segment_uuid(self):
+        return self.focused_viewer.linked_base.segment_uuid
 
     @property
     def section_name(self):
@@ -280,8 +280,8 @@ class ByteEditor(TileManagerBase):
 
     def show(self, args=None):
         print("document", self.document)
+        print("collection", self.document.collection)
         print("segments", self.document.segments)
-        print("document", self.document)
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
@@ -291,14 +291,14 @@ class ByteEditor(TileManagerBase):
         self.document.recalc_event()
 
     def create_layout_from_args(self, args):
-        print(f"Creating layout from {args}")
+        log.debug(f"Creating layout from {args}")
         self.center_base = LinkedBase(self)
         self.linked_bases = {self.center_base.uuid:self.center_base}
         viewer_metadata = {}
         for name, value in args.items():
             viewer_metadata[name.strip()] = {}
         self.create_viewers(viewer_metadata)
-        self.center_base.view_segment_number(0)
+        self.center_base.view_segment_uuid(None)
 
     def restore_session(self, s):
         log.debug("metadata: %s" % str(s))
@@ -306,7 +306,7 @@ class ByteEditor(TileManagerBase):
             self.diff_highlight = bool(s['diff highlight'])
         self.restore_linked_bases(s)
         self.restore_layout_and_viewers(s)
-        self.restore_view_segment_number(s)
+        self.restore_view_segment_uuid(s)
 
     def restore_linked_bases(self, s):
         linked_bases = {}
@@ -325,18 +325,18 @@ class ByteEditor(TileManagerBase):
         log.critical(f"linked_bases: {linked_bases}")
         self.linked_bases = linked_bases
 
-    def restore_view_segment_number(self, s):
+    def restore_view_segment_uuid(self, s):
         for uuid, lb in self.linked_bases.items():
-            segment_number = max(lb.restore_session_segment_number, 0)
-            log.debug(f"restore_view_segment_number: {uuid}->{segment_number}")
-            lb.view_segment_number(segment_number)
+            segment_uuid = lb.restore_session_segment_uuid
+            log.debug(f"restore_view_segment_uuid: {uuid}->{segment_uuid}")
+            lb.view_segment_uuid(segment_uuid)
 
     def rebuild_document_properties(self):
         if not self.document.has_baseline:
             self.use_self_as_baseline(self.document)
         FrameworkEditor.rebuild_document_properties(self)
         b = self.focused_viewer.linked_base
-        if b.segment_number == 0:
+        if b.segment_uuid is None:
             self.document.find_initial_visible_segment(b)
         log.debug("rebuilding document %s; initial segment=%s" % (str(self.document), b.segment))
         self.compare_to_baseline()
@@ -396,10 +396,6 @@ class ByteEditor(TileManagerBase):
         self.document.change_count += 1
         self.update_caret_history()
 
-    def rebuild_ui(self):
-        log.debug("rebuilding focused_base: %s" % str(self.focused_viewer.linked_base))
-        self.document.recalc_event = True
-
     def refresh_panes(self):
         log.debug("refresh_panes called")
 
@@ -411,9 +407,9 @@ class ByteEditor(TileManagerBase):
             viewer.update_caption()
         self.control.update_captions()
 
-    def view_segment_number(self, number):
+    def view_segment_uuid(self, uuid):
         base = self.focused_viewer.linked_base
-        base.view_segment_number(number)
+        base.view_segment_uuid(uuid)
         self.update_pane_names()
 
     def get_extra_segment_savers(self, segment):
@@ -462,55 +458,6 @@ class ByteEditor(TileManagerBase):
     def compare_to_baseline(self):
         if self.diff_highlight and self.document.has_baseline:
             self.document.update_baseline()
-
-    def add_user_segment(self, segment, update=True):
-        self.document.add_user_segment(segment)
-        self.added_segment(segment, update)
-
-    def added_segment(self, segment, update=True):
-        if update:
-            self.update_segments_ui()
-        self.metadata_dirty = True
-
-    def delete_user_segment(self, segment):
-        self.document.delete_user_segment(segment)
-        self.view_segment_number(self.segment_number)
-        self.update_segments_ui()
-        self.metadata_dirty = True
-
-    def update_segments_ui(self):
-        # Note: via profiling, it turns out that this is a very heavyweight
-        # call, producing hundreds of thousands of trait notifier events. This
-        # should only be called when the number of segments or document has
-        # changed. If only the segment being viewed is changed, just set the
-        # task.segment_selected trait
-        log.debug("update_segments_ui costs a lot of time!!!!!!")
-        if self.focused_viewer.linked_base.segment_parser is not None:
-            self.segment_parser_label = self.focused_viewer.linked_base.segment_parser.menu_name
-        else:
-            self.segment_parser_label = "No parser"
-        self.task.segments_changed = self.document.segments
-        self.focused_viewer.linked_base.segment_selected_event = self.segment_number
-
-    def find_in_user_segment(self, base_index):
-        # FIXME: Profiling shows this as a big bottleneck when there are
-        # comments. It inefficiently loops over segments, then the call to
-        # get_index_from_base is super slow in atrcopy because of all the
-        # calculations and dereferences needed to compute the index. That
-        # probably needs to be cached.
-        for s in self.document.user_segments:
-            try:
-                index = s.get_index_from_base_index(base_index)
-                return s, index
-            except IndexError:
-                continue
-        for s in self.document.segment_parser.segments[1:]:
-            try:
-                index = s.get_index_from_base_index(base_index)
-                return s, index
-            except IndexError:
-                continue
-        return None, None
 
     def do_popup(self, control, popup):
         # The popup event may happen on a control that isn't the focused

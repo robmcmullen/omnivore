@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 class DummyLinkedBase(object):
     segment = None
-    segment_number = 0
+    segment_uuid = None
 
 class DummyFocusedViewer(object):
     linked_base = DummyLinkedBase
@@ -189,6 +189,7 @@ class TileManagerBase(SawxEditor):
                 if not self.control.in_sidebar(viewer.control):
                     break
         print(("setting focus to %s" % viewer))
+        print("center base", self.center_base.segment_uuid)
         self.set_focused_viewer(viewer)
         self.task.segments_changed = self.document.segments
 
@@ -269,9 +270,9 @@ class TileManagerBase(SawxEditor):
         print(f"Center base is: {self.center_base}")
 
     def unlink_viewer(self):
-        number = self.focused_viewer.linked_base.segment_number
+        number = self.focused_viewer.linked_base.segment_uuid
         base = LinkedBase(editor=self)
-        base.view_segment_number(number)
+        base.view_segment_uuid(number)
         self.replace_focused_viewer(base)
         self.verify_center_base_is_used()
 
@@ -366,7 +367,7 @@ class TileManagerBase(SawxEditor):
         self.focused_viewer = viewer
         self.focused_viewer_changed_event(viewer)
         self.caret_handler = viewer.linked_base
-        viewer.linked_base.segment_selected_event(viewer.linked_base.segment_number)
+        viewer.linked_base.segment_selected_event(viewer.linked_base.segment_uuid)
         self.set_menu_for_viewer(viewer)
 
     def set_menu_for_viewer(self, viewer):

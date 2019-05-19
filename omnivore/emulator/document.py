@@ -20,7 +20,7 @@ class EmulatorSegmentParser(SegmentParser):
     menu_name = "Emulator Save State"
     def parse(self):
         r = self.segment_data
-        self.segments.append(self.container_segment(r, 0, name=self.menu_name))
+        self.segments.append(self.collection(r, 0, name=self.menu_name))
         for start, count, offset, name in self.save_state_memory_blocks:
             if count > 0:
                 print(f"creating emulator segment {name} at {hex(start)}:{hex(start + count)}")
@@ -178,7 +178,7 @@ class EmulationDocument(DiskImageDocument):
 
     def load(self, segment=None):
         if segment is None:
-            segment = self.source_document.container_segment
+            segment = self.source_document.collection
         emu = self.emulator
         emu.begin_emulation([], segment)
         for i in range(self.skip_frames_on_boot):

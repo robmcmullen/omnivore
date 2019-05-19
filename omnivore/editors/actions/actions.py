@@ -334,7 +334,7 @@ class TextFontAction(ViewerAction):
             v.machine.set_text_font(font, data.GetColour())
             prefs = self.viewer.linked_base.cached_preferences
             prefs.text_font = font
-            self.editor.rebuild_ui()
+            self.editor.document.recalc_event(True)
 
 
 class PredefinedMachineAction(ViewerAction):
@@ -678,7 +678,7 @@ class ClearTraceAction(ViewerAction):
     enabled_name = 'has_cpu'
 
     def perform(self, event):
-        cmd = commands.ClearTraceCommand(self.active_editor.document.container_segment)
+        cmd = commands.ClearTraceCommand(self.active_editor.document.collection)
         self.active_editor.process_command(cmd)
 
 

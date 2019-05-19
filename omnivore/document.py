@@ -57,7 +57,7 @@ class DiskImageDocument(SawxDocument):
 
     @property
     def can_resize(self):
-        return self.segments and self.container_segment.can_resize
+        return self.segments and self.collection.can_resize
 
     @property
     def labels(self):
@@ -101,15 +101,9 @@ class DiskImageDocument(SawxDocument):
 
     def __str__(self):
         lines = []
-        lines.append(f"DiskImageDocument: uuid={self.uuid}, mime={self.mime}, {self.uri}")
+        lines.append(f"DiskImageDocument: uuid={self.uuid}, {self.collection}")
         if log.isEnabledFor(logging.DEBUG):
-            lines.append("parser: %s" % self.segment_parser)
-            lines.append("segments:")
-            for s in self.segment_parser.segments:
-                lines.append("  %s" % s)
-            lines.append("user segments:")
-            for s in self.user_segments:
-                lines.append("  %s" % s)
+            lines.extend(self.collection.verbose_info.splitlines())
         return "\n---- ".join(lines)
 
     def __len__(self):
@@ -154,7 +148,7 @@ class DiskImageDocument(SawxDocument):
         if 'serialized user segments' in e:
             # Segments that need to be restored via deserialization
             for s in e['serialized user segments']:
-                s.reconstruct_raw(self.container_segment.rawdata)
+                s.reconstruct_raw(self.collection.rawdata)
                 self.add_user_segment(s, replace=True)
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
@@ -163,84 +157,6 @@ class DiskImageDocument(SawxDocument):
 
     def calc_layout_template_name(self, task_id):
         return "%s.default_layout" % task_id
-
-    def parse_segments(self, parser_list):
-        parser_list.append(DefaultSegmentParser)
-        r = SegmentData(self.raw_data, self.style)
-        for parser in parser_list:
-            try:
-                s = parser(r)
-                break
-            except errors.InvalidSegmentParser:
-                pass
-        self.set_segments(s)
-
-    def set_segments(self, parser):
-        log.debug("setting parser: %s" % parser)
-        self.segment_parser = parser
-        self.segments = []
-        self.segments.extend(parser.segments)
-        self.segments.extend(self.user_segments)
-
-    def set_segment_parser(self, parser_cls):
-        log.debug("setting parser: %s" % parser_cls)
-        self.segment_parser = parser_cls(self.container_segment.rawdata)
-        self.segments = []
-        self.segments.extend(self.segment_parser.segments)
-        self.segments.extend(self.user_segments)
-
-    def parse_sub_segments(self, segment):
-        mime, parser = iter_parsers(segment.rawdata)
-        if parser is not None:
-            index = self.find_segment_index(segment)
-            self.segments[index + 1:index + 1] = parser.segments[1:] # Skip the "All" segment as it would just be a duplicate of the expanded segment
-        return parser
-
-    @property
-    def container_segment(self):
-        return self.segments[0]
-
-    @property
-    def contained_segments(self):
-        return iter(self.segments[1:])
-
-    def expand_container(self, size):
-        c = self.container_segment
-        if c.can_resize:
-            oldsize, newsize = c.resize(size)
-            for s in self.contained_segments:
-                s.replace_data(c)
-            self.raw_data = c.data
-            start, end = oldsize, newsize
-            r = c.rawdata[start:end]
-            s = DefaultSegment(r, 0)
-            return s
-
-    def add_user_segment(self, segment, replace=False):
-        if replace:
-            current = self.find_matching_user_segment(segment)
-            if current is not None:
-                log.debug("replacing %s with %s" % (current, segment))
-                self.replace_user_segment(current, segment)
-                return
-        self.user_segments.append(segment)
-        self.segments.append(segment)
-
-    def is_user_segment(self, segment):
-        return segment in self.user_segments
-
-    def delete_user_segment(self, segment):
-        self.user_segments.remove(segment)
-        self.segments.remove(segment)
-
-    def replace_user_segment(self, current_segment, segment):
-        try:
-            i = self.user_segments.index(current_segment)
-            self.user_segments[i:i+1] = [segment]
-            i = self.segments.index(current_segment)
-            self.segments[i:i+1] = [segment]
-        except ValueError:
-            log.error("Attempted to replace segment %s that isn't here!")
 
     def find_matching_segment(self, segment):
         for s in self.segments:
@@ -302,14 +218,15 @@ class DiskImageDocument(SawxDocument):
 
     ##### Initial viewer defaults
 
-    def find_initial_visible_segment(self, linked_base, default=0):
+    def find_initial_visible_segment(self, linked_base, default=None):
         """Hook for subclasses to force a particular segment to be viewed on
         document load. Used in emulators to show the main memory, which is not
         usually the first segment in the list.
 
         By default, it does show the first segment.
         """
-        linked_base.find_segment(self.segments[default], refresh=False)
+        segment = self.collection.containers[0].segments[0]
+        linked_base.find_segment(segment, refresh=False)
 
     #### Baseline document for comparisons
 
@@ -324,11 +241,11 @@ class DiskImageDocument(SawxDocument):
     def update_baseline(self):
         if self.baseline_document is not None:
             self.change_count += 1
-            self.container_segment.compare_segment(self.baseline_document.container_segment)
+            self.collection.compare_segment(self.baseline_document.collection)
 
     def clear_baseline(self):
         self.change_count += 1
-        self.container_segment.clear_style_bits(diff=True)
+        self.collection.clear_style_bits(diff=True)
 
     @property
     def has_baseline(self):
