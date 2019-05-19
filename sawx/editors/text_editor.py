@@ -201,6 +201,9 @@ class DebugTextEditor(TextEditor):
         ["Dynamic",
             "debug_text_last_digit_dyn",
         ],
+        ["Generated",
+            "debug_gen_menu()",
+        ],
         ["Help",
             "about",
         ],
@@ -238,3 +241,11 @@ class DebugTextEditor(TextEditor):
     @classmethod
     def can_edit_file_generic(cls, file_metadata):
         return file_metadata['mime'].startswith("text/")
+
+    def debug_gen_menu(self):
+        return [
+            ["Sub Menu 1", "about",],
+            ["Sub Menu 2", "about", "about",],
+            ["Sub Menu 3", "about", "about", "about"],
+            ["Sub Menu 4", "about", "about", "about", ["Sub Sub Menu!", "about", "about"]],
+        ]
