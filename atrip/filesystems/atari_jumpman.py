@@ -110,13 +110,16 @@ class AtariJumpmanDirectory(Directory):
         data_index = index
         dirent_index = 0
         for filenum in range(level_count):
-            name = data_index + 0x2bec - 0x2800
-            level = np.arange(name - 2, name + 20, dtype=np.uint32)
-            level[0] = data_index
-            level[1] = data_index + 1
-            indexes[dirent_index:dirent_index + AtariJumpmanDirent.dirent_size] = level
-            data_index += 0x800
-            dirent_index += AtariJumpmanDirent.dirent_size
+            if media[data_index + 0x48] == 0x20 and media[data_index + 0x4b] == 0x60 and media[data_index + 0x4c] == 0xff: 
+                name = data_index + 0x2bec - 0x2800
+                level = np.arange(name - 2, name + 20, dtype=np.uint32)
+                level[0] = data_index
+                level[1] = data_index + 1
+                indexes[dirent_index:dirent_index + AtariJumpmanDirent.dirent_size] = level
+                data_index += 0x800
+                dirent_index += AtariJumpmanDirent.dirent_size
+            else:
+                raise errors.FilesystemError(f"Jumpman level signature not present")
         return indexes, 0
 
     def calc_dirents(self):
