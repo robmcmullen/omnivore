@@ -18,8 +18,8 @@ class Archiver:
     def __str__(self):
         return self.archive_type + " archive"
 
-    def iter_archive(self, byte_data):
-        yield byte_data
+    def iter_archive(self, basename, byte_data):
+        yield basename, byte_data
 
     def pack_data(self, fh, containers):
         raise NotImplementedError
@@ -31,8 +31,8 @@ class PlainFileArchiver:
     def __str__(self):
         return self.archive_type
 
-    def iter_archive(self, byte_data):
-        yield byte_data
+    def iter_archive(self, basename, byte_data):
+        yield basename, byte_data
 
     def pack_data(self, fh, containers):
         if len(containers) > 0:
@@ -62,13 +62,14 @@ def find_archivers():
     return _archivers
 
 def find_container_items_in_archive(pathname, raw_data):
+    basename = os.path.basename(pathname)
     archiver = None
     for c in find_archivers():
         items = []
         log.debug(f"trying archiver {c.archive_type}")
         try:
             archiver = c()
-            items = list(archiver.iter_archive(raw_data))
+            items = list(archiver.iter_archive(basename, raw_data))
         except errors.InvalidArchiver as e:
             continue
         else:
@@ -76,4 +77,4 @@ def find_container_items_in_archive(pathname, raw_data):
             return archiver, items
     else:
         log.info(f"image does not appear to be archived.")
-    return PlainFileArchiver(), [raw_data]
+    return PlainFileArchiver(), [(basename, raw_data),]

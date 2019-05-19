@@ -73,17 +73,17 @@ class Collection:
         if session is not None:
             self.restore_session(session, item_data_list)
         else:
-            for item_data in item_data_list:
+            for item_pathname, item_data in item_data_list:
                 log.info(f"container size: {len(item_data)}")
                 container = guess_container(item_data)
-                container.pathname = self.pathname
+                container.pathname = item_pathname
                 container.guess_media_type()
                 container.guess_filesystem()
                 self.containers.append(container)
                 container.name = f"D{len(self.containers)}"
                 log.info(f"container: {container}")
 
-    def iter_archive(self, byte_data):
+    def iter_archive(self, basename, byte_data):
         """Return a list of `Container` objects for each item in the archive.
 
         If the data is not recognized by this subclass, raise an
@@ -96,7 +96,7 @@ class Collection:
         the data was indeed recognized by this subclass (despite not being
         unpacked) and checking further containers is not necessary.
         """
-        return [byte_data]
+        return [basename, byte_data]
 
     def archive(self, fh):
         """Pack each container into the archive

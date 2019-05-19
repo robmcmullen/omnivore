@@ -188,7 +188,7 @@ class Container:
     def container_info(self, indent=""):
         lines = []
         name = self.verbose_name or self.name
-        desc = f"{indent}{name}: {len(self)} bytes, compression={','.join([c.compression_algorithm for c in self.decompression_order])}"
+        desc = f"{indent}{name}: {self.basename}, {len(self)} bytes, compression={','.join([c.compression_algorithm for c in self.decompression_order])}"
         lines.append(desc)
         for s in self.segments:
             v = s.segment_info(indent + "    ")
