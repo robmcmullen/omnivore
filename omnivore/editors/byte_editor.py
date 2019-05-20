@@ -177,10 +177,8 @@ class ByteEditor(TileManagerBase):
             "add_assembly_source",
             "recompile_assembly_source",
         ],
-        ["Segments",
-            ["View Segment",
-                "segment_select",
-            ],
+        ["Media",
+            "generate_segment_menu()",
             None,
             "segment_from_selection",
             "segment_multiple_from_selection",
@@ -189,7 +187,7 @@ class ByteEditor(TileManagerBase):
             None,
             "segment_goto",
         ],
-        ["Disk Image",
+        ["Machine",
             ["CPU",
                 "doc_cpu",
             ],
@@ -275,6 +273,15 @@ class ByteEditor(TileManagerBase):
     @classmethod
     def can_edit_document_generic(cls, document):
         return document.mime == "application/octet-stream"
+
+    #### ui
+
+    def generate_segment_menu(self):
+        items = []
+        for index, container in enumerate(self.document.collection.containers):
+            sub_items = [str(container), f"segment_select{{{index}}}"]
+            items.append(sub_items)
+        return items
 
     #### file handling
 

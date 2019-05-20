@@ -26,8 +26,6 @@ class SegmentEntry:
 
 
 class segment_select(SawxRadioListAction):
-    prefix = "segment_select_"
-
     empty_list_name = "No Valid Segments"
 
     def is_valid_segment(self, segment):
@@ -37,7 +35,14 @@ class segment_select(SawxRadioListAction):
         valid_segments = []
         doc = self.editor.document
         if doc is not None and doc.collection is not None:
-            for segment, level in doc.collection.iter_menu():
+            log.debug(f"segment_select: prefix={self.prefix}, list={self.action_list_id}")
+            if self.action_list_id:
+                container_index = int(self.action_list_id)
+                container = doc.collection.containers[container_index]
+                it = container.iter_menu(0)
+            else:
+                it = doc.collection.iter_menu()
+            for segment, level in it:
                 if self.is_valid_segment(segment):
                     valid_segments.append(SegmentEntry(segment, level))
         return valid_segments

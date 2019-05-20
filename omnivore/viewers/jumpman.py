@@ -197,7 +197,7 @@ class JumpmanGridControl(BitmapGridControl):
 class JumpmanViewerToolbarMixin:
     viewer_category = "Jumpman"
 
-    exclude_from_menubar = ["Segments"]
+    exclude_from_menubar = ["Media"]
 
     default_mouse_mode_cls = jm.AnticDSelectMode
 

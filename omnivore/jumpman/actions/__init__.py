@@ -4,6 +4,10 @@ from .. import commands as jc
 from ..parser import is_valid_level_segment
 from .. import mouse_modes as mm
 
+import logging
+log = logging.getLogger(__name__)
+
+
 class clear_trigger(ViewerAction):
     """Remove any trigger function from the selected coin(s).
     
@@ -182,12 +186,12 @@ class compile_assembly_source(ViewerAction):
 
 
 class jumpman_level_list(ViewerActionMixin, segment_select):
-    prefix = "jumpman_level_"
-
     empty_list_name = "No Jumpman Levels Found"
 
     def is_valid_segment(self, segment):
-        return is_valid_level_segment(segment)
+        state = is_valid_level_segment(segment)
+        log.debug(f"is jumpman level {segment}? {state}")
+        return state
 
 
 class JumpmanMouseModeTool(ViewerRadioAction):

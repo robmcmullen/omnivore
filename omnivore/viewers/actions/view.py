@@ -85,8 +85,6 @@ class view_antic_powerup_colors(ColorAction):
 
 
 class view_color_standards(ViewerRadioListAction):
-    prefix = "view_color_standards_"
-
     def calc_enabled(self, action_key):
         return self.viewer.has_colors
 
@@ -106,8 +104,6 @@ class view_color_standards(ViewerRadioListAction):
 
 
 class view_bitmap_renderers(ViewerRadioListAction):
-    prefix = "view_bitmap_renderers_"
-
     def calc_enabled(self, action_key):
         return self.viewer.has_bitmap
 
@@ -127,8 +123,6 @@ class view_bitmap_renderers(ViewerRadioListAction):
 
 
 class view_font_renderers(ViewerRadioListAction):
-    prefix = "view_font_renderers_"
-
     def calc_enabled(self, action_key):
         return self.viewer.has_font
 
@@ -148,8 +142,6 @@ class view_font_renderers(ViewerRadioListAction):
 
 
 class view_font_mappings(ViewerRadioListAction):
-    prefix = "view_font_mappings_"
-
     def calc_enabled(self, action_key):
         return self.viewer.has_font
 
@@ -169,8 +161,6 @@ class view_font_mappings(ViewerRadioListAction):
 
 
 class view_fonts(ViewerRadioListAction):
-    prefix = "view_fonts_"
-
     def calc_enabled(self, action_key):
         return self.viewer.has_font
 
@@ -190,8 +180,6 @@ class view_fonts(ViewerRadioListAction):
 
 
 class view_font_groups(ViewerListAction):
-    prefix = "view_font_groups_"
-
     def calc_enabled(self, action_key):
         return self.viewer.has_font
 
@@ -216,8 +204,6 @@ class view_font_groups(ViewerListAction):
 
 
 class view_add_viewer(ViewerListAction):
-    prefix = "view_add_viewer_"
-
     def prune_viewers(self, viewer_cls):
         return viewer_cls.viewer_category != "Emulator"
 
@@ -236,7 +222,5 @@ class view_add_viewer(ViewerListAction):
 
 
 class view_add_emulation_viewer(view_add_viewer):
-    prefix = "view_add_emulation_viewer_"
-
     def prune_viewers(self, viewer_cls):
         return viewer_cls.viewer_category == "Emulator"

@@ -17,8 +17,6 @@ log = logging.getLogger(__name__)
 
 
 class doc_cpu(SawxRadioListAction):
-    prefix = "doc_cpu_"
-
     def calc_name(self, action_key):
         cpu_name = self.get_item(action_key)
         return processors[cpu_name]["description"]
@@ -34,8 +32,6 @@ class doc_cpu(SawxRadioListAction):
         self.editor.document.cpu = item
 
 class doc_os_labels(SawxRadioListAction):
-    prefix = "doc_os_"
-
     def calc_name(self, action_key):
         item = self.get_item(action_key)
         return str(item)
