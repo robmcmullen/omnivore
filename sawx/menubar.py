@@ -12,16 +12,12 @@ sync_log = logging.getLogger("sync-menubar")
 def expand(action_key, editor):
     if str(action_key) == action_key and action_key.endswith("()"):
         func = getattr(editor, action_key[:-2])
-        action_key = func()
-        log.debug(f"expanding action_key {action_key}")
-        yield from expand(action_key, editor)
-    elif action_key is None or str(action_key) == action_key:
-        yield action_key
-    else:
-        # FIXME: currently this only allows one submenu level. It should yield the list itself and the MenuDescription will recursively add submenus.
-        for item in action_key:
-            log.debug(f"yielding item {item} from {action_key}")
+        expansion = func()
+        log.debug(f"expanding {action_key} to {expansion}")
+        for item in expansion:
             yield item
+    else:
+        yield action_key
 
 
 class MenuDescription:
