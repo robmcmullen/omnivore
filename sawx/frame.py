@@ -332,15 +332,13 @@ class SawxFrame(wx.Frame):
             try:
                 action_key, action = self.toolbar.valid_id_map[action_id]
             except KeyError:
-                log.warning("No id {action_id} found in menubar or toolbar")
+                log.warning("on_menu: No id {action_id} found in menubar or toolbar")
         if action is not None:
-            log.debug(f"found action {action}")
+            log.debug(f"on_menu: action_key={action_key}, action={action}")
             try:
                 action.perform_as_menu_item(action_key)
             except AttributeError:
-                log.debug(f"no perform method for {action}")
-            else:
-                log.debug(f"on_menu: found action_key={action_key}, action={action}")
+                log.debug(f"on_menu: no perform method for {action}")
         evt.Skip()
 
     def on_page_changed(self, evt):

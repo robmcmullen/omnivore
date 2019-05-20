@@ -3,7 +3,7 @@ from .. import errors
 
 
 class debug_text_counting(SawxAction):
-    def init_from_editor(self):
+    def init_from_editor(self, action_key):
         self.counts = list(range(5, 25, 5))
 
     def calc_name(self, action_key):
@@ -38,7 +38,7 @@ class debug_text_last_digit(SawxActionRadioMixin, SawxAction):
         toolbar_control.ToggleTool(id, count % 10 == divisor)
 
 class debug_text_last_digit_dyn(SawxAction):
-    def init_from_editor(self):
+    def init_from_editor(self, action_key):
         self.count = (self.editor.control.GetLastPosition() % 10) + 1
 
     def calc_name(self, action_key):
@@ -54,7 +54,7 @@ class debug_text_last_digit_dyn(SawxAction):
             raise errors.RecreateDynamicMenuBar
 
 class debug_text_size(SawxAction):
-    def init_from_editor(self):
+    def init_from_editor(self, action_key):
         self.counts = list(range(5, 25, 5))
 
     def calc_name(self, action_key):

@@ -531,6 +531,10 @@ class SawxEditor:
         try:
             action_factory = self.action_factory_lookup[action_key]
         except KeyError:
-            action_factory = action.find_action_factory(self.module_search_order, action_key)
+            if "{" in action_key and action_key.endswith("}"):
+                action_key_lookup, _ = action_key[:-1].split("{", 1)
+            else:
+                action_key_lookup = action_key
+            action_factory = action.find_action_factory(self.module_search_order, action_key_lookup)
             self.action_factory_lookup[action_key] = action_factory
         return action_factory(self, action_key)

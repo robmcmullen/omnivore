@@ -135,7 +135,7 @@ class SawxAction:
     def __init__(self, editor, action_key):
         self.editor = editor
         self.popup_data = None  # set by MenuDescription if action is in a popup menu
-        self.init_from_editor()
+        self.init_from_editor(action_key)
 
     def calc_name(self, action_key):
         return self.name
@@ -173,7 +173,7 @@ class SawxAction:
         icon_name = self.calc_icon_name(action_key)
         return art.get_bitmap(icon_name, self.editor.tool_bitmap_size)
 
-    def init_from_editor(self):
+    def init_from_editor(self, action_key):
         pass
 
     def calc_enabled(self, action_key):
@@ -234,15 +234,20 @@ class SawxRadioAction(SawxActionRadioMixin, SawxAction):
 
 
 class SawxActionListMixin:
-    prefix = "_prefix_name_"
-
     empty_list_name = "No Items"
 
-    def init_prefix(self):
+    def init_prefix(self, action_key):
+        if "{" in action_key and action_key.endswith("}"):
+            _, action_list_id = action_key[:-1].split("{", 1)
+        else:
+            action_list_id = ""
+        print(f"action_key={action_key}, list_id={action_list_id}")
+        self.action_list_id = action_list_id
+        self.prefix = action_key + "_"
         self.prefix_count = len(self.prefix)
 
-    def init_from_editor(self):
-        self.init_prefix()
+    def init_from_editor(self, action_key):
+        self.init_prefix(action_key)
         self.current_list = self.calc_list_items()
 
     def calc_list_items(self):
