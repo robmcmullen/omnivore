@@ -37,11 +37,8 @@ class AtariJumpmanBootSegment(AtariDosBootSegment):
 
 
 class AtariJumpmanDirent(Dirent):
-    format = np.dtype([
-        ('ID', 'S2'),
-        ('NAME','S20'),
-        ])
-    dirent_size = format.itemsize
+    name_offset = 0x2bec - 0x2800
+    dirent_size = 0x800
 
     def __init__(self, directory, file_num):
         start = file_num * self.dirent_size
@@ -61,11 +58,9 @@ class AtariJumpmanDirent(Dirent):
 
     def parse_raw_dirent(self):
         data = self.data[:]
-        data[2:] = internal_to_atascii[data[2:] & 0x3f]
-        values = data.view(dtype=self.format)[0]
-        self.id = values[0]
-        self.level_name = values[1].strip()
-        # print(self.file_num, data, values[1], self.level_name)
+        self.id = bytes(data[0:2].view(dtype="S2"))
+        name = internal_to_atascii[data[self.name_offset:self.name_offset + 20] & 0x3f]
+        self.level_name = bytes(name).strip()
 
     def encode_dirent(self):
         data = np.zeros([self.dirent_size], dtype=np.uint8)
@@ -75,11 +70,7 @@ class AtariJumpmanDirent(Dirent):
         return data
 
     def get_file(self):
-        media = self.filesystem.media
-        index, size = media.get_contiguous_sectors_offsets(17 + (16 * self.file_num), 16)
-        file_segment = guess_file_type(media, self.filename, index, size)
-        self.segments = [file_segment]
-        return file_segment
+        return None
 
     def sanity_check(self):
         return len(self) == 0x800
@@ -105,22 +96,7 @@ class AtariJumpmanDirectory(Directory):
     def find_segment_location(self):
         media = self.media
         index, size = self.find_first_level(media)
-        level_count = size // 0x800
-        indexes = np.empty(AtariJumpmanDirent.dirent_size * level_count, dtype=np.int32)
-        data_index = index
-        dirent_index = 0
-        for filenum in range(level_count):
-            if media[data_index + 0x48] == 0x20 and media[data_index + 0x4b] == 0x60 and media[data_index + 0x4c] == 0xff: 
-                name = data_index + 0x2bec - 0x2800
-                level = np.arange(name - 2, name + 20, dtype=np.uint32)
-                level[0] = data_index
-                level[1] = data_index + 1
-                indexes[dirent_index:dirent_index + AtariJumpmanDirent.dirent_size] = level
-                data_index += 0x800
-                dirent_index += AtariJumpmanDirent.dirent_size
-            else:
-                raise errors.FilesystemError(f"Jumpman level signature not present")
-        return indexes, 0
+        return index, size
 
     def calc_dirents(self):
         segments = []
