@@ -1,8 +1,5 @@
 import os
 import sys
-import inspect
-import pkg_resources
-import importlib
 import json
 
 import wx
@@ -13,6 +10,7 @@ from . import clipboard
 from .preferences import find_editor_preferences
 from .utils import jsonutil
 from .utils.command import StatusFlags
+from .utils.pyutil import get_plugins
 from .menubar import MenuDescription
 from .filesystem import fsopen as open
 
@@ -22,24 +20,7 @@ clipboard_log = logging.getLogger("sawx.clipboard")
 
 
 def get_editors():
-    editors = []
-    for entry_point in pkg_resources.iter_entry_points('sawx.editors'):
-        try:
-            mod = entry_point.load()
-        except Exception as e:
-            log.error(f"Failed importing editor {entry_point.name}: {e}")
-            import traceback
-            traceback.print_exc()
-        else:
-            log.debug(f"get_edtiors: Found module {entry_point.name}")
-            for name, obj in inspect.getmembers(mod):
-                if inspect.isclass(obj) and SawxEditor in obj.__mro__[1:]:
-                    # only use subclasses of SawxEditor, not the
-                    # SawxEditor base class itself
-                    log.debug(f"get_editors: Found editor class {name}")
-                    editors.append(obj)
-    return editors
-
+    return get_plugins('sawx.editors', SawxEditor)
 
 def find_editor_class_for_document(document):
     """Find the "best" editor for a given MIME type string.

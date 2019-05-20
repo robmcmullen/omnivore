@@ -9,27 +9,10 @@ import wx
 from .filesystem import fsopen as open
 from .filesystem import filesystem_path
 from .utils.textutil import guessBinary
+from .utils.pyutil import get_plugins
 
 import logging
 log = logging.getLogger(__name__)
-
-
-def get_loaders():
-    import pkg_resources
-
-    loaders = []
-    for entry_point in pkg_resources.iter_entry_points('sawx.loaders'):
-        try:
-            mod = entry_point.load()
-        except Exception as e:
-            log.error(f"Failed importing loader {entry_point.name}: {e}")
-            if log.isEnabledFor(logging.DEBUG):
-                import traceback
-                traceback.print_exc()
-        else:
-            log.debug(f"get_loaders: Found loader {entry_point.name}")
-            loaders.append(mod)
-    return loaders
 
 
 class FileGuess:
@@ -47,6 +30,7 @@ class FileGuess:
     @property
     def sample_data(self):
         if self._sample_data is None:
+            self.fh.seek(0)
             self._sample_data = self.fh.read(10240)
         return self._sample_data
 
@@ -124,10 +108,11 @@ def identify_file(uri, match_multiple=False):
     and possibly other keys that may be used by specific loaders for specific
     types of data.
     """
-    loaders = get_loaders()
+    loaders = get_plugins('sawx.loaders')
     log.debug(f"identify_file: identifying file {uri} using {loaders}")
     hits = []
-    fallback = None
+    binary_fallback = None
+    text_fallback = None
     file_guess = FileGuess(uri)
     for loader in loaders:
         log.debug(f"identify_file: trying loader {loader}")
@@ -135,10 +120,14 @@ def identify_file(uri, match_multiple=False):
         if file_metadata:
             file_metadata['uri'] = uri
             mime_type = file_metadata['mime']
-            if mime_type == "application/octet-stream" or mime_type == "text/plain":
+            if mime_type == "application/octet-stream":
                 log.debug(f"identify_file: identified as generic type {mime_type}")
-                if not fallback:
-                    fallback = file_metadata
+                if not binary_fallback:
+                    binary_fallback = file_metadata
+            elif mime_type == "text/plain":
+                log.debug(f"identify_file: identified as generic type {mime_type}")
+                if not text_fallback:
+                    text_fallback = file_metadata
             else:
                 log.debug(f"identify_file: identified: {file_metadata}")
                 if not match_multiple:
@@ -150,6 +139,7 @@ def identify_file(uri, match_multiple=False):
         log.debug(f"identify_file: found {hits}")
         return hits[0]
     else:
+        fallback = text_fallback or binary_fallback  # prefer text match over binary
         if not fallback:
             fallback = dict(mime="application/octet-stream", uri=uri)
         log.debug(f"identify_file: identified only as the generic {fallback}")

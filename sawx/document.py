@@ -2,8 +2,6 @@ import os
 import types
 import io as BytesIO
 import uuid
-import inspect
-import pkg_resources
 
 import numpy as np
 import jsonpickle
@@ -13,6 +11,7 @@ from .events import EventHandler
 from .utils.command import UndoStack
 from .utils import jsonutil
 from .utils.nputil import to_numpy
+from .utils.pyutil import get_plugins
 from .persistence import get_template
 from . import filesystem
 from .filesystem import fsopen as open
@@ -22,26 +21,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def get_documents():
-    documents = []
-    for entry_point in pkg_resources.iter_entry_points('sawx.documents'):
-        try:
-            mod = entry_point.load()
-        except Exception as e:
-            log.error(f"Failed importing document {entry_point.name}: {e}")
-            import traceback
-            traceback.print_exc()
-        else:
-            log.debug(f"get_documents: Found module {entry_point.name}={mod.__name__}")
-            for name, obj in inspect.getmembers(mod):
-                if inspect.isclass(obj) and SawxDocument in obj.__mro__[1:]:
-                    # only use subclasses of Sawxdocument, not the
-                    # Sawxdocument base class itself
-                    log.debug(f"get_documents:   found document class {name}")
-                    documents.append(obj)
-    return documents
-
-
 def find_document_class_for_file(file_metadata):
     """Find the "best" document for a given MIME type string.
 
@@ -49,7 +28,7 @@ def find_document_class_for_file(file_metadata):
     and if no exact matches are found, returns through the list to find
     one that can edit that class of MIME.
     """
-    all_documents = get_documents()
+    all_documents = get_plugins('sawx.documents', SawxDocument)
     log.debug(f"find_document_class_for_file: file={file_metadata}, known documents: {all_documents}")
     matching_documents = [document for document in all_documents if document.can_load_file_exact(file_metadata)]
     log.debug(f"find_document_class_for_file: exact matches: {matching_documents}")
