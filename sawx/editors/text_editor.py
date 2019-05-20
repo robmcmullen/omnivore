@@ -202,11 +202,7 @@ class DebugTextEditor(TextEditor):
             "debug_text_last_digit_dyn",
         ],
         ["Generated",
-            "debug_gen_menu()",
-            # ["Sub Menu 1", "about",],
-            # ["Sub Menu 2", "about", "about",],
-            # ["Sub Menu 3", "about", "about", "about"],
-            # ["Sub Menu 4", "about", "about", "about", ["Sub Sub Menu!", "about", "about"]],
+            "debug_gen_sub_menu()",
         ],
         ["Help",
             "about",
@@ -246,10 +242,17 @@ class DebugTextEditor(TextEditor):
     def can_edit_file_generic(cls, file_metadata):
         return file_metadata['mime'].startswith("text/")
 
-    def debug_gen_menu(self):
+    def debug_gen_sub_menu(self):
         return [
-            ["Sub Menu 1", "about",],
+            ["Sub Menu 1", "about", ["Sub Sub Menu 1!", "about"]],
             ["Sub Menu 2", "about", "about",],
-            ["Sub Menu 3", "about", "about", "about"],
-            ["Sub Menu 4", "about", "about", "about", ["Sub Sub Menu!", "about", "about"]],
+            ["Sub Menu 3", "about", "about", "about", "debug_gen_sub_sub_menu()"],
+            ["Sub Menu 4", "about", "about", "about", "debug_gen_sub_sub_menu(5)"],
         ]
+
+    def debug_gen_sub_sub_menu(self, count="2"):
+        menu = ["Sub Sub Menu 2!"]
+        count = int(count)
+        for i in range(count):
+            menu.append("about")
+        return [menu]

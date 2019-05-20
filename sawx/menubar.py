@@ -10,9 +10,14 @@ sync_log = logging.getLogger("sync-menubar")
 
 
 def expand(action_key, editor):
-    if str(action_key) == action_key and action_key.endswith("()"):
-        func = getattr(editor, action_key[:-2])
-        expansion = func()
+    if str(action_key) == action_key and "(" in action_key and action_key.endswith(")"):
+        func_name, args_string = action_key[:-1].split("(", 1)
+        func = getattr(editor, func_name)
+        args = args_string.split(",")
+        if args[0] == "":
+            expansion = func()
+        else:
+            expansion = func(*args)
         log.debug(f"expanding {action_key} to {expansion}")
         for item in expansion:
             yield item
