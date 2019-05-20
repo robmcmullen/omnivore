@@ -318,9 +318,9 @@ setup(
     entry_points={
         "sawx.remember": 'fonts = omnivore.arch.fonts',
 
-        "sawx.documents": 'byte = omnivore.document',
+        "sawx.documents": '00byte = omnivore.document',
 
-        "sawx.editors": 'byte = omnivore.editors.byte_editor',
+        "sawx.editors": '00byte = omnivore.editors.byte_editor',
 
         "omnivore.viewers": [
             'bitmap = omnivore.viewers.bitmap',
