@@ -26,7 +26,7 @@ setup(name="atrip",
         scripts=scripts,
         entry_points={
             "sawx.loaders": [
-                'atrip = atrip.omnivore_loader',
+                '00atrip = atrip.omnivore_loader',
             ],
 
             "atrip.archivers": [
