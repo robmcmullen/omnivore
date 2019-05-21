@@ -1,15 +1,8 @@
 import os
-import hashlib
 import inspect
 import pkg_resources
 
-import numpy as np
-
 from . import errors
-from . import style_bits
-from .utils import to_numpy, to_numpy_list, uuid
-from . import media_type
-from . import filesystem
 
 import logging
 log = logging.getLogger(__name__)
@@ -29,8 +22,9 @@ class Compressor:
     """
     compression_algorithm = "none"
 
-    def __init__(self, numpy_data):
-        self.unpacked = self.calc_unpacked_data(numpy_data)
+    def __init__(self, byte_data=None):
+        if byte_data is not None:
+            self.unpacked = self.calc_unpacked_data(byte_data)
 
     @property
     def is_compressed(self):
@@ -38,10 +32,11 @@ class Compressor:
 
     #### decompression
 
-    def calc_unpacked_data(self, numpy_data):
-        """Attempt to unpack `numpy_data` using this unpacking algorithm.
+    def calc_unpacked_data(self, byte_data):
+        """Attempt to unpack `byte_data` using this unpacking algorithm.
 
-        `numpy_data` must be a numpy array of `np.uint8` bytes.
+        `byte_data` must be a byte array or something that can pose for a byte
+        array.
 
         If the data is not recognized by this subclass, raise an
         `InvalidCompression` exception. The caller must recognize this and move
@@ -54,23 +49,20 @@ class Compressor:
         not being unpacked) and checking further compressors is not necessary.
         """
         if not self.is_compressed:
-            return numpy_data
+            return byte_data
         else:
             raise errors.InvalidCompressor(f"Uncompressing '{self.compression_algorithm}' not implemented")
 
     #### compression
 
-    def calc_packed_data(self, numpy_data):
+    def calc_packed_data(self, byte_data):
         """Pack this data into a compressed data array using this packing
         algorithm.
 
         Subclasses should raise the `UnsupportedCompression` exception if
         compression is not implemented.
         """
-        if not self.is_compressed:
-            return numpy_data
-        else:
-            raise errors.UnsupportedCompressor(f"Compressing '{self.compression_algorithm}' not implemented")
+        return byte_data
 
 
 _compressors = None

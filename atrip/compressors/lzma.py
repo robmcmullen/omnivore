@@ -20,3 +20,14 @@ class LZMACompressor(Compressor):
         if len(unpacked) == 0:
             raise errors.InvalidCompressor("Unpacked to zero size")
         return unpacked
+
+    def calc_packed_data(self, byte_data):
+        buf = io.BytesIO()
+        try:
+            with lzma.LZMAFile(buf, mode='wb') as f:
+                f.write(byte_data)
+        except OSError as e:
+            raise errors.InvalidCompressor(e)
+        else:
+            packed = buf.getvalue()
+        return packed

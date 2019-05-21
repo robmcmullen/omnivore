@@ -18,3 +18,14 @@ class BZipCompressor(Compressor):
         except OSError as e:
             raise errors.InvalidCompressor(e)
         return unpacked
+
+    def calc_packed_data(self, byte_data):
+        buf = io.BytesIO()
+        try:
+            with bz2.BZ2File(buf, mode='wb') as f:
+                f.write(byte_data)
+        except OSError as e:
+            raise errors.InvalidCompressor(e)
+        else:
+            packed = buf.getvalue()
+        return packed

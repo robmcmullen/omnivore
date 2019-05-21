@@ -18,3 +18,14 @@ class GZipCompressor(Compressor):
         except OSError as e:
             raise errors.InvalidCompressor(e)
         return unpacked
+
+    def calc_packed_data(self, byte_data):
+        buf = io.BytesIO()
+        try:
+            with gzip.GzipFile(mode='wb', fileobj=buf) as f:
+                f.write(byte_data)
+        except OSError as e:
+            raise errors.InvalidCompressor(e)
+        else:
+            packed = buf.getvalue()
+        return packed

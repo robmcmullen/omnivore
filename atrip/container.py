@@ -475,8 +475,7 @@ class Container:
         else:
             raise errors.InvalidSegment(f"No segment with uuid={uuid}")
 
-def guess_container(raw_data):
-    data = utils.to_numpy(raw_data)
+def guess_container(data):
     compressors = []
     while True:  # loop until reach an uncompressed state
         c = guess_compressor(data)
