@@ -259,11 +259,29 @@ class Container:
         """
         return byte_data
 
-    def calc_packed_bytes(self):
+    def calc_packed_bytes(self, skip_missing_compressors=False):
         """Pack this container into a compressed data array using this packing
         algorithm.
+
+        Can raise InvalidCompressor if one of the compressors is read-only
+        (i.e. can only decompress data). However, if `skip_missing_compressors`
+        is True, no error will be raised and compression will take place
+        ignoring any compressors that can't compress data.
         """
-        return np_data
+        byte_data = self.data.tobytes()
+        order = reversed(self.decompression_order)
+        log.debug(f"compression_order: {order}")
+        for compressor_cls in order:
+            compressor = compressor_cls()
+            try:
+                byte_data = compressor.calc_packed_data(byte_data)
+            except errors.InvalidCompressor:
+                if skip_missing_compressors:
+                    continue
+                else:
+                    log.error(f"Compression algorithm {compressor} not yet implemented")
+                    raise
+        return byte_data
 
     #### media
 

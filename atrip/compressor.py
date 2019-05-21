@@ -20,15 +20,18 @@ class Compressor:
     Compressors are stateless, but are implemented as normal classes for
     convenience and ease of subclassing.
     """
-    compression_algorithm = "none"
+    compression_algorithm = None
 
     def __init__(self, byte_data=None):
         if byte_data is not None:
             self.unpacked = self.calc_unpacked_data(byte_data)
 
+    def __str__(self):
+        return self.compression_algorithm
+
     @property
     def is_compressed(self):
-        return self.compression_algorithm != Compressor.compression_algorithm
+        return self.compression_algorithm != Uncompressed.compression_algorithm
 
     #### decompression
 
@@ -48,10 +51,7 @@ class Compressor:
         indicates that the data was indeed recognized by this subclass (despite
         not being unpacked) and checking further compressors is not necessary.
         """
-        if not self.is_compressed:
-            return byte_data
-        else:
-            raise errors.InvalidCompressor(f"Uncompressing '{self.compression_algorithm}' not implemented")
+        raise errors.InvalidCompressor(f"Uncompressing '{self.compression_algorithm}' not implemented")
 
     #### compression
 
@@ -62,6 +62,16 @@ class Compressor:
         Subclasses should raise the `UnsupportedCompression` exception if
         compression is not implemented.
         """
+        raise errors.InvalidCompressor(f"Compression for '{self.compression_algorithm}' not implemented.")
+
+
+class Uncompressed(Compressor):
+    compression_algorithm = "none"
+
+    def calc_unpacked_data(self, byte_data):
+        return byte_data
+
+    def calc_packed_data(self, byte_data):
         return byte_data
 
 
@@ -98,5 +108,5 @@ def guess_compressor(raw_data):
             break
     else:
         log.debug(f"image does not appear to be compressed.")
-        compressor = Compressor(raw_data)
+        compressor = Uncompressed(raw_data)
     return compressor
