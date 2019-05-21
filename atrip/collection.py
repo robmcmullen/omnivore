@@ -192,5 +192,6 @@ class Collection:
         # restore. The arrays will be the correct size, so all we have to do is
         # copy the actual data into the containers.
         self.containers = e["containers"]
-        for c, d in zip(self.containers, item_data_list):
-            c._data[:] = d
+        for c, (item_pathname, item_data) in zip(self.containers, item_data_list):
+            c._data[:] = np.fromstring(item_data, dtype=np.uint8)
+            c.pathname = item_pathname
