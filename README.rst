@@ -149,20 +149,18 @@ as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
 +---------------------+------------+------+-------+------------------------------+
 | Compression Format  | File Ext   | Read | Write | Status                       |
 +=====================+============+======+=======+==============================+
-| gzip                | .gz        | Yes  | No    | Read only                    |
+| gzip                | .gz        | Yes  | No    | Read/Write                   |
 +---------------------+------------+------+-------+------------------------------+
-| bzip2               | .bz2       | Yes  | No    | Read only                    |
+| bzip2               | .bz2       | Yes  | No    | Read/Write                   |
 +---------------------+------------+------+-------+------------------------------+
-| lzma                | .xz, .lzma | Yes  | No    | Read only                    |
+| lzma                | .xz, .lzma | Yes  | No    | Read/Write                   |
 +---------------------+------------+------+-------+------------------------------+
-| lzw (Unix compress) | .Z         | Yes  | No    | Read only [#]_               |
+| lzw (Unix compress) | .Z         | Yes  | No    | Read only                    |
 +---------------------+------------+------+-------+------------------------------+
-| lz4                 | .lz4       | Yes  | No    | Read only [#]_               |
+| lz4                 | .lz4       | Yes  | No    | Read/Write [#]_              |
 +---------------------+------------+------+-------+------------------------------+
 | Disk Communicator   | .dcm       | Yes  | No    | Read only                    |
 +---------------------+------------+------+-------+------------------------------+
-
-.. [#] Requires optional library unlzw
 
 .. [#] Requires optional library lz4
 
