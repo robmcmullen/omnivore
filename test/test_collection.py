@@ -17,6 +17,10 @@ class TestCollection:
         filename = "dos_sd_test1.atr"
         pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
         c = Collection(pathname)
+        m = c.containers[0].media
+        m.set_comment_at(100, "at location 100")
+        m.set_comment_at(1000, "at location 1000")
+        m.set_comment_at(10000, "at location 10000")
         s = {}
         c.serialize_session(s)
         print(s)
@@ -32,6 +36,10 @@ class TestCollection:
 
         c2 = Collection(pathname, session=sprime)
         s2 = {}
+        m2 = c2.containers[0].media
+        assert m2.get_comment_at(100) == "at location 100"
+        assert m2.get_comment_at(1000) == "at location 1000"
+        assert m2.get_comment_at(10000) == "at location 10000"
         c2.serialize_session(s2)
         j2 = jsonpickle.dumps(s2)
         assert j == j2
@@ -69,8 +77,8 @@ class TestCollection:
 
 if __name__ == "__main__":
     t = TestCollection()
-    # t.test_serialize()
+    t.test_serialize()
     # t.test_single("../samples/mydos_sd_mydos4534.dcm.lz4")
     # t.test_single("../samples/dos_sd_test1.atr.gz")
     # t.test_single("../samples/dos_sd_test_collection.zip")
-    t.test_single("../samples/dos_sd_test_collection.tar")
+    # t.test_single("../samples/dos_sd_test_collection.tar")
