@@ -55,12 +55,15 @@ class Compressor:
 
     #### compression
 
-    def calc_packed_data(self, byte_data):
+    def calc_packed_data(self, byte_data, media=None):
         """Pack this data into a compressed data array using this packing
         algorithm.
 
         Subclasses should raise the `UnsupportedCompression` exception if
         compression is not implemented.
+
+        `media` is supplied in case the compression format needs the disk
+        geometry, e.g. in DCM compression.
         """
         raise errors.InvalidCompressor(f"Compression for '{self.compression_algorithm}' not implemented.")
 
@@ -71,7 +74,7 @@ class Uncompressed(Compressor):
     def calc_unpacked_data(self, byte_data):
         return byte_data
 
-    def calc_packed_data(self, byte_data):
+    def calc_packed_data(self, byte_data, media):
         return byte_data
 
 

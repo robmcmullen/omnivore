@@ -18,7 +18,7 @@ class ZLibCompressor(Compressor):
             raise errors.InvalidCompressor(e)
         return unpacked
 
-    def calc_packed_data(self, byte_data):
+    def calc_packed_data(self, byte_data, media=None):
         try:
             packed = zlib.compress(bytes(byte_data), 9)
         except zlib.error as e:

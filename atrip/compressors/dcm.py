@@ -69,7 +69,7 @@ class DCMCompressor(Compressor):
                     log.debug(f"pass end; next pass should be {expected_pass}")
                     break
                 try:
-                    func = self.block_type_func[block_type & 0x7f]
+                    func = self.decode_block_type_func[block_type & 0x7f]
                 except KeyError:
                     if block_type == 0xfa or block_type == 0xf9:
                         raise errors.InvalidCompressor(f"Found section start byte but previous section never ended")
@@ -153,7 +153,7 @@ class DCMCompressor(Compressor):
             index += 1
 
 
-    block_type_func = {
+    decode_block_type_func = {
         0x41: decode_41,
         0x42: decode_42,
         0x43: decode_43,
@@ -161,3 +161,105 @@ class DCMCompressor(Compressor):
         0x46: decode_46,
         0x47: decode_47,
     }
+
+    #### compression
+
+    def put_byte(self, value):
+        self.pass_buffer[self.pass_buffer_index] = value
+        self.pass_buffer_index += 1
+
+    def calc_packed_data(self, byte_data, media):
+        try:
+            self.sector_size = media.sector_size
+            self.num_sectors = media.num_sectors
+        except AttributeError:
+            raise errors.InvalidMediaSize("DCM Compressor only works with disk images")
+        s = (self.num_sectors, self.sector_size)
+        for density_flag, size in self.valid_densities:
+            if s == size:
+                self.density_flag = density_flag
+                break
+        else:
+            raise errors.InvalidMediaSize("DCM Compressor only works with standard size Atari disk images")
+        self.index = 0
+        self.count = len(data)
+        self.raw = data
+        self.output = np.zeros(200000, dtype=np.uint8)  # max is 1 DD image
+        self.current = np.zeros(256, dtype=np.uint8)
+        self.previous = np.zeros(256, dtype=np.uint8)
+        self.pass_buffer = np.zeros(6500, dtype=np.uint8)
+        self.pass_buffer_index = 0
+        self.record_start_index = 0
+        self.pass_number = 1
+        current_sector = 1
+        previous_sector = 0
+
+        while self.current_sector <= self.num_sectors:
+            self.encode_fa(self.current_sector)
+            first_sector_in_pass = 0
+
+            while self.pass_buffer_index < 0x5e00:
+                if self.current_sector > self.num_sectors:
+                    break
+                pos, size = media.get_index_of_sector(current_sector)
+                self.current[:size] = media[pos:pos + size]
+                if np.count_nonzero(self.current[:size]) == 0:  # empty
+                    current_sector += 1
+                else:
+                    if first_sector_in_pass == 0:
+                        first_sector_in_pass = current_sector
+                        previous_sector = current_sector
+                    if current_sector - previous_sector > 1:
+                        # save the first non-blank sector if there is a run of
+                        # blank sectors
+                        self.encode_sector(current_sector)
+                    else:
+                        self.encode_implicit_next_sector()
+
+                    if current_sector == first_sector_in_pass:
+                        self.encode_best(True)
+                    else:
+                        if np.array_equal(self.current[:size], self.previous[:size]):
+                            self.encode_46()
+                        else:
+                            self.encode_best(False)
+
+                    # save current sector data so it can be compared
+                    self.previous[:size] = self.current[:size]
+                    previous_sector = current_sector
+                    current_sector += 1
+
+            # force next block to not attempt to read a sector number
+            self.encode_implicit_next_sector()
+
+            self.encode_45()
+
+            pass_length = self.pass_buffer_index
+
+            # rerecord FA block to show if it is the final pass
+            last_pass = current_sector > self.num_sectors
+            self.encode_fa(self.current_sector, last_pass)
+
+            self.output[output_index:output_index + pass_length] = self.pass_buffer[:pass_length]
+            self.pass_number += 1
+
+    def encode_sector(self, sector):
+        self.put_byte(sector & 0xff)
+        self.put_byte(sector >> 8)
+
+    def encode_implicit_next_sector(self):
+        self.pass_buffer[self.record_start_index] |= 0x80
+
+    def encode_fa(self, sector, last_pass=False):
+        self.record_start_index = 0
+        self.pass_buffer_index = 0
+        self.put_byte(0xfa)
+        flag = self.density_flag << 5 | self.pass_number & 0x1f
+        if last_pass:
+            flag |= 80
+        self.put_byte(flag)
+        self.encode_sector(sector)
+
+    def encode_45(self):
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x45)

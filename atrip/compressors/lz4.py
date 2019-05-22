@@ -20,7 +20,7 @@ class LZ4Compressor(Compressor):
             raise errors.InvalidCompressor(e)
         return unpacked
 
-    def calc_packed_data(self, byte_data):
+    def calc_packed_data(self, byte_data, media=None):
         if lz4 is None:
             raise errors.InvalidCompressor("lz4 module needed for .lz4 support")
         try:

@@ -21,7 +21,7 @@ class LZMACompressor(Compressor):
             raise errors.InvalidCompressor("Unpacked to zero size")
         return unpacked
 
-    def calc_packed_data(self, byte_data):
+    def calc_packed_data(self, byte_data, media=None):
         buf = io.BytesIO()
         try:
             with lzma.LZMAFile(buf, mode='wb') as f:

@@ -19,7 +19,7 @@ class BZipCompressor(Compressor):
             raise errors.InvalidCompressor(e)
         return unpacked
 
-    def calc_packed_data(self, byte_data):
+    def calc_packed_data(self, byte_data, media=None):
         buf = io.BytesIO()
         try:
             with bz2.BZ2File(buf, mode='wb') as f:
