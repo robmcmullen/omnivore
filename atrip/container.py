@@ -11,7 +11,7 @@ from . import utils
 from .segment import Segment
 from . import media_type
 from . import filesystem
-from .compressor import guess_compressor
+from .compressor import guess_compressor, Uncompressed
 from .filesystem import Dirent
 
 import logging
@@ -91,6 +91,8 @@ class Container:
         self.style = style
         self.disasm_type = disasm_type
         self.default_disasm_type = default_disasm_type
+        if decompression_order is None:
+            decompression_order = [Uncompressed()]
         self.decompression_order = decompression_order
 
         self.origin = int(origin)  # force python int to decouple from possibly being a numpy datatype
@@ -274,7 +276,7 @@ class Container:
         for compressor_cls in order:
             compressor = compressor_cls()
             try:
-                byte_data = compressor.calc_packed_data(byte_data)
+                byte_data = compressor.calc_packed_data(byte_data, self.media)
             except errors.InvalidCompressor:
                 if skip_missing_compressors:
                     continue

@@ -4,7 +4,9 @@ from .. import errors
 from ..compressor import Compressor
 
 import logging
+# logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+# log.setLevel(logging.DEBUG)
 
 
 class DCMCompressor(Compressor):
@@ -83,7 +85,7 @@ class DCMCompressor(Compressor):
                 else:
                     self.get_current_sector()
 
-        return self.output[:self.num_sectors * self.sector_size]
+        return self.output[:self.num_sectors * self.sector_size].tobytes()
 
     def get_current_sector(self):
         lo = self.get_next()
@@ -96,12 +98,14 @@ class DCMCompressor(Compressor):
         self.output[pos:pos + self.sector_size] = self.current[:self.sector_size]
 
     def decode_41(self):
+        """Change beginning of sector"""
         index = self.get_next()
-        while index > 0:
+        while index >= 0:
             self.current[index] = self.get_next()
             index -= 1
 
     def decode_42(self):
+        """DOS sector?"""
         self.current[0:124] = self.get_next()
         self.current[124] = self.get_next()
         self.current[125] = self.get_next()
@@ -109,7 +113,7 @@ class DCMCompressor(Compressor):
         self.current[127] = self.get_next()
 
     def decode_43(self):
-        # run-length encoded block
+        """Run-length encoded block"""
         index = 0
 
         while index < self.sector_size:
@@ -136,17 +140,19 @@ class DCMCompressor(Compressor):
                     index += 1
 
     def decode_44(self):
+        """Change the end of the sector"""
         index = self.get_next()
         while index < self.sector_size:
             self.current[index] = self.get_next()
             index += 1
 
     def decode_46(self):
-        # same as last sector!
+        """Same as last sector"""
         return
 
     def decode_47(self):
-        log.debug(f"index {self.index}-{self.index+self.sector_size}: uncompressed sector {self.current_sector}")
+        """Uncompressed"""
+        log.debug(f"index {self.index}-{self.index+self.sector_size}: uncompressed sector")
         index = 0
         while index < self.sector_size:
             self.current[index] = self.get_next()
@@ -164,46 +170,50 @@ class DCMCompressor(Compressor):
 
     #### compression
 
-    def put_byte(self, value):
-        self.pass_buffer[self.pass_buffer_index] = value
-        self.pass_buffer_index += 1
-
-    def calc_packed_data(self, byte_data, media):
+    def init_packing(self, media):
         try:
             self.sector_size = media.sector_size
             self.num_sectors = media.num_sectors
         except AttributeError:
             raise errors.InvalidMediaSize("DCM Compressor only works with disk images")
         s = (self.num_sectors, self.sector_size)
-        for density_flag, size in self.valid_densities:
+        for density_flag, size in self.valid_densities.items():
             if s == size:
                 self.density_flag = density_flag
                 break
         else:
             raise errors.InvalidMediaSize("DCM Compressor only works with standard size Atari disk images")
         self.index = 0
-        self.count = len(data)
-        self.raw = data
         self.output = np.zeros(200000, dtype=np.uint8)  # max is 1 DD image
         self.current = np.zeros(256, dtype=np.uint8)
         self.previous = np.zeros(256, dtype=np.uint8)
-        self.pass_buffer = np.zeros(6500, dtype=np.uint8)
+        self.pass_buffer = np.zeros(0x6500, dtype=np.uint8)
         self.pass_buffer_index = 0
         self.record_start_index = 0
         self.pass_number = 1
+
+    def put_byte(self, value):
+        self.pass_buffer[self.pass_buffer_index] = value
+        self.pass_buffer_index += 1
+
+    def calc_packed_data(self, byte_data, media, block_restrictions=None):
+        self.init_packing(media)
+        output_index = 0
         current_sector = 1
         previous_sector = 0
 
-        while self.current_sector <= self.num_sectors:
-            self.encode_fa(self.current_sector)
+        while current_sector <= self.num_sectors:
+            log.debug(f"dcm: starting pass {self.pass_number} at sector {current_sector}")
+            self.encode_fa(current_sector)
             first_sector_in_pass = 0
 
             while self.pass_buffer_index < 0x5e00:
-                if self.current_sector > self.num_sectors:
+                if current_sector > self.num_sectors:
                     break
                 pos, size = media.get_index_of_sector(current_sector)
                 self.current[:size] = media[pos:pos + size]
                 if np.count_nonzero(self.current[:size]) == 0:  # empty
+                    log.debug(f"dcm: skipping empty sector {current_sector}")
                     current_sector += 1
                 else:
                     if first_sector_in_pass == 0:
@@ -215,21 +225,18 @@ class DCMCompressor(Compressor):
                         self.encode_sector(current_sector)
                     else:
                         self.encode_implicit_next_sector()
+                    log.debug(f"dcm: encoding sector {current_sector} at buffer index {self.pass_buffer_index}")
 
-                    if current_sector == first_sector_in_pass:
-                        self.encode_best(True)
-                    else:
-                        if np.array_equal(self.current[:size], self.previous[:size]):
-                            self.encode_46()
-                        else:
-                            self.encode_best(False)
+                    self.encode_best(current_sector == first_sector_in_pass, block_restrictions)
 
                     # save current sector data so it can be compared
                     self.previous[:size] = self.current[:size]
                     previous_sector = current_sector
                     current_sector += 1
 
-            # force next block to not attempt to read a sector number
+            log.debug(f"dcm: filled buffer for pass {self.pass_number}")
+
+            # force next pass to not attempt to read a sector number
             self.encode_implicit_next_sector()
 
             self.encode_45()
@@ -238,10 +245,13 @@ class DCMCompressor(Compressor):
 
             # rerecord FA block to show if it is the final pass
             last_pass = current_sector > self.num_sectors
-            self.encode_fa(self.current_sector, last_pass)
+            self.encode_fa(first_sector_in_pass, last_pass)
 
             self.output[output_index:output_index + pass_length] = self.pass_buffer[:pass_length]
+            output_index += pass_length
             self.pass_number += 1
+
+        return self.output[:output_index].tobytes()
 
     def encode_sector(self, sector):
         self.put_byte(sector & 0xff)
@@ -256,10 +266,190 @@ class DCMCompressor(Compressor):
         self.put_byte(0xfa)
         flag = self.density_flag << 5 | self.pass_number & 0x1f
         if last_pass:
-            flag |= 80
+            flag |= 0x80
         self.put_byte(flag)
         self.encode_sector(sector)
 
     def encode_45(self):
         self.record_start_index = self.pass_buffer_index
         self.put_byte(0x45)
+
+    def encode_best(self, first=False, block_restrictions=None):
+        # NOTE: 0x46, 0x47 always allowed
+        if block_restrictions is None:
+            allowed_blocks = set([0x41, 0x42, 0x43, 0x44])
+        else:
+            allowed_blocks = block_restrictions
+        size = self.sector_size
+        best_size = size
+        best_block = 0x47
+        encoder_arg = 0
+
+        if not first:
+            same = self.current[:size] - self.previous[:size]
+            where_diff = np.where(same != 0)[0]
+            # print("same", same)
+            # print("where_diff", where_diff)
+            try:
+                first_diff = where_diff[0]
+            except IndexError:
+                # no differences!
+                best_block = 0x46
+                best_size = 0
+            else:
+                last_diff = where_diff[-1]
+                len_41 = last_diff + 1
+                if len_41 < best_size and 0x41 in allowed_blocks:
+                    # print(f"41: {last_diff}, {where_diff}")
+                    best_size = len_41
+                    best_block = 0x41
+                    encoder_arg = last_diff
+
+                len_44 = size - first_diff + 1
+                if len_44 < best_size and 0x44 in allowed_blocks:
+                    # print("current", self.current[:size])
+                    # print("previous", self.previous[:size])
+                    # print("same", same)
+                    # print("same", self.current[:size] - self.previous[:size])
+                    # print("where_diff", where_diff)
+                    # print(f"44: {first_diff}, {where_diff}")
+                    best_size = len_44
+                    best_block = 0x44
+                    encoder_arg = first_diff
+
+        same = np.diff(self.current[:size] - self.current[0])
+        where_diff = np.where(same != 0)[0]
+        try:
+            first_diff = where_diff[0] + 1
+        except IndexError:
+            # no differences anywhere
+            first_diff = self.sector_size
+        if first_diff > 123 and best_size > 5 and 0x42 in allowed_blocks:
+            # use 42, nothing else will beat 5 bytes
+            best_block = 0x42
+
+        # FIXME: try block 43
+
+        log.debug(f"dcm: encoding as block type ${best_block:x}, size={best_size}")
+        func = self.encode_block_type_func[best_block]
+        func(self, encoder_arg)
+
+    def encode_41(self, index):
+        """Change beginning of sector"""
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x41)
+        self.put_byte(index)
+        while index >= 0:
+            self.put_byte(self.current[index])
+            index -= 1
+
+    def encode_42(self, unused):
+        """DOS sector? Single density only, apparently"""
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x42)
+        self.put_byte(self.current[123])
+        self.put_byte(self.current[124])
+        self.put_byte(self.current[125])
+        self.put_byte(self.current[126])
+        self.put_byte(self.current[127])
+
+    def encode_43(self, unused):
+        """Run-length encoded block"""
+        index = 0
+
+        while index < self.sector_size:
+            # 1. starts with copying a string verbatim: find end
+            end = self.get_next()
+            if index > 0 and end == 0:
+                end = 256
+
+            # 2: copy bytes verbatim until end offset
+            log.debug(f"0x43: copying verbatim {index}-{end}")
+            while index < end:
+                self.current[index] = self.get_next()
+                index += 1
+
+            if index < self.sector_size:
+                # 3: run-length encoding
+                end = self.get_next()
+                if index > 0 and end == 0:
+                    end = 256
+                fill_byte = self.get_next()
+                log.debug(f"0x43: rle: ${fill_byte:02x} {index}-{end}")
+                while index < end:
+                    self.current[index] = fill_byte
+                    index += 1
+
+    def encode_44(self, index):
+        """Change beginning of sector"""
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x44)
+        self.put_byte(index)
+        while index < self.sector_size:
+            self.put_byte(self.current[index])
+            index += 1
+
+    def encode_46(self, unused):
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x46)
+
+    def encode_47(self, index):
+        """Uncompressed"""
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x47)
+        index = 0
+        while index < self.sector_size:
+            self.put_byte(self.current[index])
+            index += 1
+
+
+    encode_block_type_func = {
+        0x41: encode_41,
+        0x42: encode_42,
+        0x43: encode_43,
+        0x44: encode_44,
+        0x46: encode_46,
+        0x47: encode_47,
+    }
+
+# Notes:
+#
+# 
+# >>> current=np.arange(128, dtype=np.uint8)
+# >>> previous=np.arange(128, dtype=np.uint8)
+# >>> previous[80:100]=0xff
+# >>> d=np.diff(current-previous)
+# >>> d
+# array([  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,  81,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+#          1,   1,   1,   1,   1,   1,   1,   1, 156,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0], dtype=uint8)
+# >>> np.where(d!=0)[0]
+# array([79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+#        96, 97, 98, 99])
+# >>> w=np.where(d!=0)[0]
+# >>> w
+# array([79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+#        96, 97, 98, 99])
+# >>> first_diff = w[0] + 1
+# >>> last_diff = w[-1] + 1
+# >>> previous[0:first_diff]
+# array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+#        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+#        34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+#        51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
+#        68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79], dtype=uint8)
+# >>> previous[first_diff:last_diff]
+# array([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+#        255, 255, 255, 255, 255, 255, 255], dtype=uint8)
+# >>> previous[last_diff:]
+# array([100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+#        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+#        126, 127], dtype=uint8)
+# >>> 
