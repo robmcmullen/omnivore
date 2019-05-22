@@ -41,3 +41,14 @@ globbed_sample_atari_files = []
 for s in sample_atari_files:
     possiblities = glob.glob(s + "*")
     globbed_sample_atari_files.extend(possiblities)
+
+
+sample_atari_collections = [
+    "../samples/dos_sd_test_collection.zip",
+    "../samples/dos_sd_test_collection.tar",
+]
+
+globbed_sample_atari_collections = []
+for s in sample_atari_collections:
+    possiblities = glob.glob(s + "*")
+    globbed_sample_atari_collections.extend(possiblities)

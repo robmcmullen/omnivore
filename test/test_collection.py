@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import jsonpickle
 
-from mock import globbed_sample_atari_files
+from mock import globbed_sample_atari_files, globbed_sample_atari_collections
 
 from atrip.collection import Collection
 from atrip.segment import Segment
@@ -37,7 +37,7 @@ class TestCollection:
         assert j == j2
 
     @pytest.mark.parametrize(("pathname"), globbed_sample_atari_files)
-    def test_glob(self, pathname):
+    def test_single(self, pathname):
         collection = Collection(pathname)
         print(collection.verbose_info)
         output = "tmp." + os.path.basename(pathname)
@@ -63,11 +63,14 @@ class TestCollection:
                 container_uncompressed = collection_uncompressed.containers[0]
                 assert np.array_equal(container_orig._data, container_uncompressed._data)
 
+    @pytest.mark.parametrize(("pathname"), globbed_sample_atari_collections)
+    def test_multiple(self, pathname):
+        self.test_single(pathname)
 
 if __name__ == "__main__":
     t = TestCollection()
     # t.test_serialize()
-    # t.test_glob("../samples/mydos_sd_mydos4534.dcm.lz4")
-    # t.test_glob("../samples/dos_sd_test1.atr.gz")
-    # t.test_glob("../samples/dos_sd_test_collection.zip")
-    t.test_glob("../samples/dos_sd_test_collection.tar")
+    # t.test_single("../samples/mydos_sd_mydos4534.dcm.lz4")
+    # t.test_single("../samples/dos_sd_test1.atr.gz")
+    # t.test_single("../samples/dos_sd_test_collection.zip")
+    t.test_single("../samples/dos_sd_test_collection.tar")
