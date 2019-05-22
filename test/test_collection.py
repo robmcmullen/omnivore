@@ -5,24 +5,11 @@ import numpy as np
 import pytest
 import jsonpickle
 
+from mock import globbed_sample_atari_files
+
 from atrip.collection import Collection
 from atrip.segment import Segment
 import atrip.errors as errors
-
-
-sample_files = [
-    "../samples/dos_sd_test1.atr",
-    "../samples/dos_sd_test_collection.zip",
-    "../samples/dos_sd_test_collection.tar",
-    "../samples/dos_ed_test1.atr",
-    "../samples/dos_dd_test1.atr",
-    "../samples/mydos_sd_mydos4534.dcm",
-]
-
-globbed_sample_files = []
-for s in sample_files:
-    possiblities = glob.glob(s + "*")
-    globbed_sample_files.extend(possiblities)
 
 
 class TestCollection:
@@ -49,7 +36,7 @@ class TestCollection:
         j2 = jsonpickle.dumps(s2)
         assert j == j2
 
-    @pytest.mark.parametrize(("pathname"), globbed_sample_files)
+    @pytest.mark.parametrize(("pathname"), globbed_sample_atari_files)
     def test_glob(self, pathname):
         collection = Collection(pathname)
         print(collection.verbose_info)

@@ -5,6 +5,8 @@ import pytest
 import numpy as np
 np.set_printoptions(formatter={'int': lambda x: f"{x:02x}"})
 
+from mock import globbed_sample_atari_files
+
 from atrip.container import Container, guess_container
 from atrip.compressors import dcm
 from atrip.media_type import Media, guess_media_type
@@ -177,13 +179,15 @@ class TestDCM:
 
 
 class TestFileCompression:
-    # @pytest.mark.parametrize(("pathname"), globbed_sample_files)
+    @pytest.mark.parametrize(("pathname"), globbed_sample_atari_files)
     def test_glob(self, pathname):
-        container = guess_container(pathname)
-        packed = compressor.calc_packed_data(container._data, container.media)
+        sample_data = np.fromfile(pathname, dtype=np.uint8)
+        container = guess_container(sample_data)
+        container.guess_media_type()
+        packed = compressor.calc_packed_data(container.media.data, container.media)
         unpacked = compressor.calc_unpacked_data(packed)
         out = np.frombuffer(unpacked, dtype=np.uint8)
-        assert np.array_equal(container._data, out)
+        assert np.array_equal(container.media.data, out)
 
 if __name__ == "__main__":
     # t = TestDCMBlocks()

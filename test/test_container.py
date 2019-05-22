@@ -8,7 +8,7 @@ from atrip.container import guess_container
 from atrip import errors
 
 
-read_only_compressors = set(['.Z', '.dcm'])
+read_only_compressors = set(['.Z'])
 
 
 class BaseContainerTest:
@@ -65,20 +65,8 @@ class TestContainerAtariDosDDImage(BaseContainerTest):
     num_files_in_sample = 5
 
 
-sample_files = [
-    "../samples/dos_sd_test1.atr",
-    "../samples/dos_ed_test1.atr",
-    "../samples/dos_dd_test1.atr",
-    "../samples/mydos_sd_mydos4534.dcm",
-]
-
-globbed_sample_files = []
-for s in sample_files:
-    possiblities = glob.glob(s + "*")
-    globbed_sample_files.extend(possiblities)
-
 class TestMultipleCompression:
-    @pytest.mark.parametrize(("pathname"), globbed_sample_files)
+    @pytest.mark.parametrize(("pathname"), globbed_sample_atari_files)
     def test_glob(self, pathname):
         sample_data = np.fromfile(pathname, dtype=np.uint8)
         container = guess_container(sample_data)

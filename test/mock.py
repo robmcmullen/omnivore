@@ -1,4 +1,5 @@
 import os
+import glob
 
 # Include maproom directory so that maproom modules can be imported normally
 import sys
@@ -28,3 +29,15 @@ logger.setLevel(logging.DEBUG)
 
 import numpy as np
 from numpy.testing import assert_almost_equal
+
+sample_atari_files = [
+    "../samples/dos_sd_test1.atr",
+    "../samples/dos_ed_test1.atr",
+    "../samples/dos_dd_test1.atr",
+    "../samples/mydos_sd_mydos4534.dcm",
+]
+
+globbed_sample_atari_files = []
+for s in sample_atari_files:
+    possiblities = glob.glob(s + "*")
+    globbed_sample_atari_files.extend(possiblities)
