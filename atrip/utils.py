@@ -23,7 +23,8 @@ def uuid():
 
 def to_numpy(value):
     if type(value) is np.ndarray:
-        return value
+        # force copy to make sure we aren't pointing to an immutable array
+        return value.copy()
     elif type(value) is bytes:
         return np.copy(np.frombuffer(value, dtype=np.uint8))
     elif type(value) is list:
