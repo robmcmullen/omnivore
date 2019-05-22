@@ -82,6 +82,7 @@ class TestMultipleCompression:
     def test_glob(self, pathname):
         sample_data = np.fromfile(pathname, dtype=np.uint8)
         container = guess_container(sample_data)
+        container.guess_media_type()
         output = "tmp." + os.path.basename(pathname)
         pathname = os.path.join(os.path.dirname(__file__), output)
 
