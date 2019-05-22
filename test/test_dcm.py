@@ -184,10 +184,24 @@ class TestFileCompression:
         sample_data = np.fromfile(pathname, dtype=np.uint8)
         container = guess_container(sample_data)
         container.guess_media_type()
-        packed = compressor.calc_packed_data(container.media.data, container.media)
+        m = container.media
+        # can't use container._data because the container may include a header
+        # which is not part of the actual media. DCM, for instance, doesn't use
+        # a header while ATR does.
+        packed = compressor.calc_packed_data(m.data, m)
         unpacked = compressor.calc_unpacked_data(packed)
         out = np.frombuffer(unpacked, dtype=np.uint8)
-        assert np.array_equal(container.media.data, out)
+        print(len(container.media.data))
+        print(len(out))
+        if m.sector_size == 256 and len(m) == 183936 and len(out) == 184320:
+            # DCM expands DD images full DD boot sectors, so must compare the
+            # first 3 SD sectors individually
+            assert np.array_equal(m.data[0:128], out[0:128])
+            assert np.array_equal(m.data[128:256:], out[256:384])
+            assert np.array_equal(m.data[256:384], out[512:640])
+            assert np.array_equal(m.data[384:], out[768:])
+        else:
+            assert np.array_equal(m.data, out)
 
 if __name__ == "__main__":
     # t = TestDCMBlocks()
@@ -205,4 +219,4 @@ if __name__ == "__main__":
     # t.test_encode([0x44])
 
     t = TestFileCompression()
-    t.test_glob("../samples/dos_sd_test1.atr")
+    t.test_glob("../samples/dos_dd_test1.atr")
