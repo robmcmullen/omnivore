@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 
-from atrip.compressors import bzip, dcm, gzip, lz4, lzma, lzw, zlib
+from atrip.compressors import bzip, dcm, gzip, lz4, lzma, unix_compress, zlib
 
 compressors_and_decompressors = [
     bzip.BZipCompressor,
@@ -16,7 +16,7 @@ compressors_and_decompressors = [
 
 read_only_compressors = [
     dcm.DCMCompressor,
-    lzw.UnixCompressor,
+    unix_compress.UnixCompressor,
 ]
 
 class TestCompressor:
