@@ -1,6 +1,7 @@
 import gzip
 import io
 import tarfile
+import time
 
 import numpy as np
 
@@ -24,3 +25,19 @@ class TarArchiver(Archiver):
                     yield item.name, item_data
         except:
             raise errors.InvalidArchiver("Not a tar file")
+
+    def get_tarinfo(self, container):
+        tarinfo = tarfile.TarInfo(container.pathname)
+        tarinfo.mtime = time.time()
+        tarinfo.uid = 400  # easter egg!
+        tarinfo.gid = 800
+        return tarinfo
+
+    def pack_data(self, fh, containers, skip_missing_compressors=False):
+        with tarfile.open(None, 'w', fh) as zf:
+            for c in containers:
+                byte_data = c.calc_packed_bytes(skip_missing_compressors)
+                d = io.BytesIO(byte_data)
+                tarinfo = self.get_tarinfo(c)
+                tarinfo.size = len(byte_data)
+                zf.addfile(tarinfo, d)

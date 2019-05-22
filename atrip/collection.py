@@ -25,12 +25,15 @@ class Collection:
     """
     ui_name = "Collection"
 
-    def __init__(self, pathname, data, session=None):
+    def __init__(self, pathname, data=None, session=None):
         self.pathname = pathname
         self.name = ""
         self.containers = []
         self._uuid_map = None
         self.archiver = None
+        if data is None:
+            data = open(pathname, 'rb').read()
+            log.debug(f"Collection.__init__: {pathname}: read {len(data)} bytes")
         self.unarchive(data, session)
 
     @property
@@ -78,7 +81,7 @@ class Collection:
         segment = ref()
         return segment
 
-    #### compression
+    #### decompression
 
     def unarchive(self, byte_data, session=None):
         """Attempt to unpack `byte_data` using this archive unpacker.
@@ -117,10 +120,28 @@ class Collection:
         """
         return [basename, byte_data]
 
-    def archive(self, fh):
+    #### compression and save
+
+    def save(self, pathname=None, skip_missing_compressors=False):
+        """Save the collection.
+
+        If pathname is None, will attempt to overwrite the file that used to
+        load the collection.
+
+        Can raise InvalidCompressor if one of the compressors is read-only
+        (i.e. can only decompress data). However, if `skip_missing_compressors`
+        is True, no error will be raised and compression will take place
+        ignoring any compressors that can't compress data.
+        """
+        if pathname is None:
+            pathname = self.pathname
+        with open(pathname, 'wb') as fh:
+            self.save_in_archive(fh, skip_missing_compressors)
+
+    def save_in_archive(self, fh, skip_missing_compressors=False):
         """Pack each container into the archive
         """
-        return self.archive.pack_data(fh, self.containers)
+        return self.archiver.pack_data(fh, self.containers, skip_missing_compressors)
 
     #### iterators
 
@@ -193,5 +214,5 @@ class Collection:
         # copy the actual data into the containers.
         self.containers = e["containers"]
         for c, (item_pathname, item_data) in zip(self.containers, item_data_list):
-            c._data[:] = np.fromstring(item_data, dtype=np.uint8)
+            c._data[:] = np.frombuffer(item_data, dtype=np.uint8)
             c.pathname = item_pathname

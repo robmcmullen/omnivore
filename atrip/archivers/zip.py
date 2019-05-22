@@ -24,3 +24,9 @@ class ZipArchiver(Archiver):
                     yield item.filename, item_data
         except:
             raise errors.InvalidArchiver("Not a zip file")
+
+    def pack_data(self, fh, containers, skip_missing_compressors=False):
+        with zipfile.ZipFile(fh, 'w', zipfile.ZIP_DEFLATED, False) as zf:
+            for c in containers:
+                byte_data = c.calc_packed_bytes(skip_missing_compressors)
+                zf.writestr(c.pathname, byte_data)

@@ -21,7 +21,7 @@ class Archiver:
     def iter_archive(self, basename, byte_data):
         yield basename, byte_data
 
-    def pack_data(self, fh, containers):
+    def pack_data(self, fh, containers, skip_missing_compressors=False):
         raise NotImplementedError
 
 
@@ -34,10 +34,10 @@ class PlainFileArchiver:
     def iter_archive(self, basename, byte_data):
         yield basename, byte_data
 
-    def pack_data(self, fh, containers):
-        if len(containers) > 0:
+    def pack_data(self, fh, containers, skip_missing_compressors=False):
+        if len(containers) > 1:
             raise errors.InvalidArchiver(f"{str(self)} doesn't support multiple containers")
-        fh.write(containers[0].data.tobytes())
+        fh.write(containers[0].calc_packed_bytes(skip_missing_compressors))
 
 
 _archivers = None
