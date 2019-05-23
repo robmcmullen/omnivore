@@ -126,10 +126,13 @@ be addressed using that prefix.
 +---------------------+----------+------+-------+------------------------------+
 | Container           | File Ext | Read | Write | Status                       |
 +=====================+==========+======+=======+==============================+
-| Zip File            | .zip     | Yes  | No    | Read only                    |
+| Zip File            | .zip     | Yes  | No    | Read/Write                   |
 +---------------------+----------+------+-------+------------------------------+
-| Tar File            | .tar     | Yes  | No    | Read only                    |
+| Tar File            | .tar     | Yes  | No    | Read/Write                   |
 +---------------------+----------+------+-------+------------------------------+
+
+Archives may also be compressed with any of the general purpose compression
+formats listed below.
 
 
 Supported Compression Formats
@@ -159,10 +162,12 @@ as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
 +---------------------+------------+------+-------+------------------------------+
 | lz4                 | .lz4       | Yes  | No    | Read/Write [#]_              |
 +---------------------+------------+------+-------+------------------------------+
-| Disk Communicator   | .dcm       | Yes  | No    | Read only                    |
+| Disk Communicator   | .dcm       | Yes  | No    | Read/Write [#]_              |
 +---------------------+------------+------+-------+------------------------------+
 
 .. [#] Requires optional library lz4
+
+.. [#] Not general purpose compression; Atari 720 or 1040 sector disk images only
 
 
 Segment Structure

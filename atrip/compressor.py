@@ -128,3 +128,17 @@ def guess_compressor_list(data):
         compressors.append(c.__class__)
     return data, compressors
 
+def compress_in_reverse_order(byte_data, decompression_order, media=None, skip_missing_compressors=False):
+    order = reversed(decompression_order)
+    log.debug(f"compression_order: {order}")
+    for compressor_cls in order:
+        compressor = compressor_cls()
+        try:
+            byte_data = compressor.calc_packed_data(byte_data, media)
+        except errors.InvalidCompressor:
+            if skip_missing_compressors:
+                continue
+            else:
+                log.error(f"Compression algorithm {compressor} not yet implemented")
+                raise
+    return byte_data

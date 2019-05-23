@@ -58,6 +58,9 @@ class TestCollection:
             # compressed data may not be the same; don't really care as long as
             # it decompresses the same
             collection2 = Collection(output)
+            print(collection.decompression_order)
+            print(collection2.decompression_order)
+            assert collection.decompression_order == collection2.decompression_order
             for c, c2 in zip(collection.containers, collection2.containers):
                 print(f"checking collections: {c}, {c2}")
                 assert np.array_equal(c._data, c2._data)

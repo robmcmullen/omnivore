@@ -1,14 +1,14 @@
 import os
+import io
 import hashlib
-import inspect
-import pkg_resources
 import weakref
 
 import numpy as np
 
 from . import errors
 from .utils import to_numpy, to_numpy_list, uuid
-from .container import guess_container
+from .container import guess_container, Container
+from .compressor import guess_compressor_list, compress_in_reverse_order, Uncompressed
 from .archiver import Archiver, find_container_items_in_archive
 from .filesystem import Dirent
 
@@ -29,6 +29,7 @@ class Collection:
         self.pathname = pathname
         self.name = ""
         self.containers = []
+        self.decompression_order = [Uncompressed]
         self._uuid_map = None
         self.archiver = None
         if data is None:
@@ -83,6 +84,14 @@ class Collection:
 
     #### decompression
 
+    def add_container(self, container, pathname):
+        container.pathname = pathname
+        container.guess_media_type()
+        container.guess_filesystem()
+        self.containers.append(container)
+        container.name = f"D{len(self.containers)}"
+        log.info(f"container: {container}")
+
     def unarchive(self, byte_data, session=None):
         """Attempt to unpack `byte_data` using this archive unpacker.
 
@@ -90,19 +99,20 @@ class Collection:
         listed here will be the order returned by the subclass; no sorting is
         done here.
         """
-        self.archiver, item_data_list = find_container_items_in_archive(self.pathname, byte_data)
+        decompressed_archive_byte_data, decompression_list = guess_compressor_list(byte_data)
+        self.archiver, item_data_list = find_container_items_in_archive(self.pathname, decompressed_archive_byte_data)
         if session is not None:
             self.restore_session(session, item_data_list)
+        elif not self.archiver.supports_multiple_containers:
+            item_pathname, item_data = item_data_list[0]
+            container = Container(item_data, decompression_list)
+            self.add_container(container, item_pathname)
         else:
+            self.decompression_order = decompression_list
             for item_pathname, item_data in item_data_list:
                 log.info(f"container size: {len(item_data)}")
                 container = guess_container(item_data)
-                container.pathname = item_pathname
-                container.guess_media_type()
-                container.guess_filesystem()
-                self.containers.append(container)
-                container.name = f"D{len(self.containers)}"
-                log.info(f"container: {container}")
+                self.add_container(container, item_pathname)
         self._uuid_map = None
 
     def iter_archive(self, basename, byte_data):
@@ -135,8 +145,12 @@ class Collection:
         """
         if pathname is None:
             pathname = self.pathname
+        fh = io.BytesIO()
+        self.save_in_archive(fh, skip_missing_compressors)
+        archived_bytes = fh.getvalue()
+        compressed_bytes = compress_in_reverse_order(archived_bytes, self.decompression_order)
         with open(pathname, 'wb') as fh:
-            self.save_in_archive(fh, skip_missing_compressors)
+            fh.write(compressed_bytes)
 
     def save_in_archive(self, fh, skip_missing_compressors=False):
         """Pack each container into the archive

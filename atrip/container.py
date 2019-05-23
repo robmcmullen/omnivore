@@ -11,7 +11,7 @@ from . import utils
 from .segment import Segment
 from . import media_type
 from . import filesystem
-from .compressor import guess_compressor_list, Uncompressed
+from .compressor import guess_compressor_list, compress_in_reverse_order, Uncompressed
 from .filesystem import Dirent
 
 import logging
@@ -271,19 +271,7 @@ class Container:
         ignoring any compressors that can't compress data.
         """
         byte_data = self.data.tobytes()
-        order = reversed(self.decompression_order)
-        log.debug(f"compression_order: {order}")
-        for compressor_cls in order:
-            compressor = compressor_cls()
-            try:
-                byte_data = compressor.calc_packed_data(byte_data, self.media)
-            except errors.InvalidCompressor:
-                if skip_missing_compressors:
-                    continue
-                else:
-                    log.error(f"Compression algorithm {compressor} not yet implemented")
-                    raise
-        return byte_data
+        return compress_in_reverse_order(byte_data, self.decompression_order, self.media, skip_missing_compressors)
 
     #### media
 
