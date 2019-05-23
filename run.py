@@ -79,7 +79,7 @@ def main(argv):
     import atrip
 
     image_paths = [get_image_path("icons", omnivore)]
-    template_paths = [get_image_path("templates", omnivore), atrip.get_template_path()]
+    template_paths = [get_image_path("templates", omnivore), get_image_path("templates/fonts", omnivore), atrip.get_template_path()]
 
     from omnivore._version import __version__
     OmnivoreApp = SawxApp
