@@ -11,7 +11,7 @@ from . import utils
 from .segment import Segment
 from . import media_type
 from . import filesystem
-from .compressor import guess_compressor, Uncompressed
+from .compressor import guess_compressor_list, Uncompressed
 from .filesystem import Dirent
 
 import logging
@@ -496,17 +496,7 @@ class Container:
             raise errors.InvalidSegment(f"No segment with uuid={uuid}")
 
 def guess_container(data):
-    compressors = []
-    while True:  # loop until reach an uncompressed state
-        c = guess_compressor(data)
-        data = c.unpacked
-        if not c.is_compressed:
-            if not compressors:
-                # save the null compressor only if it's the only one
-                log.info(f"image does not appear to be compressed.")
-                compressors.append(c.__class__)
-            break
-        compressors.append(c.__class__)
+    data, compressors = guess_compressor_list(data)
     container = Container(data, compressors)
     return container
 

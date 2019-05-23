@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 class Archiver:
     archive_type = ""
 
+    supports_multiple_containers = True
+
     def __str__(self):
         return self.archive_type + " archive"
 
@@ -27,6 +29,8 @@ class Archiver:
 
 class PlainFileArchiver:
     archive_type = "plain file"
+
+    supports_multiple_containers = False
 
     def __str__(self):
         return self.archive_type

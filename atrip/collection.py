@@ -181,7 +181,7 @@ class Collection:
 
     def find_uuid(self, uuid):
         try:
-            segment = self.uuid_map[uuid]
+            segment = self[uuid]
         except KeyError:
             raise errors.InvalidSegment(f"No segment in any disk with uuid={uuid}")
         return segment

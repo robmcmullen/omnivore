@@ -11,6 +11,7 @@ from atrip.container import Container
 from atrip.segment import Segment
 import atrip.style_bits as style_bits
 import atrip.errors as errors
+from atrip.utils import collapse_values, restore_values
 from functools import reduce
 
 
@@ -143,13 +144,13 @@ class TestSegment:
         c = s.container
         assert c.disasm_type[2000] == 50
 
-        ranges = c.calc_disasm_ranges()
-        assert ranges == [(0, 0, 200), (2, 200, 1200), (50, 1200, 3000), (2, 3000, 4000), (0, 4000, 4096)]
+        ranges = collapse_values(c.disasm_type)
+        assert ranges == [[0, 0, 200], [2, 200, 1200], [50, 1200, 3000], [2, 3000, 4000], [0, 4000, 4096]]
 
         c.disasm_type[:] = 0
         assert c.disasm_type[2000] == 0
 
-        c.restore_disasm_ranges(ranges)
+        restore_values(c.disasm_type, ranges)
         assert s.disasm_type[0] == 0
         assert s100.disasm_type[1] == 0
         assert s100.disasm_type[10] == 2
@@ -159,7 +160,7 @@ class TestSegment:
         assert s1000.disasm_type[2] == s100.disasm_type[20]
         assert c.disasm_type[2000] == 50
 
-        r2 = c.calc_disasm_ranges()
+        r2 = collapse_values(c.disasm_type)
         assert ranges == r2
 
 #         s2 = self.sub_segment

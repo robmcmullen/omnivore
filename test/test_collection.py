@@ -62,14 +62,31 @@ class TestCollection:
                 print(f"checking collections: {c}, {c2}")
                 assert np.array_equal(c._data, c2._data)
 
-            if ".atr." in pathname:
-                orig, _ = pathname.split(".atr.", 1)
-                orig += ".atr"
+            if ".atr." in pathname or ".dcm." in pathname:
+                if ".atr." in pathname:
+                    ext = ".atr"
+                else:
+                    ext = ".dcm"
+                orig, _ = pathname.split(ext + ".", 1)
+                orig += ext
                 collection_uncompressed = Collection(orig)
                 print("comparing against uncompressed\n", collection_uncompressed.verbose_info)
                 container_orig = collection.containers[0]
                 container_uncompressed = collection_uncompressed.containers[0]
                 assert np.array_equal(container_orig._data, container_uncompressed._data)
+
+            if ".zip." in pathname or ".tar." in pathname:
+                if ".zip." in pathname:
+                    ext = ".zip"
+                else:
+                    ext = ".tar"
+                orig, _ = pathname.split(ext + ".", 1)
+                orig += ext
+                collection_uncompressed = Collection(orig)
+                print("comparing against uncompressed\n", collection_uncompressed.verbose_info)
+                assert len(collection.containers) == len(collection_uncompressed.containers)
+                for c, c2 in zip(collection.containers, collection_uncompressed.containers):
+                    assert np.array_equal(c._data, c2._data)
 
     @pytest.mark.parametrize(("pathname"), globbed_sample_atari_collections)
     def test_multiple(self, pathname):
@@ -82,3 +99,4 @@ if __name__ == "__main__":
     # t.test_single("../samples/dos_sd_test1.atr.gz")
     # t.test_single("../samples/dos_sd_test_collection.zip")
     # t.test_single("../samples/dos_sd_test_collection.tar")
+    t.test_single("../samples/dos_sd_test_collection.zip.lz4")

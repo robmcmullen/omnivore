@@ -113,3 +113,18 @@ def guess_compressor(raw_data):
         log.debug(f"image does not appear to be compressed.")
         compressor = Uncompressed(raw_data)
     return compressor
+
+def guess_compressor_list(data):
+    compressors = []
+    while True:  # loop until reach an uncompressed state
+        c = guess_compressor(data)
+        data = c.unpacked
+        if not c.is_compressed:
+            if not compressors:
+                # save the null compressor only if it's the only one
+                log.info(f"image does not appear to be compressed.")
+                compressors.append(c.__class__)
+            break
+        compressors.append(c.__class__)
+    return data, compressors
+
