@@ -84,13 +84,14 @@ class Container:
     """
     ui_name = "Raw Data"
 
-    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=0):
+    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=None):
 
         self.init_empty()
+        if default_disasm_type is not None:
+            self.default_disasm_type = default_disasm_type
         self.data = data
         self.style = style
         self.disasm_type = disasm_type
-        self.default_disasm_type = default_disasm_type
         if decompression_order is None:
             decompression_order = [Uncompressed()]
         self.decompression_order = decompression_order
@@ -109,6 +110,7 @@ class Container:
         self._media = None
         self.mime = "application/octet-stream"
         self.pathname = ""
+        self.default_disasm_type = 128  # libudis flag to use default CPU
         self.origin = 0
         self.error = ""
         self.name = ""
@@ -150,7 +152,7 @@ class Container:
     @disasm_type.setter
     def disasm_type(self, value):
         if value is None:
-            value = np.zeros(len(self._data), dtype=np.uint8)
+            value = np.zeros(len(self._data), dtype=np.uint8) + self.default_disasm_type
         self._disasm_type = utils.to_numpy(value)
 
     @property
@@ -331,6 +333,7 @@ class Container:
         raw = np.zeros(size, dtype=np.uint8)
         self._data = raw
         self.style = None
+        self.default_disasm_type = state.pop('default_disasm_type')
         self.disasm_type = None
         self.origin = state.pop('origin', 0)
         self.name = state.pop('name', "")
@@ -338,7 +341,6 @@ class Container:
         self.uuid = state.pop('uuid', utils.uuid())
         self.error = state.pop('error', "")
         self.decompression_order = state.pop('decompression_order', [])
-        self.default_disasm_type = state.pop('default_disasm_type')
         self.memory_map = dict(state.pop('memory_map', []))
         self.restore_comments(state.pop('comments', []))
         utils.restore_values(self._disasm_type, state.pop('disasm_type', []))
