@@ -746,6 +746,24 @@ case 0x%x:
 
 
 def gen_pyx(filename, parsers, stringifiers):
+    header = f"""
+from libc.string cimport strcmp
+import cython
+import numpy as np
+cimport numpy as np
+
+from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
+
+cdef string_func_t parser_map[{disassembler_type_max + 1}]
+cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
+"""
+
+    with open(filename, "w") as fh:
+        fh.write(py_disclaimer)
+        fh.write(header)
+
+
+def gen_py_cpu_map(filename, parsers):
     ret = "\n"
     parser_lookup = {}
     for p in parsers + custom_parsers:
@@ -758,26 +776,17 @@ def gen_pyx(filename, parsers, stringifiers):
     valid_cpus = [disassembler_type[k] for (k, p) in cpus_with_nop if disassembler_type[k] in parser_lookup]
 
     header = f"""
-from libc.string cimport strcmp
-import cython
-import numpy as np
-cimport numpy as np
+cpu_id_to_name = {repr(parser_lookup)}
 
-from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
+cpu_name_to_id = {repr(parser_name_map)}
 
-parser_lookup = {repr(parser_lookup)}
-
-parser_name_map = {repr(parser_name_map)}
-
-valid_cpus = {repr(valid_cpus)}
-
-cdef string_func_t parser_map[{disassembler_type_max + 1}]
-cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
+valid_cpu_ids = {repr(valid_cpus)}
 """
 
     with open(filename, "w") as fh:
         fh.write(py_disclaimer)
         fh.write(header)
+
 
 def gen_map(fh, history, custom_history, map_name, default_history):
     all_history = history + custom_history
@@ -883,3 +892,6 @@ if __name__ == "__main__":
         gen_end_guard(fh, filename)
 
     gen_pyx(destdir + "declarations.pyx", generated_parsers, generated_stringifiers)
+
+    destfile = os.path.join(destdir + "../omnivore/disassembler/valid_cpus.py")
+    gen_py_cpu_map(destfile, generated_parsers)

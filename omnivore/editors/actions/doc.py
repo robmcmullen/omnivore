@@ -9,7 +9,7 @@ from sawx.action import SawxAction, SawxRadioListAction
 
 from ... import commands
 from ... import errors
-from ...disassembler import valid_cpus, processors
+from ...disassembler import valid_cpu_ids, cpu_id_to_name, processors
 from ...utils.archutil import calc_available_memory_maps, available_memory_maps
 
 import logging
@@ -19,10 +19,10 @@ log = logging.getLogger(__name__)
 class doc_cpu(SawxRadioListAction):
     def calc_name(self, action_key):
         cpu_name = self.get_item(action_key)
-        return processors[cpu_name]["description"]
+        return cpu_name
 
     def calc_list_items(self):
-        return valid_cpus
+        return [cpu_id_to_name[i] for i in valid_cpu_ids]
 
     def calc_checked_list_item(self, action_key, index, item):
         return self.editor.document.cpu == item

@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 try:
-    from .miniasm import MiniAssembler, valid_cpus, processors
+    from .miniasm import MiniAssembler, processors
     from .disasm import DisassemblyConfig, ParsedDisassembly
     from .history import HistoryStorage
     from . import libudis
@@ -22,6 +22,13 @@ except ModuleNotFoundError:
     raise
 except ImportError as e:
     log.warning(f"libudis C extension not loaded (likely an undefined symbol):\n{str(e)}")
+
+try:
+    from .valid_cpus import valid_cpu_ids, cpu_id_to_name, cpu_name_to_id
+except:
+    valid_cpu_ids = [10]
+    cpu_name_to_id = {"6502": 10}
+    cpu_name_to_id = {10: "6502"}
 
 
 
