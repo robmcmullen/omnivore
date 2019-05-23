@@ -147,10 +147,7 @@ class DiskImageDocument(SawxDocument):
             for s in e['user segments']:
                 self.add_user_segment(s, replace=True)
         if 'serialized user segments' in e:
-            # Segments that need to be restored via deserialization
-            for s in e['serialized user segments']:
-                s.reconstruct_raw(self.collection.rawdata)
-                self.add_user_segment(s, replace=True)
+            log.warning("found serialized user segments from Omnivore 1.0. These will not be restored.")
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
 
