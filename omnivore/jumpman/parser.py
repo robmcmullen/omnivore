@@ -9,15 +9,20 @@ log = logging.getLogger(__name__)
 #log.setLevel(logging.DEBUG)
 
 
-def is_valid_level_segment(segment):
+def is_valid_level_segment(segment, strict=True):
     # 283f is always 4c (JMP) because it and the next two bytes are a jump target from the game loop
     # 2848: always 20 (i.e. JSR)
     # 284b: always 60 (i.e. RTS)
     # 284c: always FF (target for harvest table if no action to be taken)
     if len(segment) >= 0x800 and segment[0x3f] == 0x4c and segment[0x48] == 0x20 and segment[0x4b] == 0x60 and segment[0x4c] == 0xff:
         # check for sane level definition table
-        index = segment[0x38]*256 + segment[0x37] - segment.origin
-        return index >=0 and index < len(segment)
+        if strict:
+            addr = segment[0x38]*256 + segment[0x37]
+            if addr >= segment.origin and addr < segment.origin + len(segment):
+                return True
+            log.debug("Failed strict jumpman level test: level table={addr} not in segment range {segment.origin} - {segment.origin + len(segment)}")
+        else:
+            return True
     return False
 
 
@@ -685,8 +690,8 @@ class ScreenState(LevelDef):
         self.search_order.extend(segments)
         self.screen = screen
         if screen is not None:
-            self.screen_2d = screen.data.reshape((88, 160))
-            self.screen_style_2d = screen.style.reshape((88, 160))
+            self.screen_2d = screen.container.data.reshape((88, 160))
+            self.screen_style_2d = screen.container.style.reshape((88, 160))
         self.pick_buffer = pick_buffer
         if pick_buffer is not None:
             self.pick_buffer_2d = pick_buffer.reshape((88, 160))

@@ -193,7 +193,7 @@ class JumpmanPlayfieldModel(object):
         self.playfield[:] = 0
         self.playfield.style[:] = 0
         self.force_refresh = True
-        s = self.playfield.style.reshape((self.antic_lines, -1))
+        s = self.playfield.container.style.reshape((self.antic_lines, -1))
         s[::2,::2] = style_bits.comment_bit_mask
         s[1::2,1::2] = style_bits.comment_bit_mask
         self.set_current_screen()
