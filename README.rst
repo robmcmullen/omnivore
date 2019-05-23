@@ -3,7 +3,8 @@ ATRip
 
 Python library for hierarchical filesystem parsing on Atari 8-bit and Apple ][
 disk images. The successor to `atrcopy <https://pypi.org/atrcopy>`_, this is
-under heavy development and is not stable.
+under heavy development and is still in a beta state. It is the basis for disk
+image support in `Omnivore 2 <https://github.com/robmcmullen/omnivore>`_.
 
 Pronounced "uh-trip", the name is a happy coincidence that a dictionary word
 exists that is the quasi-portmanteau of "ATR" (the Atari 8 bit disk image
@@ -71,6 +72,8 @@ Supported Disk Image Types
 
 * ``XFD``: XFormer images, basically raw disk dumps
 * ``ATR``: Nick Kennedy's disk image format; includes 16 byte header
+* ``DCM``: Disk Communicator images, Bob Puff's compression format for Atari disk images
+* ``CAS``: Atari cassette images
 * ``DSK``: Apple ][ DOS 3.3 disk image; raw sector dump
 
 Supported File System Formats
@@ -120,15 +123,15 @@ Archives
 -----------------
 
 Archives containing multiple disk images are supported, where each disk image
-can be addressed individually. Each image will be given a disk number and can
-be addressed using that prefix.
+within the archive will be given a disk number and is addressable using that
+prefix.
 
 +---------------------+----------+------+-------+------------------------------+
 | Container           | File Ext | Read | Write | Status                       |
 +=====================+==========+======+=======+==============================+
-| Zip File            | .zip     | Yes  | No    | Read/Write                   |
+| Zip File            | .zip     | Yes  | Yes   | Fully supported              |
 +---------------------+----------+------+-------+------------------------------+
-| Tar File            | .tar     | Yes  | No    | Read/Write                   |
+| Tar File            | .tar     | Yes  | Yes   | Fully supported              |
 +---------------------+----------+------+-------+------------------------------+
 
 Archives may also be compressed with any of the general purpose compression
@@ -152,44 +155,52 @@ as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
 +---------------------+------------+------+-------+------------------------------+
 | Compression Format  | File Ext   | Read | Write | Status                       |
 +=====================+============+======+=======+==============================+
-| gzip                | .gz        | Yes  | No    | Read/Write                   |
+| gzip                | .gz        | Yes  | Yes   | Fully supported              |
 +---------------------+------------+------+-------+------------------------------+
-| bzip2               | .bz2       | Yes  | No    | Read/Write                   |
+| bzip2               | .bz2       | Yes  | Yes   | Fully supported              |
 +---------------------+------------+------+-------+------------------------------+
-| lzma                | .xz, .lzma | Yes  | No    | Read/Write                   |
+| lzma                | .xz, .lzma | Yes  | Yes   | Fully supported              |
 +---------------------+------------+------+-------+------------------------------+
-| lzw (Unix compress) | .Z         | Yes  | No    | Read only                    |
+| lzw (Unix compress) | .Z         | Yes  | No    | Read only [#]_               |
 +---------------------+------------+------+-------+------------------------------+
-| lz4                 | .lz4       | Yes  | No    | Read/Write [#]_              |
+| lz4                 | .lz4       | Yes  | Yes   | Extra library required [#]_  |
 +---------------------+------------+------+-------+------------------------------+
-| Disk Communicator   | .dcm       | Yes  | No    | Read/Write [#]_              |
+| Disk Communicator   | .dcm       | Yes  | Yes   | Atari images only [#]_       |
 +---------------------+------------+------+-------+------------------------------+
 
-.. [#] Requires optional library lz4
+.. [#] Contains code from the
+   `BSD-licensed python implementation <https://github.com/umeat/unlzw>`_
+   of Mark Adler's reference C implementation of unlzw. See LICENSE.unlzw in the
+   source distribution for more details.
 
-.. [#] Not general purpose compression; Atari 720 or 1040 sector disk images only
+.. [#] Requires optional library lz4 installable through PyPi.
+
+.. [#] Not general purpose compression; Atari 720 or 1040 sector disk images only.
+   Contains my own python reimplementation of the DCM algorithms based on the
+   `GPL code in acvt <http://ftp.pigwa.net/stuff/collections/holmes%20cd/Holmes%202/PC%20Atari%20Programming%20Utils/Acvt%20v1.04/index.html>`_
 
 
 Segment Structure
 ==================
 
-```
-Collection:      example.atr: plain file
-Container:          D1: 92176 bytes, compression=none
-Header:                 ATR Header (16 bytes)
-DiskImage:              Atari SD (90K) Floppy Disk Image, size=92160, filesystem=Atari DOS 2
-BootSegment:                Boot Sectors (384 bytes)
-Segment:                        Boot Header (6 bytes)
-Segment:                        Boot Code (378 bytes @ 0006)
-VTOC:                       DOS2 SD VTOC (128 bytes)
-Directory:                  Directory (1024 bytes)
-Dirent:                         File #0  (.2.u. ) 004 DOS     SYS  035
-FileType:                           DOS.SYS (4375 bytes) Unknown file type
-Dirent:                         File #1  (.2.u. ) 039 DUP     SYS  054
-AtariObjectFile:                    DUP.SYS (6708 bytes) Atari 8-bit Object File
-ObjSegment:                             Segment #1 (6706 bytes)
-Segment:                                    [$2949-$4376] (6702 bytes)
-```
+::
+
+    Collection:      example.atr: plain file
+    Container:          D1: 92176 bytes, compression=none
+    Header:                 ATR Header (16 bytes)
+    DiskImage:              Atari SD (90K) Floppy Disk Image, size=92160, filesystem=Atari DOS 2
+    BootSegment:                Boot Sectors (384 bytes)
+    Segment:                        Boot Header (6 bytes)
+    Segment:                        Boot Code (378 bytes @ 0006)
+    VTOC:                       DOS2 SD VTOC (128 bytes)
+    Directory:                  Directory (1024 bytes)
+    Dirent:                         File #0  (.2.u. ) 004 DOS     SYS  035
+    FileType:                           DOS.SYS (4375 bytes) Unknown file type
+    Dirent:                         File #1  (.2.u. ) 039 DUP     SYS  054
+    AtariObjectFile:                    DUP.SYS (6708 bytes) Atari 8-bit Object File
+    ObjSegment:                             Segment #1 (6706 bytes)
+    Segment:                                    [$2949-$4376] (6702 bytes)
+
 
 
 References
