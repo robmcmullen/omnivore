@@ -324,11 +324,15 @@ class DCMCompressor(Compressor):
         except IndexError:
             # no differences anywhere
             first_diff = self.sector_size
-        if first_diff > 123 and best_size > 5 and 0x42 in allowed_blocks:
-            # use 42, nothing else will beat 5 bytes
+        if first_diff > 123 and best_size > 6 and 0x42 in allowed_blocks:
             best_block = 0x42
-
-        # FIXME: try block 43
+            best_size = 6
+        if 0x43 in allowed_blocks:
+            len_43, groups_43 = self.prepare_43()
+            if len_43 < best_size and 0x43 in allowed_blocks:
+                best_size = len_43
+                best_block = 0x43
+                encoder_arg = groups_43
 
         log.debug(f"dcm: encoding as block type ${best_block:x}, size={best_size}")
         func = self.encode_block_type_func[best_block]
@@ -353,32 +357,89 @@ class DCMCompressor(Compressor):
         self.put_byte(self.current[126])
         self.put_byte(self.current[127])
 
-    def encode_43(self, unused):
-        """Run-length encoded block"""
+    def prepare_43(self):
+        size = self.sector_size
+
+        # find where the values are the same
+        d = np.diff(self.current[:size])
+        # [  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+        #    1,   1,   1,   1,   1,   1,  -9,   0,   0,   0,   0,   0,   0,
+        #    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+        #   30,   1,   1,   1,   1,   1,   1,   1,   1,   1,  50,   0,   0,
+        #    0,   0,   0,   0,   0,   0,   0, -95,   0,   0,   0,   0,   0,
+        #    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+        #    0,  76,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+        #    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+        #    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+        #    1,   1,   1,   1,   1,   1,   1,   1,   1,   1]
+
+        # The index before the first zero in a group of zeros is the start of a
+        # group of the same values. This gives a list of indexes of the groups
+        same = np.where(d == 0)[0]
+        # [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+        #  37, 38, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 63, 64, 65,
+        #  66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78]
+
+        # If no consecutive bytes have the same value, abort!
+        if len(same) == 0:
+            return 100000, None
+
+        # The changes in same are the breaks in groups:
+        changes=np.diff(same)
+        # [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+        #   1, 12,  1,  1,  1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,
+        #   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+
+        # each 1 represents the same value as the next item in the array, so
+        # values > 1 are where there are gaps, i.e. the start of a new group
+        starts = np.where(changes > 1)[0] + 1
+        # [19, 28]
+        ends = starts - 1
+        # [18, 27]
+
+        # but it doesn't include the start of the first group or the end of the
+        # last group
+        starts = list(starts)
+        starts[0:0] = [0]
+        ends = list(ends)
+        ends.append(-1)
+
+        rle_starts = same[starts]
+        # [20, 50, 60]
+        rle_ends = same[ends] + 1 + 1  # inclusive, so need extra to form slice
+        # [40, 60, 80]
+        rle_groups = list(zip(rle_starts, rle_ends))
+
+        # start with verbatim copy, then alternate with rle
+        length = 0
         index = 0
+        for start, end in rle_groups:
+            length += 1 + start - index  # verbatim
+            index = start
+            if index < size:
+                length += 2  # rle blocks always encoded in 2 bytes
+            index = end
+        if index < size:
+            length += 1 + size - index
+            rle_groups.append((size, size))
+        return length, rle_groups
 
-        while index < self.sector_size:
-            # 1. starts with copying a string verbatim: find end
-            end = self.get_next()
-            if index > 0 and end == 0:
-                end = 256
-
-            # 2: copy bytes verbatim until end offset
-            log.debug(f"0x43: copying verbatim {index}-{end}")
-            while index < end:
-                self.current[index] = self.get_next()
+    def encode_43(self, groups):
+        """Run-length encoded block"""
+        self.record_start_index = self.pass_buffer_index
+        self.put_byte(0x43)
+        index = 0
+        size = self.sector_size
+        for rle_start, rle_end in groups:
+            self.put_byte(rle_start)
+            while index < rle_start:
+                self.put_byte(self.current[index])
                 index += 1
 
-            if index < self.sector_size:
-                # 3: run-length encoding
-                end = self.get_next()
-                if index > 0 and end == 0:
-                    end = 256
-                fill_byte = self.get_next()
-                log.debug(f"0x43: rle: ${fill_byte:02x} {index}-{end}")
-                while index < end:
-                    self.current[index] = fill_byte
-                    index += 1
+            if index < size:
+                self.put_byte(rle_end)
+                self.put_byte(self.current[index])
+                index += rle_end - rle_start
 
     def encode_44(self, index):
         """Change beginning of sector"""
@@ -453,3 +514,68 @@ class DCMCompressor(Compressor):
 #        113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
 #        126, 127], dtype=uint8)
 # >>> 
+
+
+
+# RLE notes:
+#
+# >>> a=np.arange(128)
+# >>> a[20:40]=10
+# >>> a[50:60]=99
+# >>> a[60:80]=4
+# >>> a
+# array([  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,
+#         13,  14,  15,  16,  17,  18,  19,  10,  10,  10,  10,  10,  10,
+#         10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,
+#         10,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  99,  99,
+#         99,  99,  99,  99,  99,  99,  99,  99,   4,   4,   4,   4,   4,
+#          4,   4,   4,   4,   4,   4,   4,   4,   4,   4,   4,   4,   4,
+#          4,   4,  80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,
+#         91,  92,  93,  94,  95,  96,  97,  98,  99, 100, 101, 102, 103,
+#        104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+#        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127])
+
+# >>> d=np.diff(a)
+# >>> d
+# array([  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+#          1,   1,   1,   1,   1,   1,  -9,   0,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#         30,   1,   1,   1,   1,   1,   1,   1,   1,   1,  50,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0, -95,   0,   0,   0,   0,   0,
+#          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+#          0,  76,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+#          1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+#          1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+#          1,   1,   1,   1,   1,   1,   1,   1,   1,   1])
+# >>> 
+#
+# The index before the first zero in a group of zeros is the start of a group
+# of the same values. This gives a list of indexes of the groups:
+#
+# >>> same=np.where(d==0)[0]
+# >>> same
+# array([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+#        37, 38, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 63, 64, 65,
+#        66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78])
+#
+# and where it is different:
+#
+# >>> changes=np.diff(same)
+# >>> changes
+# array([ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+#         1, 12,  1,  1,  1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,
+#         1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1])
+#
+# should be the start of a new group.
+#
+# >>> starts=np.where(changes > 1)[0] + 1
+# >>> starts
+# array([19, 28])
+# >>> same[0:19]
+# array([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+#        37, 38])
+# >>> same[19:28]
+# array([50, 51, 52, 53, 54, 55, 56, 57, 58])
+# >>> same[28:]
+# array([60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+#        77, 78])

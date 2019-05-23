@@ -89,7 +89,7 @@ class TestDCMBlocks:
         c.previous[:128] = m[128:256]
         c.current[80:] = c.previous[80:]
         value = c.current[:128].copy()
-        c.encode_best(False)
+        c.encode_best(False, [0x41])
         r = c.pass_buffer[0:c.pass_buffer_index]
         print("previous")
         print(c.previous[:128])
@@ -140,6 +140,50 @@ class TestDCMBlocks:
         # assert np.array_equal(c.current[:128], value)
 
         self.validate_block(value)
+
+    def test_43(self):
+        c = compressor
+        m = self.media
+        m[256:384] = np.arange(128, dtype=np.uint8)
+        c.current[:128] = m[256:384]
+        c.previous[:128] = m[128:256]
+        c.current[20:40] = 10
+        c.current[50:60] = 99
+        c.current[60:80] = 4
+        value = c.current[:128].copy()
+        c.encode_best(False, [0x43])
+        r = c.pass_buffer[0:c.pass_buffer_index]
+        print("previous")
+        print(c.previous[:128])
+        print("current")
+        print(c.current[:128])
+        print("encoded")
+        print(r, len(r))
+
+        # assert len(r) == 129
+        assert r[0] == 0x43
+        self.validate_block(value)
+
+    def test_43_failure(self):
+        c = compressor
+        m = self.media
+
+        # No consecutive bytes, so 43 encoding should fail
+        m[256:384] = np.arange(128, dtype=np.uint8)
+        c.current[:128] = m[256:384]
+        c.previous[:128] = m[128:256]
+        value = c.current[:128].copy()
+        print("previous")
+        print(c.previous[:128])
+        print("current")
+        print(c.current[:128])
+        c.encode_best(False, [0x43])
+        r = c.pass_buffer[0:c.pass_buffer_index]
+        print("encoded")
+        print(r, len(r))
+        assert r[0] == 0x47
+        self.validate_block(value)
+
 
 
 class TestDCM:
@@ -204,8 +248,11 @@ class TestFileCompression:
             assert np.array_equal(m.data, out)
 
 if __name__ == "__main__":
-    # t = TestDCMBlocks()
-    # t.setup()
+    t = TestDCMBlocks()
+    t.setup()
+    t.test_43()
+    t.setup()
+    t.test_43_failure()
     # # t.test_42()
     # # t.setup()
     # # t.test_47()
@@ -218,5 +265,5 @@ if __name__ == "__main__":
     # t.setup()
     # t.test_encode([0x44])
 
-    t = TestFileCompression()
-    t.test_glob("../samples/dos_dd_test1.atr")
+    # t = TestFileCompression()
+    # t.test_glob("../samples/dos_dd_test1.atr")
