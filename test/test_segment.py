@@ -133,11 +133,11 @@ class TestSegment:
         s1000 = self.seg1000
         s.set_disasm_ranges([[200, 4000]], 2)
         s.set_disasm_ranges([[1200, 3000]], 50)
-        assert s.disasm_type[0] == 0
-        assert s100.disasm_type[1] == 0
+        assert s.disasm_type[0] == 128
+        assert s100.disasm_type[1] == 128
         assert s100.disasm_type[10] == 2
         assert s100.disasm_type[20] == 50
-        assert s1000.disasm_type[0] == 0
+        assert s1000.disasm_type[0] == 128
         assert s1000.disasm_type[1] == s100.disasm_type[10]
         assert s1000.disasm_type[2] == s100.disasm_type[20]
 
@@ -145,17 +145,17 @@ class TestSegment:
         assert c.disasm_type[2000] == 50
 
         ranges = collapse_values(c.disasm_type)
-        assert ranges == [[0, 0, 200], [2, 200, 1200], [50, 1200, 3000], [2, 3000, 4000], [0, 4000, 4096]]
+        assert ranges == [[128, 0, 200], [2, 200, 1200], [50, 1200, 3000], [2, 3000, 4000], [128, 4000, 4096]]
 
         c.disasm_type[:] = 0
         assert c.disasm_type[2000] == 0
 
         restore_values(c.disasm_type, ranges)
-        assert s.disasm_type[0] == 0
-        assert s100.disasm_type[1] == 0
+        assert s.disasm_type[0] == 128
+        assert s100.disasm_type[1] == 128
         assert s100.disasm_type[10] == 2
         assert s100.disasm_type[20] == 50
-        assert s1000.disasm_type[0] == 0
+        assert s1000.disasm_type[0] == 128
         assert s1000.disasm_type[1] == s100.disasm_type[10]
         assert s1000.disasm_type[2] == s100.disasm_type[20]
         assert c.disasm_type[2000] == 50
