@@ -8,16 +8,19 @@ from setuptools import setup
 from distutils.extension import Extension
 
 install_requires = [
-    'numpy',
+    'python-slugify',  # really for omnivore, but needs it installed before its setup.py can be run
     'jsonpickle>=0.9.4',
     'bson<1.0.0',
+    'fleep',  # not actually required
+    'appdirs',
     'configobj',
     'pyparsing',
     'pytz',
     'wxpython',
-    'fleep',  # not actually required
-    'appdirs',
-    'python-slugify',  # really for omnivore, but needs it installed before its setup.py can be run
+    'pillow',
+    'pathlib2',
+    'six',
+    'numpy',
     ]
 
 cmdclass = dict()
