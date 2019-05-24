@@ -105,6 +105,7 @@ class AtariJumpmanDirectory(Directory):
         while pointer < len(self):
             filenum = pointer // AtariJumpmanDirent.dirent_size
             dirent = AtariJumpmanDirent(self, filenum)
+            dirent.origin = 0x2800
             pointer += AtariJumpmanDirent.dirent_size
             segments.append(dirent)
         return segments
