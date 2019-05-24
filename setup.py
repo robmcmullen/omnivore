@@ -249,7 +249,6 @@ else:
         Extension("omnivore.disassembler.libudis",
             sources = [
                 "libudis/libudis.pyx",
-                "libudis/declarations.pyx",
                 "libudis/parse_udis_cpu.c",
                 "libudis/parse_custom.c",
                 "libudis/stringify_udis_cpu.c",

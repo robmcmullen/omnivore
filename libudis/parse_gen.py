@@ -745,24 +745,6 @@ case 0x%x:
         return lines
 
 
-def gen_pyx(filename, parsers, stringifiers):
-    header = f"""
-from libc.string cimport strcmp
-import cython
-import numpy as np
-cimport numpy as np
-
-from libudis.libudis cimport parse_func_t, string_func_t, history_entry_t, jmp_targets_t
-
-cdef string_func_t parser_map[{disassembler_type_max + 1}]
-cdef string_func_t stringifier_map[{disassembler_type_max + 1}]
-"""
-
-    with open(filename, "w") as fh:
-        fh.write(py_disclaimer)
-        fh.write(header)
-
-
 def gen_py_cpu_map(filename, parsers):
     ret = "\n"
     parser_lookup = {}
@@ -890,8 +872,6 @@ if __name__ == "__main__":
         fh.write("\n".join(list(c_includes)) + "\n\n")
         gen_header(fh, generated_stringifiers)
         gen_end_guard(fh, filename)
-
-    gen_pyx(destdir + "declarations.pyx", generated_parsers, generated_stringifiers)
 
     destfile = os.path.join(destdir + "../omnivore/disassembler/valid_cpus.py")
     gen_py_cpu_map(destfile, generated_parsers)
