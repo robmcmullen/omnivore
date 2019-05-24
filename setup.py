@@ -83,6 +83,8 @@ setup(name="atrip",
         python_requires = '>=3.6',
         install_requires = [
             'numpy',
+            'jsonpickle',
+            'lz4',
         ],
         tests_require = [
             'pytest>3.0',

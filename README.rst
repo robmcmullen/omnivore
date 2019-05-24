@@ -29,6 +29,8 @@ Runtime Dependencies
 ---------------------
 
 * numpy
+* jsonpickle
+* lz4
 
 It will be automatically installed when installing with ``pip`` as described
 below.
@@ -163,7 +165,7 @@ as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
 +---------------------+------------+------+-------+------------------------------+
 | lzw (Unix compress) | .Z         | Yes  | No    | Read only [#]_               |
 +---------------------+------------+------+-------+------------------------------+
-| lz4                 | .lz4       | Yes  | Yes   | Extra library required [#]_  |
+| lz4                 | .lz4       | Yes  | Yes   | Fully supported              |
 +---------------------+------------+------+-------+------------------------------+
 | Disk Communicator   | .dcm       | Yes  | Yes   | Atari images only [#]_       |
 +---------------------+------------+------+-------+------------------------------+
@@ -172,8 +174,6 @@ as well, like image.gz.bz2.xz.bz2.gz.gz.gz.
    `BSD-licensed python implementation <https://github.com/umeat/unlzw>`_
    of Mark Adler's reference C implementation of unlzw. See LICENSE.unlzw in the
    source distribution for more details.
-
-.. [#] Requires optional library lz4 installable through PyPi.
 
 .. [#] Not general purpose compression; Atari 720 or 1040 sector disk images only.
    Contains my own python reimplementation of the DCM algorithms based on the
