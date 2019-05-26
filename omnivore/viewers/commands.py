@@ -283,8 +283,8 @@ class MiniAssemblerCommand(SetRangeValueModifyIndexesCommand):
             ('data', 'string'),
             ]
 
-    def __init__(self, segment, cpu, ranges, data, advance=False):
-        SetRangeValueCommand.__init__(self, segment, ranges, data, advance)
+    def __init__(self, segment, cpu, ranges, data, advance=False, rango_to_index_function=None):
+        SetRangeValueModifyIndexesCommand.__init__(self, segment, ranges, data, advance, rango_to_index_function)
         self.cpu = cpu
 
     def get_data_and_indexes(self, indexes):

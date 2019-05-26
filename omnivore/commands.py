@@ -133,14 +133,14 @@ class SetRangeCommand(ChangeByteValuesCommand):
             ('range_to_index_function', 'func_pointer'),
             ]
 
-    def __init__(self, segment, ranges, advance=False):
+    def __init__(self, segment, ranges, advance=False, range_to_index_function=None):
         ChangeByteValuesCommand.__init__(self, segment, advance)
         self.ranges = tuple(ranges)
 
         # function to convert ranges to indexes will be set the first time this
         # command is performed so it can use the function appropriate to the
         # currently focused viewer.
-        self.range_to_index_function = None
+        self.range_to_index_function = range_to_index_function
 
     def get_data(self, orig):
         raise NotImplementedError
@@ -174,8 +174,8 @@ class SetRangeValueCommand(SetRangeCommand):
             ('data', 'string'),
             ]
 
-    def __init__(self, segment, ranges, data, advance=False):
-        SetRangeCommand.__init__(self, segment, ranges, advance)
+    def __init__(self, segment, ranges, data, advance=False, range_to_index_function=None):
+        SetRangeCommand.__init__(self, segment, ranges, advance, range_to_index_function)
         self.data = data
 
     def get_data(self, orig):
@@ -191,8 +191,8 @@ class SetRangeValueModifyIndexesCommand(SetRangeCommand):
             ('data', 'string'),
             ]
 
-    def __init__(self, segment, ranges, data, advance=False):
-        SetRangeCommand.__init__(self, segment, ranges, advance)
+    def __init__(self, segment, ranges, data, advance=False, range_to_index_function=None):
+        SetRangeCommand.__init__(self, segment, ranges, advance, range_to_index_function)
         self.data = data
 
     def get_data_and_indexes(self, indexes):

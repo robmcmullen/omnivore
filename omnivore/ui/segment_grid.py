@@ -340,13 +340,13 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         self.process_edit(val)
 
     def process_edit(self, val):
-        ranges = []
-        # for c in self.caret_handler.carets:
-        #     ranges.append((c.index, c.index + 1))
-        ranges = self.caret_handler.get_selected_ranges_including_carets(self.table)
+        ranges = self.calc_ranges_for_edit()
         print(f"process_edit: ranges={ranges}")
         cmd = self.calc_edit_command(ranges, val)
         flags = self.segment_viewer.editor.process_command(cmd)
+
+    def calc_ranges_for_edit(self):
+        return self.caret_handler.get_selected_ranges_including_carets(self.table)
 
     def calc_edit_command(self, ranges, val):
         cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
