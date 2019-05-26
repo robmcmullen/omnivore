@@ -126,6 +126,9 @@ class DiskImageDocument(SawxDocument):
         self.segments = list(self.collection.iter_segments())
         self.user_segments = []
 
+    def calc_raw_data_to_save(self):
+        return self.collection.calc_compressed_data()
+
     #### serialization methods
 
     def serialize_session(self, s):
