@@ -241,7 +241,7 @@ class SawxActionListMixin:
             _, action_list_id = action_key[:-1].split("{", 1)
         else:
             action_list_id = ""
-        print(f"action_key={action_key}, list_id={action_list_id}")
+        log.debug(f"action_key={action_key}, list_id={action_list_id}")
         self.action_list_id = action_list_id
         self.prefix = action_key + "_"
         self.prefix_count = len(self.prefix)
