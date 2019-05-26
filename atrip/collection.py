@@ -145,12 +145,16 @@ class Collection:
         """
         if pathname is None:
             pathname = self.pathname
+        compressed_bytes = self.calc_compressed_data(skip_missing_compressors)
+        with open(pathname, 'wb') as fh:
+            fh.write(compressed_bytes)
+
+    def calc_compressed_data(self, skip_missing_compressors=False):
         fh = io.BytesIO()
         self.save_in_archive(fh, skip_missing_compressors)
         archived_bytes = fh.getvalue()
         compressed_bytes = compress_in_reverse_order(archived_bytes, self.decompression_order)
-        with open(pathname, 'wb') as fh:
-            fh.write(compressed_bytes)
+        return compressed_bytes
 
     def save_in_archive(self, fh, skip_missing_compressors=False):
         """Pack each container into the archive
@@ -220,7 +224,7 @@ class Collection:
         self.archiver = e["archiver"]
 
         if item_data_list is None:
-            item_data_list = [c._data for c in self.containers]
+            item_data_list = [(c.pathname, c._data) for c in self.containers]
 
         # unless restoring a session over top of existing containers, the
         # containers will have been initialized with zeros from the jsonpickle
