@@ -166,8 +166,8 @@ class SetRangeCommand(ChangeByteValuesCommand):
 
 
 class SetRangeValueCommand(SetRangeCommand):
-    short_name = "set_range_base"
-    pretty_name = "Set Ranges Abstract Command"
+    short_name = "set_range_value"
+    pretty_name = "Set Ranges To Value"
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
@@ -180,6 +180,34 @@ class SetRangeValueCommand(SetRangeCommand):
 
     def get_data(self, orig):
         return self.data
+
+
+class SetRangeValueModifyIndexesCommand(SetRangeCommand):
+    short_name = "set_range_value_modify_index"
+    pretty_name = "Set Ranges To Value + Modify"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ('data', 'string'),
+            ]
+
+    def __init__(self, segment, ranges, data, advance=False):
+        SetRangeCommand.__init__(self, segment, ranges, advance)
+        self.data = data
+
+    def get_data_and_indexes(self, indexes):
+        return self.data, indexes
+
+    def do_change(self, editor, undo):
+        indexes = self.range_to_index_function(self.ranges)
+        print(f"{self.short_name}: ranges={self.ranges}, indexes={indexes}")
+        undo.flags.index_range = indexes[0], indexes[-1]
+        data, new_indexes = self.get_data_and_indexes(indexes)
+        old_data = self.segment[new_indexes].copy()
+        self.segment[new_indexes] = data
+        if self.advance:
+            undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
+        return old_data
 
 
 class SetIndexedDataCommand(ChangeByteValuesCommand):

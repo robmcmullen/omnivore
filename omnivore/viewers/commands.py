@@ -1,7 +1,9 @@
 import numpy as np
 
-from ..commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand
+from ..commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand, SetRangeValueModifyIndexesCommand
 from sawx.utils.permute import bit_reverse_table
+
+from ..disassembler import miniasm
 
 import logging
 log = logging.getLogger(__name__)
@@ -37,7 +39,7 @@ class SetHighBitCommand(SetRangeCommand):
     short_name = "set_high_bit"
     pretty_name = "Set High Bit"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_or(orig, 0x80)
 
 
@@ -45,7 +47,7 @@ class ClearHighBitCommand(SetRangeCommand):
     short_name = "clear_high_bit"
     pretty_name = "Clear High Bit"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_and(orig, 0x7f)
 
 
@@ -53,7 +55,7 @@ class BitwiseNotCommand(SetRangeCommand):
     short_name = "bitwise_not"
     pretty_name = "Bitwise NOT"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.invert(orig)
 
 
@@ -61,7 +63,7 @@ class OrWithCommand(SetRangeValueCommand):
     short_name = "or_value"
     pretty_name = "OR With"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_or(orig, self.data)
 
 
@@ -69,7 +71,7 @@ class AndWithCommand(SetRangeValueCommand):
     short_name = "and_value"
     pretty_name = "AND With"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_and(orig, self.data)
 
 
@@ -77,7 +79,7 @@ class XorWithCommand(SetRangeValueCommand):
     short_name = "xor_value"
     pretty_name = "XOR With"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_xor(orig, self.data)
 
 
@@ -85,7 +87,7 @@ class LeftShiftCommand(SetRangeCommand):
     short_name = "left_shift"
     pretty_name = "Left Shift"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.left_shift(orig, 1)
 
 
@@ -93,7 +95,7 @@ class RightShiftCommand(SetRangeCommand):
     short_name = "right_shift"
     pretty_name = "Right Shift"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.right_shift(orig, 1)
 
 
@@ -101,7 +103,7 @@ class LeftRotateCommand(SetRangeCommand):
     short_name = "left_rotate"
     pretty_name = "Left Rotate"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         rotated = np.right_shift(np.bitwise_and(orig, 0x80), 7)
         return np.bitwise_or(np.left_shift(orig, 1), rotated)
 
@@ -110,7 +112,7 @@ class RightRotateCommand(SetRangeCommand):
     short_name = "right_rotate"
     pretty_name = "Right Rotate"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         rotated = np.left_shift(np.bitwise_and(orig, 0x01), 7)
         return np.bitwise_or(np.right_shift(orig, 1), rotated)
 
@@ -119,7 +121,7 @@ class ReverseBitsCommand(SetRangeCommand):
     short_name = "reverse_bits"
     pretty_name = "Reverse Bits"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return bit_reverse_table[orig]
 
 
@@ -127,7 +129,7 @@ class RandomBytesCommand(SetRangeCommand):
     short_name = "random_bytes"
     pretty_name = "Random Bytes"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return np.random.randint(0, 256, len(orig), dtype=np.uint8)
 
 
@@ -135,7 +137,7 @@ class RampUpCommand(SetRangeValueCommand):
     short_name = "ramp_up"
     pretty_name = "Ramp Up"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         num = np.alen(orig)
         if type(self.data) == slice:
             first = self.data.start
@@ -154,7 +156,7 @@ class RampDownCommand(SetRangeValueCommand):
     short_name = "ramp_down"
     pretty_name = "Ramp Down"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         num = np.alen(orig)
         if type(self.data) == slice:
             first = self.data.start
@@ -172,7 +174,7 @@ class AddValueCommand(SetRangeValueCommand):
     short_name = "add_value"
     pretty_name = "Add"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return orig + self.data
 
 
@@ -180,7 +182,7 @@ class SubtractValueCommand(SetRangeValueCommand):
     short_name = "subtract_value"
     pretty_name = "Subtract"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return orig - self.data
 
 
@@ -188,7 +190,7 @@ class SubtractFromCommand(SetRangeValueCommand):
     short_name = "subtract_from"
     pretty_name = "Subtract From"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return self.data - orig
 
 
@@ -196,7 +198,7 @@ class MultiplyCommand(SetRangeValueCommand):
     short_name = "multiply"
     pretty_name = "Multiply"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return orig * self.data
 
 
@@ -204,7 +206,7 @@ class DivideByCommand(SetRangeValueCommand):
     short_name = "divide"
     pretty_name = "Divide By"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return orig // self.data
 
 
@@ -212,7 +214,7 @@ class DivideFromCommand(SetRangeValueCommand):
     short_name = "divide_from"
     pretty_name = "Divide From"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return self.data // orig
 
 
@@ -220,7 +222,7 @@ class ReverseSelectionCommand(SetRangeCommand):
     short_name = "reverse_selection"
     pretty_name = "Reverse Selection"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         return orig[::-1,...]
 
 
@@ -228,7 +230,7 @@ class ReverseGroupCommand(SetRangeValueCommand):
     short_name = "reverse_group"
     pretty_name = "Reverse In Groups"
 
-    def get_data(self, orig):
+    def get_data_at_indexes(self, orig, indexes):
         num = len(orig)
         chunk = self.data
         num_groups = num // chunk
@@ -270,3 +272,33 @@ class ClearTraceCommand(ChangeStyleCommand):
 
     def update_can_trace(self, editor):
         editor.can_trace = False
+
+
+class MiniAssemblerCommand(SetRangeValueModifyIndexesCommand):
+    short_name = "miniasm"
+    pretty_name = "Assemble"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ('data', 'string'),
+            ]
+
+    def __init__(self, segment, cpu, ranges, data, advance=False):
+        SetRangeValueCommand.__init__(self, segment, ranges, data, advance)
+        self.cpu = cpu
+
+    def get_data_and_indexes(self, indexes):
+        changed_bytes = []
+        new_indexes = []
+        print("INDEXES!", indexes)
+        next_valid_start = 0
+        for index in indexes:
+            if index < next_valid_start:
+                # don't overwrite an instruction in the middle
+                continue
+            pc = self.segment.origin + index
+            d = miniasm.process(self.cpu, self.data, pc)
+            changed_bytes.extend(d)
+            next_valid_start = index + len(d)
+            new_indexes.extend(range(index, next_valid_start))
+        return changed_bytes, new_indexes

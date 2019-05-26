@@ -75,10 +75,10 @@ class FormatSpec(object):
         # Only need to implement 'less than' for sorting to work
         return (self.length, self.format) < (other.length, other.format)
     
-    def get_bytes(self, bytes=None):
+    def get_bytes(self, data=None):
         out = list(self.opcode_bytes)
-        if bytes is not None:
-            out.extend(bytes)
+        if data is not None:
+            out.extend(data)
         return tuple(out)
     
     def check_exact(self, operands):
@@ -168,11 +168,11 @@ class FormatSpec(object):
 
 
 class MiniAssembler(object):
-    def __init__(self, cpu_name, allow_undocumented=False):
+    def __init__(self, cpu_name):
         self.source = None
-        self.setup(cpu_name, allow_undocumented)
+        self.setup(cpu_name)
     
-    def setup(self, cpu_name, allow_undocumented):
+    def setup(self, cpu_name):
         """ Create the opcode lookup tables that store all the possible
         addressing modes for each opcode.
         """
@@ -198,11 +198,8 @@ class MiniAssembler(object):
             except ValueError:
                 num_bytes, mnemonic, mode_name = optable
                 flag = 0
-            log.debug("%x: %s %s %d bytes, %x" % (opcode, mnemonic, mode_name, num_bytes, flag))
-            if allow_undocumented: # or not flag & FLAG_UNDOC:
-                d[mnemonic].append(FormatSpec(formats[mode_name], opcode, num_bytes, mode_name, flag))
-            else:
-                log.debug("Skipping %s %s" % (opcode, mnemonic))
+            log.debug("%x: %s, %s, %d bytes, %x" % (opcode, mnemonic, mode_name, num_bytes, flag))
+            d[mnemonic].append(FormatSpec(formats[mode_name], opcode, num_bytes, mode_name, flag))
         d[".db"].append(FormatSpec("${0:02x}", None, 1, "data_byte", 0))
         
         # Order the lookup table from smallest to largest format specifier for
@@ -212,7 +209,6 @@ class MiniAssembler(object):
             modelist.sort()
             log.debug("%s: %s" % (mnemonic, modelist))
             self.ops[mnemonic] = modelist
-        self.undocumented = allow_undocumented
     
     addrre = re.compile(r'\$[0-9a-fA-F]+')
     immediatere = re.compile(r'#?\$[0-9a-fA-F]+')
@@ -226,9 +222,9 @@ class MiniAssembler(object):
         
         # Check if a single operand matches an address mode exactly
         for f in format_specs:
-            bytes = f.check_exact(operands)
-            if bytes:
-                return bytes
+            data = f.check_exact(operands)
+            if data:
+                return data
         
         # Check for hex value
         values = re.findall(self.addrre, operands)
@@ -241,34 +237,34 @@ class MiniAssembler(object):
                 v = int(hexstr, 16)
                 if len(hexstr) == 1 or len(hexstr) == 2:
                     for f in format_specs:
-                        bytes = f.check_hex_1x8(operands, pc, v)
-                        if bytes:
-                            return bytes
+                        data = f.check_hex_1x8(operands, pc, v)
+                        if data:
+                            return data
                 if len(hexstr) > 4:
                     vh, vl = divmod(v, 256)
                     vb, vh = divmod(vh, 256)
                     for f in format_specs:
-                        bytes = f.check_hex_3x8(operands, pc, vl, vh, vb)
-                        if bytes:
-                            return bytes
+                        data = f.check_hex_3x8(operands, pc, vl, vh, vb)
+                        if data:
+                            return data
                 elif len(hexstr) > 2:
                     vh, vl = divmod(v, 256)
                     for f in format_specs:
-                        bytes = f.check_hex_1x16(operands, pc, vl, vh)
-                        if bytes:
-                            return bytes
-                        bytes = f.check_hex_2x8(operands, pc, vl, vh)
-                        if bytes:
-                            return bytes
+                        data = f.check_hex_1x16(operands, pc, vl, vh)
+                        if data:
+                            return data
+                        data = f.check_hex_2x8(operands, pc, vl, vh)
+                        if data:
+                            return data
             elif num == 2:
                 hexstr = values[0][1:]
                 vl = int(hexstr, 16)
                 hexstr = values[1][1:]
                 vh = int(hexstr, 16)
                 for f in format_specs:
-                    bytes = f.check_hex_2x8(operands, pc, vl, vh)
-                    if bytes:
-                        return bytes
+                    data = f.check_hex_2x8(operands, pc, vl, vh)
+                    if data:
+                        return data
         
         return []
     
@@ -285,100 +281,35 @@ class MiniAssembler(object):
         operands = operands.replace(" ", "")
         opstr = opstr.lower()
         operands = operands.strip()
-        bytes = self.parse_operands(opstr, operands, origin)
-        return bytes
+        log.debug(f"op: {opstr} operands: {operands}, origin: {origin}")
+        data = self.parse_operands(opstr, operands, origin)
+        return data
 
 
-def process(source, filename, start_pc, cpu, assemble_only=False, undoc=False, verbose=True):
-    def format_hex(t):
-        return "(" + ", ".join(["%02x" % s for s in t]) + ")"
-    
-    pc = start_pc
-    miniasm = MiniAssembler(cpu, allow_undocumented=undoc)
-    success = failure = 0
-    if assemble_only:
-        for line in source.splitlines():
-            if line.startswith("0x"):
-                addr, line = line.split(" ", 1)
-                addr = int(addr, 16)
-                line = line.strip()
-            else:
-                addr = pc
-            try:
-                bytes = miniasm.asm(addr, line)
-                log.debug(bytes)
-            except KeyError:
-                log.debug("unrecognized", line)
-                bytes = []
-            print("%s: output=%s" % (line, str(bytes)))
-            pc += len(bytes)
+_miniassemblers = {}
+
+def get_miniasm(cpu):
+    global _miniassemblers
+
+    if cpu not in _miniassemblers:
+        m = MiniAssembler(cpu)
+        _miniassemblers[cpu] = m
+    return _miniassemblers[cpu]
+
+
+def process(cpu, line, pc):
+    miniasm = get_miniasm(cpu)
+    if line.startswith("0x"):
+        addr, line = line.split(" ", 1)
+        addr = int(addr, 16)
+        line = line.strip()
     else:
-        binary = np.fromstring(source, dtype=np.uint8)
-        disasm = Disassembler(cpu, allow_undocumented=undoc, hex_lower=True, mnemonic_lower=True)
-        disasm.set_pc(binary, start_pc)
-        for addr, disassembled_bytes, opstr, comment, is_undocumented, flag in disasm.get_disassembly():
-            assembled_bytes = miniasm.asm(addr, opstr)
-            if disassembled_bytes == assembled_bytes:
-                success += 1
-                if verbose:
-                    print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
-            else:
-                failure += 1
-                print("%06x %s:" % (addr, opstr), format_hex(disassembled_bytes), format_hex(assembled_bytes))
-#            print "0x%04x %-12s ; %s   %s %s" % (addr, opstr, comment, bytes, flag)
-        print("%s: %d instructions matched, %d failed" % (filename, success, failure))
-    return success, failure
-
-if __name__ == "__main__":
-    import sys
-    import argparse
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--cpu", help="Specify CPU type (defaults to 6502)", default="6502")
-    parser.add_argument("-u", "--undocumented", help="Allow undocumented opcodes", action="store_true")
-    parser.add_argument("-a", "--assemble", help="Only assemble", action="store_true")
-    parser.add_argument("-d", "--debug", help="Show debug information as the program runs", action="store_true")
-    parser.add_argument("-v", "--verbose", help="Show processed instructions as the program runs", action="store_true")
-    parser.add_argument("-x", "--hex", help="Assemble a string version of hex digits")
-    parser.add_argument("-s", "--string", help="Assemble a single line opcode (implies -a)")
-    parser.add_argument("-p", "--pc", help="Process counter", default="0")
-    args, extra = parser.parse_known_args()
-    
-    if args.debug:
-        log.setLevel(logging.DEBUG)
-    
+        addr = pc
     try:
-        start_pc = int(args.pc, 16)
-    except ValueError:
-        start_pc = int(args.pc)
-    
-
-    if args.string:
-        source = args.string
-        args.assemble = True
-        process(source, args.string, start_pc, args.cpu, args.assemble, args.undocumented, args.verbose)
-    elif args.hex:
-        try:
-            source = args.hex.decode("hex")
-        except TypeError:
-            print("Invalid hex digits!")
-            sys.exit()
-        process(source, args.string, start_pc, args.cpu, args.assemble, args.undocumented, args.verbose)
-    else:
-        for filename in extra:
-            source = []
-            with open(filename, 'rb') if filename !="-" else sys.stdin as fh:
-                try:
-                    chunk_length = 1024
-                    while True:
-                        chunk = fh.read(chunk_length)
-                        source.append(chunk)
-                        if len(chunk) < chunk_length:
-                            break
-                except KeyboardInterrupt:
-                    pass
-            source = "".join(source)
-            if args.verbose:
-                print("read %d bytes" % len(source))
-            process(source, filename, start_pc, args.cpu, args.assemble, args.undocumented, args.verbose)
-
+        data = miniasm.asm(addr, line)
+        log.debug(data)
+    except KeyError:
+        log.debug("unrecognized", line)
+        data = []
+    print("%s: output=%s" % (line, str(data)))
+    return data

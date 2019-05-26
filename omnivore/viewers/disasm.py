@@ -12,6 +12,8 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 
 from ..viewer import SegmentViewer
 
+from .commands import MiniAssemblerCommand
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -123,6 +125,10 @@ class DisassemblyControl(SegmentGridControl):
     def recalc_view(self):
         self.table.rebuild()
         super().recalc_view()
+
+    def calc_edit_command(self, ranges, val):
+        cmd = MiniAssemblerCommand(self.segment_viewer.segment, self.segment_viewer.document.cpu, ranges, val, advance=True)
+        return cmd
 
 
 class DisassemblyViewer(SegmentViewer):
