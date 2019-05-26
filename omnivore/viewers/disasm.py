@@ -134,12 +134,12 @@ class DisassemblyControl(SegmentGridControl):
             start, _ = table.get_index_range(*r[0])
             _, end = table.get_index_range(*r[1])
             row1, _ = table.index_to_row_col(start)
-            row2, _ = table.index_to_row_col(end)
+            row2, _ = table.index_to_row_col(end - 1)
             if row1 == row2:
                 # single line selected, so pass a singly byte so moving from a
                 # multi-byte op (e.g. JSR) to fewer bytes doesn't result in
                 # more than one op
-                ranges.append((start, start+1))
+                ranges.append((start, start + 1))
             else:
                 # multiple lines passes entire range, MiniAssemblerCommand
                 # handdles possible overlaps
