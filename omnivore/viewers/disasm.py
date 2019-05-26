@@ -150,6 +150,9 @@ class DisassemblyControl(SegmentGridControl):
         cmd = MiniAssemblerCommand(self.segment_viewer.segment, self.segment_viewer.document.cpu, ranges, val, advance=True)
         return cmd
 
+    def advance_caret_position(self, evt, flags):
+        self.caret_handler.move_carets_vertically(self.table, 1)
+
 
 class DisassemblyViewer(SegmentViewer):
     name = "disasm"

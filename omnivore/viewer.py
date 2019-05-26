@@ -361,7 +361,7 @@ class SegmentViewer:
     def on_sync_caret_to_index(self, evt):
         flags = evt.flags
         caret_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
-        if self.control == flags.source_control:
+        if self.control == flags.source_control or self.control == flags.advance_caret_position_in_control:
             caret_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
         else:
             caret_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
