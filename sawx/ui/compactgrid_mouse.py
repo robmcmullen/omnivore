@@ -166,6 +166,9 @@ class MultiCaretHandler:
     def __init__(self):
         self.carets = []
 
+    def __str__(self):
+        return "MultiCaretHandler: carets=" + " ".join([str(c) for c in self.carets])
+
     @property
     def current(self):
         return self.carets[-1]  # last one is the most recent
