@@ -161,9 +161,9 @@ class CharGridControl(SegmentGridControl):
         self.line_renderer = self.calc_line_renderer()
         SegmentGridControl.recalc_view(self)
 
-    def handle_char_ordinary(self, evt):
+    def start_editing(self, evt):
         c = evt.GetKeyCode()
-        print(("ordinary char: %s", c))
+        print(f"start_editing: {c} for {self}")
         if c != wx.WXK_NONE:
             c = self.segment_viewer.font_mapping.convert_byte_mapping(c)
             self.process_edit(c| self.inverse)
