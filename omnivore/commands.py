@@ -245,6 +245,37 @@ class SetIndexedDataCommand(ChangeByteValuesCommand):
         self.segment[self.indexes] = old_data
 
 
+class SetDisasmCommand(SetRangeCommand):
+    short_name = "set_disasm_type"
+    pretty_name = "Set Disassembler Type"
+    serialize_order =  [
+            ('segment', 'int'),
+            ('ranges', 'int_list'),
+            ('disasm_type', 'int'),
+            ]
+
+    def __init__(self, segment, ranges, disasm_type):
+        SetRangeCommand.__init__(self, segment, ranges)
+        self.disasm_type = disasm_type
+
+    def get_data(self, orig):
+        return self.disasm_type
+
+    def do_change(self, editor, undo):
+        indexes = self.range_to_index_function(self.ranges)
+        # print(f"{self.short_name}: ranges={self.ranges}, indexes={indexes}")
+        undo.flags.index_range = indexes[0], indexes[-1]
+        old_data = self.segment.disasm_type[indexes].copy()
+        self.segment.disasm_type[indexes] = self.get_data(old_data)
+        if self.advance:
+            undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
+        return old_data
+
+    def undo_change(self, editor, old_data):
+        indexes = self.range_to_index_function(self.ranges)
+        self.segment.disasm_type[indexes] = old_data
+
+
 class ChangeStyleCommand(SetContiguousDataCommand):
     short_name = "cs"
     pretty_name = "Change Style"
