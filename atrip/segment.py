@@ -325,6 +325,9 @@ class Segment:
         matches = (self.style & bits) == bits
         return style_bits.bool_to_ranges(matches)
 
+    def update_data_style_from_disasm_type(self):
+        self.container.update_data_style_from_disasm_type()
+
     #### disassembly type
 
     def set_disasm_ranges(self, ranges, value):

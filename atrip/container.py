@@ -423,6 +423,13 @@ class Container:
         matches = (self.style & bits) == bits
         return utils.bool_to_ranges(matches)
 
+    def update_data_style_from_disasm_type(self):
+        mask = style_bits.get_style_mask(data=True)
+        self._style &= mask
+        indexes = np.where(self._disasm_type == 0)[0]
+        bits = style_bits.get_style_bits(data=True)
+        self._style[indexes] |= bits
+
 
     #### comments
 
