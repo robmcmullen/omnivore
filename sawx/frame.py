@@ -185,6 +185,18 @@ class SawxFrame(wx.Frame):
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
 
+    def add_document(self, document, current_editor=None, args=None):
+        if current_editor is not None and current_editor.can_edit_document(document):
+            editor_cls = current_editor.__class__
+        else:
+            editor_cls = editor_module.find_editor_class_for_document(document)
+        new_editor = editor_cls(document)
+        log.debug(f"load_file: Created editor {new_editor}")
+        # have to add before load so the control exists
+        self.add_editor(new_editor)
+        new_editor.show(args)
+        return new_editor
+
     def close_editor(self, editor, remove=True, quit=False):
         control = editor.control
         if remove:
@@ -214,15 +226,7 @@ class SawxFrame(wx.Frame):
                 current_editor.load_file(file_metadata)
                 return
             document = identify_document(file_metadata)
-            if current_editor is not None and current_editor.can_edit_document(document):
-                editor_cls = current_editor.__class__
-            else:
-                editor_cls = editor_module.find_editor_class_for_document(document)
-            new_editor = editor_cls(document)
-            log.debug(f"load_file: Created editor {new_editor}")
-            # have to add before load so the control exists
-            self.add_editor(new_editor)
-            new_editor.show(args)
+            new_editor = self.add_document(document, current_editor, args)
         except Exception as e:
             # force close the progress bar so the error dialog doesn't get lost
             # under the progress bar dialog
