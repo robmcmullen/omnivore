@@ -14,6 +14,8 @@ from ..document import DiskImageDocument
 from sawx.filesystem import fsopen
 from sawx.utils.processutil import run_detach
 
+from atrip.compressor import find_compressors
+
 from .linked_base import LinkedBase
 
 import logging
@@ -177,6 +179,11 @@ class ByteEditor(TileManagerBase):
             "add_assembly_source",
             "recompile_assembly_source",
         ],
+        ["Generate",
+            ["Compression",
+                "generate_compression_menu()",
+            ],
+        ],
         ["Media",
             "generate_segment_menu()",
             None,
@@ -285,6 +292,13 @@ class ByteEditor(TileManagerBase):
         for index, container in enumerate(self.document.collection.containers):
             sub_items = [str(container), f"segment_select{{{index}}}"]
             items.append(sub_items)
+        return items
+
+    def generate_compression_menu(self):
+        items = []
+        for index, cls in enumerate(find_compressors()):
+            items.append(f"compress_select{{{cls.compression_algorithm}}}")
+        items.sort()
         return items
 
     #### file handling

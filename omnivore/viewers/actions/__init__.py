@@ -1,6 +1,6 @@
 """Baseclass for actions with common code applicable to viewers
 """
-from sawx.action import SawxAction, SawxListAction, SawxRadioAction, SawxRadioListAction
+from sawx.action import SawxAction, SawxSubAction, SawxListAction, SawxRadioAction, SawxRadioListAction
 
 import logging
 log = logging.getLogger(__name__)
@@ -20,6 +20,10 @@ class ViewerActionMixin:
 
 
 class ViewerAction(ViewerActionMixin, SawxAction):
+    pass
+
+
+class ViewerSubAction(ViewerActionMixin, SawxSubAction):
     pass
 
 
