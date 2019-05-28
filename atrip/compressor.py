@@ -98,6 +98,13 @@ def find_compressors():
         _compressors = _find_compressors()
     return _compressors
 
+def find_compressor_by_name(name):
+    items = find_compressors()
+    for c in items:
+        if c.compression_algorithm == name:
+            return c()
+    raise KeyError(f"Unknown compressor {name}")
+
 def guess_compressor(raw_data):
     compressor = None
     for c in find_compressors():
