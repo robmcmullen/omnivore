@@ -477,7 +477,7 @@ class SawxEditor:
         visible_range = False
 
         if flags.message:
-            self.task.status_bar.message = flags.message
+            self.frame.status_message(flags.message)
 
         if flags.rebuild_ui:
             log.debug(f"process_flags: rebuild_ui")
