@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class disasm_type(ViewerListAction):
     def calc_enabled(self, action_key):
-        return True
+       return self.viewer.control.caret_handler.has_selection
 
     def calc_name(self, action_key):
         item = self.get_item(action_key)
