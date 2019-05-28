@@ -5,8 +5,8 @@ log = logging.getLogger(__name__)
 
 
 user_bit_mask = 0x07
-data_style = 0x1
 not_user_bit_mask = 0xff ^ user_bit_mask
+data_bit_mask = 0x08
 diff_bit_mask = 0x10
 match_bit_mask = 0x20
 comment_bit_mask = 0x40
@@ -33,7 +33,7 @@ def get_style_bits(match=False, comment=False, selected=False, data=False, diff=
     if comment:
         style_bits |= comment_bit_mask
     if data:
-        style_bits |= (data_style & user_bit_mask)
+        style_bits |= data_bit_mask
     if selected:
         style_bits |= selected_bit_mask
     return style_bits
