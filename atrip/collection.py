@@ -9,7 +9,7 @@ from . import errors
 from .utils import to_numpy, to_numpy_list, uuid
 from .container import guess_container, Container
 from .compressor import guess_compressor_list, compress_in_reverse_order, Uncompressed
-from .archiver import Archiver, find_container_items_in_archive
+from .archiver import Archiver, find_container_items_in_archive, PlainFileArchiver
 from .filesystem import Dirent
 
 import logging
@@ -25,17 +25,21 @@ class Collection:
     """
     ui_name = "Collection"
 
-    def __init__(self, pathname, data=None, session=None):
+    def __init__(self, pathname, data=None, session=None, container=None):
         self.pathname = pathname
         self.name = ""
         self.containers = []
         self.decompression_order = [Uncompressed]
         self._uuid_map = None
         self.archiver = None
-        if data is None:
-            data = open(pathname, 'rb').read()
-            log.debug(f"Collection.__init__: {pathname}: read {len(data)} bytes")
-        self.unarchive(data, session)
+        if container is None:
+            if data is None:
+                data = open(pathname, 'rb').read()
+                log.debug(f"Collection.__init__: {pathname}: read {len(data)} bytes")
+            self.unarchive(data, session)
+        else:
+            self.archiver = PlainFileArchiver()
+            self.add_container(container, pathname)
 
     @property
     def verbose_info(self):

@@ -8,11 +8,21 @@ import jsonpickle
 from mock import globbed_sample_atari_files, globbed_sample_atari_collections
 
 from atrip.collection import Collection
+from atrip.container import Container
 from atrip.segment import Segment
 import atrip.errors as errors
 
 
 class TestCollection:
+    def test_create(self):
+        data = np.arange(4096, dtype=np.uint8)
+        container = Container(data)
+        collection = Collection("test", container=container)
+        print(collection)
+        assert collection.archiver.__class__.__name__ == "PlainFileArchiver"
+        assert len(collection.containers) == 1
+        assert len(collection.containers[0]) == 4096
+
     def test_serialize(self):
         filename = "dos_sd_test1.atr"
         pathname = os.path.join(os.path.dirname(__file__), "../samples", filename)
@@ -97,9 +107,10 @@ class TestCollection:
 
 if __name__ == "__main__":
     t = TestCollection()
-    t.test_serialize()
+    # t.test_serialize()
     # t.test_single("../samples/mydos_sd_mydos4534.dcm.lz4")
     # t.test_single("../samples/dos_sd_test1.atr.gz")
     # t.test_single("../samples/dos_sd_test_collection.zip")
     # t.test_single("../samples/dos_sd_test_collection.tar")
-    t.test_single("../samples/dos_sd_test_collection.zip.lz4")
+    # t.test_single("../samples/dos_sd_test_collection.zip.lz4")
+    t.test_create()
