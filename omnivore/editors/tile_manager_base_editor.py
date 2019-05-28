@@ -44,7 +44,7 @@ class TileManagerBase(SawxEditor):
     * viewers specified in the default_viewers class attribute of the editor
     """
     name = "omnivore.tile_manager_base"
-    pretty_name = "Tile Manager Base"
+    ui_name = "Tile Manager Base"
 
     default_viewers = "dummy"
 

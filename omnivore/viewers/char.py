@@ -172,7 +172,7 @@ class CharGridControl(SegmentGridControl):
 class CharViewer(AnticColorViewer):
     name = "char"
 
-    pretty_name = "Character"
+    ui_name = "Character"
 
     control_cls = CharGridControl
 

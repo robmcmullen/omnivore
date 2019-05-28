@@ -173,7 +173,7 @@ class BitmapGridControl(SegmentGridControl):
 class BitmapViewer(AnticColorViewer):
     name = "bitmap"
 
-    pretty_name = "Bitmap"
+    ui_name = "Bitmap"
 
     control_cls = BitmapGridControl
 
@@ -222,4 +222,4 @@ class BitmapViewer(AnticColorViewer):
 class MemoryMapViewer(BitmapViewer):
     name = "memmap"
 
-    pretty_name = "Memory Page Map"
+    ui_name = "Memory Page Map"

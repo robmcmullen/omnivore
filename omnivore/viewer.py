@@ -65,7 +65,7 @@ class SegmentViewer:
 
     name = ""  # slug to uniquely identify viewer class
 
-    pretty_name = ""  # text to be used in titles and menus
+    ui_name = ""  # text to be used in titles and menus
 
     viewer_category = "Data"
 
@@ -342,7 +342,7 @@ class SegmentViewer:
 
     def update_caption(self):
         self.control.SetName(self.window_title + self.linked_base_segment_identifier)
-        self.control.SetLabel(self.pretty_name)
+        self.control.SetLabel(self.ui_name)
 
     ##### non-wx event handlers
 
@@ -366,18 +366,18 @@ class SegmentViewer:
     def sync_caret(self, flags):
         if self.has_caret:
             if flags.carets_to_indexes:
-                caret_log.debug(f"sync_caret: {self.pretty_name} has carets; syncing from {flags.carets_to_indexes}")
+                caret_log.debug(f"sync_caret: {self.ui_name} has carets; syncing from {flags.carets_to_indexes}")
                 self.control.caret_handler.convert_from_indexes(self.control.table, flags.carets_to_indexes)
                 self.control.keep_current_caret_on_screen(flags)
             else:
                 caret_log.debug(f"sync_caret: caret position/selection unchanged")
         else:
-            caret_log.debug(f"sync_caret: {self.pretty_name} refreshed as side effect")
+            caret_log.debug(f"sync_caret: {self.ui_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
 
     @property
     def window_title(self):
-        return self.pretty_name
+        return self.ui_name
 
     @property
     def linked_base_segment_identifier(self):
@@ -405,7 +405,7 @@ class SegmentViewer:
         self.control.recalc_view()
 
     def show_caret(self, control, index, bit):
-        caret_log.debug("show_caret: %s, index=%d" % (self.pretty_name, index))
+        caret_log.debug("show_caret: %s, index=%d" % (self.ui_name, index))
         self.control.set_caret_index(control, index, bit)
 
     def on_priority_level_refresh(self, evt):
@@ -667,7 +667,7 @@ class PlaceholderControl(wx.Window):
 class PlaceholderViewer(SegmentViewer):
     name = "placeholder"
 
-    pretty_name = "Placeholder"
+    ui_name = "Placeholder"
 
     control_cls = PlaceholderControl
 

@@ -157,7 +157,7 @@ class DisassemblyControl(SegmentGridControl):
 class DisassemblyViewer(SegmentViewer):
     name = "disasm"
 
-    pretty_name = "Static Disassembly"
+    ui_name = "Static Disassembly"
 
     control_cls = DisassemblyControl
 

@@ -18,7 +18,7 @@ debug_frames = False
 class Crabapple(Generic6502):
     cpu = "6502"
     name = "crabapple"
-    pretty_name = "Crabapple 2+"
+    ui_name = "Crabapple 2+"
 
     mime_types = set(["application/vnd.apple2.bin"])
 

@@ -282,7 +282,7 @@ class CommentsPanel(wx.VListBox):
 class CommentsViewer(BaseInfoViewer):
     name = "comments"
 
-    pretty_name = "Comments"
+    ui_name = "Comments"
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -301,7 +301,7 @@ class CommentsViewer(BaseInfoViewer):
 class UndoViewer(BaseInfoViewer):
     name = "undo"
 
-    pretty_name = "Undo History"
+    ui_name = "Undo History"
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -323,7 +323,7 @@ class UndoViewer(BaseInfoViewer):
 class SegmentListViewer(BaseInfoViewer):
     name = "segments"
 
-    pretty_name = "Segments"
+    ui_name = "Segments"
 
     control_cls = SegmentList
 

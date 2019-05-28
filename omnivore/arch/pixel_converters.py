@@ -37,7 +37,7 @@ from sawx.utils.permute import bit_reverse_table
 
 class ConverterBase:
     name = "base"
-    pretty_name = "Base"
+    ui_name = "Base"
 
     pixels_per_byte = 8
     bitplanes = 1
@@ -66,7 +66,7 @@ class ConverterBase:
 
 class Converter1bpp(ConverterBase):
     name = "1bpp"
-    pretty_name = "1 bit per pixel"
+    ui_name = "1 bit per pixel"
     
     pixels_per_byte = 8
 
@@ -91,7 +91,7 @@ class Converter1bpp(ConverterBase):
 
 class Converter2bpp(ConverterBase):
     name = "2bpp"
-    pretty_name = "2 bits per pixel"
+    ui_name = "2 bits per pixel"
     
     pixels_per_byte = 4
 
@@ -117,7 +117,7 @@ class Converter2bpp(ConverterBase):
 
 class Converter4bpp(ConverterBase):
     name = "4bpp"
-    pretty_name = "4 bits per pixel"
+    ui_name = "4 bits per pixel"
     
     pixels_per_byte = 2
 
@@ -139,7 +139,7 @@ class Converter4bpp(ConverterBase):
 
 class Converter8bpp(ConverterBase):
     name = "8bpp"
-    pretty_name = "8 bits per pixel"
+    ui_name = "8 bits per pixel"
     
     pixels_per_byte = 1
 
@@ -175,7 +175,7 @@ class Converter8bpp(ConverterBase):
 
 class AnticB(Converter1bpp):
     name = "antic_b"
-    pretty_name = "ANTIC Mode B (Gr 6, 1bpp)"
+    ui_name = "ANTIC Mode B (Gr 6, 1bpp)"
 
     scale_width = 2
     scale_height = 2
@@ -183,7 +183,7 @@ class AnticB(Converter1bpp):
 
 class AnticC(AnticB):
     name = "antic_c"
-    pretty_name = "ANTIC Mode C (Gr 6+, 1bpp)"
+    ui_name = "ANTIC Mode C (Gr 6+, 1bpp)"
 
     scale_width = 2
     scale_height = 1
@@ -191,7 +191,7 @@ class AnticC(AnticB):
 
 class AnticD(Converter2bpp):
     name = "antic_d"
-    pretty_name = "ANTIC Mode D (Gr 7, 2bpp)"
+    ui_name = "ANTIC Mode D (Gr 7, 2bpp)"
 
     scale_width = 2
     scale_height = 2
@@ -199,7 +199,7 @@ class AnticD(Converter2bpp):
 
 class AnticE(AnticD):
     name = "antic_e"
-    pretty_name = "ANTIC Mode E (Gr 7+, 2bpp)"
+    ui_name = "ANTIC Mode E (Gr 7+, 2bpp)"
 
     scale_width = 2
     scale_height = 1

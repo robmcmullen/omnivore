@@ -373,7 +373,7 @@ class PasteDisassemblyCommentsCommand(SetCommentCommand):
         self.disasm = disasm
 
     def __str__(self):
-        return "%s: %d line%s" % (self.pretty_name, self.num_lines, "" if self.num_lines == 1 else "s")
+        return "%s: %d line%s" % (self.ui_name, self.num_lines, "" if self.num_lines == 1 else "s")
 
     def clamp_ranges_and_indexes(self, editor):
         disasm = self.disasm
@@ -419,7 +419,7 @@ class DisassemblySearcher(searchutil.BaseSearcher):
         self.search_text = None
         self.matches = []
         self.panel = panel
-        self.pretty_name = viewer.machine.disassembler.name
+        self.ui_name = viewer.machine.disassembler.name
 
     def __call__(self, editor, search_text):
         self.search_text = self.get_search_text(search_text)
@@ -444,7 +444,7 @@ class DisassemblySearcher(searchutil.BaseSearcher):
 class DisassemblyViewer(SegmentViewer):
     name = "disassembly"
 
-    pretty_name = "Disassembly"
+    ui_name = "Disassembly"
 
     control_cls = DisassemblyGridControl
 

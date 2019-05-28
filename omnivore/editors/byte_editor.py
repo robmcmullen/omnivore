@@ -62,7 +62,7 @@ class ByteEditor(TileManagerBase):
         }
     """
     name = "omnivore.byte_edit"
-    pretty_name = "Byte Editor"
+    ui_name = "Byte Editor"
 
     default_viewers = "hex,bitmap,char,disasm"
     default_viewers = "hex,bitmap,disasm"
@@ -460,10 +460,10 @@ class ByteEditor(TileManagerBase):
             for s in v.searchers:
                 # searchers may depend on the viewer (like the disassembly)
                 # or they may be generic to the segment
-                if s.pretty_name not in found:
+                if s.ui_name not in found:
                     search_order.append(s)
-                    found.add(s.pretty_name)
-        log.debug("search order: %s" % [s.pretty_name for s in search_order])
+                    found.add(s.ui_name)
+        log.debug("search order: %s" % [s.ui_name for s in search_order])
         return search_order
 
     def compare_to_baseline(self):

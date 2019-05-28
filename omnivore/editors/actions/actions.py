@@ -425,7 +425,7 @@ class IndexRangeAction(ViewerAction):
     enabled_name = 'has_editable_bytes'
 
     def _name_default(self):
-        return self.cmd.pretty_name
+        return self.cmd.ui_name
 
     def get_cmd(self, editor, segment, ranges):
         return self.cmd(segment, ranges)
@@ -512,10 +512,10 @@ class IndexRangeValueAction(IndexRangeAction):
     prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
 
     def _name_default(self):
-        return self.cmd.pretty_name + "..."
+        return self.cmd.ui_name + "..."
 
     def show_dialog(self):
-        value = prompt_for_hex(self.viewer.control, self.prompt, self.cmd.pretty_name)
+        value = prompt_for_hex(self.viewer.control, self.prompt, self.cmd.ui_name)
         if value is not None:
             cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, value)
             self.active_editor.process_command(cmd)
@@ -556,7 +556,7 @@ class SliceValueAction(IndexRangeValueAction):
     prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
 
     def show_dialog(self):
-        slice_obj = prompt_for_slice(self.viewer.control, self.prompt, self.cmd.pretty_name)
+        slice_obj = prompt_for_slice(self.viewer.control, self.prompt, self.cmd.ui_name)
         if slice_obj is not None:
             cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, slice_obj)
             self.active_editor.process_command(cmd)

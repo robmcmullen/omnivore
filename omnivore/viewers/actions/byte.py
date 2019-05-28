@@ -21,7 +21,7 @@ class IndexRangeAction(ViewerAction):
     cmd = None
 
     def calc_name(self, action_key):
-        return self.cmd.pretty_name
+        return self.cmd.ui_name
 
     def calc_enabled(self, action_key):
         state = self.viewer.control.caret_handler.has_selection
@@ -108,10 +108,10 @@ class IndexRangeValueAction(IndexRangeAction):
     prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
 
     def calc_name(self, action_key):
-        return self.cmd.pretty_name + "..."
+        return self.cmd.ui_name + "..."
 
     def show_dialog(self):
-        value = prompt_for_hex(self.viewer.control, self.prompt, self.cmd.pretty_name)
+        value = prompt_for_hex(self.viewer.control, self.prompt, self.cmd.ui_name)
         if value is not None:
             cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, value)
             self.editor.process_command(cmd)
@@ -149,7 +149,7 @@ class SliceValueAction(IndexRangeValueAction):
     prompt = "Enter byte value: (default hex, prefix with # for decimal, %% for binary)"
 
     def show_dialog(self):
-        slice_obj = prompt_for_slice(self.viewer.control, self.prompt, self.cmd.pretty_name)
+        slice_obj = prompt_for_slice(self.viewer.control, self.prompt, self.cmd.ui_name)
         if slice_obj is not None:
             cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, slice_obj)
             self.editor.process_command(cmd)

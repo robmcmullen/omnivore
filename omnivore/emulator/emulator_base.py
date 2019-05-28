@@ -24,7 +24,7 @@ FRAME_WATCHPOINT = 3
 
 class EmulatorBase(Debugger):
     cpu = "<base>"
-    pretty_name = "<pretty name>"
+    ui_name = "<pretty name>"
 
     mime_prefix = ""
     mime_types = set()

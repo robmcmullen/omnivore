@@ -9,7 +9,7 @@ class AssemblerResult:
 
 class AssemblerBase:
     name = "<base>"
-    pretty_name = "<pretty name>"
+    ui_name = "<pretty name>"
     cpu = "<cpu>"
 
     comment_char = ";"

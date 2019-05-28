@@ -68,7 +68,7 @@ class HexEditControl(SegmentGridControl):
 class HexEditViewer(SegmentViewer):
     name = "hex"
 
-    pretty_name = "Hex"
+    ui_name = "Hex"
 
     control_cls = HexEditControl
 

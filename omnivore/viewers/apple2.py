@@ -62,11 +62,11 @@ class HiresLineRenderer(b.BitmapLineRenderer):
 class HiresTable(SegmentVirtualTable):
     row_offset_for_line = a2.hgr_offsets
     segment_name = "Hi-res"
-    segment_pretty_name = "Apple ][ Hi-res"
+    segment_ui_name = "Apple ][ Hi-res"
 
     def get_data_style_view(self, linked_base):
         byte_order = self.calc_byte_order(linked_base)
-        self.apple2_segment = linked_base.segment.create_subset(byte_order, self.segment_name, self.segment_pretty_name)
+        self.apple2_segment = linked_base.segment.create_subset(byte_order, self.segment_name, self.segment_ui_name)
         data = self.apple2_segment.data
         style = self.apple2_segment.style
         return data, style
@@ -158,7 +158,7 @@ class AppleSegmentChecker:
 class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
     name = "hgr1"
 
-    pretty_name = "Apple ][ Hi-res Page 1"
+    ui_name = "Apple ][ Hi-res Page 1"
 
     viewer_category = "Video"
 
@@ -182,7 +182,7 @@ class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
 
     @property
     def window_title(self):
-        return self.pretty_name
+        return self.ui_name
 
     def validate_width(self, width):
         return 560
@@ -190,7 +190,7 @@ class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
 class HiresPage2Viewer(HiresPage1Viewer):
     name = "hgr2"
 
-    pretty_name = "Apple ][ Hi-res Page 2"
+    ui_name = "Apple ][ Hi-res Page 2"
 
     segment_origin = 0x4000
 
@@ -198,7 +198,7 @@ class HiresPage2Viewer(HiresPage1Viewer):
 class TextTable(HiresTable):
     row_offset_for_line = a2.gr_offsets
     segment_name = "Text"
-    segment_pretty_name = "Apple ][ Text"
+    segment_ui_name = "Apple ][ Text"
 
     def calc_byte_order(self, linked_base):
         byte_order = a2.lores_byte_order(len(linked_base.segment))
@@ -216,7 +216,7 @@ class TextGridControl(c.CharGridControl):
 class TextPage1Viewer(AppleSegmentChecker, c.CharViewer):
     name = "text1"
 
-    pretty_name = "Apple ][ Text Page 1"
+    ui_name = "Apple ][ Text Page 1"
 
     viewer_category = "Video"
 
@@ -228,12 +228,12 @@ class TextPage1Viewer(AppleSegmentChecker, c.CharViewer):
 
     @property
     def window_title(self):
-        return self.pretty_name
+        return self.ui_name
 
 
 class TextPage2Viewer(TextPage1Viewer):
     name = "text2"
 
-    pretty_name = "Apple ][ Text Page 2"
+    ui_name = "Apple ][ Text Page 2"
 
     segment_origin = 0x800

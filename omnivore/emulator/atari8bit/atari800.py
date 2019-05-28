@@ -75,7 +75,7 @@ def ntsc_color_map():
 class Atari800(EmulatorBase):
     cpu = "6502"
     name = "atari800"
-    pretty_name = "Atari 800"
+    ui_name = "Atari 800"
 
     input_array_dtype = d.INPUT_DTYPE
     output_array_dtype = d.OUTPUT_DTYPE
@@ -163,7 +163,7 @@ class Atari800(EmulatorBase):
         self.save_state_memory_blocks.extend(segments)
 
     def boot_from_file(self, filename):
-        log.debug(f"booting {self.pretty_name} from {filename}")
+        log.debug(f"booting {self.ui_name} from {filename}")
         liba8.reboot_with_file(filename)
         self.configure_io_arrays()
 
@@ -291,7 +291,7 @@ class Atari800(EmulatorBase):
 class Atari800XL(Atari800):
     cpu = "6502"
     name = "atari800xl"
-    pretty_name = "Atari 800XL"
+    ui_name = "Atari 800XL"
 
     def process_args(self, emu_args):
         if not emu_args:
@@ -304,7 +304,7 @@ class Atari800XL(Atari800):
 class Atari5200(Atari800):
     cpu = "6502"
     name = "atari5200"
-    pretty_name = "Atari 5200"
+    ui_name = "Atari 5200"
 
     mime_types = set(["application/vnd.atari5200.cart",])
 

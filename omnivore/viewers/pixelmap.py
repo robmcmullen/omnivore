@@ -230,7 +230,7 @@ class PixelGridControl(SegmentGridControl):
 class PixelViewer(SegmentViewer):
     name = "pixel"
 
-    pretty_name = "Pixel Array"
+    ui_name = "Pixel Array"
 
     control_cls = PixelGridControl
 
@@ -253,7 +253,7 @@ class PixelViewer(SegmentViewer):
 
     @property
     def window_title(self):
-        return "Pixels: " + self.pixel_converter.pretty_name
+        return "Pixels: " + self.pixel_converter.ui_name
 
     def update_bitmap(self, evt):
         log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)

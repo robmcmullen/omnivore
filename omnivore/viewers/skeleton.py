@@ -82,7 +82,7 @@ class SampleGridControl(SegmentGridControl):
 class VirtualTestViewer(SegmentViewer):
     name = "vtest"
 
-    pretty_name = "Virtual Test Viewer"
+    ui_name = "Virtual Test Viewer"
 
     control_cls = SampleGridControl
 

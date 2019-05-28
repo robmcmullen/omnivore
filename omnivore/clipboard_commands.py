@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class ClipboardCommand(SegmentCommand):
     short_name = "clipboard_command"
-    pretty_name = "Clipboard Abstract Command"
+    ui_name = "Clipboard Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
             ('serializer', 'clipboard_serializer')
@@ -115,7 +115,7 @@ class PasteCommand(ClipboardCommand):
     overwrite earlier selections.
     """
     short_name = "paste"
-    pretty_name = "Paste"
+    ui_name = "Paste"
 
 
 class PasteCommentsCommand(PasteCommand):
@@ -126,7 +126,7 @@ class PasteCommentsCommand(PasteCommand):
     disassembly, see :meth:`PasteDisassemblyComments`.
     """
     short_name = "paste_comments"
-    pretty_name = "Paste Comments"
+    ui_name = "Paste Comments"
 
     def get_data(self, orig):
         return orig
@@ -137,7 +137,7 @@ class PasteCommentsCommand(PasteCommand):
 
 class PasteAndRepeatCommand(PasteCommand):
     short_name = "paste_rep"
-    pretty_name = "Paste And Repeat"
+    ui_name = "Paste And Repeat"
 
     def get_data(self, orig):
         data = self.data
@@ -151,7 +151,7 @@ class PasteAndRepeatCommand(PasteCommand):
 
 class PasteRectCommand(SegmentCommand):
     short_name = "paste_rect"
-    pretty_name = "Paste Rectangular"
+    ui_name = "Paste Rectangular"
     serialize_order =  [
             ('segment', 'int'),
             ('serializer', 'clipboard_serializer'),
@@ -164,7 +164,7 @@ class PasteRectCommand(SegmentCommand):
 
     def __str__(self):
         s = self.serializer
-        return "%s @ %04x (%dx%d)" % (self.pretty_name, s.dest_carets.current.index + self.segment.origin, s.clipboard_num_cols, s.clipboard_num_rows)
+        return "%s @ %04x (%dx%d)" % (self.ui_name, s.dest_carets.current.index + self.segment.origin, s.clipboard_num_cols, s.clipboard_num_rows)
 
     def single_source_single_dest(self, editor, undo):
         s = self.serializer

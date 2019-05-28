@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 class BaseSearcher(object):
-    pretty_name = "<base class>"
+    ui_name = "<base class>"
 
     def __init__(self, editor, search_text, **kwargs):
         self.search_text = self.get_search_text(search_text)
@@ -33,7 +33,7 @@ class BaseSearcher(object):
 
 
 class HexSearcher(BaseSearcher):
-    pretty_name = "hex"
+    ui_name = "hex"
 
     def __str__(self):
         return "hex matches: %s" % str(self.matches)
@@ -47,14 +47,14 @@ class HexSearcher(BaseSearcher):
 
 
 class CharSearcher(BaseSearcher):
-    pretty_name = "text"
+    ui_name = "text"
 
     def __str__(self):
         return "char matches: %s" % str(self.matches)
 
 
 class CommentSearcher(BaseSearcher):
-    pretty_name = "comments"
+    ui_name = "comments"
 
     def __str__(self):
         return "comment matches: %s" % str(self.matches)

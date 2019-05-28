@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 class MemoryAccessTable(SegmentVirtualTable):
     segment_name = "memaccess"
-    segment_pretty_name = "Memory Access"
+    segment_ui_name = "Memory Access"
 
     def get_data_style_view(self, linked_base):
         self.access_segment = linked_base.document.find_segment_by_name("Memory Access")
@@ -66,7 +66,7 @@ class MemoryAccessGridControl(b.BitmapGridControl):
 class MemoryAccessViewer(SegmentViewer):
     name = "mem"
 
-    pretty_name = "Memory Access"
+    ui_name = "Memory Access"
 
     viewer_category = "Emulator"
 

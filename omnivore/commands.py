@@ -11,7 +11,7 @@ progress_log = logging.getLogger("progress")
 
 class SegmentCommand(Command):
     short_name = "segment_data_base"
-    pretty_name = "Segment Modification Abstract Command"
+    ui_name = "Segment Modification Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
             ]
@@ -28,7 +28,7 @@ class SegmentCommand(Command):
 
 class ChangeByteValuesCommand(SegmentCommand):
     short_name = "change_values_base"
-    pretty_name = "Change Values Abstract Command"
+    ui_name = "Change Values Abstract Command"
 
     def __init__(self, segment, advance=False):
         SegmentCommand.__init__(self, segment)
@@ -40,7 +40,7 @@ class ChangeByteValuesCommand(SegmentCommand):
 
 class ChangeMetadataCommand(SegmentCommand):
     short_name = "metadata_base"
-    pretty_name = "Change Metadata Abstract Command"
+    ui_name = "Change Metadata Abstract Command"
 
     def set_undo_flags(self, flags):
         flags.byte_style_changed = True
@@ -48,7 +48,7 @@ class ChangeMetadataCommand(SegmentCommand):
 
 class SetContiguousDataCommand(ChangeByteValuesCommand):
     short_name = "set_data_base"
-    pretty_name = "Set Data Abstract Command"
+    ui_name = "Set Data Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
@@ -66,9 +66,9 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
 
     def __str__(self):
         if self.end_index - self.start_index > 1:
-            return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.origin, self.end_index + self.segment.origin)
+            return "%s @ %04x-%04x" % (self.ui_name, self.start_index + self.segment.origin, self.end_index + self.segment.origin)
         else:
-            return "%s @ %04x" % (self.pretty_name, self.start_index)
+            return "%s @ %04x" % (self.ui_name, self.start_index)
 
     def get_data(self, orig):
         raise NotImplementedError
@@ -94,7 +94,7 @@ class SetContiguousDataCommand(ChangeByteValuesCommand):
 
 class ChangeByteCommand(SetContiguousDataCommand):
     short_name = "cb"
-    pretty_name = "Change Bytes"
+    ui_name = "Change Bytes"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
@@ -126,7 +126,7 @@ class CoalescingChangeByteCommand(ChangeByteCommand):
 
 class SetRangeCommand(ChangeByteValuesCommand):
     short_name = "set_range_base"
-    pretty_name = "Set Ranges Abstract Command"
+    ui_name = "Set Ranges Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
@@ -167,7 +167,7 @@ class SetRangeCommand(ChangeByteValuesCommand):
 
 class SetRangeValueCommand(SetRangeCommand):
     short_name = "set_range_value"
-    pretty_name = "Set Ranges To Value"
+    ui_name = "Set Ranges To Value"
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
@@ -184,7 +184,7 @@ class SetRangeValueCommand(SetRangeCommand):
 
 class SetRangeValueModifyIndexesCommand(SetRangeCommand):
     short_name = "set_range_value_modify_index"
-    pretty_name = "Set Ranges To Value + Modify"
+    ui_name = "Set Ranges To Value + Modify"
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
@@ -212,7 +212,7 @@ class SetRangeValueModifyIndexesCommand(SetRangeCommand):
 
 class SetIndexedDataCommand(ChangeByteValuesCommand):
     short_name = "set_indexes_value"
-    pretty_name = "Set Values at Indexes"
+    ui_name = "Set Values at Indexes"
     serialize_order =  [
             ('segment', 'int'),
             ('indexes', 'int_list'),
@@ -225,7 +225,7 @@ class SetIndexedDataCommand(ChangeByteValuesCommand):
         self.data = data
 
     def __str__(self):
-        return "%s (%04x indexes)" % (self.pretty_name, len(self.indexes))
+        return "%s (%04x indexes)" % (self.ui_name, len(self.indexes))
 
     def get_data(self, orig):
         return self.data
@@ -247,7 +247,7 @@ class SetIndexedDataCommand(ChangeByteValuesCommand):
 
 class SetDisasmCommand(SetRangeCommand):
     short_name = "set_disasm_type"
-    pretty_name = "Set Disassembler Type"
+    ui_name = "Set Disassembler Type"
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),
@@ -280,7 +280,7 @@ class SetDisasmCommand(SetRangeCommand):
 
 class ChangeStyleCommand(SetContiguousDataCommand):
     short_name = "cs"
-    pretty_name = "Change Style"
+    ui_name = "Change Style"
 
     def __init__(self, segment):
         start_index = 0

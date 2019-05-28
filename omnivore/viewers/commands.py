@@ -11,12 +11,12 @@ log = logging.getLogger(__name__)
 
 class SetValueCommand(SetRangeValueCommand):
     short_name = "set_value"
-    pretty_name = "Set Value"
+    ui_name = "Set Value"
 
 
 class ZeroCommand(SetRangeValueCommand):
     short_name = "zero"
-    pretty_name = "Zero Bytes"
+    ui_name = "Zero Bytes"
 
     def __init__(self, segment, ranges):
         SetRangeValueCommand.__init__(self, segment, ranges, 0)
@@ -24,7 +24,7 @@ class ZeroCommand(SetRangeValueCommand):
 
 class FFCommand(SetRangeValueCommand):
     short_name = "ff"
-    pretty_name = "FF Bytes"
+    ui_name = "FF Bytes"
 
     def __init__(self, segment, ranges):
         SetRangeValueCommand.__init__(self, segment, ranges, 0xff)
@@ -32,12 +32,12 @@ class FFCommand(SetRangeValueCommand):
 
 class NOPCommand(SetRangeValueCommand):
     short_name = "nop"
-    pretty_name = "NOP Bytes"
+    ui_name = "NOP Bytes"
 
 
 class SetHighBitCommand(SetRangeCommand):
     short_name = "set_high_bit"
-    pretty_name = "Set High Bit"
+    ui_name = "Set High Bit"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_or(orig, 0x80)
@@ -45,7 +45,7 @@ class SetHighBitCommand(SetRangeCommand):
 
 class ClearHighBitCommand(SetRangeCommand):
     short_name = "clear_high_bit"
-    pretty_name = "Clear High Bit"
+    ui_name = "Clear High Bit"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_and(orig, 0x7f)
@@ -53,7 +53,7 @@ class ClearHighBitCommand(SetRangeCommand):
 
 class BitwiseNotCommand(SetRangeCommand):
     short_name = "bitwise_not"
-    pretty_name = "Bitwise NOT"
+    ui_name = "Bitwise NOT"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.invert(orig)
@@ -61,7 +61,7 @@ class BitwiseNotCommand(SetRangeCommand):
 
 class OrWithCommand(SetRangeValueCommand):
     short_name = "or_value"
-    pretty_name = "OR With"
+    ui_name = "OR With"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_or(orig, self.data)
@@ -69,7 +69,7 @@ class OrWithCommand(SetRangeValueCommand):
 
 class AndWithCommand(SetRangeValueCommand):
     short_name = "and_value"
-    pretty_name = "AND With"
+    ui_name = "AND With"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_and(orig, self.data)
@@ -77,7 +77,7 @@ class AndWithCommand(SetRangeValueCommand):
 
 class XorWithCommand(SetRangeValueCommand):
     short_name = "xor_value"
-    pretty_name = "XOR With"
+    ui_name = "XOR With"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.bitwise_xor(orig, self.data)
@@ -85,7 +85,7 @@ class XorWithCommand(SetRangeValueCommand):
 
 class LeftShiftCommand(SetRangeCommand):
     short_name = "left_shift"
-    pretty_name = "Left Shift"
+    ui_name = "Left Shift"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.left_shift(orig, 1)
@@ -93,7 +93,7 @@ class LeftShiftCommand(SetRangeCommand):
 
 class RightShiftCommand(SetRangeCommand):
     short_name = "right_shift"
-    pretty_name = "Right Shift"
+    ui_name = "Right Shift"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.right_shift(orig, 1)
@@ -101,7 +101,7 @@ class RightShiftCommand(SetRangeCommand):
 
 class LeftRotateCommand(SetRangeCommand):
     short_name = "left_rotate"
-    pretty_name = "Left Rotate"
+    ui_name = "Left Rotate"
 
     def get_data_at_indexes(self, orig, indexes):
         rotated = np.right_shift(np.bitwise_and(orig, 0x80), 7)
@@ -110,7 +110,7 @@ class LeftRotateCommand(SetRangeCommand):
 
 class RightRotateCommand(SetRangeCommand):
     short_name = "right_rotate"
-    pretty_name = "Right Rotate"
+    ui_name = "Right Rotate"
 
     def get_data_at_indexes(self, orig, indexes):
         rotated = np.left_shift(np.bitwise_and(orig, 0x01), 7)
@@ -119,7 +119,7 @@ class RightRotateCommand(SetRangeCommand):
 
 class ReverseBitsCommand(SetRangeCommand):
     short_name = "reverse_bits"
-    pretty_name = "Reverse Bits"
+    ui_name = "Reverse Bits"
 
     def get_data_at_indexes(self, orig, indexes):
         return bit_reverse_table[orig]
@@ -127,7 +127,7 @@ class ReverseBitsCommand(SetRangeCommand):
 
 class RandomBytesCommand(SetRangeCommand):
     short_name = "random_bytes"
-    pretty_name = "Random Bytes"
+    ui_name = "Random Bytes"
 
     def get_data_at_indexes(self, orig, indexes):
         return np.random.randint(0, 256, len(orig), dtype=np.uint8)
@@ -135,7 +135,7 @@ class RandomBytesCommand(SetRangeCommand):
 
 class RampUpCommand(SetRangeValueCommand):
     short_name = "ramp_up"
-    pretty_name = "Ramp Up"
+    ui_name = "Ramp Up"
 
     def get_data_at_indexes(self, orig, indexes):
         num = np.alen(orig)
@@ -154,7 +154,7 @@ class RampUpCommand(SetRangeValueCommand):
 
 class RampDownCommand(SetRangeValueCommand):
     short_name = "ramp_down"
-    pretty_name = "Ramp Down"
+    ui_name = "Ramp Down"
 
     def get_data_at_indexes(self, orig, indexes):
         num = np.alen(orig)
@@ -172,7 +172,7 @@ class RampDownCommand(SetRangeValueCommand):
 
 class AddValueCommand(SetRangeValueCommand):
     short_name = "add_value"
-    pretty_name = "Add"
+    ui_name = "Add"
 
     def get_data_at_indexes(self, orig, indexes):
         return orig + self.data
@@ -180,7 +180,7 @@ class AddValueCommand(SetRangeValueCommand):
 
 class SubtractValueCommand(SetRangeValueCommand):
     short_name = "subtract_value"
-    pretty_name = "Subtract"
+    ui_name = "Subtract"
 
     def get_data_at_indexes(self, orig, indexes):
         return orig - self.data
@@ -188,7 +188,7 @@ class SubtractValueCommand(SetRangeValueCommand):
 
 class SubtractFromCommand(SetRangeValueCommand):
     short_name = "subtract_from"
-    pretty_name = "Subtract From"
+    ui_name = "Subtract From"
 
     def get_data_at_indexes(self, orig, indexes):
         return self.data - orig
@@ -196,7 +196,7 @@ class SubtractFromCommand(SetRangeValueCommand):
 
 class MultiplyCommand(SetRangeValueCommand):
     short_name = "multiply"
-    pretty_name = "Multiply"
+    ui_name = "Multiply"
 
     def get_data_at_indexes(self, orig, indexes):
         return orig * self.data
@@ -204,7 +204,7 @@ class MultiplyCommand(SetRangeValueCommand):
 
 class DivideByCommand(SetRangeValueCommand):
     short_name = "divide"
-    pretty_name = "Divide By"
+    ui_name = "Divide By"
 
     def get_data_at_indexes(self, orig, indexes):
         return orig // self.data
@@ -212,7 +212,7 @@ class DivideByCommand(SetRangeValueCommand):
 
 class DivideFromCommand(SetRangeValueCommand):
     short_name = "divide_from"
-    pretty_name = "Divide From"
+    ui_name = "Divide From"
 
     def get_data_at_indexes(self, orig, indexes):
         return self.data // orig
@@ -220,7 +220,7 @@ class DivideFromCommand(SetRangeValueCommand):
 
 class ReverseSelectionCommand(SetRangeCommand):
     short_name = "reverse_selection"
-    pretty_name = "Reverse Selection"
+    ui_name = "Reverse Selection"
 
     def get_data_at_indexes(self, orig, indexes):
         return orig[::-1,...]
@@ -228,7 +228,7 @@ class ReverseSelectionCommand(SetRangeCommand):
 
 class ReverseGroupCommand(SetRangeValueCommand):
     short_name = "reverse_group"
-    pretty_name = "Reverse In Groups"
+    ui_name = "Reverse In Groups"
 
     def get_data_at_indexes(self, orig, indexes):
         num = len(orig)
@@ -247,7 +247,7 @@ class ReverseGroupCommand(SetRangeValueCommand):
 
 class ApplyTraceSegmentCommand(ChangeStyleCommand):
     short_name = "applytrace"
-    pretty_name = "Apply Trace to Segment"
+    ui_name = "Apply Trace to Segment"
 
     def get_style(self, editor):
         v = editor.focused_viewer
@@ -263,7 +263,7 @@ class ApplyTraceSegmentCommand(ChangeStyleCommand):
 
 class ClearTraceCommand(ChangeStyleCommand):
     short_name = "cleartrace"
-    pretty_name = "Clear Current Trace Results"
+    ui_name = "Clear Current Trace Results"
 
     def get_style(self, editor):
         mask = self.segment.get_style_mask(match=True)
@@ -276,7 +276,7 @@ class ClearTraceCommand(ChangeStyleCommand):
 
 class MiniAssemblerCommand(SetRangeValueModifyIndexesCommand):
     short_name = "miniasm"
-    pretty_name = "Assemble"
+    ui_name = "Assemble"
     serialize_order =  [
             ('segment', 'int'),
             ('ranges', 'int_list'),

@@ -146,7 +146,7 @@ class InstructionHistoryGridControl(SegmentGridControl):
 class InstructionHistoryViewer(SegmentViewer):
     name = "cpuhistory"
 
-    pretty_name = "Instruction History"
+    ui_name = "Instruction History"
 
     viewer_category = "Emulator"
 

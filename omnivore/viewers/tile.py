@@ -61,7 +61,7 @@ class TileWindow(wx.SplitterWindow):
 class TileViewer(SegmentViewer):
     name = "tile"
 
-    pretty_name = "Tile"
+    ui_name = "Tile"
 
     has_font = True
 

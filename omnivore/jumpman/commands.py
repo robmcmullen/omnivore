@@ -55,34 +55,34 @@ class JumpmanBaseCommand(SetValueCommand):
 
 class CreateObjectCommand(JumpmanBaseCommand):
     short_name = "create_jumpman_obj"
-    pretty_name = "Create Object"
+    ui_name = "Create Object"
 
 
 class MoveObjectCommand(JumpmanBaseCommand):
     short_name = "move_jumpman_obj"
-    pretty_name = "Move Object"
+    ui_name = "Move Object"
 
 
 class FlipVerticalCommand(JumpmanBaseCommand):
     short_name = "vflip_jumpman_obj"
-    pretty_name = "Flip Vertically"
+    ui_name = "Flip Vertically"
 
 
 class FlipHorizontalCommand(JumpmanBaseCommand):
     short_name = "hflip_jumpman_obj"
-    pretty_name = "Flip Horizontally"
+    ui_name = "Flip Horizontally"
 
 
 class ClearTriggerCommand(JumpmanBaseCommand):
     short_name = "cleartrigger_jumpman_obj"
-    pretty_name = "Clear Trigger Function"
+    ui_name = "Clear Trigger Function"
 
 
 class SetTriggerCommand(JumpmanBaseCommand):
     short_name = "settrigger_jumpman_obj"
-    pretty_name = "Set Trigger Function"
+    ui_name = "Set Trigger Function"
 
 
 class AssemblyChangedCommand(JumpmanBaseCommand):
     short_name = "jumpman_custom_code"
-    pretty_name = "Reassemble Custom Code"
+    ui_name = "Reassemble Custom Code"

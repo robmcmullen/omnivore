@@ -239,7 +239,7 @@ class JumpmanControlMouseModeMixin:
 class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
     name = "jumpman"
 
-    pretty_name = "Jumpman Level Editor"
+    ui_name = "Jumpman Level Editor"
 
     control_cls = JumpmanGridControl
 
@@ -467,7 +467,7 @@ class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
 class TriggerPaintingViewer(JumpmanOtherViewerToolbarMixin, BaseInfoViewer):
     name = "trigger_painting"
 
-    pretty_name = "Jumpman Trigger Painting"
+    ui_name = "Jumpman Trigger Painting"
 
     control_cls = TriggerList
 
@@ -516,7 +516,7 @@ class JumpmanInfoPanel(JumpmanControlMouseModeMixin, InfoPanel):
 class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, BaseInfoViewer):
     name = "level_summary"
 
-    pretty_name = "Jumpman Level Summary"
+    ui_name = "Jumpman Level Summary"
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):

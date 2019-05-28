@@ -11,12 +11,12 @@ progress_log = logging.getLogger("progress")
 
 class DrawBatchCommand(Batch):
     short_name = "draw"
-    pretty_name = "Draw"
+    ui_name = "Draw"
 
     def __str__(self):
         if self.commands:
-            return "%s %dx%s" % (self.pretty_name, len(self.commands), str(self.commands[0]))
-        return self.pretty_name
+            return "%s %dx%s" % (self.ui_name, len(self.commands), str(self.commands[0]))
+        return self.ui_name
 
     def get_next_batch_command(self, segment, index, data):
         cmd = ChangeByteCommand(segment, index, index+len(data), data, False, True)
@@ -25,7 +25,7 @@ class DrawBatchCommand(Batch):
 
 class LineCommand(SegmentCommand):
     short_name = "line"
-    pretty_name = "Line"
+    ui_name = "Line"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
@@ -40,7 +40,7 @@ class LineCommand(SegmentCommand):
         self.bytes_per_row = bytes_per_row
 
     def __str__(self):
-        return "%s @ %04x-%04x" % (self.pretty_name, self.start_index + self.segment.origin, self.end_index + self.segment.origin)
+        return "%s @ %04x-%04x" % (self.ui_name, self.start_index + self.segment.origin, self.end_index + self.segment.origin)
 
     def get_data(self, orig):
         return self.data
@@ -73,7 +73,7 @@ class LineCommand(SegmentCommand):
 
 class SquareCommand(LineCommand):
     short_name = "square"
-    pretty_name = "Square"
+    ui_name = "Square"
 
     def get_points(self, i1, i2):
         return drawutil.get_rectangle(i1, i2, self.bytes_per_row)
@@ -81,7 +81,7 @@ class SquareCommand(LineCommand):
 
 class FilledSquareCommand(LineCommand):
     short_name = "filled_square"
-    pretty_name = "Filled Square"
+    ui_name = "Filled Square"
 
     def get_points(self, i1, i2):
         return drawutil.get_filled_rectangle(i1, i2, self.bytes_per_row)
@@ -89,7 +89,7 @@ class FilledSquareCommand(LineCommand):
 
 class PasteRectangularCommand(SegmentCommand):
     short_name = "paste_rect"
-    pretty_name = "Paste Rectangular"
+    ui_name = "Paste Rectangular"
     serialize_order =  [
             ('segment', 'int'),
             ('start_index', 'int'),
@@ -108,7 +108,7 @@ class PasteRectangularCommand(SegmentCommand):
         self.data = data
 
     def __str__(self):
-        return "%s @ %04x (%dx%d)" % (self.pretty_name, self.start_index + self.segment.origin, self.cols, self.rows)
+        return "%s @ %04x (%dx%d)" % (self.ui_name, self.start_index + self.segment.origin, self.cols, self.rows)
 
     def perform(self, editor, undo):
         i1 = self.start_index

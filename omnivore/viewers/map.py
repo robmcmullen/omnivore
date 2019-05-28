@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 class MapViewer(CharViewer):
     name = "map"
 
-    pretty_name = "Map"
+    ui_name = "Map"
 
     valid_mouse_modes = [m.RectangularSelectMode, m.EyedropperMode, m.DrawMode, m.LineMode, m.SquareMode, m.FilledSquareMode]
 

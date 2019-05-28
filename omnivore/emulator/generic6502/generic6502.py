@@ -20,7 +20,7 @@ debug_frames = False
 class Generic6502(EmulatorBase):
     cpu = "6502"
     name = "6502"
-    pretty_name = "Generic 6502"
+    ui_name = "Generic 6502"
 
     mime_prefix = ""
 

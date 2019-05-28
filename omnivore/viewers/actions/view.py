@@ -209,12 +209,12 @@ class view_add_viewer(ViewerListAction):
 
     def calc_list_items(self):
         subset = [v for v in get_viewers().values() if self.prune_viewers(v)]
-        subset.sort(key=lambda v: v.pretty_name)
+        subset.sort(key=lambda v: v.ui_name)
         return subset
 
     def calc_name(self, action_key):
         viewer = self.get_item(action_key)
-        return viewer.pretty_name
+        return viewer.ui_name
 
     def perform(self, action_key):
         viewer = self.get_item(action_key)

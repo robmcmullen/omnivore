@@ -217,7 +217,7 @@ class LinkedBase:
         self.document.change_count += 1
         cmd = CoalescingChangeByteCommand(self.segment, start, end, byte_values)
         if pretty:
-            cmd.pretty_name = pretty
+            cmd.ui_name = pretty
         self.editor.process_command(cmd)
 
     # #### CaretHandler overrides

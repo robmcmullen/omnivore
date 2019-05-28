@@ -67,7 +67,7 @@ class EmulatorViewer(SegmentViewer):
 class VideoViewer(EmulatorViewer):
     name = "video"
 
-    pretty_name = "Emulator Video Output"
+    ui_name = "Emulator Video Output"
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -79,7 +79,7 @@ class VideoViewer(EmulatorViewer):
     @property
     def window_title(self):
         emu = self.linked_base.emulator
-        return f"{emu.pretty_name} (frame {emu.current_frame_number})"
+        return f"{emu.ui_name} (frame {emu.current_frame_number})"
 
     def update_window_title(self):
         self.update_caption()
@@ -145,7 +145,7 @@ class CPUParamTableViewer(VirtualTableInfoViewer):
 
     viewer_category = "Emulator"
 
-    pretty_name = "<pretty name>"
+    ui_name = "<pretty name>"
 
     control_cls = sg.SegmentVirtualGridControl
 
@@ -157,7 +157,7 @@ class CPUParamTableViewer(VirtualTableInfoViewer):
 class CPU6502Viewer(CPUParamTableViewer):
     name = "cpu6502"
 
-    pretty_name = "6502 CPU Registers"
+    ui_name = "6502 CPU Registers"
 
     override_table_cls = CPU6502Table
 
@@ -230,14 +230,14 @@ class DtypeTable(sg.SegmentVirtualTable):
 #
 # class ANTICTableViewer(CPUParamTableViewer):
 #     name = "antic"
-#     pretty_name = "ANTIC Registers"
+#     ui_name = "ANTIC Registers"
 #     override_table_cls = type('ANTICTable', (DtypeTable,), {'emulator_dtype_name': 'ANTIC'})
 
 for dtype_name in ['ANTIC', 'GTIA', 'POKEY', 'PIA']:
     clsname = '%sViewer' % dtype_name
     cls = type(clsname, (CPUParamTableViewer,), {
         'name': dtype_name.lower(),
-        'pretty_name': '%s Registers' % dtype_name,
+        'ui_name': '%s Registers' % dtype_name,
         'override_table_cls': type('%sTable' % dtype_name, (DtypeTable,), {'emulator_dtype_name': dtype_name}),
         })
     globals()[clsname] = cls
@@ -386,7 +386,7 @@ class LabelViewer(SegmentViewer):
 
     viewer_category = "Emulator"
 
-    pretty_name = "Labels"
+    ui_name = "Labels"
 
     control_cls = LabelGridControl
 

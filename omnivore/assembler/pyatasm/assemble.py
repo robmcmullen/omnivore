@@ -3,7 +3,7 @@ from .libatasm import mac65_assemble
 
 class ATasm(AssemblerBase):
     name = "atasm"
-    pretty_name = "ATasm (MAC/65)"
+    ui_name = "ATasm (MAC/65)"
     cpu = "6502"
 
     comment_char = ";"
