@@ -4,9 +4,9 @@ import wx
 import numpy as np
 
 try:
-    from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
+    from atrip import match_bit_mask, comment_bit_mask, data_bit_mask, selected_bit_mask, diff_bit_mask
 except ImportError:
-    user_bit_mask = 0x07
+    data_bit_mask = 0x08
     diff_bit_mask = 0x10
     match_bit_mask = 0x20
     comment_bit_mask = 0x40
@@ -97,7 +97,7 @@ class DrawTextImageCache(object):
             dc.SetBrush(v.comment_brush)
             dc.SetBackground(v.comment_brush)
             dc.SetTextBackground(v.comment_background_color)
-        elif style & user_bit_mask:
+        elif style & data_bit_mask:
             dc.SetBrush(v.data_brush)
             dc.SetBackground(v.normal_brush)
             dc.SetTextBackground(v.data_background_color)
