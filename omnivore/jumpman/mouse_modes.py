@@ -112,7 +112,7 @@ class JumpmanSelectMode(NormalSelectMode):
             msg = "x=%d (0x%x) y=%d (0x%x) pick=%d" % (x, x, y, y, pick)
             if extra:
                 msg += " " + extra
-            e.linked_base.editor.status_message = msg
+            e.linked_base.editor.frame.status_message(msg)
 
     def process_left_down(self, evt):
         self.display_coords(evt)

@@ -492,7 +492,7 @@ class ByteEditor(TileManagerBase):
         #self.caret_handler.process_caret_flags(flags, d)
 
         if flags.message:
-            self.task.status_bar.message = flags.message
+            self.frame.status_message(flags.message)
 
         if flags.metadata_dirty:
             self.metadata_dirty = True

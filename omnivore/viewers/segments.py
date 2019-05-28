@@ -160,9 +160,9 @@ class SegmentList(wx.ListBox):
         selected = self.HitTest(pos)
         if selected >= 0:
             segment = self.linked_base.document.segments[selected]
-            self.linked_base.task.status_bar.message = segment.verbose_info
+            self.linked_base.editor.frame.status_message(segment.verbose_info)
         else:
-            self.linked_base.task.status_bar.message = ""
+            self.linked_base.editor.frame.status_message("")
         evt.Skip()
 
     def ensure_visible(self, segment):

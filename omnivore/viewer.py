@@ -178,8 +178,8 @@ class SegmentViewer:
         return self.linked_base.editor.document
 
     @property
-    def task(self):
-        return self.linked_base.task
+    def frame(self):
+        return self.linked_base.editor.frame
 
     @property
     def preferences(self):
@@ -429,7 +429,7 @@ class SegmentViewer:
         self.do_emulator_breakpoint()
 
     def do_emulator_breakpoint(self, evt):
-            self.task.status_bar.message = f"{self.document.emulator.cycles_since_power_on} cycles"
+            self.frame.status_message(f"{self.document.emulator.cycles_since_power_on} cycles")
 
     def on_refresh_view(self, evt):
         self.refresh_view(evt.flags)
@@ -577,7 +577,7 @@ class SegmentViewer:
         s = self.get_selected_status_message()
         if s:
             msg = "%s %s" % (msg, s)
-        self.task.status_bar.message = msg
+        self.frame.status_message(msg)
 
     def get_label_at_index(self, index):
         return self.segment.label(index)
