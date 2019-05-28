@@ -95,7 +95,7 @@ def get_numpy_font_map_image(segment_viewer, antic_font, np.ndarray[np.uint8_t, 
                 fast_array[y:y+char_h,x:x+char_w,:] = fast_fm[c]
             elif s & 0x40:
                 fast_array[y:y+char_h,x:x+char_w,:] = fast_fc[c]
-            elif s & 0x07:
+            elif s & 0x08:
                 fast_array[y:y+char_h,x:x+char_w,:] = fast_fd[c]
             else:
                 fast_array[y:y+char_h,x:x+char_w,:] = fast_f[c]

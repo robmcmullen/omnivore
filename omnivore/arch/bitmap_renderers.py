@@ -109,7 +109,7 @@ class BaseRenderer(object):
             style_per_pixel = self.calc_style_per_pixel_2bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -136,7 +136,7 @@ class BaseRenderer(object):
             style_per_pixel = self.calc_style_per_pixel_4bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -178,7 +178,7 @@ class BaseRenderer(object):
         style_per_pixel = s.repeat(8).reshape((-1, pixels_per_row))
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -218,7 +218,7 @@ class OneBitPerPixelB(BaseRenderer):
             style_per_pixel = self.calc_style_per_pixel_1bpp(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -302,7 +302,7 @@ class OneBitPerPixelApple2Linear(BaseRenderer):
             style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -362,7 +362,7 @@ class OneBitPerPixelApple2FullScreen(OneBitPerPixelApple2Linear):
             style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -445,7 +445,7 @@ class OneBitPerPixelApple2Artifacting(OneBitPerPixelApple2Linear):
             style_per_pixel = self.calc_style_per_pixel(style)
         normal = (style_per_pixel & self.ignore_mask) == 0
         highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
-        data = (style_per_pixel & style_bits.user_bit_mask) > 0
+        data = (style_per_pixel & style_bits.data_bit_mask) == style_bits.data_bit_mask
         comment = (style_per_pixel & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
         match = (style_per_pixel & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
@@ -718,7 +718,7 @@ class BaseBytePerPixelRenderer(BaseRenderer):
         normal = style == 0
         highlight = (style & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
         comment = (style & style_bits.comment_bit_mask) == style_bits.comment_bit_mask
-        data = (style & style_bits.user_bit_mask) > 0
+        data = (style & style_bits.data_bit_mask) == style_bits.data_bit_mask
         match = (style & style_bits.match_bit_mask) == style_bits.match_bit_mask
 
         color_registers, h_colors, m_colors, c_colors, d_colors = self.get_colors(segment_viewer, list(range(16)))

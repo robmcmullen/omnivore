@@ -267,6 +267,7 @@ class SetDisasmCommand(SetRangeCommand):
         undo.flags.index_range = indexes[0], indexes[-1]
         old_data = self.segment.disasm_type[indexes].copy()
         self.segment.disasm_type[indexes] = self.get_data(old_data)
+        self.segment.update_data_style_from_disasm_type()
         if self.advance:
             undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
         return old_data
@@ -274,6 +275,7 @@ class SetDisasmCommand(SetRangeCommand):
     def undo_change(self, editor, old_data):
         indexes = self.range_to_index_function(self.ranges)
         self.segment.disasm_type[indexes] = old_data
+        self.segment.update_data_style_from_disasm_type()
 
 
 class ChangeStyleCommand(SetContiguousDataCommand):
