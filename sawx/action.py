@@ -173,6 +173,16 @@ class SawxAction:
         icon_name = self.calc_icon_name(action_key)
         return art.get_bitmap(icon_name, self.editor.tool_bitmap_size)
 
+    def init_prefix(self, action_key):
+        if "{" in action_key and action_key.endswith("}"):
+            _, action_list_id = action_key[:-1].split("{", 1)
+        else:
+            action_list_id = ""
+        log.debug(f"action_key={action_key}, list_id={action_list_id}")
+        self.action_list_id = action_list_id
+        self.prefix = action_key + "_"
+        self.prefix_count = len(self.prefix)
+
     def init_from_editor(self, action_key):
         pass
 
@@ -186,6 +196,17 @@ class SawxAction:
     def sync_tool_item_from_editor(self, action_key, toolbar_control, id):
         state = self.calc_enabled(action_key)
         toolbar_control.EnableTool(id, state)
+
+
+class SawxSubAction(SawxAction):
+    def init_from_editor(self, action_key):
+        self.init_prefix(action_key)
+
+    def calc_name(self, action_key):
+        return self.action_list_id
+
+    def calc_icon_name(self, action_key):
+        return self.prefix
 
 
 class SawxNameChangeAction(SawxAction):
@@ -235,16 +256,6 @@ class SawxRadioAction(SawxActionRadioMixin, SawxAction):
 
 class SawxActionListMixin:
     empty_list_name = "No Items"
-
-    def init_prefix(self, action_key):
-        if "{" in action_key and action_key.endswith("}"):
-            _, action_list_id = action_key[:-1].split("{", 1)
-        else:
-            action_list_id = ""
-        log.debug(f"action_key={action_key}, list_id={action_list_id}")
-        self.action_list_id = action_list_id
-        self.prefix = action_key + "_"
-        self.prefix_count = len(self.prefix)
 
     def init_from_editor(self, action_key):
         self.init_prefix(action_key)

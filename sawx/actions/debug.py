@@ -1,4 +1,4 @@
-from ..action import SawxAction, SawxActionRadioMixin
+from ..action import SawxAction, SawxSubAction, SawxActionRadioMixin
 from .. import errors
 
 
@@ -64,3 +64,7 @@ class debug_text_size(SawxAction):
     def sync_menu_item_from_editor(self, action_key, menu_item):
         name = self.calc_name(action_key)
         menu_item.SetItemLabel(name)
+
+class debug_generated(SawxSubAction):
+    def perform(self, action_key):
+        print(f"perform: {self.action_list_id}")
