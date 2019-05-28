@@ -55,7 +55,7 @@ class SegmentList(wx.ListBox):
         self.Refresh()
 
     def show_segment_in_list(self, segment):
-        return True
+        return hasattr(segment, "container")
 
     def filter_segments(self, collection, selected=None):
         self.index_to_segment_uuid = []
@@ -68,7 +68,7 @@ class SegmentList(wx.ListBox):
                     found = len(self.index_to_segment_uuid)
                 self.index_to_segment_uuid.append(segment.uuid)
                 self.segment_uuid_to_index[segment.uuid] = len(names)
-                names.append(str(segment))
+                names.append((level - 1) * "    " + str(segment))
         return names, found
 
     def set_segments(self, collection, selected=0):
