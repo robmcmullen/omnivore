@@ -115,14 +115,14 @@ class DiskImageDocument(SawxDocument):
 
     def load(self, file_metadata):
         log.debug(f"load: file_metadata={file_metadata}")
-        try:
-            self.collection = file_metadata["atrip_collection"]
-        except (KeyError, TypeError):
-            super().load(file_metadata)
-        else:
-            log.debug(f"load: found collection {self.collection}")
-            self.file_metadata = file_metadata
-            self.load_session()
+        collection = file_metadata["atrip_collection"]
+        self.load_collection(collection, file_metadata)
+
+    def load_collection(self, collection, file_metadata):
+        self.collection = collection
+        log.debug(f"load: found collection {self.collection}")
+        self.file_metadata = file_metadata
+        self.load_session()
         self.segments = list(self.collection.iter_segments())
         self.user_segments = []
 
