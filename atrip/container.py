@@ -356,6 +356,7 @@ class Container:
         self.restore_missing_state()
         self.__dict__.update(state)
         self.restore_renamed_attributes()
+        self.update_data_style_from_disasm_type()
 
     def restore_media(self, state):
         self.media = state.pop('media')
