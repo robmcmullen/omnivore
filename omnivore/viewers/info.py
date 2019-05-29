@@ -245,14 +245,17 @@ class CommentsPanel(wx.VListBox):
                 # in user segments first, rather than listing everything in
                 # the main segment.
                 raise IndexError
-            index = segment.get_index_from_base_index(item[0])
+            index = segment.reverse_offset[item[0]]
+            if index < 0:
+                raise IndexError
             label = v.get_label_at_index(index)
             font = self.normal_font
             segment_font = self.bold_font
         except IndexError:
             font = self.italic_font
             segment_font = self.italic_font
-            segment, index = v.editor.find_in_user_segment(item[0])
+            # segment, index = v.editor.find_in_user_segment(item[0])
+            segment = None
             if segment is not None:
                 label = segment.label(index)
             else:
