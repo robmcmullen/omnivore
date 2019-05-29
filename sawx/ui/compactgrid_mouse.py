@@ -174,6 +174,10 @@ class MultiCaretHandler:
         return self.carets[-1]  # last one is the most recent
 
     @property
+    def has_carets(self):
+        return len(self.carets) > 0
+
+    @property
     def has_selection(self):
         for caret in self.carets:
             if caret.has_selection:
