@@ -329,6 +329,7 @@ class ByteEditor(TileManagerBase):
         else:
             s = self.document.last_session.get(self.editor_id, {})
             self.restore_session(s)
+        self.restore_legacy_session(self.document.last_session)
         self.set_initial_focused_viewer()
         self.document.recalc_event()
 
@@ -349,6 +350,14 @@ class ByteEditor(TileManagerBase):
         self.restore_linked_bases(s)
         self.restore_layout_and_viewers(s)
         self.restore_view_segment_uuid(s)
+
+    def restore_legacy_session(self, s):
+        try:
+            container = self.document.collection.containers[0]
+        except IndexError:
+            pass
+        else:
+            container.restore_backward_compatible_state(s)
 
     def restore_linked_bases(self, s):
         linked_bases = {}
