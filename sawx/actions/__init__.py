@@ -312,3 +312,13 @@ class widget_inspector(SawxAction):
 
     def perform(self, action_key):
         wx.lib.inspection.InspectionTool().Show()
+
+class show_focus(SawxAction):
+    def calc_name(self, action_key):
+        return "Show Control With Focus"
+
+    def perform(self, action_key):
+        focused = wx.Window.FindFocus()
+        info = f"{focused.__class__.__name__}, {hex(id(focused))}, {focused.GetName()}, {focused.GetParent().GetName()}"
+        print(info)
+        self.editor.frame.status_message(info)
