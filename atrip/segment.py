@@ -374,7 +374,7 @@ class Segment:
 
     def set_comments_at_indexes(self, ranges, indexes, comments):
         for where_index, comment in zip(indexes, comments):
-            rawindex = self.get_raw_index(where_index)
+            rawindex = self.container_offset[where_index]
             if comment:
                 log.debug("  restoring comment: rawindex=%d, '%s'" % (rawindex, comment))
                 self.container.comments[rawindex] = comment
@@ -392,7 +392,7 @@ class Segment:
         has_comments = np.where(s & style_bits.comment_bit_mask > 0)[0]
         comments = []
         for where_index in has_comments:
-            raw = self.get_raw_index(indexes[where_index])
+            raw = self.container_offset[indexes[where_index]]
             try:
                 comment = self.container.comments[raw]
             except KeyError:
@@ -410,7 +410,7 @@ class Segment:
             styles = self.style[start:end].copy()
             items = {}
             for i in range(start, end):
-                rawindex = self.get_raw_index(i)
+                rawindex = self.container_offset[i]
                 try:
                     comment = self.container.comments[rawindex]
                     log.debug("  index: %d rawindex=%d '%s'" % (i, rawindex, comment))
@@ -477,7 +477,7 @@ class Segment:
 
     def get_first_comment(self, ranges):
         start = reduce(min, [r[0] for r in ranges])
-        rawindex = self.get_raw_index(start)
+        rawindex = self.container_offset[start]
         return self.container.comments.get(rawindex, "")
 
     def clear_comment_ranges(self, ranges):
@@ -488,8 +488,8 @@ class Segment:
 
     def iter_comments_in_segment(self):
         start = self.origin
-        start_index = self.get_raw_index(0)
-        end_index = self.get_raw_index(len(self.rawdata))
+        start_index = self.container_offset[0]
+        end_index = self.container_offset[len(self.rawdata)]
         for k, v in self.container.comments.items():
             if k >= start_index and k < end_index:
                 yield self.rawdata.get_reverse_index(k), v
