@@ -360,6 +360,14 @@ class TileManagerBase(SawxEditor):
 
     def force_focus(self, viewer):
         self.control.force_focus(viewer.uuid)
+        c = viewer.control
+        if not c.caret_handler.has_carets:
+            c.caret_handler.move_current_caret_to_index(c.table, 0)
+            flags = c.create_mouse_event_flags()
+            flags.carets_to_indexes = [(0, -1, -1)]
+            flags.source_control = c
+            self.linked_base.sync_caret_to_index_event(flags=flags)
+            wx.CallAfter(c.SetFocus)
         self.update_pane_names()
         viewer.update_toolbar()
 
