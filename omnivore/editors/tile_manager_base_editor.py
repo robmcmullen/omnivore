@@ -43,7 +43,7 @@ class TileManagerBase(SawxEditor):
       editor and MIME type of the file
     * viewers specified in the default_viewers class attribute of the editor
     """
-    name = "omnivore.tile_manager_base"
+    editor_id = "omnivore.tile_manager_base"
     ui_name = "Tile Manager Base"
 
     default_viewers = "dummy"
@@ -79,7 +79,7 @@ class TileManagerBase(SawxEditor):
         return bool(args)
 
     def get_default_layout(self):
-        template_name = self.document.calc_layout_template_name(self.name)
+        template_name = self.document.calc_layout_template_name(self.editor_id)
         log.debug("template from: %s" % template_name)
         try:
             data = get_template(template_name)

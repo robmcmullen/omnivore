@@ -63,7 +63,7 @@ class ByteEditor(TileManagerBase):
             }
         }
     """
-    name = "omnivore.byte_edit"
+    editor_id = "omnivore.byte_edit"
     ui_name = "Byte Editor"
 
     default_viewers = "hex,bitmap,char,disasm"
@@ -327,7 +327,7 @@ class ByteEditor(TileManagerBase):
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
-            s = self.document.last_session.get(self.name, {})
+            s = self.document.last_session.get(self.editor_id, {})
             self.restore_session(s)
         self.set_initial_focused_viewer()
         self.document.recalc_event()
