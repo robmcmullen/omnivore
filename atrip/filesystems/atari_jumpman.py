@@ -39,6 +39,7 @@ class AtariJumpmanBootSegment(AtariDosBootSegment):
 class AtariJumpmanDirent(Dirent):
     name_offset = 0x2bec - 0x2800
     dirent_size = 0x800
+    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'id', 'level_name']
 
     def __init__(self, directory, file_num):
         start = file_num * self.dirent_size
