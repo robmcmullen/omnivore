@@ -255,7 +255,7 @@ class SawxEditor:
     @property
     def editor_summary(self):
         lines = []
-        lines.append(f"name: {self.name}")
+        lines.append(f"name: {self.ui_name} ({self.editor_id})")
         lines.append(f"document: {self.document}" % self.document)
         lines.append(f"flags: is_dirty: {self.is_dirty}\n  can_cut: {self.can_cut}\n  can_copy: {self.can_copy}\n  can_paste: {self.can_paste}" )
         lines.append(f"last saved: {self.last_saved_uri}")
