@@ -92,6 +92,14 @@ def collapse_values(src):
     return ranges
 
 
+def restore_value_to_ranges(dest, ranges, value):
+    """Restore a list given the description returned by `collapse_list`
+    """
+    for start, end in ranges:
+        print(f"{hex(start)}:{hex(end)} = {value}")
+        dest[start:end] = value
+
+
 def restore_values(dest, ranges):
     """Restore a list given the description returned by `collapse_list`
     """

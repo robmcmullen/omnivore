@@ -372,22 +372,42 @@ class Container:
 
     def restore_backward_compatible_state(self, state):
         # convert old atrcopy stuff
-        if 'data ranges' in state:
-            self.set_style_ranges(state['data ranges'], user=data_style)
-        if 'display list ranges' in state:
-            # DEPRECATED, but supported on read. Converts display list to
-            # disassembly type 0 for user index 1
-            self.set_style_ranges(state['display list ranges'], data=True, user=1)
-        if 'user ranges 1' in state:
-            # DEPRECATED, but supported on read. Converts user extra data 0
-            # (antic dl), 1 (jumpman level), and 2 (jumpman harvest) to user
-            # styles 2, 3, and 4. Data is now user style 1.
-            for r, val in state['user ranges 1']:
-                self.set_style_ranges([r], user=val + 2)
-        for i in range(1, style_bits.user_bit_mask):
-            slot = "user style %d" % i
-            if slot in state:
-                self.set_style_ranges(state[slot], user=i)
+        d = state.get('data ranges', None)
+        if d is not None:
+            utils.restore_value_to_ranges(self._disasm_type, d, 0)
+        d = state.get('display list ranges', None)
+        if d is not None:
+            utils.restore_value_to_ranges(self._disasm_type, d, 30)
+
+        d2 = state.get('user style 2', None)  # display list
+        if d2 is not None:
+            utils.restore_value_to_ranges(self._disasm_type, d2, 30)
+        d3 = state.get('user style 3', None)  # jumpman level
+        if d3 is not None:
+            utils.restore_value_to_ranges(self._disasm_type, d3, 31)
+
+        if d2 is not None and d2 == d3:
+            # it seems that user styles 2 and 3 can point to the same ranges,
+            # although 2 was supposed to be the display list and 3 the jumpman
+            # level data. Try to disambiguate them because display lists
+            # usually start out with 0x70, 0x70.
+            for start, end in d2:
+                if self._data[start] == 0x70 and self._data[start + 1] == 0x70:
+                    self._disasm_type[start:end] = 30
+                elif self._data[start] in [0xfc, 0xfd, 0xfe]:
+                    self._disasm_type[start:end] = 32
+                else:
+                    self._disasm_type[start:end] = 30
+
+        d = state.get('user style 4', None)  # jumpman harvest
+        if d is not None:
+            utils.restore_value_to_ranges(self._disasm_type, d, 31)
+
+        d = state.get('comments', None)  # jumpman harvest
+        if d is not None:
+            self.restore_comments(d, overwrite=False)
+
+        self.update_data_style_from_disasm_type()
 
     def restore_missing_state(self):
         """Hook for the future when extra serializable attributes are added to
@@ -427,8 +447,8 @@ class Container:
     def update_data_style_from_disasm_type(self):
         mask = style_bits.get_style_mask(data=True)
         self._style &= mask
-        indexes = np.where(self._disasm_type == 0)[0]
         bits = style_bits.get_style_bits(data=True)
+        indexes = np.where((self._disasm_type == 0) | ((self._disasm_type >= 30) & (self._disasm_type < 128)))[0]
         self._style[indexes] |= bits
 
 
@@ -447,8 +467,9 @@ class Container:
     def get_sorted_comments(self):
         return sorted([[int(k), str(v)] for k, v in self.comments.items()])
 
-    def restore_comments(self, comments_list):
-        self.comments = {}
+    def restore_comments(self, comments_list, overwrite=True):
+        if overwrite:
+            self.comments = {}
         bits = style_bits.get_style_bits(comment=True)
         style = self.style
         for k, v in comments_list:
