@@ -14,7 +14,7 @@ except ImportError:
     raise RuntimeError("atrip %s requires numpy" % __version__)
 
 from . import errors
-from .container import Container, guess_container
+from .container import Container, ContainerHeader, guess_container
 from .collection import Collection
 from .segment import Segment
 from . import style_bits
