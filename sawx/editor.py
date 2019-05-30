@@ -370,6 +370,14 @@ class SawxEditor:
         open_recent.open_recent.append(path)
         self.frame.status_message(f"saved {path}", True)
 
+    #### search
+
+    @property
+    def search_start(self):
+        """Return index at which the next search will start.
+        """
+        return 0
+
     #### popup menu utilities
 
     def show_popup(self, popup_menu_desc, popup_data=None):
