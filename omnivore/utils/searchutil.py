@@ -20,7 +20,7 @@ class BaseSearcher(object):
             self.matches = []
 
     def get_search_text(self, text):
-        return bytearray(text, "utf-8")
+        return bytes(text, "utf-8")
 
     def get_matches(self, editor):
         text = editor.segment.search_copy
@@ -40,7 +40,7 @@ class HexSearcher(BaseSearcher):
 
     def get_search_text(self, text):
         try:
-            return bytearray.fromhex(text)
+            return bytes.fromhex(text)
         except ValueError:
             log.debug("%s: fromhex failed on: %s")
             return ""

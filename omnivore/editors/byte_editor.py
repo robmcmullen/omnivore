@@ -103,6 +103,11 @@ class ByteEditor(TileManagerBase):
                 "disasm_type",
             ],
             None,
+            "find",
+            "find_expression",
+            "find_next",
+            "find_to_selection",
+            None,
             "prefs",
         ],
         ["View",
@@ -292,6 +297,14 @@ class ByteEditor(TileManagerBase):
         TileManagerBase.__init__(self, document, action_factory_lookup)
         self.center_base = None
         self.linked_bases = {}
+        self.last_search_settings = {
+            "find": "",
+            "replace": "",
+            "match_case": False,
+            "allow_inverse": False,
+            "regex": False,
+            "algorithm": "",
+        }
 
     @classmethod
     def can_edit_document_exact(cls, document):
@@ -487,6 +500,13 @@ class ByteEditor(TileManagerBase):
             self.document.change_count += 1
 
     ##### Search
+
+    @property
+    def search_start(self):
+        c = self.focused_viewer.control
+        caret = c.caret_handler.current
+        index, _ = c.table.get_index_range(caret.rc[0], caret.rc[1])
+        return index
 
     def invalidate_search(self):
         self.task.change_minibuffer_editor(self)
