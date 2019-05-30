@@ -3,6 +3,8 @@ import wx.lib.buttons as buttons
 import wx.lib.colourselect as csel
 import wx.lib.agw.cubecolourdialog as CCD
 
+from .. import art
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -121,8 +123,7 @@ class FlatBitmapToggleButton(buttons.GenBitmapToggleButton):
         buttons.GenBitmapToggleButton.__init__(self, parent, -1, None, style=wx.BORDER_NONE)
         self.SetValue(pressed)
         self.tooltip_prefix = tooltip_prefix
-        img = ImageResource(icon_name)
-        bmp = img.create_bitmap()
+        bmp = art.find_bitmap(icon_name)
         self.SetBitmapLabel(bmp)
         self.SetInitialSize()
         self.set_tooltip()
