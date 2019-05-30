@@ -8,7 +8,7 @@ import wx
 import numpy as np
 import json
 
-from atrip import Container, Segment
+from atrip import Container, ContainerHeader, Segment
 
 from sawx.utils.command import DisplayFlags
 from sawx.events import EventHandler
@@ -154,8 +154,11 @@ class LinkedBase:
                     continue
 
     def find_first_valid_segment_uuid(self):
-        uuid = self.document.collection.containers[0].segments[0].uuid
-        return uuid
+        for s in self.document.collection.iter_segments():
+            if isinstance(s, ContainerHeader):
+                continue
+            break
+        return s.uuid
 
     def find_segment(self, segment, refresh=False, data_model_changed=True):
         if segment is not None:
