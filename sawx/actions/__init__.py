@@ -217,7 +217,7 @@ class select_none(SawxAction):
 
 class select_invert(SawxAction):
     def calc_name(self, action_key):
-        return "Select Invert"
+        return "Invert Selection"
 
     def calc_enabled(self, action_key):
         return True
