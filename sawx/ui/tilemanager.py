@@ -398,6 +398,7 @@ class TileManager(wx.Window):
         self.sidebars = []
         self.header = None
         self.footer = None
+        self.minibuffer_panel = None
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_MOTION, self.on_motion)
         self.Bind(wx.EVT_LEFT_DOWN, self.on_left_down)
@@ -525,6 +526,7 @@ class TileManager(wx.Window):
         x, y = 0, 0
         w, h = self.GetSize()
         x, y, w, h = self.set_header_size_inside(x, y, w, h)
+        x, y, w, h = self.set_minibuffer_size_inside(x, y, w, h)
         x, y, w, h = self.set_footer_size_inside(x, y, w, h)
         for sidebar in self.sidebars:
             x, y, w, h = sidebar.set_size_inside(x, y, w, h)
@@ -539,6 +541,13 @@ class TileManager(wx.Window):
             _, hh = self.header.GetBestSize()
             self.header.SetSize(x, y, w, hh)
             y += hh
+            h -= hh
+        return x, y, w, h
+
+    def set_minibuffer_size_inside(self, x, y, w, h):
+        if self.minibuffer_panel is not None and self.minibuffer_panel.IsShown():
+            _, hh = self.minibuffer_panel.GetBestSize()
+            self.minibuffer_panel.SetSize(x, y + h - hh, w, hh)
             h -= hh
         return x, y, w, h
 
@@ -816,6 +825,69 @@ class TileManager(wx.Window):
     def show_header(self, state=True):
         self.header.Show(state)
         self.do_layout()
+
+    def on_hide_minibuffer_or_cancel(self, evt):
+        info = self.minibuffer_panel
+        if info is not None:
+            info.Hide()
+            self.do_layout(layout_changed=True)
+
+    def show_minibuffer(self, minibuffer, **kwargs):
+        # minibuffer_pane_info is stored in the TaskWindow instance because all
+        # tasks use the same minibuffer pane in the AUI manager
+        from sawx import art
+        if self.minibuffer_panel is None:
+            panel = wx.Panel(self, name="minibuffer_parent", style=wx.NO_BORDER)
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            bmp = art.find_bitmap('cancel')
+            close = wx.BitmapButton(panel, -1, bmp, size=(bmp.GetWidth()+10, bmp.GetHeight()+10), style=wx.NO_BORDER)
+            close.Bind(wx.EVT_BUTTON, self.on_hide_minibuffer_or_cancel)
+            sizer.Add(close, 0, wx.EXPAND)
+            panel.SetSizer(sizer)
+            panel.minibuffer = None
+            panel.close_button = close
+            self.minibuffer_panel = panel
+            log.debug(f"created minibuffer pane")
+        info = self.minibuffer_panel
+        repeat = False
+        if info.minibuffer is not None:
+            if info.minibuffer.is_repeat(minibuffer):
+                log.debug(f"Reusing old minibuffer control {info.minibuffer.control}")
+                repeat = True
+            else:
+                log.debug(f"Removing old minibuffer control {info.minibuffer.control}")
+                info.minibuffer.destroy_control()
+        force_update = False
+        if not repeat:
+            minibuffer.create_control(info)
+            # info.close_button.Show(minibuffer.show_close_button)
+            info.GetSizer().Insert(0, minibuffer.control, 1, wx.EXPAND)
+
+            # force minibuffer parent panel to take min size of contents of
+            # minibuffer. Apparently this doesn't happen automatically.
+            #
+            # FIXME: or maybe it does. Removing all the min size stuff now
+            # seems to work. Maybe because prior I had been setting the min
+            # size after the Fit?
+            min_size = minibuffer.control.GetMinSize()
+#            info.window.SetMinSize(min_size)
+#            info.BestSize(min_size)  # Force minibuffer height, just in case
+
+            info.Fit()  # Fit instead of Layout to prefer control size
+            minibuffer.focus()
+            info.minibuffer = minibuffer
+            force_update = True
+        else:
+            log.debug(f"Repeat: {info.minibuffer}")
+            info.minibuffer.focus()
+            info.minibuffer.repeat(minibuffer)  # Include new minibuffer
+        if not info.IsShown():
+            info.Show()
+            force_update = True
+        if force_update:
+            self.do_layout(layout_changed=True)
+        log.debug(f"size after update: {info.GetSize()}")#" best=%s min=%s" % (info.window.GetSize(), info.best_size, info.min_size))
+        # info.window.SetMinSize(minibuffer.control.GetSize())
 
     def calc_graphviz(self):
         from graphviz import Digraph
