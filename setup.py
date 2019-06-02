@@ -1,5 +1,8 @@
 import sys
 
+if sys.version_info < (3, 6):
+    sys.exit('Omnivore requires Python 3.6 or higher')
+
 try:
     from setuptools import setup
 except ImportError:
