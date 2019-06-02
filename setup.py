@@ -320,6 +320,7 @@ setup(
     ext_modules = ext_modules,
     include_dirs = [np.get_include()],
     packages = find_packages(exclude=["libudis"]),
+    scripts = ["scripts/omnivore"],
     entry_points={
         "sawx.remember": 'fonts = omnivore.arch.fonts',
 
