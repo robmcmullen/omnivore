@@ -1,10 +1,11 @@
+=======
 ATRip
 =======
 
 Python library for hierarchical filesystem parsing on Atari 8-bit and Apple ][
-disk images. The successor to `atrcopy <https://pypi.org/atrcopy>`_, this is
-under heavy development and is still in a beta state. It is the basis for disk
-image support in `Omnivore 2 <https://github.com/robmcmullen/omnivore>`_.
+disk images. The successor to atrcopy, this is under heavy development and is
+still in a beta state. It is the basis for disk image support in `Omnivore 2
+<https://github.com/robmcmullen/omnivore>`_.
 
 Pronounced "uh-trip", the name is a happy coincidence that a dictionary word
 exists that is the quasi-portmanteau of "ATR" (the Atari 8 bit disk image
