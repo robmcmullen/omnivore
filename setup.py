@@ -6,6 +6,9 @@ import glob
 from distutils.command.clean import clean
 import numpy as np
 
+if sys.version_info < (3, 6):
+    sys.exit('Omnivore requires Python 3.6 or higher')
+
 try:
     from Cython.Build import cythonize
 except ImportError:
@@ -63,7 +66,7 @@ class clean_py(clean):
         ]
         for pathspec in files:
             for path in glob.glob(pathspec):
-                print(f"cleaning {path}")
+                print("cleaning" + str(path))
                 try:
                     os.unlink(path)
                 except OSError:
