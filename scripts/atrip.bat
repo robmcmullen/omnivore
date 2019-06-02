@@ -12,9 +12,9 @@ goto exit
 # -------------------- Python section --------------------
 import os,sys
 
-import atree
+import atrip
 
-atree.run()
+atrip.run()
 
 DosExitLabel = """
 :exit
