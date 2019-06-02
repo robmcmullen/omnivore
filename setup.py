@@ -4,7 +4,10 @@ import subprocess
 from setuptools import setup, find_packages, Extension
 import glob
 from distutils.command.clean import clean
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    sys.exit('Please install numpy first, e.g. "pip install numpy"')
 
 if sys.version_info < (3, 6):
     sys.exit('Omnivore requires Python 3.6 or higher')
