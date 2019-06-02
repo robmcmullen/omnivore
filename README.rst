@@ -1,20 +1,19 @@
 
-============
-Omnivore 2.0
-============
+=========================================================
+Omnivore 2.0 (pre-release, very very alpha version)
+=========================================================
 
 
 
 Abstract
 ========
 
-Omnivore - the 8-bit binary editor, emulator, and debugger
+Omnivore - the retrocomputing reverse engineering toolbox
 
 Omnivore is a cross-platform app for modern hardware (running linux, MacOS and
-Windows) to work with executables or disk images of Atari 8-bit and Apple ][+
-machines.
+Windows) to work with executables or media images of Atari 8-bit, Apple ][+, and other retrocomputer machines and game consoles.
 
-Features include:
+Features include (in various states of operation at the moment):
 
 * emulator with debugger (see below)
 * binary editor
@@ -36,7 +35,7 @@ Currently available are:
 
 * libatari800, an embedded port of the `atari800 emulator <https://atari800.github.io/>`_
 * lib6502, a generic 6502 emulator based on `David Buchanan's 6502-emu <https://github.com/DavidBuchanan314/6502-emu>`_
-* crabapple, a thin layer atop of lib6502 that provides some (tiny, small amount of) Apple ][+ compatibily
+* crabapple, a thin layer atop of lib6502 that provides some (tiny, small amount of) Apple ][+ compatibility
 
 The debugger includes:
 
@@ -55,13 +54,12 @@ A Tribute
 ---------
 
 While producing the Player/Missile podcast, I have had many ideas about hacking
-code on the 8-bits like I used to as a kid.  One of the tools I had was the
+code on the 8-bits like I used to as a kid. One of the tools I had was the
 Omnimon system monitor board by CDY Consulting, an add-on board for the Atari
-800 that provided a ROM-resident monitor similiar to what was available by
-default on the Apple ][ series.  In fact, I originally named this program
-Omnimon but felt that would be too confusing as there are people in the 8-bit
-community who still use the original Omnimon hardware.  Using the prefix
-"Omni-" is my tribute to all the fun I had with the Omnimon hardware.
+800 that provided a ROM-resident monitor similar to what was provided in the Apple ][+ hardware.  In fact, I originally named this program Omnimon but felt
+that would be too confusing as there are people in the 8-bit community who
+still use the original Omnimon hardware.  Using the prefix "Omni-" is my
+tribute to all the fun I had with the Omnimon hardware.
 
 
 How To Run Omnivore
