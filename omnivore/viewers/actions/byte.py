@@ -5,6 +5,8 @@ import sys
 
 import wx
 
+from sawx.ui.dialogs import prompt_for_hex, prompt_for_slice
+
 from . import ViewerAction
 from .. import commands
 
@@ -113,7 +115,8 @@ class IndexRangeValueAction(IndexRangeAction):
     def show_dialog(self):
         value = prompt_for_hex(self.viewer.control, self.prompt, self.cmd.ui_name)
         if value is not None:
-            cmd = self.cmd(self.linked_base.segment, self.linked_base.carets.selected_ranges, value)
+            ranges = self.viewer.control.get_selected_ranges()
+            cmd = self.cmd(self.editor.segment, ranges, value)
             self.editor.process_command(cmd)
 
     def perform(self, action_key):
