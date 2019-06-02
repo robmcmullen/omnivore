@@ -1,0 +1,22 @@
+include LICENSE
+include LICENSE.apache
+include LICENSE.MIT
+include LICENSE.tinycthread
+include README.rst
+recursive-include omnivore/templates *
+include samples/air_defense*
+recursive-include lib6502 *.h
+recursive-include libatari800 *.h
+recursive-include libatari800 *.inc
+prune libatari800/atari800/src/android
+prune libatari800/atari800/src/dc
+prune libatari800/atari800/src/sdl
+prune libatari800/atari800/src/dos
+prune libatari800/atari800/src/javanvm
+prune libatari800/atari800/src/wince
+prune libatari800/atari800/src/win32
+prune libatari800/atari800/src/falcon
+prune libatari800/atari800/src/amiga
+recursive-include libatasm *.h
+recursive-include libdebugger *.h
+recursive-include libudis *.h
