@@ -7,6 +7,9 @@ from setuptools import find_packages
 from setuptools import setup
 from distutils.extension import Extension
 
+if sys.version_info < (3, 6):
+    sys.exit('Sawx requires Python 3.6 or higher')
+
 install_requires = [
     'python-slugify',  # really for omnivore, but needs it installed before its setup.py can be run
     'jsonpickle>=0.9.4',
