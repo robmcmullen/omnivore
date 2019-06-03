@@ -14,7 +14,7 @@ def identify_loader(file_guess):
     else:
         try:
             collection = Collection(file_guess.uri, data)
-        except (errors.UnsupportedContainer, errors.UnsupportedDiskImage, IOError) as e:
+        except (errors.UnsupportedDiskImage, IOError) as e:
             log.debug(f"error in atrip parser: {e}")
         else:
             log.debug(f"{collection}")

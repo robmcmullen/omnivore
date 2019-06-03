@@ -111,7 +111,7 @@ def guess_compressor(raw_data):
         log.debug(f"trying compressor {c.compression_algorithm}")
         try:
             compressor = c(raw_data)
-        except errors.InvalidCompressor as e:
+        except (errors.InvalidCompressor, IOError, EOFError) as e:
             continue
         else:
             log.info(f"found compressor {c.compression_algorithm}")
