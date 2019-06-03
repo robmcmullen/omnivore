@@ -11,6 +11,9 @@ if sys.version_info < (3, 6):
     sys.exit('Sawx requires Python 3.6 or higher')
 
 install_requires = [
+    'pathlib2',  # pip install processes from the top down!
+    'numpy',
+
     'python-slugify',  # really for omnivore, but needs it installed before its setup.py can be run
     'jsonpickle>=0.9.4',
     'bson<1.0.0',
@@ -21,9 +24,10 @@ install_requires = [
     'pytz',
     'wxpython',
     'pillow',
-    'pathlib2',
     'six',
+
     'numpy',
+    'pathlib2',  # python setup.py develop processes from the bottom up!
     ]
 
 cmdclass = dict()
