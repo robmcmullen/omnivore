@@ -352,7 +352,7 @@ cdef class ParsedDisassembly:
     def __init__(self, max_entries, origin, num_bytes):
         self.max_entries = max_entries
         self.entry_size = sizeof(history_entry_t)
-        self.raw_entries = np.zeros(max_entries * self.entry_size, dtype=np.uint8)
+        self.raw_entries = np.zeros((max_entries + 1) * self.entry_size, dtype=np.uint8)
         self.history_entries = <history_entry_t *>self.raw_entries.data
         self.num_entries = 0
         self.origin = origin
@@ -468,7 +468,8 @@ cdef class DisassemblyConfig:
 
         cdef int first_index = 0
         cdef np.uint8_t current_disasm_type = c_disasm_type[0]
-        cdef int start_index, end_index
+        cdef int start_index
+        cdef int end_index = 0
         cdef history_entry_t *h = parsed.history_entries
         cdef int count
         # print "CYTHON FAST_GET_ENTIRE", style_copy
