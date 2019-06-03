@@ -406,6 +406,11 @@ class TileManager(wx.Window):
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
         self.Bind(wx.EVT_KILL_FOCUS, self.on_kill_focus)
         self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, self.on_mouse_capture_lost)
+        if wx.Platform == "__WXMAC__":
+            try:
+                wx.GetApp().deactivate_app_event += self.on_app_deactivate
+            except AttributeError:
+                pass
         self.current_leaf_focus = None
         self.previous_leaf_focus = None
         self.dock_handler = DockTarget.DockingRectangleHandler()
@@ -907,6 +912,10 @@ class TileManager(wx.Window):
         return "%s-%d" % (name, cls._debug_count)
 
     #### Dynamic positioning of child windows
+
+    def on_app_deactivate(self, evt):
+        # Only macOS needs this; other platforms are handled by on_kill_focus
+        self.force_clear_sidebar()
 
     def on_kill_focus(self, evt):
         # FIXME: MacOS doesn't get this event

@@ -95,6 +95,8 @@ class SawxApp(wx.App):
 
         self.active_frame = None
         self.Bind(wx.EVT_IDLE, self.on_idle)
+        self.deactivate_app_event = EventHandler(self)
+        self.Bind(wx.EVT_ACTIVATE_APP, self.on_activate_app)
         return True
 
     def OnExit(self):
@@ -165,6 +167,10 @@ class SawxApp(wx.App):
     def on_idle(self, evt):
         if self.active_frame is not None:
             self.active_frame.active_editor.idle_when_active()
+
+    def on_activate_app(self, evt):
+        if not evt.GetActive():
+            self.deactivate_app_event(evt)
 
     #### Shutdown
 
