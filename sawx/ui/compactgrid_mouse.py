@@ -938,7 +938,8 @@ class DisplayFlags:
             self.source_control = flags.source_control
         if flags.advance_caret_position_in_control:
             self.advance_caret_position_in_control = flags.advance_caret_position_in_control
-
+        if flags.carets_to_indexes:
+            self.carets_to_indexes = flags.carets_to_indexes
 
 
 
