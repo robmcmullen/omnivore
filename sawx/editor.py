@@ -443,6 +443,9 @@ class SawxEditor:
 
     #### command processing
 
+    def calc_status_flags(self):
+        return StatusFlags()
+
     def undo(self):
         undo = self.document.undo_stack.undo(self)
         self.process_flags(undo.flags)
@@ -460,7 +463,7 @@ class SawxEditor:
         """Process a single command and immediately update the UI to reflect
         the results of the command.
         """
-        f = StatusFlags()
+        f = self.calc_status_flags()
         undo = self.process_batch_command(command, f, batch)
         if undo.flags.success:
             self.process_flags(f)

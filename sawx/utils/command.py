@@ -78,7 +78,7 @@ class UndoStack(HistoryList):
 
     def perform(self, cmd, editor, batch=None):
         if cmd is None:
-            return UndoInfo()
+            return UndoInfo(editor)
         if batch != self.batch:
             if batch is None:
                 self.end_batch()
@@ -87,7 +87,7 @@ class UndoStack(HistoryList):
                     self.end_batch()
                 self.start_batch(batch)
         self.batch.perform_setup(editor)
-        undo_info = UndoInfo()
+        undo_info = UndoInfo(editor)
         cmd.perform(editor, undo_info)
         if undo_info.flags.changed_document:
             if undo_info.flags.success:
@@ -98,7 +98,7 @@ class UndoStack(HistoryList):
     def undo(self, editor):
         cmd = self.get_undo_command()
         if cmd is None:
-            return UndoInfo()
+            return UndoInfo(editor)
         undo_info = cmd.undo(editor)
         if undo_info.flags.success:
             self.insert_index -= 1
@@ -108,8 +108,8 @@ class UndoStack(HistoryList):
     def redo(self, editor):
         cmd = self.get_redo_command()
         if cmd is None:
-            return UndoInfo()
-        undo_info = UndoInfo()
+            return UndoInfo(editor)
+        undo_info = UndoInfo(editor)
         cmd.perform(editor, undo_info)
         if undo_info.flags.success:
             self.insert_index += 1
@@ -322,10 +322,10 @@ class DisplayFlags(StatusFlags):
 
 
 class UndoInfo(object):
-    def __init__(self):
+    def __init__(self, editor):
         self.index = -1
         self.data = None
-        self.flags = StatusFlags()
+        self.flags = editor.calc_status_flags()
 
     def __str__(self):
         return "index=%d, flags=%s" % (self.index, str(dir(self.flags)))
@@ -458,7 +458,7 @@ class Overlay(Command):
         if last is not None:
             undo = last.undo(document)
             flags.add_flags(undo.flags)
-        undo = UndoInfo()
+        undo = UndoInfo(editor)
         undo.flags = flags
         return undo
 
