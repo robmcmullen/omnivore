@@ -11,8 +11,9 @@ log = logging.getLogger(__name__)
 class BaseSearcher(object):
     ui_name = "<base class>"
 
-    def __init__(self, editor, search_text, **kwargs):
+    def __init__(self, editor, search_text, search_copy, **kwargs):
         self.search_text = self.get_search_text(search_text)
+        self.search_copy = search_copy
         if len(self.search_text) > 0:
             self.matches = self.get_matches(editor)
             self.set_style(editor)
@@ -23,8 +24,8 @@ class BaseSearcher(object):
         return bytes(text, "utf-8")
 
     def get_matches(self, editor):
-        text = editor.segment.search_copy
-        rs = re.escape(str(self.search_text))
+        text = self.search_copy
+        rs = re.escape(bytes(self.search_text))
         matches = [(i.start(), i.end()) for i in re.finditer(rs, text)]
         return matches
 
@@ -89,10 +90,10 @@ class AlgorithmSearcher(BaseSearcher):
     def get_matches(self, editor):
         s = editor.segment
         a = np.arange(s.origin, s.origin + len(s))
-        b = np.copy(s.data)
+        b = np.asarray(self.search_copy, dtype=np.uint8)
         v = {
-            'a': np.arange(s.origin, s.origin + len(s)),
-            'b': np.copy(s.data),
+            'a': a,
+            'b': b,
             }
         expression = NumpyIntExpression(v)
         try:

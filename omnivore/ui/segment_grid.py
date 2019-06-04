@@ -232,7 +232,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
             ch.collapse_selections_to_carets()
             ch.refresh_style_from_selection(self.table)
         flags.carets_to_indexes = ch.convert_to_indexes(self.table)
-        self.segment_viewer.linked_base.sync_caret_to_index_event(flags=flags)
+        # self.segment_viewer.linked_base.sync_caret_to_index_event(flags=flags)
 
 
     ##### Rectangular regions

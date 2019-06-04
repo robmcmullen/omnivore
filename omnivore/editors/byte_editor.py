@@ -13,6 +13,7 @@ from ..document import DiskImageDocument
 
 from sawx.filesystem import fsopen
 from sawx.utils.processutil import run_detach
+from sawx.ui.compactgrid_mouse import DisplayFlags
 
 from atrip.compressor import find_compressors
 
@@ -540,6 +541,11 @@ class ByteEditor(TileManagerBase):
         wx.CallAfter(self.force_focus, control.segment_viewer)
         return ret
 
+    #### command processing
+
+    def calc_status_flags(self):
+        return DisplayFlags()
+
     def process_flags(self, flags):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
@@ -559,6 +565,10 @@ class ByteEditor(TileManagerBase):
         control = flags.advance_caret_position_in_control
         if control:
             control.post_process_caret_flags(flags)
+
+        if flags.carets_to_indexes:
+            log.debug(f"carets_to_indexes: {flags.carets_to_indexes}")
+            self.linked_base.sync_caret_to_index_event(flags=flags)
 
         if flags.data_model_changed:
             log.debug(f"process_flags: data_model_changed")

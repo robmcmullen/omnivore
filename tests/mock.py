@@ -26,42 +26,29 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-from traits.api import HasTraits, Str, Event
-
 import numpy as np
 from numpy.testing import assert_almost_equal
-
-from omnivore_framework.framework.persistence import FilePersistenceMixin
-from omnivore.document import SegmentedDocument
 
 def null(self, *args, **kwargs):
     pass
 
-class MockApplication(FilePersistenceMixin):
-    document_class = SegmentedDocument
+# class MockApplication(FilePersistenceMixin):
+#     document_class = SegmentedDocument
 
 class MockWindowSink(object):
     recalc_view = null
     set_font = null
     Refresh = null
-    application = MockApplication
 
-class MockTask(HasTraits):
-    id = Str("mock")
-    machine_menu_changed = Event
-    window = MockWindowSink
-    _active_editor_tab_change = null
-
+class MockFrame:
     def __init__(self, editor):
         self.active_editor = editor
 
-class MockEditorArea(HasTraits):
-    def __init__(self, editor):
-        task = MockTask(editor)
-
 class MockEditor(object):
     def __init__(self, segment):
+        self.frame = MockFrame(self)
         self.segment = segment
+        self.document = null
 
     def change_bytes(self, start, end, bytes):
         print("changing bytes %d-%d to %s" % (start, end, repr(bytes)))
@@ -69,7 +56,6 @@ class MockEditor(object):
 class MockHexEditor(MockEditor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.editor_area = MockEditorArea(self)
         self.font_map = MockWindowSink()
         self.bitmap = MockWindowSink()
 

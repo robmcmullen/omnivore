@@ -16,15 +16,17 @@ class FindAllCommand(Command):
     short_name = "find"
     ui_name = "Find"
 
-    def __init__(self, start_cursor_index, search_text, error, repeat=False, reverse=False):
+    def __init__(self, start_caret_index, search_text, error, repeat=False, reverse=False):
         Command.__init__(self)
-        self.start_cursor_index = start_cursor_index
+        self.start_caret_index = start_caret_index
+        self.current_caret_index = start_caret_index
         self.search_text = search_text
         self.error = error
         self.repeat = repeat
         self.reverse = reverse
         self.current_match_index = -1
         self.origin = -1
+        self.search_copy = None
 
     def __str__(self):
         return "%s %s" % (self.ui_name, repr(self.search_text))
@@ -37,6 +39,7 @@ class FindAllCommand(Command):
 
     def perform(self, editor, undo):
         self.origin = editor.segment.origin
+        self.search_copy = editor.segment.tobytes()
         self.all_matches = []
         self.match_ids = {}
         undo.flags.changed_document = False
@@ -46,9 +49,11 @@ class FindAllCommand(Command):
             errors = []
             match_dict = {}
             editor.segment.clear_style_bits(match=True)
-            for searcher_cls in self.get_searchers(editor):
+            searchers = self.get_searchers(editor)
+            log.debug(f"Using searchers {searchers}")
+            for searcher_cls in searchers:
                 try:
-                    searcher = searcher_cls(editor, self.search_text)
+                    searcher = searcher_cls(editor, self.search_text, self.search_copy)
                     for start, end in searcher.matches:
                         if start in self.match_ids:
                             if searcher.ui_name not in self.match_ids[start]:
@@ -72,16 +77,14 @@ class FindAllCommand(Command):
                 else:
                 # Need to use a tuple in order for bisect to search the list
                 # of tuples
-                    cursor_tuple = (editor.cursor_index, 0)
-                    self.current_match_index = bisect.bisect_left(self.all_matches, cursor_tuple)
+                    caret_tuple = (self.current_caret_index, 0)
+                    self.current_match_index = bisect.bisect_left(self.all_matches, caret_tuple)
                     if self.current_match_index >= len(self.all_matches):
                         self.current_match_index = 0
                     match = self.all_matches[self.current_match_index]
                     start = match[0]
                     log.debug("Starting at match_index %d = %s" % (self.current_match_index, match))
-                    undo.flags.index_range = match
-                    undo.flags.cursor_index = start
-                    undo.flags.select_range = True
+                    undo.flags.carets_to_indexes = [(start, match[0], match[1])]
                     undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.origin, self.match_ids[start]))
             undo.flags.refresh_needed = True
 
@@ -96,8 +99,8 @@ class FindNextCommand(Command):
 
     def get_index(self, editor):
         cmd = self.search_command
-        cursor_tuple = (editor.cursor_index, 0)
-        match_index = bisect.bisect_right(cmd.all_matches, cursor_tuple)
+        caret_tuple = (cmd.current_caret_index, 0)
+        match_index = bisect.bisect_right(cmd.all_matches, caret_tuple)
         if match_index == cmd.current_match_index:
             match_index += 1
         if match_index >= len(cmd.all_matches):
@@ -106,18 +109,18 @@ class FindNextCommand(Command):
         return match_index
 
     def perform(self, editor, undo):
+        cmd = self.search_command
         undo.flags.changed_document = False
         index = self.get_index(editor)
-        all_matches = self.search_command.all_matches
+        all_matches = cmd.all_matches
         #print "FindNext:", all_matches
         try:
             match = all_matches[index]
             start = match[0]
-            undo.flags.index_range = match
-            undo.flags.cursor_index = start
-            undo.flags.select_range = True
+            undo.flags.carets_to_indexes = [(start, match[0], match[1])]
             c = self.search_command
             undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start + c.origin, c.match_ids[start]))
+            cmd.current_caret_index = start
         except IndexError:
             pass
         undo.flags.refresh_needed = True
@@ -129,8 +132,8 @@ class FindPrevCommand(FindNextCommand):
 
     def get_index(self, editor):
         cmd = self.search_command
-        cursor_tuple = (editor.cursor_index, 0)
-        match_index = bisect.bisect_left(cmd.all_matches, cursor_tuple)
+        caret_tuple = (cmd.current_caret_index, 0)
+        match_index = bisect.bisect_left(cmd.all_matches, caret_tuple)
         match_index -= 1
         if match_index < 0:
             match_index = len(cmd.all_matches) - 1
