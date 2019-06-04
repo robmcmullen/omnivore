@@ -346,7 +346,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         flags = self.segment_viewer.editor.process_command(cmd)
 
     def calc_ranges_for_edit(self):
-        return self.caret_handler.get_selected_ranges_including_carets(self.table)
+        return self.get_selected_ranges_including_carets()
 
     def calc_edit_command(self, ranges, val):
         cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
