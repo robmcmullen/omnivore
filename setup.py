@@ -358,7 +358,7 @@ setup(
     'jsonpickle',
     'pyopengl-accelerate',
     'pyopengl',
-    'sawx',
+    'sawx>=1.2',
     'atrip',
     'numpy',
     ],
