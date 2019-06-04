@@ -323,7 +323,7 @@ class Segment:
         """
         bits = style_bits.get_style_bits(**kwargs)
         matches = (self.style & bits) == bits
-        return style_bits.bool_to_ranges(matches)
+        return utils.bool_to_ranges(matches)
 
     def update_data_style_from_disasm_type(self):
         self.container.update_data_style_from_disasm_type()
@@ -487,24 +487,17 @@ class Segment:
             c.clear_comments(offsets)
 
     def iter_comments_in_segment(self):
-        start = self.origin
-        start_index = self.container_offset[0]
-        end_index = self.container_offset[len(self.rawdata)]
-        for k, v in self.container.comments.items():
-            if k >= start_index and k < end_index:
-                yield self.rawdata.get_reverse_index(k), v
+        s = self.style[:]
+        has_comments = np.where(s & style_bits.comment_bit_mask > 0)[0]
+        for index in has_comments:
+            rawindex = self.container_offset[index]
+            yield index, self.container.comments.get(rawindex, "")
 
     def label(self, index, lower_case=True):
         if lower_case:
             return "%04x" % (index + self.origin)
         else:
             return "%04X" % (index + self.origin)
-
-    @property
-    def search_copy(self):
-        if self._search_copy is None:
-            self._search_copy = self.data.tobytes()
-        return self._search_copy
 
     def compare_segment(self, other_segment):
         self.clear_style_bits(diff=True)
