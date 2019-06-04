@@ -588,9 +588,9 @@ class SegmentViewer:
             labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
         return ", ".join(labels)
 
-    def get_label_of_first_byte(self, carets):
+    def get_label_of_first_byte(self, ranges):
         labels = []
-        for start, end in [c.range for c in carets]:
+        for start, end in ranges:
             labels.append(self.get_label_at_index(start))
         return ", ".join(labels)
 

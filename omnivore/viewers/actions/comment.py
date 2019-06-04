@@ -38,18 +38,14 @@ class comment_add(ViewerAction):
         return True
 
     def is_range(self):
-        return self.viewer.control.caret_handler.has_selection
-
-    def get_index(self):
-        c = self.viewer.control.caret_handler.current
-        index, _ = self.viewer.control.table.get_index_range(c.rc[0], c.rc[1])
-        return index
+        ch = self.viewer.control.caret_handler
+        return ch.has_selection or len(ch) > 1
 
     def perform(self, action_key):
         e = self.editor
         s = e.segment
         if self.is_range():
-            ranges = s.get_style_ranges(selected=True)
+            ranges = self.viewer.control.get_selected_ranges_including_carets()
             if len(ranges) == 1:
                 desc = "Enter comment for first byte of range:\n%s" % self.viewer.get_label_of_first_byte(ranges)
             else:
@@ -57,7 +53,7 @@ class comment_add(ViewerAction):
         else:
             ranges = []
         if not ranges:
-            index = self.get_index()
+            index = self.viewer.control.get_current_caret_index()
             ranges = [(index, index+1)]
             desc = "Enter comment for location %s" % index
         prompt_for_comment(e, s, ranges, desc)
@@ -74,11 +70,7 @@ class comment_remove(ViewerAction):
     def perform(self, event):
         e = self.editor
         s = e.segment
-        if e.can_copy:
-            ranges = s.get_style_ranges(selected=True)
-        else:
-            index = e.caret_index
-            ranges = [(index, index+1)]
+        ranges = self.viewer.control.get_selected_ranges_including_carets()
         if ranges:
             cmd = commands.ClearCommentCommand(s, ranges)
             e.process_command(cmd)
