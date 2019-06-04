@@ -327,17 +327,6 @@ class SegmentViewer:
     def is_toggle_set(self, toggle_flag):
         return self.linked_base == self.editor.center_base
 
-    ##### Range operations
-
-    def get_selected_ranges_and_indexes(self):
-        return self.control.get_selected_ranges_and_indexes(self.linked_base)
-
-    def get_selected_index_metadata(self, indexes):
-        return self.linked_base.get_selected_index_metadata(indexes)
-
-    def restore_selected_index_metadata(self, metastr):
-        return self.linked_base.restore_selected_index_metadata(metastr)
-
     ##### SegmentViewer interface
 
     def update_caption(self):
