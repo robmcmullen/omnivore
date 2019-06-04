@@ -169,6 +169,9 @@ class MultiCaretHandler:
     def __str__(self):
         return "MultiCaretHandler: carets=" + " ".join([str(c) for c in self.carets])
 
+    def __len__(self):
+        return len(self.carets)
+
     @property
     def current(self):
         return self.carets[-1]  # last one is the most recent
@@ -193,16 +196,6 @@ class MultiCaretHandler:
     @property
     def selected_ranges(self):
         return [c.range for c in self.carets if c.has_selection]
-
-    @property
-    def selected_ranges_including_carets(self):
-        ranges = []
-        for c in self.carets:
-            if c.has_selection:
-                ranges.append(c.range)
-            else:
-                ranges.append((c.index, c.index + 1))
-        return ranges
 
     def new_carets(self, caret_state):
         self.carets = [Caret(state=s) for s in caret_state]
@@ -350,22 +343,6 @@ class MultiCaretHandler:
     def collapse_selections_to_carets(self):
         for caret in self.carets:
             caret.clear_selection()
-
-    def get_selected_ranges(self, table):
-        ranges = []
-        for r in [c.range for c in self.carets]:
-            start, _ = table.get_index_range(*r[0])
-            _, end = table.get_index_range(*r[1])
-            ranges.append((start, end))
-        return ranges
-
-    def get_selected_ranges_including_carets(self, table):
-        ranges = []
-        for r in [c.range_including_caret for c in self.carets]:
-            start, _ = table.get_index_range(*r[0])
-            _, end = table.get_index_range(*r[1])
-            ranges.append((start, end))
-        return ranges
 
     def get_selected_ranges_and_indexes(self, table):
         opt = self.get_selected_ranges(table)
@@ -1467,7 +1444,7 @@ class MouseEventMixin:
         ranges = []
         # for c in self.caret_handler.carets:
         #     ranges.append((c.index, c.index + 1))
-        ranges = self.get_selected_ranges_including_carets(self.caret_handler)
+        ranges = self.get_selected_ranges_including_carets()
         cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
         self.segment_viewer.editor.process_command(cmd)
 

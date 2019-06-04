@@ -1783,7 +1783,24 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         return row_info
 
     def get_selected_ranges(self):
-        return self.caret_handler.get_selected_ranges(self.table)
+        table = self.table
+        ch = self.caret_handler
+        ranges = []
+        for r in [c.range for c in ch.carets]:
+            start, _ = table.get_index_range(*r[0])
+            _, end = table.get_index_range(*r[1])
+            ranges.append((start, end))
+        return ranges
+
+    def get_selected_ranges_including_carets(self):
+        table = self.table
+        ch = self.caret_handler
+        ranges = []
+        for r in [c.range_including_caret for c in ch.carets]:
+            start, _ = table.get_index_range(*r[0])
+            _, end = table.get_index_range(*r[1])
+            ranges.append((start, end))
+        return ranges
 
     def get_current_caret_index(self):
         c = self.caret_handler.current
