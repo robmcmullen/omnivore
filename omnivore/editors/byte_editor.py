@@ -262,6 +262,24 @@ class ByteEditor(TileManagerBase):
         "byte_divide_from": "Shift+Ctrl+/",
         "byte_reverse_selection": "",
         "byte_reverse_group": "",
+
+        "new_file": "Ctrl+N",
+        "open_file": "Ctrl+O",
+        "save_file" : "Ctrl+S",
+        "save_as" : "Shift+Ctrl+S",
+        "cut": "Ctrl+X",
+        "copy": "Ctrl+C",
+        "paste": "Ctrl+V",
+        "undo": "Ctrl+Z",
+        "redo": "Shift+Ctrl+Z",
+        "select_all": "Ctrl+A",
+        "select_none": "Shift+Ctrl+A",
+        "select_invert": "Ctrl+I",
+
+        "find": "Ctrl+F",
+        "prefs": "Ctrl+,",
+        "comment_add": "Ctrl+;",
+        "comment_remove": "Shift+Ctrl+;",
     }
 
     module_search_order = ["omnivore.viewers.actions", "omnivore.editors.actions", "sawx.actions", "omnivore.jumpman.actions"]
