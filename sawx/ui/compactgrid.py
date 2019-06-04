@@ -1785,6 +1785,11 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     def get_selected_ranges(self):
         return self.caret_handler.get_selected_ranges(self.table)
 
+    def get_current_caret_index(self):
+        c = self.caret_handler.current
+        index, _ = self.table.get_index_range(c.rc[0], c.rc[1])
+        return index
+
     ##### Keyboard movement implementations
 
     def advance_caret_position(self, evt, flags):
