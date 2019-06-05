@@ -532,7 +532,7 @@ class SegmentViewer:
 
     ##### Clipboard & Copy/Paste
 
-    supported_clipboard_data_objects = [
+    supported_clipboard_data = [
         wx.CustomDataObject("numpy,multiple"),
         wx.CustomDataObject("numpy"),
         wx.CustomDataObject("numpy,columns"),
@@ -543,8 +543,17 @@ class SegmentViewer:
     def clipboard_data_format(self):
         return "numpy"
 
-    def get_paste_command(self, serialized_data, *args, **kwargs):
+    def calc_paste_command(self, serialized_data, *args, **kwargs):
         return PasteCommand(self.segment, serialized_data, *args, **kwargs)
+
+    def get_selected_ranges_and_indexes(self):
+        return self.control.get_selected_ranges_and_indexes(self.linked_base)
+
+    def get_selected_index_metadata(self, indexes):
+        return self.linked_base.get_selected_index_metadata(indexes)
+
+    def restore_selected_index_metadata(self, metastr):
+        return self.linked_base.restore_selected_index_metadata(metastr)
 
     ##### Status info and text utilities
 

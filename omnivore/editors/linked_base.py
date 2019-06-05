@@ -277,23 +277,6 @@ class LinkedBase:
         self.selected_ranges = s.get_style_ranges(selected=True)
         self.document.change_count += 1
 
-    def get_selected_index_metadata(self, indexes):
-        """Return serializable string containing style information"""
-        style = self.segment.get_style_at_indexes(indexes)
-        r_orig = self.segment.get_style_ranges(comment=True)
-        comments = self.segment.get_comments_at_indexes(indexes)
-        log.debug("after get_comments_at_indexes: %s" % str(comments))
-        metadata = [style.tolist(), comments[0].tolist(), comments[1]]
-        j = json.dumps(metadata).encode('utf-8')
-        return j
-
-    @classmethod
-    def restore_selected_index_metadata(self, encoded_meta):
-        metadata = json.loads(encoded_meta.decode('utf-8'))
-        style = np.asarray(metadata[0], dtype=np.uint8)
-        where_comments = np.asarray(metadata[1], dtype=np.int32)
-        return style, where_comments, metadata[2]
-
     def get_segments_from_selection(self, size=-1):
         s = self.segment
         segments = []

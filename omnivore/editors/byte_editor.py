@@ -11,6 +11,7 @@ import json
 from .tile_manager_base_editor import TileManagerBase
 from ..document import DiskImageDocument
 
+from sawx import clipboard
 from sawx.filesystem import fsopen
 from sawx.utils.processutil import run_detach
 from sawx.ui.compactgrid_mouse import DisplayFlags
@@ -18,9 +19,11 @@ from sawx.ui.compactgrid_mouse import DisplayFlags
 from atrip.compressor import find_compressors
 
 from .linked_base import LinkedBase
+from .. import clipboard_helpers
 
 import logging
 log = logging.getLogger(__name__)
+clipboard_log = logging.getLogger("clipboard")
 
 
 class DummyLinkedBase(object):
@@ -437,14 +440,34 @@ class ByteEditor(TileManagerBase):
     ##### Copy/paste
 
     @property
-    def clipboard_data_format(self):
-        return self.focused_viewer.clipboard_data_format
+    def supported_clipboard_data(self):
+        try:
+            return self.focused_viewer.supported_clipboard_data
+        except AttributeError:
+            return []
 
     def calc_clipboard_data_from(self, focused):
         print("FOCUSED CONTROL", focused)
         # FIXME: for the moment, assume focused control is in focused viewer
         data_objs = self.focused_viewer.control.calc_clipboard_data_objs(focused)
         return data_objs
+
+    def paste_clipboard(self):
+        clipboard_log.debug(f"focused: {self.focused_viewer}")
+        data_obj = clipboard.get_clipboard_data(self.supported_clipboard_data)
+        if data_obj:
+            print("Found data obj", data_obj)
+            parsed_data = clipboard_helpers.parse_data_obj(data_obj, self.focused_viewer)
+            cmd = self.focused_viewer.calc_paste_command(parsed_data)
+            if cmd:
+                clipboard_log.debug("processing paste object %s" % cmd)
+                self.process_command(cmd)
+                return cmd
+            # handler = self.get_clipboard_handler(data_obj)
+            # if handler:
+            #     handler(self, data_obj, focused)
+            # else:
+            #     clipboard_log.error("No clipboard handler found for data {data_obj}")
 
     def get_paste_data_from_clipboard(self):
         return clipboard.get_paste_data(self.focused_viewer)
@@ -458,9 +481,7 @@ class ByteEditor(TileManagerBase):
         self.process_command(cmd)
         return cmd
 
-    @property
-    def supported_clipboard_data_objects(self):
-        return self.focused_viewer.supported_clipboard_data_objects
+    #### selection helpers
 
     def select_all(self):
         self.focused_viewer.select_all()

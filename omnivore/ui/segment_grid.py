@@ -4,11 +4,13 @@ from sawx.ui import compactgrid as cg
 from sawx.keybindings import KeyBindingControlMixin
 from sawx.ui.mouse_mode import MouseMode
 from sawx.utils.command import DisplayFlags
+from sawx.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from ..arch.disasm import get_style_name
 # from sawx.framework import actions as fa
 # from ..byte_edit import actions as ba
 # from ..viewers import actions as va
 from ..commands import SetRangeValueCommand
+from .. import clipboard_helpers
 
 import logging
 log = logging.getLogger(__name__)
@@ -253,15 +255,42 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     ##### Copy/paste
 
     def calc_clipboard_data_objs(self, focused_control):
-        rects = self.get_rects_from_selections()
-        data = []
-        for (r1, c1), (r2, c2) in rects:
-            start, _ = self.table.get_index_range(r1, c1)
-            _, end = self.table.get_index_range(r2, c2)
-            data.append((start, end, self.table.data[start:end]))
-        if len(data) > 1:
-            data_obj = wx.CustomDataObject("numpy,multiple")
-            # multiple
+        segment = self.table.segment
+        ranges = self.get_selected_ranges()
+        indexes = ranges_to_indexes(ranges)
+        log.debug(f"calc_clipboard_data_objs: {self}, ranges={ranges} indexes={indexes}")
+        data_objs = []
+        if len(ranges) > 0:
+            metadata = segment.serialize_selected_index_metadata(indexes)
+            log.debug("  metadata: %s" % str(metadata))
+            if len(ranges) == 1:
+                r = ranges[0]
+                data = segment[r[0]:r[1]]
+                s1 = data.tobytes()
+                serialized = b"%d,%s%s" % (len(s1), s1, metadata)
+                data_obj = clipboard_helpers.create_numpy_data_obj(data, metadata)
+                text_obj = clipboard_helpers.create_hexified_text_data_obj(data)
+                data_objs.append(data_obj)
+                data_objs.append(text_obj)
+            # elif np.alen(indexes) > 0:
+            #     data = segment[indexes]
+            #     s1 = data.tobytes()
+            #     s2 = indexes.tobytes()
+            #     serialized = b"%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
+            #     name = "numpy,multiple"
+
+        return data_objs
+
+
+        # rects = self.get_rects_from_selections()
+        # data = []
+        # for (r1, c1), (r2, c2) in rects:
+        #     start, _ = self.table.get_index_range(r1, c1)
+        #     _, end = self.table.get_index_range(r2, c2)
+        #     data.append((start, end, self.table.data[start:end]))
+        # if len(data) > 1:
+        #     data_obj = wx.CustomDataObject("numpy,multiple")
+        #     # multiple
 
 
 
