@@ -26,7 +26,7 @@ cdef class TextStorage:
     cdef label_info_t *label_info_data
     cdef public np.ndarray text_buffer
     cdef char *text_buffer_data
-    cdef text_buffer_size
+    cdef int text_buffer_size
     cdef char *text_ptr
     cdef np.uint32_t text_index
 
@@ -91,12 +91,17 @@ cdef class TextStorage:
         cdef int i
 
         i = self.num_lines
+        if i >= self.max_lines:
+            print(f"CYTHON ERROR! Text buffer line count {self.max_lines} exceeded in TextStorage, attempted to save {i} lines")
         info = &self.label_info_data[i]
         info.line_length = count
         info.text_start_index = self.text_index
         self.text_index += count
         self.text_ptr += count
         self.num_lines += 1
+        if self.text_index >= self.text_buffer_size:
+            print(f"CYTHON ERROR! Text buffer size {self.text_buffer_size} exceeded in TextStorage, attempted to save {self.text_index} bytes")
+        #print(f"stored line {i}, max={self.max_lines}, storage: index={self.text_index}, max={self.text_buffer_size}")
 
     def get_label_data_addr(self):
         return long(<long>&self.label_info_data[0])
@@ -163,6 +168,10 @@ cdef class LabelStorage(TextStorage):
                 type_code = 0
                 desc_code = 0
             count = len(value)
+            if i >= self.max_lines:
+                print(f"CYTHON ERROR! Text buffer line count {self.max_lines} exceeded in LabelStorage, attempted to save {i} lines")
+            if start + count >= self.text_buffer_size:
+                print(f"CYTHON ERROR! Text buffer size {self.text_buffer_size} exceeded in LabelStorage, attempted to save {start + count} bytes")
             info = &self.label_info_data[i]
             info.line_length = count
             info.text_start_index = self.text_index
@@ -389,6 +398,10 @@ cdef class ParsedDisassembly:
                 h += 1
             else:
                 break
+        if self.num_entries >= self.max_entries:
+            print(f"CYTHON ERROR! ParsedDisassembly disassembly entries {self.max_entries} exceeded, attempted to save {self.num_entries}")
+        if self.index_index > self.num_bytes:
+            print(f"CYTHON ERROR! ParsedDisassembly index_to_row entries {self.num_bytes} exceeded, attempted to save {self.index_index}")
 
     cdef fix_offset_labels(self):
         # fast loop in C to check for references to addresses that are in the
@@ -470,7 +483,6 @@ cdef class DisassemblyConfig:
         cdef np.uint8_t current_disasm_type = c_disasm_type[0]
         cdef int start_index
         cdef int end_index = 0
-        cdef history_entry_t *h = parsed.history_entries
         cdef int count
         # print "CYTHON FAST_GET_ENTIRE", style_copy
         for end_index in range(1, num_bytes):
@@ -481,7 +493,7 @@ cdef class DisassemblyConfig:
             # print "%04x" % i, s, s2,
             if s & comment_bit_mask:
                 if t == current_disasm_type and not self.c_split_comments[t]:
-                    # print "same w/skippable comment"
+                    # print("same w/skippable comment")
                     continue
             elif t == current_disasm_type:
                 # print "same"
@@ -490,7 +502,7 @@ cdef class DisassemblyConfig:
             # process chuck here:
             start_index = first_index
             count = end_index - start_index
-            # print("break here -> %x:%x = %s" % (start_index, end_index, chunk_type))
+            # print("break here -> %x:%x = %s" % (start_index, end_index, current_disasm_type))
             processor = parser_map[current_disasm_type]
             parsed.parse_next(processor, src, count)
             src += count
@@ -501,12 +513,12 @@ cdef class DisassemblyConfig:
         start_index = first_index
         end_index += 1  # i is last byte tested, need +1 to include it in the range
         count = end_index - start_index
-        # print("final break here -> %x:%x = %s, count=%x" % (start_index, end_index, base_style, num_bytes))
+        # print("final break here -> %x:%x = %s, count=%x" % (start_index, end_index, current_disasm_type, num_bytes))
         processor = parser_map[current_disasm_type]
         parsed.parse_next(processor, src, count)
 
         parsed.fix_offset_labels()
-
+        # print("finished offset label generation")
         return parsed
 
 
@@ -669,7 +681,7 @@ cdef class HistoryStorage:
         print(f"number of entries: {mod}, used: {num}, cumulative {self.history.cumulative_count}")
         print(f"start of ring: {start}, latest: {last}")
         print("summary:", self)
-        printf("libudis: history_storage: %lx\n", <int>self.history)
+        printf("libudis: history_storage: %lx\n", <long int>self.history)
 
     def debug_range(self, from_index):
         last = self.history.latest_entry_index
