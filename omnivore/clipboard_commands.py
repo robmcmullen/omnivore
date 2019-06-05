@@ -24,26 +24,32 @@ class ClipboardCommand(SegmentCommand):
     def prepare_data(self, editor):
         pass
 
-    def get_clipped_indexes(self, editor):
+    def get_clipped_indexes(self, viewer):
         s = self.serializer
         if s.clipboard_indexes is not None:
-            caret = s.dest_carets.current.index
-            indexes = s.clipboard_indexes.copy() - s.clipboard_indexes[0] + caret
+            index = s.dest_carets.current.index
+            indexes = s.clipboard_indexes.copy() - s.clipboard_indexes[0] + index
         elif s.dest_carets.has_selection:
-            ranges = collapse_overlapping_ranges(s.dest_carets.selected_ranges_including_carets)
+            ranges = collapse_overlapping_ranges(viewer.selected_ranges_including_carets(s.dest_carets))
             log.debug("ranges:", ranges)
-            indexes = ranges_to_indexes(ranges)
+            indexes = viewer.range_processor(ranges)
             log.debug("indexes:", indexes)
         else:
             count = len(s.clipboard_data)
-            ranges = [(c.anchor_start_index, c.anchor_start_index + count) for c in s.dest_carets]
+            ranges = []
+            for c in s.dest_carets.carets:
+                anchor = c.anchor_start
+                if anchor[0] < 0:
+                    anchor = c.rc
+                index, _ = viewer.control.table.get_index_range(*anchor)
+                ranges.append((index, index + count))
             ranges = collapse_overlapping_ranges(ranges)
-            log.debug("ranges:", ranges)
-            indexes = ranges_to_indexes(ranges)
-            log.debug("indexes:", indexes)
+            log.debug("ranges: {ranges}")
+            indexes = viewer.range_processor(ranges)
+            log.debug("indexes: {indexes}")
         max_index = len(self.segment)
         indexes = indexes[indexes < max_index]
-        log.debug("indexes after limits: %s" % str(indexes))
+        log.debug("indexes after limits: {str(indexes)}")
         return indexes
 
     def get_data(self, orig):
@@ -65,7 +71,7 @@ class ClipboardCommand(SegmentCommand):
 
     def do_change(self, editor, undo):
         self.prepare_data(editor)
-        indexes = self.get_clipped_indexes(editor)
+        indexes = self.get_clipped_indexes(editor.focused_viewer)
         data = self.get_data(self.segment.data[indexes])
         log.debug("orig data: %s" % self.segment.data[indexes])
         log.debug("new data: %s" % data)

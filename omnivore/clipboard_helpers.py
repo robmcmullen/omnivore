@@ -4,6 +4,8 @@ import numpy as np
 from sawx.errors import ClipboardError
 from sawx.clipboard import calc_composite_object
 
+from atrip import Segment
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -152,7 +154,7 @@ class TextSelection(ClipboardSerializer):
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
-        self.dest_carets = viewer.linked_base.carets.copy()
+        self.dest_carets = viewer.control.caret_handler.copy()
 
 
 class BinarySelection(ClipboardSerializer):
@@ -191,8 +193,8 @@ class BinarySelection(ClipboardSerializer):
         len1 = int(len1)
         value, j = value[0:len1], value[len1:]
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
-        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = viewer.linked_base.restore_selected_index_metadata(j)
-        self.dest_carets = viewer.linked_base.carets.copy()
+        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = Segment.restore_selected_index_metadata(j)
+        self.dest_carets = viewer.control.caret_handler.copy()
 
 
 class MultipleBinarySelection(ClipboardSerializer):
@@ -214,8 +216,8 @@ class MultipleBinarySelection(ClipboardSerializer):
         value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
         self.clipboard_indexes = np.fromstring(index_string, dtype=np.uint32)
-        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = viewer.linked_base.restore_selected_index_metadata(j)
-        self.dest_carets = viewer.linked_base.carets.copy()
+        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = Segment.restore_selected_index_metadata(j)
+        self.dest_carets = viewer.control.caret_handler.copy()
 
 
 class RectangularSelection(ClipboardSerializer):
@@ -242,7 +244,7 @@ class RectangularSelection(ClipboardSerializer):
         self.clipboard_num_rows = int(r)
         self.clipboard_num_cols = int(c)
         self.clipboard_data = np.fromstring(value, dtype=np.uint8)
-        self.dest_carets = viewer.linked_base.carets.copy()
+        self.dest_carets = viewer.control.caret_handler.copy()
         self.dest_items_per_row = viewer.control.items_per_row
 
 

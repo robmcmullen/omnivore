@@ -14,6 +14,7 @@ from sawx.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from .utils import searchutil
 from .ui.segment_grid import SegmentGridControl
 from .viewers.mouse_modes import NormalSelectMode
+from . import clipboard_commands
 # from . import actions as va
 
 import logging
@@ -544,16 +545,10 @@ class SegmentViewer:
         return "numpy"
 
     def calc_paste_command(self, serialized_data, *args, **kwargs):
-        return PasteCommand(self.segment, serialized_data, *args, **kwargs)
+        return clipboard_commands.PasteCommand(self.segment, serialized_data, *args, **kwargs)
 
     def get_selected_ranges_and_indexes(self):
         return self.control.get_selected_ranges_and_indexes(self.linked_base)
-
-    def get_selected_index_metadata(self, indexes):
-        return self.linked_base.get_selected_index_metadata(indexes)
-
-    def restore_selected_index_metadata(self, metastr):
-        return self.linked_base.restore_selected_index_metadata(metastr)
 
     ##### Status info and text utilities
 
