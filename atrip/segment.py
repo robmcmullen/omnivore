@@ -1,5 +1,6 @@
 import bisect
 import io
+import json
 
 import numpy as np
 
@@ -505,6 +506,30 @@ class Segment:
         d = diff * np.uint8(style_bits.diff_bit_mask)
         self.style |= (diff * np.uint8(style_bits.diff_bit_mask))
         log.debug("compare_segment: # entries %d, # diffs: %d" % (len(diff), len(np.where(diff == True)[0])))
+
+    def calc_selected_index_metadata(self, indexes):
+        """Return serializable string containing style information"""
+        style = self.style[indexes]
+        where_comments, comments = self.get_comments_at_indexes(indexes)
+        log.debug(f"after get_comments_at_indexes: {where_comments}, {comments}")
+        return style, where_comments, comments
+
+    @classmethod
+    def encode_selected_index_metadata(cls, style, where_comments, comments):
+        metadata = [style.tolist(), where_comments.tolist(), comments]
+        j = json.dumps(metadata).encode('utf-8')
+        return j
+
+    def serialize_selected_index_metadata(self, indexes):
+        a = self.calc_selected_index_metadata(indexes)
+        return self.encode_selected_index_metadata(*a)
+
+    @classmethod
+    def restore_selected_index_metadata(self, encoded_meta):
+        metadata = json.loads(encoded_meta.decode('utf-8'))
+        style = np.asarray(metadata[0], dtype=np.uint8)
+        where_comments = np.asarray(metadata[1], dtype=np.int32)
+        return style, where_comments, metadata[2]
 
 
 class RawSectorsSegment(Segment):

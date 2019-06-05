@@ -127,6 +127,23 @@ class TestSegment:
         assert s1000.style[1] == s100.style[10]
         assert s1000.style[2] == s100.style[20]
 
+    def test_metadata(self):
+        s = self.segment
+        s.set_style_ranges([[200, 400]], selected=True)
+        s.set_comment_at(190, "test190")
+        s.set_comment_at(210, "test210")
+        s.set_comment_at(230, "test230")
+        indexes = np.arange(180,220)
+        m = s.calc_selected_index_metadata(indexes)
+        print(m)
+        e = s.encode_selected_index_metadata(*m)
+
+        r = s.restore_selected_index_metadata(e)
+        print(r)
+        assert r[0].tolist() == m[0].tolist()
+        assert r[1].tolist() == m[1].tolist()
+        assert r[2] == m[2]
+
     def test_disasm_type(self):
         s = self.segment
         s100 = self.seg100
@@ -289,9 +306,10 @@ class TestSegment:
 
 
 
-# if __name__ == "__main__":
-#     # t = TestIndexed()
-#     # t.setup()
+if __name__ == "__main__":
+    t = TestSegment()
+    t.setup()
+    t.test_metadata()
 #     # t.test_indexed()
 #     # t.test_indexed_sub()
 #     # t.test_interleave()
