@@ -30,7 +30,7 @@ class ClipboardCommand(SegmentCommand):
             index = s.dest_carets.current.index
             indexes = s.clipboard_indexes.copy() - s.clipboard_indexes[0] + index
         elif s.dest_carets.has_selection:
-            ranges = collapse_overlapping_ranges(viewer.selected_ranges_including_carets(s.dest_carets))
+            ranges = collapse_overlapping_ranges(viewer.control.get_selected_ranges_including_carets(s.dest_carets))
             log.debug("ranges:", ranges)
             indexes = viewer.range_processor(ranges)
             log.debug("indexes:", indexes)
