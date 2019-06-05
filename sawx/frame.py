@@ -36,8 +36,6 @@ class SawxFrame(wx.Frame):
 
         self.raw_statusbar = statusbar.RawStatusBar(self)
 
-        self.toolbar_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.on_timer)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
@@ -168,10 +166,15 @@ class SawxFrame(wx.Frame):
         # value of the wx object is supposed to fail if the C++ part has been
         # destroyed. We'll see how well it works. Otherwise, it will take a
         # try/except on RuntimeError
+        log.debug("sync_active_tab: sync start")
         if self.notebook and self.notebook.GetPageCount() > 0:
+            log.debug("sync_active_tab: sync_name")
             self.sync_name()
+            log.debug("sync_active_tab: sync_toolbar")
             self.sync_toolbar()
+            log.debug("sync_active_tab: sync_can_paste")
             self.sync_can_paste()
+        log.debug("sync_active_tab: sync done")
 
     def add_editor(self, editor):
         editor.frame = self
@@ -243,11 +246,23 @@ class SawxFrame(wx.Frame):
                 wx.CallAfter(progress_log.info, f"END")
         self.set_title()
 
-    def make_active(self, editor, force=False):
+    def make_active(self, editor, force=False, in_event_loop=False):
         last = self.active_editor
         self.active_editor = editor
         wx.GetApp().active_frame = self
         if force or last != editor or self.raw_menubar.GetMenuCount() == 0:
+            if in_event_loop:
+                wx.CallAfter(self.make_active_rebuild, editor)
+            else:
+                self.make_active_rebuild(editor)
+
+    def make_active_rebuild(self, editor):
+        log.debug(f"make_active_rebuild: for {editor}")
+        try:
+            index = self.find_index_of_control(editor.control)
+        except errors.EditorNotFound:
+            log.debug("attempt to rebuild removed editor; probably the result of a CallAfter")
+        else:
             self.create_menubar()
             self.sync_menubar()
             self.create_toolbar()
@@ -255,7 +270,6 @@ class SawxFrame(wx.Frame):
             self.create_statusbar()
             self.sync_statusbar()
             self.create_keybindings()
-            index = self.find_index_of_control(editor.control)
             log.debug(f"setting tab focus to {index}")
             self.notebook.SetSelection(index)
             editor.control.SetFocus()
@@ -349,7 +363,7 @@ class SawxFrame(wx.Frame):
         index = evt.GetSelection()
         editor = self.find_editor_from_index(index)
         log.debug(f"on_page_changed: page id: {index}, {editor.document.uri}")
-        self.make_active(editor, True)
+        self.make_active(editor, force=True, in_event_loop=True)
         evt.Skip()
 
     def on_page_closing(self, evt):
@@ -366,24 +380,11 @@ class SawxFrame(wx.Frame):
         if index >= count:
             index = count - 1
         log.debug(f"on_page_closed: new active page id: {index}")
-        self.close_editor(editor, remove=False)
+        wx.CallAfter(self.close_editor, editor, remove=False)
         self.pending_editor_close = None
         evt.Skip()
 
-    def on_timer(self, evt):
-        evt.Skip()
-        wx.CallAfter(self.sync_active_tab)
-
-    def activate_timer(self, start=True):
-        if start:
-            log.debug("restarting toolbar timer")
-            self.toolbar_timer.Start(wx.GetApp().clipboard_check_interval * 1000)
-        else:
-            log.debug("halting toolbar timer")
-            self.toolbar_timer.Stop()
-
     def on_activate(self, evt):
-        self.activate_timer(evt.GetActive())
         wx.CallAfter(self.sync_active_tab)
 
     def on_char_hook(self, evt):

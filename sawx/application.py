@@ -68,6 +68,8 @@ class SawxApp(wx.App):
 
     clipboard_check_interval = .75
 
+    toolbar_check_interval = .75
+
     window_sizes = {
         "default": [800, 600],
         "last_window_size": [1000, 800],
@@ -97,7 +99,8 @@ class SawxApp(wx.App):
         self.active_frame = None
         self.debug_show_focused = False
         self.last_clipboard_check_time = 0
-        self.clipboard_check_interval = 0.75
+        self.toolbar_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_timer)
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.deactivate_app_event = EventHandler(self)
         self.Bind(wx.EVT_ACTIVATE_APP, self.on_activate_app)
@@ -170,17 +173,37 @@ class SawxApp(wx.App):
 
     def on_idle(self, evt):
         if self.active_frame is not None:
-            self.active_frame.active_editor.idle_when_active()
+            wx.CallAfter(self.active_frame.active_editor.idle_when_active)
             t = time.time()
             if t > self.last_clipboard_check_time + self.clipboard_check_interval:
-                self.active_frame.sync_can_paste()
+                wx.CallAfter(self.active_frame.sync_can_paste)
                 self.last_clipboard_check_time = time.time()
                 if self.debug_show_focused:
                     self.show_focused()
 
+    def activate_timer(self, start=True):
+        if start:
+            log.debug("restarting toolbar timer")
+            wx.CallAfter(self.toolbar_timer.Start, self.toolbar_check_interval * 1000)
+            log.debug("restarted toolbar timer")
+        else:
+            log.debug("halting toolbar timer")
+            wx.CallAfter(self.toolbar_timer.Stop)
+            log.debug("halted toolbar timer")
+
     def on_activate_app(self, evt):
-        if not evt.GetActive():
+        log.debug("on_activate_app")
+        if evt.GetActive():
+            self.activate_timer(True)
+        else:
+            self.activate_timer(False)
+            log.debug("on_activate_app: deactivate!")
             self.deactivate_app_event(evt)
+
+    def on_timer(self, evt):
+        evt.Skip()
+        if self.active_frame is not None:
+            wx.CallAfter(self.active_frame.sync_active_tab)
 
     #### Shutdown
 
