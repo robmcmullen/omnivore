@@ -31,11 +31,19 @@ class InvalidSegment(AtrError):
     pass
 
 
-class UnsupportedCompressor(AtrError):
+class ReadOnlyContainer(AtrError):
     pass
 
 
-class ReadOnlyContainer(AtrError):
+# Errors for compressors and other translators
+
+class AlgorithmError(AtrError):
+    pass
+
+class UnsupportedAlgorithm(AlgorithmError):
+    pass
+
+class InvalidAlgorithm(AlgorithmError):
     pass
 
 
@@ -47,10 +55,6 @@ class ArchiverError(AtrError):
 class InvalidArchiver(ArchiverError):
     pass
 
-
-
-class InvalidCompressor(AtrError):
-    pass
 
 # Errors when trying to determine media type
 

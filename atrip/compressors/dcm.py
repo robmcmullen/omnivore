@@ -22,7 +22,7 @@ class DCMCompressor(Compressor):
         try:
             data = self.raw[self.index]
         except IndexError:
-            raise errors.InvalidCompressor("Incomplete DCM file")
+            raise errors.InvalidAlgorithm("Incomplete DCM file")
         else:
             self.index += 1
         return data
@@ -48,17 +48,17 @@ class DCMCompressor(Compressor):
                 log.debug(f"index {self.index-1}: pass number={pass_num} last={last_pass}")
                 if archive_flags & 0x1f != expected_pass:
                     if archive_type == 0xf9:
-                        raise errors.InvalidCompressor("DCM multi-file archive combined in the wrong order")
+                        raise errors.InvalidAlgorithm("DCM multi-file archive combined in the wrong order")
                     else:
-                        raise errors.InvalidCompressor("Expected pass one of DCM archive first")
+                        raise errors.InvalidAlgorithm("Expected pass one of DCM archive first")
                 density_flag = (archive_flags >> 5) & 3
                 try:
                     self.num_sectors, self.sector_size = self.valid_densities[density_flag]
                 except KeyError:
-                    raise errors.InvalidCompressor(f"Unsupported density flag {density_flag} in DCM")
+                    raise errors.InvalidAlgorithm(f"Unsupported density flag {density_flag} in DCM")
                 log.debug(f"sectors: {self.num_sectors}x{self.sector_size}B")
             else:
-                raise errors.InvalidCompressor("Not a DCM file")
+                raise errors.InvalidAlgorithm("Not a DCM file")
             self.get_current_sector()
 
             while True:
@@ -74,9 +74,9 @@ class DCMCompressor(Compressor):
                     func = self.decode_block_type_func[block_type & 0x7f]
                 except KeyError:
                     if block_type == 0xfa or block_type == 0xf9:
-                        raise errors.InvalidCompressor(f"Found section start byte but previous section never ended")
+                        raise errors.InvalidAlgorithm(f"Found section start byte but previous section never ended")
                     else:
-                        raise errors.InvalidCompressor(f"Unsupported block type {block_type} in DCM")
+                        raise errors.InvalidAlgorithm(f"Unsupported block type {block_type} in DCM")
                 func(self)
                 self.copy_current_to_sector()
 

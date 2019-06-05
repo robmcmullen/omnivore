@@ -62,7 +62,7 @@ class TestCollection:
         output = os.path.join(os.path.dirname(__file__), output)
         try:
             collection.save(output)
-        except errors.InvalidCompressor as e:
+        except errors.InvalidAlgorithm as e:
             pytest.skip(f"skipping {pathname}: {e}")
         else:
             # compressed data may not be the same; don't really care as long as

@@ -16,9 +16,9 @@ class LZMACompressor(Compressor):
             with lzma.LZMAFile(buf, mode='rb') as f:
                 unpacked = f.read()
         except lzma.LZMAError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         if len(unpacked) == 0:
-            raise errors.InvalidCompressor("Unpacked to zero size")
+            raise errors.InvalidAlgorithm("Unpacked to zero size")
         return unpacked
 
     def calc_packed_data(self, byte_data, media=None):
@@ -27,7 +27,7 @@ class LZMACompressor(Compressor):
             with lzma.LZMAFile(buf, mode='wb') as f:
                 f.write(byte_data)
         except OSError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         else:
             packed = buf.getvalue()
         return packed

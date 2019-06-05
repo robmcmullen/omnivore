@@ -13,18 +13,18 @@ class LZ4Compressor(Compressor):
 
     def calc_unpacked_data(self, byte_data):
         if lz4 is None:
-            raise errors.InvalidCompressor("lz4 module needed for .lz4 support")
+            raise errors.InvalidAlgorithm("lz4 module needed for .lz4 support")
         try:
             unpacked = lz4.decompress(bytes(byte_data))
         except RuntimeError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         return unpacked
 
     def calc_packed_data(self, byte_data, media=None):
         if lz4 is None:
-            raise errors.InvalidCompressor("lz4 module needed for .lz4 support")
+            raise errors.InvalidAlgorithm("lz4 module needed for .lz4 support")
         try:
             packed = lz4.compress(bytes(byte_data))
         except RuntimeError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         return packed

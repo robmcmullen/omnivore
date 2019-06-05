@@ -142,7 +142,7 @@ class Collection:
         If pathname is None, will attempt to overwrite the file that used to
         load the collection.
 
-        Can raise InvalidCompressor if one of the compressors is read-only
+        Can raise InvalidAlgorithm if one of the compressors is read-only
         (i.e. can only decompress data). However, if `skip_missing_compressors`
         is True, no error will be raised and compression will take place
         ignoring any compressors that can't compress data.

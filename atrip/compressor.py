@@ -42,16 +42,16 @@ class Compressor:
         array.
 
         If the data is not recognized by this subclass, raise an
-        `InvalidCompression` exception. The caller must recognize this and move
+        `InvalidAlgorithm` exception. The caller must recognize this and move
         on to trying the next compressor in the list.
 
         If the data is recognized by this subclass but the unpacking algorithm
-        is not implemented, raise an `UnsupportedCompression` exception. This
-        is different than the `InvalidCoCompression` exception because it
+        is not implemented, raise an `UnsupportedAlgorithm` exception. This
+        is different than the `InvalidAlgorithm` exception because it
         indicates that the data was indeed recognized by this subclass (despite
         not being unpacked) and checking further compressors is not necessary.
         """
-        raise errors.InvalidCompressor(f"Uncompressing '{self.compression_algorithm}' not implemented")
+        raise errors.InvalidAlgorithm(f"Uncompressing '{self.compression_algorithm}' not implemented")
 
     #### compression
 
@@ -59,13 +59,13 @@ class Compressor:
         """Pack this data into a compressed data array using this packing
         algorithm.
 
-        Subclasses should raise the `UnsupportedCompression` exception if
+        Subclasses should raise the `UnsupportedAlgorithm` exception if
         compression is not implemented.
 
         `media` is supplied in case the compression format needs the disk
         geometry, e.g. in DCM compression.
         """
-        raise errors.InvalidCompressor(f"Compression for '{self.compression_algorithm}' not implemented.")
+        raise errors.InvalidAlgorithm(f"Compression for '{self.compression_algorithm}' not implemented.")
 
 
 class Uncompressed(Compressor):
@@ -111,7 +111,7 @@ def guess_compressor(raw_data):
         log.debug(f"trying compressor {c.compression_algorithm}")
         try:
             compressor = c(raw_data)
-        except (errors.InvalidCompressor, IOError, EOFError) as e:
+        except (errors.InvalidAlgorithm, IOError, EOFError) as e:
             continue
         else:
             log.info(f"found compressor {c.compression_algorithm}")
@@ -142,7 +142,7 @@ def compress_in_reverse_order(byte_data, decompression_order, media=None, skip_m
         compressor = compressor_cls()
         try:
             byte_data = compressor.calc_packed_data(byte_data, media)
-        except errors.InvalidCompressor:
+        except errors.InvalidAlgorithm:
             if skip_missing_compressors:
                 continue
             else:

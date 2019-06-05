@@ -11,7 +11,7 @@ class UnixCompressor(Compressor):
         try:
             unpacked = unlzw(byte_data)
         except ValueError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         return unpacked
 
 

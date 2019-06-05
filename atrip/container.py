@@ -267,7 +267,7 @@ class Container:
         """Pack this container into a compressed data array using this packing
         algorithm.
 
-        Can raise InvalidCompressor if one of the compressors is read-only
+        Can raise `InvalidAlgorithm` if one of the compressors is read-only
         (i.e. can only decompress data). However, if `skip_missing_compressors`
         is True, no error will be raised and compression will take place
         ignoring any compressors that can't compress data.

@@ -16,7 +16,7 @@ class BZipCompressor(Compressor):
             with bz2.BZ2File(buf, mode='rb') as f:
                 unpacked = f.read()
         except OSError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         return unpacked
 
     def calc_packed_data(self, byte_data, media=None):
@@ -25,7 +25,7 @@ class BZipCompressor(Compressor):
             with bz2.BZ2File(buf, mode='wb') as f:
                 f.write(byte_data)
         except OSError as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         else:
             packed = buf.getvalue()
         return packed

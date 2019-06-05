@@ -39,7 +39,7 @@ class BaseContainerTest:
 
             try:
                 compressed = container.calc_packed_bytes()
-            except errors.InvalidCompressor:
+            except errors.InvalidAlgorithm:
                 if ext in read_only_compressors:
                     pytest.skip(f"skipping {pathname} because can't compress {ext} yet")
 
@@ -76,7 +76,7 @@ class TestMultipleCompression:
 
         try:
             compressed = container.calc_packed_bytes()
-        except errors.InvalidCompressor as e:
+        except errors.InvalidAlgorithm as e:
             pytest.skip(f"skipping {pathname}: {e}")
         else:
             # compressed data may not be the same; don't really care as long as

@@ -15,12 +15,12 @@ class ZLibCompressor(Compressor):
         try:
             unpacked = zlib.decompress(bytes(byte_data))
         except zlib.error as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         return unpacked
 
     def calc_packed_data(self, byte_data, media=None):
         try:
             packed = zlib.compress(bytes(byte_data), 9)
         except zlib.error as e:
-            raise errors.InvalidCompressor(e)
+            raise errors.InvalidAlgorithm(e)
         return packed
