@@ -144,9 +144,11 @@ class SawxAction:
         return action_key
 
     def perform_as_menu_item(self, action_key):
+        log.debug(f"performing as menu item: {action_key}")
         wx.CallAfter(self.perform, action_key)
 
     def perform_as_keystroke(self, action_key):
+        log.debug(f"performing as keystroke: {action_key}")
         try:
             self.perform(action_key)
         except AttributeError as e:
