@@ -197,6 +197,11 @@ class MultiCaretHandler:
     def selected_ranges(self):
         return [c.range for c in self.carets if c.has_selection]
 
+    def copy(self):
+        handler = MultiCaretHandler()
+        handler.carets = [c.copy() for c in self.carets]
+        return handler
+
     def new_carets(self, caret_state):
         self.carets = [Caret(state=s) for s in caret_state]
 
