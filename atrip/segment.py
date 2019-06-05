@@ -374,11 +374,12 @@ class Segment:
             self.remove_comment(where_index)
 
     def set_comments_at_indexes(self, ranges, indexes, comments):
+        c = self.container
         for where_index, comment in zip(indexes, comments):
             rawindex = self.container_offset[where_index]
             if comment:
                 log.debug("  restoring comment: rawindex=%d, '%s'" % (rawindex, comment))
-                self.container.comments[rawindex] = comment
+                c.comments[rawindex] = comment
             else:
                 try:
                     del self.container.comments[rawindex]
@@ -386,6 +387,7 @@ class Segment:
                 except KeyError:
                     log.debug("  no comment in original data or current data at rawindex=%d" % rawindex)
                     pass
+        c.fixup_comments()
 
     def get_comments_at_indexes(self, indexes):
         """Get a list of comments at specified indexes"""
