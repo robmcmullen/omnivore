@@ -11,13 +11,13 @@ trace_after_funcname = None
 def trace_calls(frame, event, arg):
     global last_trace_was_system_call, trace_after_funcname
 
-    if event != 'call':
-        return
+    # if event != 'call':
+    #     return
     co = frame.f_code
     func_name = co.co_name
-    if func_name == 'write':
-        # Ignore write() calls from print statements
-        return
+    # if func_name == 'write':
+    #     # Ignore write() calls from print statements
+    #     return
     if trace_after_funcname is not None:
         if func_name == trace_after_funcname:
             trace_after_funcname = None
@@ -29,13 +29,15 @@ def trace_calls(frame, event, arg):
     caller = frame.f_back
     caller_line_no = caller.f_lineno
     caller_filename = caller.f_code.co_filename
-    if "/python2.7" in caller_filename or "agw/aui" in func_filename or "agw/aui" in caller_filename or "/logging/" in func_filename or "/wx/core.py" in func_filename or "/traits/" in func_filename or "/traits/" in caller_filename or "/traitsui/" in func_filename or "/traitsui/" in caller_filename or "/sre_" in caller_filename or "/logging/" in caller_filename:
-        if not last_trace_was_system_call:
-            print('  <system calls>')
-            last_trace_was_system_call = True
+    # if "/python2.7" in caller_filename or "agw/aui" in func_filename or "agw/aui" in caller_filename or "/logging/" in func_filename or "/wx/core.py" in func_filename or "/traits/" in func_filename or "/traits/" in caller_filename or "/traitsui/" in func_filename or "/traitsui/" in caller_filename or "/sre_" in caller_filename or "/logging/" in caller_filename:
+    if "/logging/" in caller_filename:
         return
+    #     if not last_trace_was_system_call:
+    #         print('  <system calls>')
+    #         last_trace_was_system_call = True
+    #     return
     last_trace_was_system_call = False
-    print('%s:%s -> %s %s:%s' % (caller_filename, caller_line_no, func_name, func_filename, func_line_no))
+    print(f'{event}: %s:%s -> %s %s:%s' % (caller_filename, caller_line_no, func_name, func_filename, func_line_no))
     return
 
 def create_global_functions():
