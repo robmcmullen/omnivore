@@ -135,14 +135,6 @@ class TextEditor(SawxEditor):
         (wx.TextDataObject(), "paste_text_control"),
     ]
 
-    def calc_clipboard_data_from(self, focused):
-        data_objs = []
-        text = self.control.GetStringSelection()
-        d = wx.TextDataObject()
-        d.SetText(text)
-        data_objs.append(d)
-        return data_objs
-
     def delete_selection_from(self, focused):
         start, end = focused.GetSelection()
         focused.Remove(start, end)

@@ -21,6 +21,17 @@ def paste_text_control(editor, data_obj, focused):
     start, end = focused.GetSelection()
     focused.Replace(start, end, "DEBUG->" + text + "<-DEBUG")
 
+def calc_data_objects_from_control(control):
+    if hasattr(control, "GetStringSelection"):
+        return calc_data_objects_from_text_control(control)
+
+def calc_data_objects_from_text_control(control):
+    data_objs = []
+    text = control.GetStringSelection()
+    d = wx.TextDataObject()
+    d.SetText(text)
+    data_objs.append(d)
+    return data_objs
 
 def calc_composite_object(data_objs):
     c = wx.DataObjectComposite()

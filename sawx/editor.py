@@ -420,7 +420,7 @@ class SawxEditor:
         clipboard.set_clipboard_data(data_objs)
 
     def calc_clipboard_data_from(self, focused):
-        return None
+        return clipboard.calc_data_objects_from_control(focused)
 
     def delete_selection(self):
         focused = wx.Window.FindFocus()

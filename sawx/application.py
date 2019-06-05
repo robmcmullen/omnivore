@@ -1,5 +1,6 @@
 """ Simple menubar & tabbed window framework
 """
+import time
 import argparse
 import collections
 
@@ -94,6 +95,9 @@ class SawxApp(wx.App):
         progress_dialog.attach_handler()
 
         self.active_frame = None
+        self.debug_show_focused = False
+        self.last_clipboard_check_time = 0
+        self.clipboard_check_interval = 0.75
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.deactivate_app_event = EventHandler(self)
         self.Bind(wx.EVT_ACTIVATE_APP, self.on_activate_app)
@@ -167,6 +171,12 @@ class SawxApp(wx.App):
     def on_idle(self, evt):
         if self.active_frame is not None:
             self.active_frame.active_editor.idle_when_active()
+            t = time.time()
+            if t > self.last_clipboard_check_time + self.clipboard_check_interval:
+                self.active_frame.sync_can_paste()
+                self.last_clipboard_check_time = time.time()
+                if self.debug_show_focused:
+                    self.show_focused()
 
     def on_activate_app(self, evt):
         if not evt.GetActive():
@@ -245,6 +255,10 @@ class SawxApp(wx.App):
             uri = self.default_uri
         frame = SawxFrame(None, uri)
         return frame
+
+    def show_focused(self):
+        focused = self.active_frame.FindFocus()
+        print(f"Focus at: {focused}" + focused.GetName() if focused is not None else "")
 
     #### subprocess helpers
 
