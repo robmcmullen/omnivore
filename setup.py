@@ -47,6 +47,11 @@ setup(name="atrip",
                 'dcm = atrip.compressors.dcm',
             ],
 
+            "atrip.stringifiers": [
+                'hexify = atrip.stringifiers.hexify',
+                'basic_data = atrip.stringifiers.basic_data',
+            ],
+
             "atrip.media_types": [
                 'atari_disks = atrip.media_types.atari_disks',
                 'atari_carts = atrip.media_types.atari_carts',
