@@ -1,10 +1,12 @@
 import wx
 import numpy as np
+import jsonpickle
 
 from sawx.errors import ClipboardError
 from sawx.clipboard import calc_composite_object
 
 from atrip import Segment
+from atrip.stringifier import find_stringifier_by_name
 
 import logging
 log = logging.getLogger(__name__)
@@ -18,15 +20,6 @@ log = logging.getLogger(__name__)
 # 'DF_INVALID', 'DF_LOCALE', 'DF_MAX', 'DF_METAFILE', 'DF_OEMTEXT',
 # 'DF_PALETTE', 'DF_PENDATA', 'DF_PRIVATE', 'DF_RIFF', 'DF_SYLK', 'DF_TEXT',
 # 'DF_TIFF', 'DF_UNICODETEXT', 'DF_WAVE']
-
-
-hex_format = True
-
-def format_number(num):
-    if hex_format:
-        return "$%x" % num
-    else:
-        return "%d" % num
 
 
 def get_data_object_by_format(data_obj, fmt):
@@ -52,98 +45,65 @@ def get_data_object_value(data_obj, name):
     raise ClipboardError("Expecting %s data object, found %s" % (name, fmt.GetId()))
 
 
-def create_hexified_text_data_obj(data):
-    text = " ".join(["%02x" % i for i in data])
-    text_obj = wx.TextDataObject()
-    text_obj.SetText(text)
-    return text_obj
+def create_numpy_clipboard_blob(ranges, indexes, segment, control):
+    print(ranges)
+    rects = control.get_rects_from_selections()
+    if rects:
+        blob = NumpyRectBlob(ranges, indexes, rects, segment, control)
+    else:
+        if len(ranges) == 1:
+            blob = NumpyBlob(ranges, indexes, segment, control)
+        elif len(ranges) > 1:
+            blob = NumpyMultipleBlob(ranges, indexes, segment, control)
+    return blob
 
 
-def create_numpy_data_obj(data, metadata):
-    s1 = data.tobytes()
-    serialized = b"%d,%s%s" % (len(s1), s1, metadata)
-    data_obj = wx.CustomDataObject("numpy")
-    data_obj.SetData(serialized)
-    return data_obj
-
-
-class ClipboardSerializer(object):
+class ClipboardBlob:
     data_format_name = "_base_"
-    pretty_name = "_base_"
+    ui_name = "_base_"
 
-    @classmethod
-    def get_composite_object(cls, raw_data, serialized_data, data_format_name=""):
-        """Create a composite data object that holds both the serialized data
-        and a hexified string of the raw data that can be pasted into other
-        applications
-        """
-        if data_format_name:
-            name = data_format_name
-        else:
-            name = cls.data_format_name
-        data_obj = wx.CustomDataObject(name)
-        data_obj.SetData(serialized_data)
-        text = " ".join(["%02x" % i for i in raw_data])
-        text_obj = wx.TextDataObject()
-        text_obj.SetText(text)
-        c = wx.DataObjectComposite()
-        c.Add(data_obj)
-        c.Add(text_obj)
-        return calc_composite_object([data_obj, text_obj])
-
-    @classmethod
-    def selection_to_data_object(cls, viewer):
-        raise NotImplementedError("Unimplemented for data format %s" % cls.data_format_name)
-
-    @classmethod
-    def from_data_object(cls, data_obj):
-        try:
-            d = data_obj.GetObject(fmt)
-        except AttributeError:
-            d = data_obj
-        return d
-
-    def __init__(self, source_data_format_name):
-        self.source_data_format_name = source_data_format_name
-        self.clipboard_data = None
-        self.clipboard_indexes = None
-        self.clipboard_style = None
-        self.clipboard_relative_comment_indexes = None
-        self.clipboard_comments = None
-        self.clipboard_num_rows = None
-        self.clipboard_num_cols = None
+    def __init__(self):
+        self.data = None
+        self.indexes = None
+        self.style = None
+        self.relative_comment_indexes = None
+        self.comments = None
+        self.num_rows = None
+        self.num_cols = None
+        self.num_regions = 1
         self.dest_items_per_row = None
         self.dest_carets = None
 
     @property
-    def size_info(self):
-        size = np.alen(self.clipboard_data)
-        return "%s bytes" % (format_number(size))
+    def serialized(self):
+        return jsonpickle.encode(self).encode('utf-8')
 
-    def __str__(self):
-        """Return a string with a summary of the contents of the data object
-        """
-        return self.size_info
+    @property
+    def data_obj(self):
+        data_obj = wx.CustomDataObject(self.data_format_name)
+        data_obj.SetData(self.serialized)
+        return data_obj
 
-    def unpack_data_object(self, viewer, data_obj):
-        """Parse the data object into the instance attributes
-        """
-        raise NotImplementedError("Unimplemented for data format %s" % cls.data_format_name)
+    def text_data_obj(self, stringifier="hexify"):
+        try:
+            s = find_stringifier_by_name(stringifier)
+            log.warning(f"Stringifier {stringifier} not found; using default")
+        except KeyError:
+            s = find_stringifier_by_name("hexify")
+        text = s.calc_text(self.data)
+        text_obj = wx.TextDataObject()
+        text_obj.SetText(text)
+        return text_obj
 
-    def unpack_metadata(self, viewer):
-        """Parse the data object into the class attributes
-        """
-        raise NotImplementedError("Unimplemented for data format %s" % cls.data_format_name)
 
-
-class TextSelection(ClipboardSerializer):
+class TextBlob(ClipboardBlob):
+    """Supports unpacking data objects only."""
     data_format_name = "text"
-    pretty_name = "Text"
+    ui_name = "Text"
 
-    def __str__(self):
-        """Return a string with a summary of the contents of the data object
-        """
-        return "%s text characters" % (format_number(np.alen(self.clipboard_data)))
+    def __init__(self, data_obj):
+        super().__init()
+        self.unpack_data_object(data_obj)
 
     def unpack_data_object(self, viewer, data_obj):
         fmts = data_obj.GetAllFormats()
@@ -153,153 +113,56 @@ class TextSelection(ClipboardSerializer):
             value = data_obj.GetText().encode('utf-8')
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
-        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
+        self.data = np.fromstring(value, dtype=np.uint8)
         self.dest_carets = viewer.control.caret_handler.copy()
 
 
-class BinarySelection(ClipboardSerializer):
+class NumpyBlob(ClipboardBlob):
     data_format_name = "numpy"
-    pretty_name = "Single Selection"
+    ui_name = "Single Selection"
 
-    @classmethod
-    def selection_to_data_object(cls, viewer):
-        # NOTE: also handles multiple selection
-        ranges, indexes = viewer.get_selected_ranges_and_indexes()
-        log.debug("selection_to_data_object: viewer=%s ranges=%s indexes=%s" % (viewer, ranges, indexes))
-        if len(ranges) > 0:
-            metadata = viewer.get_selected_index_metadata(indexes)
-            log.debug("  metadata: %s" % str(metadata))
-            if len(ranges) == 1:
-                r = ranges[0]
-                data = viewer.segment[r[0]:r[1]]
-                s1 = data.tobytes()
-                serialized = b"%d,%s%s" % (len(s1), s1, metadata)
-                name = ""
-            elif np.alen(indexes) > 0:
-                data = viewer.segment[indexes]
-                s1 = data.tobytes()
-                s2 = indexes.tobytes()
-                serialized = b"%d,%d,%s%s%s" % (len(s1), len(s2), s1, s2, metadata)
-                name = "numpy,multiple"
-            else:
-                raise ClipboardError("No ranges or indexes selected")
-            return cls.get_composite_object(data, serialized, name)
-        else:
-            return None
+    def __init__(self, ranges, indexes, segment, control):
+        super().__init__()
+        self.ranges = ranges
+        self.num_regions = len(self.ranges)
+        self.indexes = indexes
+        self.get_data_from_segment(segment, control)
+        self.style, self.relative_comment_indexes, self.comments = segment.calc_selected_index_metadata(indexes)
 
-    def unpack_data_object(self, viewer, data_obj):
-        value = get_data_object_value(data_obj, self.data_format_name)
-        len1, value = value.split(b",", 1)
-        len1 = int(len1)
-        value, j = value[0:len1], value[len1:]
-        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
-        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = Segment.restore_selected_index_metadata(j)
-        self.dest_carets = viewer.control.caret_handler.copy()
+    def get_data_from_segment(self, segment, control):
+        r = self.ranges[0]
+        self.data = segment[r[0]:r[1]]
 
 
-class MultipleBinarySelection(ClipboardSerializer):
+class NumpyMultipleBlob(NumpyBlob):
     data_format_name = "numpy,multiple"
-    pretty_name = "Multiple Selection"
+    ui_name = "Multiple Selection"
 
-    def __str__(self):
-        """Return a string with a summary of the contents of the data object
-        """
-        return "%s in multiple ranges" % (self.size_info)
-
-    def unpack_data_object(self, viewer, data_obj):
-        value = get_data_object_value(data_obj, self.data_format_name)
-        len1, len2, value = value.split(b",", 2)
-        len1 = int(len1)
-        len2 = int(len2)
-        split1 = len1
-        split2 = len1 + len2
-        value, index_string, j = value[0:split1], value[split1:split2], value[split2:]
-        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
-        self.clipboard_indexes = np.fromstring(index_string, dtype=np.uint32)
-        self.clipboard_style, self.clipboard_relative_comment_indexes, self.clipboard_comments = Segment.restore_selected_index_metadata(j)
-        self.dest_carets = viewer.control.caret_handler.copy()
+    def get_data_from_segment(self, segment, control):
+        self.data = segment[self.indexes]
 
 
-class RectangularSelection(ClipboardSerializer):
-    data_format_name = "numpy,columns"
-    pretty_name = "Rectangular Selection"
+class NumpyRectBlob(NumpyMultipleBlob):
+    def __init__(self, ranges, indexes, rects, segment, control):
+        super().__init__(ranges, indexes, segment, control)
+        self.get_rects_from_segment(rects, segment, control)
 
-    @classmethod
-    def selection_to_data_object(cls, viewer):
-        rects = viewer.control.get_rects_from_selections()
-        if rects:
-            r = rects[0]  # FIXME: handle multiple rects
-            num_rows, num_cols, data = viewer.control.get_data_from_rect(r)
-            return cls.get_composite_object(data.flat, b"%d,%d,%s" % (num_rows, num_cols, data.tobytes()))
-        return None
-
-    def __str__(self):
-        """Return a string with a summary of the contents of the data object
-        """
-        return "%s bytes in %sx%s rectangle" % (self.size_info, format_number(self.clipboard_num_cols), format_number(self.clipboard_num_rows))
-
-    def unpack_data_object(self, viewer, data_obj):
-        value = get_data_object_value(data_obj, self.data_format_name)
-        r, c, value = value.split(b",", 2)
-        self.clipboard_num_rows = int(r)
-        self.clipboard_num_cols = int(c)
-        self.clipboard_data = np.fromstring(value, dtype=np.uint8)
-        self.dest_carets = viewer.control.caret_handler.copy()
-        self.dest_items_per_row = viewer.control.items_per_row
-
-
-def create_data_object(viewer, name):
-    try:
-        serializer_cls = known_clipboard_serializers[name]
-    except IndexError:
-        raise ClipboardError("Unknown format name %s" % name)
-    log.debug("create_data_object: cls=%s viewer=%s name=%s" % (serializer_cls, viewer, name))
-    data_obj = serializer_cls.selection_to_data_object(viewer)
-    if data_obj is None:
-        raise ClipboardError("Viewer %s can't encode as a %s." % (viewer, serializer_cls.pretty_name.lower()))
-
-    # format may not be the same as requested because the type of selection
-    # (single, multiple, etc.) may result in a different format.
-    fmt = data_obj.GetPreferredFormat()
-    name = fmt.GetId()
-    try:
-        serializer_cls = known_clipboard_serializers[name]
-    except IndexError:
-        raise ClipboardError("Unknown format name %s" % name)
-    serializer = serializer_cls(name)
-    serializer.unpack_data_object(viewer, data_obj)
-    log.debug("create_data_object: serialized: %s" % serializer)
-    return data_obj, serializer
-
-
-def set_from_selection(viewer, name):
-    data_obj, serializer = create_data_object(viewer, name)
-    set_clipboard_object(data_obj)
-    return serializer
-
-def set_clipboard_object(data_obj):
-    if wx.TheClipboard.Open():
-        wx.TheClipboard.SetData(data_obj)
-        wx.TheClipboard.Close()
-    else:
-        raise ClipboardError("System error: unable to open clipboard")
+    def get_rects_from_segment(self, rects, segment, control):
+        r = rects[0]  # FIXME: handle multiple rects
+        self.num_rows, self.num_cols, self.data = control.get_data_from_rect(r)
 
 
 def parse_data_obj(data_obj, viewer):
     if wx.DF_TEXT in data_obj.GetAllFormats() or wx.DF_UNICODETEXT in data_obj.GetAllFormats():  # for windows
-        serializer_cls = TextSelection
-        name = "text"
+        blob = TextBlob(data_obj)
     else:
         fmt = data_obj.GetPreferredFormat()
         name = fmt.GetId()
+        value = get_data_object_value(data_obj, name)
         try:
-            serializer_cls = known_clipboard_serializers[name]
+            blob = jsonpickle.decode(value.decode('utf-8'))
+            print("DECODED BLOB!", blob)
         except IndexError:
-            raise ClipboardError("Unknown format name %s" % name)
-    serializer = serializer_cls(name)
-    serializer.unpack_data_object(viewer, data_obj)
-    return serializer
-
-known_clipboard_serializers = {}
-for s in [TextSelection, BinarySelection, MultipleBinarySelection, RectangularSelection]:
-    known_clipboard_serializers[s.data_format_name] = s
+            raise ClipboardError(f"Failed unpacking data_obj {name}: {value}")
+    blob.dest_carets = viewer.control.caret_handler.copy()
+    return blob

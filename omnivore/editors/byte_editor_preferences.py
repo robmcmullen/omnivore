@@ -48,6 +48,7 @@ class ByteEditorPreferences(SawxEditorPreferences):
         self.hex_grid_width_low = 1
         self.hex_grid_width_high = 256
         self.hex_grid_width = 16
+        self.text_copy_stringifier = "basic_data"
 
     @property
     def hex_format_character(self):

@@ -544,8 +544,8 @@ class SegmentViewer:
     def clipboard_data_format(self):
         return "numpy"
 
-    def calc_paste_command(self, serialized_data, *args, **kwargs):
-        return clipboard_commands.PasteCommand(self.segment, serialized_data, *args, **kwargs)
+    def calc_paste_command(self, clipboard_blob, *args, **kwargs):
+        return clipboard_commands.PasteCommand(self.segment, clipboard_blob, *args, **kwargs)
 
     def get_selected_ranges_and_indexes(self):
         return self.control.get_selected_ranges_and_indexes(self.linked_base)

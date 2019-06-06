@@ -457,8 +457,8 @@ class ByteEditor(TileManagerBase):
         data_obj = clipboard.get_clipboard_data(self.supported_clipboard_data)
         if data_obj:
             print("Found data obj", data_obj)
-            parsed_data = clipboard_helpers.parse_data_obj(data_obj, self.focused_viewer)
-            cmd = self.focused_viewer.calc_paste_command(parsed_data)
+            blob = clipboard_helpers.parse_data_obj(data_obj, self.focused_viewer)
+            cmd = self.focused_viewer.calc_paste_command(blob)
             if cmd:
                 clipboard_log.debug("processing paste object %s" % cmd)
                 self.process_command(cmd)

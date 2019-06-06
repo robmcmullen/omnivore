@@ -13,29 +13,29 @@ class ClipboardCommand(SegmentCommand):
     ui_name = "Clipboard Abstract Command"
     serialize_order =  [
             ('segment', 'int'),
-            ('serializer', 'clipboard_serializer')
+            ('blob', 'clipboard_blob')
             ]
 
-    def __init__(self, segment, serializer):
+    def __init__(self, segment, blob):
         SegmentCommand.__init__(self, segment)
-        self.serializer = serializer
-        s = serializer
+        self.blob = blob
 
     def prepare_data(self, editor):
         pass
 
     def get_clipped_indexes(self, viewer):
-        s = self.serializer
-        if s.clipboard_indexes is not None:
-            index = s.dest_carets.current.index
-            indexes = s.clipboard_indexes.copy() - s.clipboard_indexes[0] + index
+        s = self.blob
+        if s.indexes is not None:
+            caret = s.dest_carets.current
+            index, _ = viewer.control.table.get_index_range(*caret.rc)
+            indexes = s.indexes.copy() - s.indexes[0] + index
         elif s.dest_carets.has_selection:
             ranges = collapse_overlapping_ranges(viewer.control.get_selected_ranges_including_carets(s.dest_carets))
             log.debug("ranges:", ranges)
             indexes = viewer.range_processor(ranges)
             log.debug("indexes:", indexes)
         else:
-            count = len(s.clipboard_data)
+            count = len(s.data)
             ranges = []
             for c in s.dest_carets.carets:
                 anchor = c.anchor_start
@@ -53,7 +53,7 @@ class ClipboardCommand(SegmentCommand):
         return indexes
 
     def get_data(self, orig):
-        data = self.serializer.clipboard_data
+        data = self.blob.data
         data_len = np.alen(data)
         orig_len = np.alen(orig)
         if data_len > orig_len > 1:
@@ -61,10 +61,10 @@ class ClipboardCommand(SegmentCommand):
         return data[0:data_len]
 
     def get_style(self, data):
-        s = self.serializer
-        style_data = s.clipboard_style
+        s = self.blob
+        style_data = s.style
         if style_data is not None:
-            style = s.clipboard_style[0:np.alen(data)]
+            style = s.style[0:np.alen(data)]
         else:
             style = None
         return style
@@ -77,10 +77,10 @@ class ClipboardCommand(SegmentCommand):
         log.debug("new data: %s" % data)
         indexes = indexes[0:np.alen(data)]
         log.debug("indexes truncated to data length: %s" % str(indexes))
-        s = self.serializer
-        if s.clipboard_relative_comment_indexes is not None:
-            log.debug("relative comment indexes: %s" % (str(s.clipboard_relative_comment_indexes)))
-            subset = s.clipboard_relative_comment_indexes[s.clipboard_relative_comment_indexes < np.alen(indexes)]
+        s = self.blob
+        if s.relative_comment_indexes is not None:
+            log.debug("relative comment indexes: %s" % (str(s.relative_comment_indexes)))
+            subset = s.relative_comment_indexes[s.relative_comment_indexes < np.alen(indexes)]
             log.debug("comment index subset: %s" % str(subset))
             comment_indexes = indexes[subset]
             log.debug("new comment indexes: %s" % str(comment_indexes))
@@ -101,8 +101,8 @@ class ClipboardCommand(SegmentCommand):
         else:
             old_style = None
         if old_comment_info is not None:
-            log.debug("setting comments: %s" % s.clipboard_comments)
-            self.segment.set_comments_at_indexes(clamped_ranges, comment_indexes, s.clipboard_comments)
+            log.debug("setting comments: %s" % s.comments)
+            self.segment.set_comments_at_indexes(clamped_ranges, comment_indexes, s.comments)
         return (old_data, indexes, old_style, old_comment_info)
 
     def undo_change(self, editor, old_data):
@@ -160,26 +160,26 @@ class PasteRectCommand(SegmentCommand):
     ui_name = "Paste Rectangular"
     serialize_order =  [
             ('segment', 'int'),
-            ('serializer', 'clipboard_serializer'),
+            ('blob', 'clipboard_blob'),
             ]
 
-    def __init__(self, segment, serializer):
+    def __init__(self, segment, blob):
         #start_index, rows, cols, bytes_per_row, bytes):
         SegmentCommand.__init__(self, segment)
-        self.serializer = serializer
+        self.blob = blob
 
     def __str__(self):
-        s = self.serializer
-        return "%s @ %04x (%dx%d)" % (self.ui_name, s.dest_carets.current.index + self.segment.origin, s.clipboard_num_cols, s.clipboard_num_rows)
+        s = self.blob
+        return "%s @ %04x (%dx%d)" % (self.ui_name, s.dest_carets.current.index + self.segment.origin, s.num_cols, s.num_rows)
 
     def single_source_single_dest(self, editor, undo):
-        s = self.serializer
+        s = self.blob
         caret = s.dest_carets.current
         i1 = caret.index
         bpr = s.dest_items_per_row
         r1, c1 = divmod(i1, bpr)
-        r2 = r1 + s.clipboard_num_rows
-        c2 = c1 + s.clipboard_num_cols
+        r2 = r1 + s.num_rows
+        c2 = c1 + s.num_cols
         last = r2 * bpr
         d = self.segment[:last].reshape(-1, bpr)
         r2 = min(r2, d.shape[0])
@@ -187,7 +187,7 @@ class PasteRectCommand(SegmentCommand):
         undo.flags.byte_values_changed = True
         #undo.flags.index_range = i1, i2
         old_data = d[r1:r2,c1:c2].copy()
-        new_data = np.fromstring(s.clipboard_data, dtype=np.uint8).reshape(s.clipboard_num_rows, s.clipboard_num_cols)
+        new_data = np.fromstring(s.data, dtype=np.uint8).reshape(s.num_rows, s.num_cols)
         d[r1:r2, c1:c2] = new_data[0:r2 - r1, 0:c2 - c1]
         undo.data = (r1, c1, r2, c2, last, old_data, )
         self.undo_info = undo
@@ -196,7 +196,7 @@ class PasteRectCommand(SegmentCommand):
         self.single_source_single_dest(editor, undo)
 
     def undo(self, editor):
-        s = self.serializer
+        s = self.blob
         r1, c1, r2, c2, last, old_data, = self.undo_info.data
         d = self.segment[:last].reshape(-1, s.dest_items_per_row)
         d[r1:r2, c1:c2] = old_data

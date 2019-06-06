@@ -242,7 +242,8 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     def get_rects_from_selections(self):
         rects = []
         for caret in self.caret_handler.carets_with_selection:
-            rects.append(caret.range)
+            if caret.rectangular:
+                rects.append(caret.range)
         return rects
 
     def get_data_from_rect(self, r):
@@ -261,17 +262,9 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         log.debug(f"calc_clipboard_data_objs: {self}, ranges={ranges} indexes={indexes}")
         data_objs = []
         if len(ranges) > 0:
-            metadata = segment.serialize_selected_index_metadata(indexes)
-            log.debug("  metadata: %s" % str(metadata))
-            if len(ranges) == 1:
-                r = ranges[0]
-                data = segment[r[0]:r[1]]
-                s1 = data.tobytes()
-                serialized = b"%d,%s%s" % (len(s1), s1, metadata)
-                data_obj = clipboard_helpers.create_numpy_data_obj(data, metadata)
-                text_obj = clipboard_helpers.create_hexified_text_data_obj(data)
-                data_objs.append(data_obj)
-                data_objs.append(text_obj)
+            blob = clipboard_helpers.create_numpy_clipboard_blob(ranges, indexes, segment, self)
+            data_objs.append(blob.data_obj)
+            data_objs.append(blob.text_data_obj(self.view_params.text_copy_stringifier))
             # elif np.alen(indexes) > 0:
             #     data = segment[indexes]
             #     s1 = data.tobytes()
