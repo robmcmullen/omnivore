@@ -1401,13 +1401,15 @@ class MouseEventMixin:
 
     def handle_char_ordinary(self, evt):
         c = evt.GetKeyCode()
-        print(("ordinary char: %s", c))
+        print("ordinary char: {c}")
         if not self.is_editing_in_cell:
+            print("handle_char_ordinary: not editing in cell")
             if self.verify_keycode_can_start_edit(c):
                 self.start_editing(evt)
             else:
                 evt.Skip()
         else:
+            print("handle_char_ordinary: editing in cell")
             self.edit_source.EmulateKeyPress(evt)
 
     def verify_keycode_can_start_edit(self, c):
