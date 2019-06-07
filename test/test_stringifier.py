@@ -10,6 +10,7 @@ from atrip.stringifier import find_stringifier_by_name
 stringifiers = [
     ('repr', "\\x00\\x01"),
     ('hexify', "00 01 02 03"),
+    ('c_bytes', "0x00,0x01,0x02,0x03"),
     ('basic_data', "DATA 0,1,2,3"),
 ]
 
@@ -39,3 +40,4 @@ if __name__ == "__main__":
     t.test_stringifier('hexify', "00 01")
     t.test_stringifier('basic_data', "DATA 0,1,2")
     t.test_stringifier('repr', '\\x00\\x01')
+    t.test_stringifier('c_bytes', "0x00,0x01,0x02,0x03")

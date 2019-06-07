@@ -49,6 +49,7 @@ setup(name="atrip",
 
             "atrip.stringifiers": [
                 'hexify = atrip.stringifiers.hexify',
+                'c_bytes = atrip.stringifiers.c_bytes',
                 'basic_data = atrip.stringifiers.basic_data',
             ],
 
