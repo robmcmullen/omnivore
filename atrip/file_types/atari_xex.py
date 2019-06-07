@@ -16,13 +16,13 @@ except NameError:
 
 class RunAddressSegment(Segment):
     @property
-    def target_address(self):
+    def run_address(self):
         return self[0] + 256 * self[1]
 
 
 class InitAddressSegment(Segment):
     @property
-    def target_address(self):
+    def init_address(self):
         return self[0] + 256 * self[1]
 
 
