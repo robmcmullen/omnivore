@@ -415,9 +415,13 @@ class SawxEditor:
     def copy_selection_to_clipboard(self):
         focused = wx.Window.FindFocus()
         clipboard_log.debug(f"focused control: {focused}")
-        data_objs = self.calc_clipboard_data_from(focused)
-        clipboard_log.debug(f"created data objs: {data_objs}")
-        clipboard.set_clipboard_data(data_objs)
+        try:
+            data_objs = self.calc_clipboard_data_from(focused)
+        except ValueError:
+            log.warning("No selection")
+        else:
+            clipboard_log.debug(f"created data objs: {data_objs}")
+            clipboard.set_clipboard_data(data_objs)
 
     def calc_clipboard_data_from(self, focused):
         return clipboard.calc_data_objects_from_control(focused)
