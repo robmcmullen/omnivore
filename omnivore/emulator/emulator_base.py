@@ -3,7 +3,7 @@ import tempfile
 
 import numpy as np
 
-from atrip import find_diskimage
+from atrip import find_container
 
 from ..debugger import Debugger
 from ..debugger.dtypes import FRAME_STATUS_DTYPE
@@ -251,17 +251,18 @@ class EmulatorBase(Debugger):
         self.boot_from_file(self.bootfile)
 
     def boot_from_file(self, filename):
-        parser = find_diskimage(filename, True)
-        print(f"diskimage: filename={filename} image={parser.image}")
+        container = find_container(filename, True)
+        print(f"container: filename={filename} {container}")
         run_addr = None
-        for s in parser.image.segments:
+        for s in container.iter_segments():
             print(f"segment: {s}")
-            try:
-                run_addr = s.run_address()
-            except AttributeError:
-                if run_addr is None:
-                    run_addr = s.origin
-            self.add_segment_to_memory(s)
+            if s.origin > 0:
+                try:
+                    run_addr = s.run_address()
+                except AttributeError:
+                    if run_addr is None:
+                        run_addr = s.origin
+                self.add_segment_to_memory(s)
         print(f"running at: {hex(run_addr)}")
         self.program_counter = run_addr
         self.last_boot_state = self.calc_current_state()
