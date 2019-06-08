@@ -59,13 +59,9 @@ class SawxFrame(wx.Frame):
                 self.raw_menubar.Bind(wx.EVT_ENTER_WINDOW, self.on_menu_open_linux)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        self.notebook = aui.AuiNotebook(self, -1)
+        self.notebook = self.create_notebook()
         sizer.Add(self.notebook, 1, wx.GROW)
         self.SetSizer(sizer)
-
-        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.on_page_changed)
-        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_closing)
-        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.on_page_closed)
 
         self.active_editor = None
         self.active_editor_can_paste = False
@@ -87,6 +83,13 @@ class SawxFrame(wx.Frame):
         for e in self.editors:
             state |= e.is_dirty
         return state
+
+    def create_notebook(self):
+        notebook = aui.AuiNotebook(self, -1)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.on_page_changed)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_closing)
+        self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.on_page_closed)
+        return notebook
 
     def create_icon(self):
         data = open(wx.GetApp().app_icon, 'rb')
@@ -492,3 +495,48 @@ class SawxFrame(wx.Frame):
             self.raw_statusbar.debug(message)
         else:
             self.raw_statusbar.message(message)
+
+
+class FakeNotebook(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent, -1)
+        self.notebook_page = None
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
+
+    def GetPageCount(self):
+        return 1 if self.notebook_page is not None else 0
+
+    def GetPage(self, index):
+        return self.notebook_page
+
+    def GetCurrentPage(self):
+        return self.notebook_page
+
+    def GetSelection(self):
+        return 0
+
+    def SetSelection(self, index):
+        pass
+
+    def SetPageText(self, index, title):
+        pass
+
+    def AddPage(self, control, name):
+        if self.notebook_page is None:
+            self.notebook_page = control
+            self.GetSizer().Add(control, 1, wx.GROW)
+        else:
+            raise IndexError("Only one page allowed")
+
+    def RemovePage(self, index):
+        page = self.notebook_page
+        self.notebook_page = None
+        self.GetSizer().Clear()
+        return page
+
+
+class SawxSingleEditorFrame(SawxFrame):
+    def create_notebook(self):
+        notebook = FakeNotebook(self)
+        return notebook
