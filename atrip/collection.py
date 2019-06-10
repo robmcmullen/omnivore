@@ -25,7 +25,7 @@ class Collection:
     """
     ui_name = "Collection"
 
-    def __init__(self, pathname, data=None, session=None, container=None):
+    def __init__(self, pathname, data=None, session=None, container=None, guess=True):
         self.pathname = pathname
         self.name = ""
         self.containers = []
@@ -39,7 +39,7 @@ class Collection:
             self.unarchive(data, session)
         else:
             self.archiver = PlainFileArchiver()
-            self.add_container(container, pathname)
+            self.add_container(container, pathname, guess=guess)
 
     @property
     def verbose_info(self):
@@ -88,10 +88,11 @@ class Collection:
 
     #### decompression
 
-    def add_container(self, container, pathname):
+    def add_container(self, container, pathname, guess=True):
         container.pathname = pathname
-        container.guess_media_type()
-        container.guess_filesystem()
+        if guess:
+            container.guess_media_type()
+            container.guess_filesystem()
         self.containers.append(container)
         container.name = f"D{len(self.containers)}"
         log.info(f"container: {container}")
