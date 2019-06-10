@@ -84,12 +84,17 @@ class Container:
     """
     ui_name = "Raw Data"
 
-    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=None):
+    def __init__(self, data, decompression_order=None, style=None, origin=0, name="D1", error=None, verbose_name=None, memory_map=None, disasm_type=None, default_disasm_type=None, force_numpy_data=False):
 
         self.init_empty()
         if default_disasm_type is not None:
             self.default_disasm_type = default_disasm_type
-        self.data = data
+        if force_numpy_data:
+            # don't copy the data; use the data passed in as the raw data for
+            # this container
+            self._data = data
+        else:
+            self.data = data
         self.style = style
         self.disasm_type = disasm_type
         if decompression_order is None:
