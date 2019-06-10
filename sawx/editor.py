@@ -213,7 +213,7 @@ class SawxEditor:
         if self.last_loaded_uri:
             # try directory of last loaded file next
             attempts.append(self.last_loaded_uri)
-        if self.document and self.document.uri:
+        if self.document is not None and self.document.uri:
             # path of current file is the final try
             attempts.append(self.document.uri)
 
@@ -229,7 +229,7 @@ class SawxEditor:
 
     @property
     def title(self):
-        if self.document:
+        if self.document is not None:
             uri = self.document.uri
         else:
             uri = self.last_saved_uri or self.last_loaded_uri
@@ -242,7 +242,7 @@ class SawxEditor:
     @property
     def tab_name(self):
         name = self.ui_name
-        if self.document:
+        if self.document is not None:
             name = self.document.name
         if self.is_dirty:
             name = "\u2605" + name
