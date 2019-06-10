@@ -232,7 +232,7 @@ class EmulatorBase(Debugger):
 
     def boot_from_segment(self, boot_segment):
         if boot_segment is not None:
-            data = boot_segment.data
+            data = boot_segment.data[:]
             origin = boot_segment.origin
             self.boot_from_raw(data, origin)
 
@@ -323,6 +323,13 @@ class EmulatorBase(Debugger):
         print(self.current_cpu_status)
 
     # Emulator user input functions
+
+    def get_special_key_actions(self):
+        """If this emulator has any special keys that may be hard to duplicate
+        on a modern keyboard, an action name can be added here and it will be
+        added to the menubar.
+        """
+        return []
 
     def coldstart(self):
         """Simulate an initial power-on startup.

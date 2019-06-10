@@ -337,7 +337,7 @@ setup(
             'info = omnivore.viewers.info',
             'map = omnivore.viewers.map',
             'jumpman = omnivore.viewers.jumpman',
-            # 'emulator = omnivore.viewers.emulator',
+            'emulator = omnivore.viewers.emulator',
             'apple2 = omnivore.viewers.apple2',
             'memory = omnivore.viewers.memory',
             'skeleton = omnivore.viewers.skeleton',

@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 from collections import namedtuple
 
 import numpy as np
@@ -18,15 +19,15 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class EmulatorViewer(SegmentViewer):
+class EmulatorViewerMixin:
     viewer_category = "Emulator"
 
     has_caret = False
 
-    # effectively don't allow emulator screen viewers to use the priority
-    # refresh; they will always be explicitly refreshed with the
-    # emulator_update_screen_event
-    priority_refresh_frame_count = 10000000
+    # Performance modifier to prevent non-essential viewers from getting
+    # updated at each frame. Viewers will not be updated frame count reaches a
+    # multiple of this value.
+    priority_refresh_frame_count = 10
 
     @property
     def emulator(self):
@@ -35,6 +36,16 @@ class EmulatorViewer(SegmentViewer):
     @property
     def linked_base_segment_identifier(self):
         return ""
+
+    def set_event_handlers(self):
+        super().set_event_handlers()
+        self.document.priority_level_refresh_event += self.on_priority_level_refresh
+        self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
+
+        # start the initial frame count on a random value so the frame refresh
+        # load can be spread around instead of each with the same frame count
+        # being refreshed at the same time.
+        self.frame_count = random.randint(0, self.priority_refresh_frame_count)
 
     def use_default_view_params(self):
         pass
@@ -54,20 +65,54 @@ class EmulatorViewer(SegmentViewer):
         self.control.Refresh()
 
     def update_window_title(self):
-        pass
+        self.update_caption()
+        # FIXME: probably shouldn't know this much about the internals to call
+        # blah.blah.title_bar
+        self.control.GetParent().title_bar.Refresh()
 
-    # @on_trait_change('linked_base.editor.document.emulator_update_screen_event')
-    def process_emulator_update_screen(self, evt):
-        log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.control.show_frame(force=True)
-            self.update_window_title()
+    #### event handlers
+
+    def on_priority_level_refresh(self, evt):
+        """Refresh based on frame count and priority. If the value passed
+        through this event is an integer, all viewers with priority values less
+        than the event priority value (i.e. the viewers with a higher priority)
+        will be refreshed.
+        """
+        log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        count = evt[0]
+        self.frame_count += 1
+        p = self.priority_refresh_frame_count
+        if self.frame_count > p or p < count:
+            self.do_priority_level_refresh()
+            self.frame_count = 0
+
+    def do_priority_level_refresh(self):
+        self.refresh_view(True)
+
+    def on_emulator_breakpoint(self, evt):
+        log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        self.do_emulator_breakpoint()
+
+    def do_emulator_breakpoint(self, evt):
+        self.frame.status_message(f"{self.document.emulator.cycles_since_power_on} cycles")
 
 
-class VideoViewer(EmulatorViewer):
+class VideoViewer(EmulatorViewerMixin, SegmentViewer):
     name = "video"
 
     ui_name = "Emulator Video Output"
+
+    has_caret = False
+
+    # # effectively don't allow emulator screen viewers to use the priority
+    # # refresh; they will always be explicitly refreshed with the
+    # # emulator_update_screen_event
+    # priority_refresh_frame_count = 10000000
+
+    def set_event_handlers(self):
+        SegmentViewer.set_event_handlers(self)  # skip viewer mixin handlers, which skips the priority level refresh
+        self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
+        self.document.emulator_update_screen_event += self.on_emulator_update_screen
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -78,14 +123,18 @@ class VideoViewer(EmulatorViewer):
 
     @property
     def window_title(self):
-        emu = self.linked_base.emulator
+        emu = self.emulator
         return f"{emu.ui_name} (frame {emu.current_frame_number})"
 
-    def update_window_title(self):
-        self.update_caption()
-        # FIXME: probably shouldn't know this much about the internals to call
-        # blah.blah.title_bar
-        self.control.GetParent().title_bar.Refresh()
+    #### event handlers
+
+    def on_emulator_update_screen(self, evt):
+        log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        self.do_emulator_update_screen()
+
+    def do_emulator_update_screen(self):
+        self.control.show_frame(force=True)
+        self.update_window_title()
 
     ##### Spring Tab interface
 
@@ -140,7 +189,7 @@ class CPU6502Table(sg.SegmentVirtualTable):
         return "cpu"
 
 
-class CPUParamTableViewer(VirtualTableInfoViewer):
+class CPUParamTableViewer(EmulatorViewerMixin, VirtualTableInfoViewer):
     name = "<base class>"
 
     viewer_category = "Emulator"
@@ -243,7 +292,10 @@ for dtype_name in ['ANTIC', 'GTIA', 'POKEY', 'PIA']:
     globals()[clsname] = cls
 
 
-from .disasm import labels1
+from ..utils.archutil import Labels
+filename = "./omnivore/templates/atari800.labels"
+labels1 = Labels.from_file(filename)
+print(labels1.labels)
 
 class LabelTable(cg.VariableWidthHexTable):
     want_col_header = False
@@ -381,7 +433,7 @@ class LabelGridControl(sg.SegmentGridControl):
 
 
 
-class LabelViewer(SegmentViewer):
+class LabelViewer(EmulatorViewerMixin, SegmentViewer):
     name = "labels"
 
     viewer_category = "Emulator"

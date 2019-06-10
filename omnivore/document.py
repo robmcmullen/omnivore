@@ -47,8 +47,6 @@ class DiskImageDocument(SawxDocument):
         SawxDocument.__init__(self, file_metadata)
 
         self.cpu_changed_event = EventHandler(self)
-        self.priority_level_refresh_event = EventHandler(self)
-        self.emulator_breakpoint_event = EventHandler(self)
 
         # default emulator class, if the user selects something different than
         # the normal default. This is usually None, which means that omnivore

@@ -12,6 +12,8 @@ except ImportError:
 
 import numpy as np
 
+from sawx.ui.compactgrid import MultiCaretHandler
+
 from ..emulator.atari8bit.colors import NTSC
 from .intscale import intscale
 from .ui_wx import wxGLSLTextureCanvas, wxLegacyTextureCanvas
@@ -35,6 +37,8 @@ class EmulatorScreenBase(object):
             self.Bind(wx.EVT_PAINT, self.on_paint)
         else:
             self.Bind(wx.EVT_PAINT, self.on_paint_double_buffer)
+
+        self.caret_handler = MultiCaretHandler()
 
     def DoGetBestSize(self):
         """ Base class virtual method for sizer use to get the best size

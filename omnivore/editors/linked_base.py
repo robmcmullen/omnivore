@@ -44,11 +44,13 @@ class LinkedBase:
     """
     rect_select = False
 
-    def __init__(self, editor):
+    def __init__(self, editor, segment=None):
         self.uuid = str(uuid.uuid4())
         self.editor = editor
 
-        self.segment = blank_segment
+        if segment is None:
+            segment = blank_segment
+        self.segment = segment
         self.segment_uuid = None
         self.restore_session_segment_uuid = None
         self.has_origin = False

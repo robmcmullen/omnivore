@@ -271,6 +271,13 @@ class Atari800(EmulatorBase):
 
     ##### Input routines
 
+    def get_special_key_actions(self):
+        return [
+            "emu_a8_start_key",
+            "emu_a8_select_key",
+            "emu_a8_option_key",
+        ]
+
     def send_special_key(self, key_id):
         self.input['keychar'] = 0
         self.input['keycode'] = 0

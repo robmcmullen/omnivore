@@ -1,5 +1,4 @@
 import uuid
-import random
 import inspect
 import pkg_resources
 
@@ -142,8 +141,6 @@ class SegmentViewer:
         searchutil.CommentSearcher,
     ]
 
-    priority_refresh_frame_count = 10
-
     # List of menu bar titles to be excluded from the menu bar when this viewer
     # is focused
     exclude_from_menubar = ["Jumpman"]
@@ -158,11 +155,6 @@ class SegmentViewer:
 
         self.range_processor = ranges_to_indexes
         self.is_tracing = False
-
-        # start the initial frame count on a random value so the frame refresh
-        # load can be spread around instead of each with the same frame count
-        # being refreshed at the same time.
-        self.frame_count = random.randint(0, self.priority_refresh_frame_count)
 
     ##### Properties
 
@@ -281,8 +273,6 @@ class SegmentViewer:
         self.document.byte_style_changed_event += self.on_refresh_view_for_style_change
         self.document.structure_changed_event += self.on_recalc_data_model
         self.document.recalc_event += self.on_recalc_view
-        self.document.priority_level_refresh_event += self.on_priority_level_refresh
-        self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
         self.linked_base.ensure_visible_event += self.on_ensure_visible
         self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
         self.linked_base.refresh_event += self.on_refresh_view
@@ -397,29 +387,6 @@ class SegmentViewer:
     def show_caret(self, control, index, bit):
         caret_log.debug("show_caret: %s, index=%d" % (self.ui_name, index))
         self.control.set_caret_index(control, index, bit)
-
-    def on_priority_level_refresh(self, evt):
-        """Refresh based on frame count and priority. If the value passed
-        through this event is an integer, all viewers with priority values less
-        than the event priority value (i.e. the viewers with a higher priority)
-        will be refreshed.
-        """
-        log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.frame_count += 1
-        p = self.priority_refresh_frame_count
-        if self.frame_count > p or p < evt:
-            self.do_priority_level_refresh()
-            self.frame_count = 0
-
-    def do_priority_level_refresh(self):
-        self.refresh_view(True)
-
-    def on_emulator_breakpoint(self, evt):
-        log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.do_emulator_breakpoint()
-
-    def do_emulator_breakpoint(self, evt):
-            self.frame.status_message(f"{self.document.emulator.cycles_since_power_on} cycles")
 
     def on_refresh_view(self, evt):
         self.refresh_view(evt.flags)

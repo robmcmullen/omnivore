@@ -3,10 +3,12 @@ import time
 
 import wx
 import numpy as np
-from atrip import SegmentData, DefaultSegment, DefaultSegmentParser, SegmentParser
 
-# Enthought library imports.
-from traits.api import Trait, Any, List, Event, Dict, Property, Bool, Int, String, Float, Undefined
+from atrip import Collection, Container, Segment, errors
+
+from sawx.document import SawxDocument
+from sawx.utils.nputil import to_numpy
+from sawx.events import EventHandler
 
 from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError, EmulatorError
 
@@ -14,21 +16,6 @@ from ..document import DiskImageDocument
 
 import logging
 log = logging.getLogger(__name__)
-
-
-class EmulatorSegmentParser(SegmentParser):
-    menu_name = "Emulator Save State"
-    def parse(self):
-        r = self.segment_data
-        self.segments.append(self.collection(r, 0, name=self.menu_name))
-        for start, count, offset, name in self.save_state_memory_blocks:
-            if count > 0:
-                print(f"creating emulator segment {name} at {hex(start)}:{hex(start + count)}")
-                self.segments.append(DefaultSegment(r[start:start + count], offset, name))
-
-def segment_parser_factory(save_state_memory_blocks):
-    cls = type('EmulatorSegmentParser', (EmulatorSegmentParser, SegmentParser), dict(save_state_memory_blocks = save_state_memory_blocks))
-    return cls
 
 
 class EmulationTimer(wx.Timer):
@@ -48,33 +35,28 @@ class EmulationDocument(DiskImageDocument):
 
     metadata_extension = ".omniemu"
 
-    # Traits
+    def __init__(self, file_metadata, emulator_type, emulator, source_document=None):
+        super().__init__(file_metadata)
+        self.source_document = source_document
+        self.boot_segment = None
+        self.emulator_type = emulator_type
+        self.emulator = emulator
+        self.skip_frames_on_boot = 0
+        self.emu_container = None
+        self.collection = None
 
-    source_document = Any(None)
+        # Update the graphic screen
+        self.priority_level_refresh_event = EventHandler(self)
+        self.emulator_breakpoint_event = EventHandler(self)
+        self.emulator_update_screen_event = EventHandler(self)
+        self.framerate = 1/60.0
+        self.tickrate = 1/60.0
+        self.last_update_time = 0.0
 
-    boot_segment = Any(None)
-
-    emulator_type = Any(Undefined)
-
-    emulator = Any(None)
-
-    skip_frames_on_boot = Int(0)
-
-    # Update the graphic screen
-    emulator_update_screen_event = Event
-
-    framerate = Float(1/60.0)
-
-    tickrate = Float(1/60.0)
-
-    last_update_time = Float(0.0)
-
-    ##### trait default values
-
-    #### object methods
+    #### dunder methods
 
     def __str__(self):
-        return f"EmulationDocument: id={self.document_id}, mime={self.metadata.mime}, {self.metadata.uri}. {self.emulator_type} source={self.source_document}"
+        return f"EmulationDocument: mime={self.mime}, {self.uri}. {self.emulator_type} source={self.source_document}"
 
     @classmethod
     def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False, extra_metadata=None):
@@ -93,7 +75,7 @@ class EmulationDocument(DiskImageDocument):
         emu = emu_cls()
         emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
-        doc = cls(emulator_type=emulator_type, emulator=emu, source_document=source_document)
+        doc = cls(None, emulator_type, emu, source_document)
         if extra_metadata:
             doc.restore_save_points_from_dict(extra_metadata)
         return doc
@@ -174,25 +156,23 @@ class EmulationDocument(DiskImageDocument):
             for i in range(self.skip_frames_on_boot):
                 emu.next_frame()
         self.create_segments()
-        self.start_timer()
+        self.create_timer()
+        # self.start_timer()
 
     def load(self, segment=None):
-        if segment is None:
-            segment = self.source_document.collection
-        emu = self.emulator
-        emu.begin_emulation([], segment)
-        for i in range(self.skip_frames_on_boot):
-            emu.next_frame()
-        self.create_segments()
-        self.start_timer()
+        SawxDocument.load(self, segment)
 
     def create_segments(self):
         emu = self.emulator
-        self.raw_bytes = emu.raw_array
-        self.style = np.zeros([len(self.raw_bytes)], dtype=np.uint8)
-        self.parse_segments([segment_parser_factory(emu.save_state_memory_blocks)])
-        log.debug("Segments after boot: %s" % str(self.segments))
-        self.create_timer()
+        ec = Container(emu.raw_array, force_numpy_data=True)
+        print(f"created container for {emu.raw_array}")
+        for offset, count, origin, name in emu.save_state_memory_blocks:
+            s = Segment(ec, offset, origin, name, length=count)
+            ec.segments.append(s)
+            print(f"added segment {s}")
+        self.collection = Collection(emu.ui_name, container=ec)
+        log.debug(f"Emulator: {emu} collection:{self.collection}")
+        self.load_collection(self.collection, self.file_metadata)
 
     ##### Emulator commands
 
@@ -214,8 +194,8 @@ class EmulationDocument(DiskImageDocument):
         frame_number = self.emulator.status['frame_number']
         log.debug(f"showing frame {frame_number}, breakpoint_id={breakpoint}")
         if breakpoint is None:
-            self.emulator_update_screen_event = True
-            self.priority_level_refresh_event = True
+            self.emulator_update_screen_event(True)
+            self.priority_level_refresh_event(True)
             after = time.time()
             delta = after - now
             if delta > self.framerate:
@@ -228,8 +208,8 @@ class EmulationDocument(DiskImageDocument):
                 next_time = .001
             self.emulation_timer.StartOnce(next_time * 1000)
         else:
-            self.emulator_update_screen_event = True
-            self.priority_level_refresh_event = 100
+            self.emulator_update_screen_event(True)
+            self.priority_level_refresh_event(100)
             print(f"generating breakpoint event: {breakpoint} at cycles={self.emulator.cycles_since_power_on}")
             self.emulator_breakpoint_event = breakpoint
             self.stop_timer()
@@ -240,13 +220,13 @@ class EmulationDocument(DiskImageDocument):
         emu = self.emulator
         self.stop_timer()
         emu.cpu_history_show_next_instruction()
-        self.emulator_update_screen_event = True
-        self.priority_level_refresh_event = 100
+        self.emulator_update_screen_event(True)
+        self.priority_level_refresh_event(100)
 
     def restart_emulator(self):
         print("restart")
         self.start_timer()
-        self.emulator_update_screen_event = True
+        self.emulator_update_screen_event(True)
 
     def debugger_step(self):
         print("stepping")
@@ -273,8 +253,8 @@ class EmulationDocument(DiskImageDocument):
             emu.restore_history(desired)
             frame_number = self.emulator.status['frame_number']
             log.debug(f"showing frame {frame_number}")
-            self.emulator_update_screen_event = True
-            self.priority_level_refresh_event = 100
+            self.emulator_update_screen_event(True)
+            self.priority_level_refresh_event(100)
 
     def history_next(self):
         emu = self.emulator
@@ -286,5 +266,5 @@ class EmulationDocument(DiskImageDocument):
             emu.restore_history(desired)
             frame_number = self.emulator.status['frame_number']
             log.debug(f"showing frame {frame_number}")
-            self.emulator_update_screen_event = True
-            self.priority_level_refresh_event = 100
+            self.emulator_update_screen_event(True)
+            self.priority_level_refresh_event(100)
