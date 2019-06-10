@@ -165,10 +165,13 @@ class SawxAction:
         raise AttributeError("this action has no dynamically created sub-actions")
 
     def append_to_menu(self, menu, id, action_key):
-        menu.Append(id, self.calc_name(action_key))
+        name = self.calc_name(action_key)
+        log.debug(f"append_to_menu: {action_key}: name={name}")
+        menu.Append(id, name)
 
     def append_to_toolbar(self, tb, id, action_key):
         name = self.calc_name(action_key)
+        log.debug(f"append_to_toolbar: {action_key}: name={name}")
         tb.AddTool(id, name, self.calc_bitmap(action_key), wx.NullBitmap, wx.ITEM_NORMAL, name, f"{action_key} id={id} '{name}'", None)
 
     def calc_bitmap(self, action_key):
