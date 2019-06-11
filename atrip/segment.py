@@ -179,6 +179,15 @@ class Segment:
         in_container = self.container_offset[in_here]
         return in_container
 
+    def calc_index_from_other_segment(self, other_segment_index, other_segment):
+        """Convert an index from another segment by mapping it to the container
+        and then looking up the index that corresponds to that container index
+        in this segment.
+        """
+        container_index = other_segment.container_offset[other_segment_index]
+        index = self.reverse_offset[container_index]
+        return index
+
     #### creation
 
     def calc_segments(self):
@@ -325,6 +334,14 @@ class Segment:
         bits = style_bits.get_style_bits(**kwargs)
         matches = (self.style & bits) == bits
         return utils.bool_to_ranges(matches)
+
+    def get_style_indexes(self, **kwargs):
+        """Return a list of start, end pairs that match the specified style
+        """
+        bits = style_bits.get_style_bits(**kwargs)
+        matches = (self.style & bits) == bits
+        w = np.where(matches == True)[0]
+        return w
 
     def update_data_style_from_disasm_type(self):
         self.container.update_data_style_from_disasm_type()
