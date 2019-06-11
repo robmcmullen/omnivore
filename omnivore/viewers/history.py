@@ -5,7 +5,7 @@ import numpy as np
 
 import wx
 
-from atrip import DefaultSegment
+from atrip import Container, Segment
 
 from ..disassembler import flags
 from ..disassembler import dtypes as dd
@@ -16,6 +16,7 @@ from ..editors.linked_base import VirtualTableLinkedBase
 from ..ui.segment_grid import SegmentGridControl
 
 from ..viewer import SegmentViewer
+from .emulator import EmulatorViewerMixin
 
 import logging
 log = logging.getLogger(__name__)
@@ -106,8 +107,8 @@ class InstructionHistoryTable(cg.VirtualTable):
         v = self.virtual_linked_base
         emu = v.emulator
         self.current_num_rows = len(emu.cpu_history)
-        segment = DefaultSegment(emu.cpu_history.entries.view(np.uint8))
-        v.segment = segment
+        c = Container(emu.cpu_history.entries.view(np.uint8), force_numpy_data=True)
+        v.segment = Segment(c, 0)
         print("CPU HISTORY ENTRIES", self.current_num_rows)
         self.init_boundaries()
 
@@ -143,7 +144,7 @@ class InstructionHistoryGridControl(SegmentGridControl):
             log.debug("skipping refresh of hidden %s" % self)
 
 
-class InstructionHistoryViewer(SegmentViewer):
+class InstructionHistoryViewer(EmulatorViewerMixin, SegmentViewer):
     name = "cpuhistory"
 
     ui_name = "Instruction History"
@@ -152,14 +153,15 @@ class InstructionHistoryViewer(SegmentViewer):
 
     control_cls = InstructionHistoryGridControl
 
-    # trait defaults
+    priority_refresh_frame_count = 1
 
     # initialization
 
     @classmethod
     def replace_linked_base(cls, linked_base):
         # the new linked base decouples the cursor here from the other segments
-        segment = DefaultSegment(np.arange(400, dtype=np.uint8))
+        c = Container(np.arange(40, dtype=np.uint8))
+        segment = Segment(c, 0)
         return VirtualTableLinkedBase(editor=linked_base.editor, segment=segment)
 
     def create_post(self):

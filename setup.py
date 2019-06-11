@@ -342,7 +342,7 @@ setup(
             'memory = omnivore.viewers.memory',
             'skeleton = omnivore.viewers.skeleton',
             'disasm = omnivore.viewers.disasm',
-            # 'history = omnivore.viewers.history',
+            'history = omnivore.viewers.history',
         ],
     },
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
