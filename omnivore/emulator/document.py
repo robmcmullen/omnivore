@@ -35,12 +35,19 @@ class EmulationDocument(DiskImageDocument):
 
     metadata_extension = ".omniemu"
 
+    # Only one emulator is allowed at one time for now. I think that's a
+    # livable restriction for now. Besides, most emulators can't run multiple
+    # instances of themselves, e.g. atari800 uses global variables for most of
+    # its state.
+    current_emulator = None
+
     def __init__(self, file_metadata, emulator_type, emulator, source_document=None):
         super().__init__(file_metadata)
         self.source_document = source_document
         self.boot_segment = None
         self.emulator_type = emulator_type
         self.emulator = emulator
+        self.__class__.current_emulator = emulator
         self.skip_frames_on_boot = 0
         self.emu_container = None
         self.collection = None
@@ -60,6 +67,8 @@ class EmulationDocument(DiskImageDocument):
 
     @classmethod
     def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False, extra_metadata=None):
+        if cls.current_emulator is not None:
+            raise RuntimeError(f"Only one emulator at a time, I'm afraid.\n\nYou currently have an {cls.current_emulator.ui_name} running.")
         try:
             emu_cls = find_emulator(emulator_type)
         except UnknownEmulatorError:
@@ -78,6 +87,7 @@ class EmulationDocument(DiskImageDocument):
         doc = cls(None, emulator_type, emu, source_document)
         if extra_metadata:
             doc.restore_save_points_from_dict(extra_metadata)
+        cls.current_emulator = emu
         return doc
 
     @property
