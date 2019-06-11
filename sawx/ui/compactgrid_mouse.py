@@ -77,10 +77,6 @@ class Caret:
         return self.anchor_start >= (0,0)
 
     @property
-    def num_selected(self):
-        return self.anchor_end - self.anchor_start
-
-    @property
     def range(self):
         if not self.has_selection:
             raise ValueError("No selection")
