@@ -26,9 +26,7 @@ class compress_select(ViewerSubAction):
         compressor_name = self.action_list_id
         compressor = find_compressor_by_name(compressor_name)
         log.debug(f"compressing with {compressor_name}")
-        ranges = self.viewer.control.get_selected_ranges()
-        indexes = self.viewer.range_processor(ranges)
-        data = self.viewer.segment[indexes].copy()
+        data = self.viewer.copy_data_from_selections()
         compressed = compressor.calc_packed_data(data)
         log.debug(f"data size={len(data)}, compressed={len(compressed)}")
         container = Container(compressed)

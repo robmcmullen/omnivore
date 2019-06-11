@@ -528,6 +528,20 @@ class SegmentViewer:
         # (rectangular selection) will need to be defined in the subclass
         segment.set_style_ranges(selected_ranges, selected=True)
 
+    def copy_data_from_selected_ranges(self):
+        ranges = self.control.get_selected_ranges()
+        log.debug(f"ranges: {ranges}")
+        indexes = self.range_processor(ranges)
+        log.debug(f"indexes: {list(indexes[0:1000])}")
+        data = self.segment[indexes].copy()
+        return data
+
+    def copy_data_from_selections(self):
+        indexes = self.segment.get_style_indexes(selected=True)
+        log.debug(f"indexes: {list(indexes[0:1000])}")
+        data = self.segment[indexes].copy()
+        return data
+
     ##### Clipboard & Copy/Paste
 
     supported_clipboard_data = [

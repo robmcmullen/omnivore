@@ -170,6 +170,13 @@ class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
     def validate_width(self, width):
         return 560
 
+    def copy_data_from_selections(self):
+        segment = self.control.table.segment
+        indexes = segment.get_style_indexes(selected=True)
+        data = segment[indexes].copy()
+        return data
+
+
 class HiresPage2Viewer(HiresPage1Viewer):
     name = "hgr2"
 
