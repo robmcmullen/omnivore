@@ -162,7 +162,7 @@ class CPU6502Table(sg.SegmentVirtualTable):
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.cpu_state
         self.compute_col_lookup(data.dtype)
-        return data, data
+        return data, None
 
     def compute_col_lookup(self, dtype):
         print(dtype)
@@ -183,7 +183,7 @@ class CPU6502Table(sg.SegmentVirtualTable):
             text = self.col_labels[col] if val & self.p_bit[col] else "-"
         else:
             text = "%04x" % val
-        return text, 0
+        return text, self.style[col]
 
     def get_label_at_index(self, index):
         return "cpu"
@@ -240,7 +240,7 @@ class DtypeTable(sg.SegmentVirtualTable):
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
         print((data.dtype.names))
-        return data, data
+        return data, None
 
     def create_row_labels(self):
         # already generated above
@@ -263,9 +263,12 @@ class DtypeTable(sg.SegmentVirtualTable):
                 text = f"{val}"
             elif col == 2:
                 text = f"{val:08b}"
+            index, _ = self.get_index_range(row, col)
+            style = self.style[index]
         except TypeError:
             text = "..."
-        return text, 0
+            style = 0
+        return text, style
 
     def get_label_at_index(self, index):
         return self.emulator_dtype_name

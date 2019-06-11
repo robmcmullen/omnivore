@@ -92,6 +92,14 @@ class InstructionHistoryTable(cg.VirtualTable):
         style = 0
         return text, style
 
+    def clear_selected_style(self):
+        # self.style[:] &= (0xff ^ selected_bit_mask)
+        pass
+
+    def set_selected_index_range(self, index1, index2):
+        # self.style[index1:index2] |= selected_bit_mask
+        pass
+
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         emu = self.virtual_linked_base.emulator
         self.visible_history_start_row = start_row

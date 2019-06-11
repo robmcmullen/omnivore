@@ -1,5 +1,7 @@
 import wx
 
+import numpy as np
+
 from sawx.ui import compactgrid as cg
 from sawx.keybindings import KeyBindingControlMixin
 from sawx.ui.mouse_mode import MouseMode
@@ -52,12 +54,20 @@ class SegmentVirtualTable(cg.HexTable):
         data, style = self.get_data_style_view(linked_base)
         num_cols = self.calc_num_cols()
         cg.HexTable.__init__(self, data, style, num_cols)
+        if style is None:
+            self.style = np.zeros(self.last_valid_index, dtype=np.uint8)
 
     @property
     def segment(self):
         return self.linked_base.segment
 
     def get_data_style_view(self, linked_base):
+        """Subclasses implement this to return arrays to be used for data and
+        style.
+
+        If style is returned as None, a style array will be created based on
+        the largest index of the data.
+        """
         raise NotImplementedError
 
     def calc_num_cols(self):
