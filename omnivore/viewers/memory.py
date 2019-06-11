@@ -9,6 +9,7 @@ from sawx.ui import compactgrid as cg
 
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from ..viewer import SegmentViewer
+from .emulator import EmulatorViewerMixin
 from . import actions as va
 from . import bitmap as b
 from ..arch.bitmap_renderers import MemoryAccessMap
@@ -63,7 +64,7 @@ class MemoryAccessGridControl(b.BitmapGridControl):
         return actions
 
 
-class MemoryAccessViewer(SegmentViewer):
+class MemoryAccessViewer(EmulatorViewerMixin, SegmentViewer):
     name = "mem"
 
     ui_name = "Memory Access"
