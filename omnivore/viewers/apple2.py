@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import wx
 
-from atrip import style_bits
+from atrip import Segment, style_bits
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
@@ -35,7 +35,7 @@ class HiresLineRenderer(b.BitmapLineRenderer):
 
         background = (bw == 0)
         color1 = (bw == 1)
-        highlight = (style_per_pixel & selected_bit_mask) == selected_bit_mask
+        highlight = (style_per_pixel & style_bits.selected_bit_mask) == style_bits.selected_bit_mask
         rgb = np.empty([1, subset_count, 3], dtype=np.uint8)
         rgb[0,background & highlight] = h_colors[0]
         rgb[0,background & np.logical_not(highlight)] = (0, 0, 0)
@@ -65,40 +65,19 @@ class HiresTable(SegmentVirtualTable):
     segment_ui_name = "Apple ][ Hi-res"
 
     def get_data_style_view(self, linked_base):
-        byte_order = self.calc_byte_order(linked_base)
-        self.apple2_segment = linked_base.segment.create_subset(byte_order, self.segment_name, self.segment_ui_name)
+        s = linked_base.segment
+        byte_order = self.calc_byte_order(s)
+        self.apple2_segment = Segment(s, byte_order, name=self.segment_name, verbose_name=self.segment_ui_name)
         data = self.apple2_segment.data
         style = self.apple2_segment.style
         return data, style
 
-    def calc_byte_order(self, linked_base):
-        byte_order = a2.hires_byte_order(len(linked_base.segment))
-        return byte_order
+    def calc_byte_order(self, segment):
+        byte_order = a2.hires_byte_order(len(segment))
+        return byte_order[0:len(segment)]
 
     def calc_num_cols(self):
         return 40
-
-    def get_index_of_row(self, line):
-        return self.row_offset_for_line[line]
-
-    def get_label_at_index(self, index):
-        return(str(index // 40))
-
-    def get_index_range(self, row, col):
-        index = self.row_offset_for_line[row] + col
-        return index, index + 1
-
-    def is_index_valid(self, index):
-        try:
-            real_index = self.apple2_segment.get_index_from_base_index(index)
-        except IndexError:
-            return False
-        else:
-            return True
-
-    def index_to_row_col(self, index):
-        real_index = self.apple2_segment.get_index_from_base_index(index)
-        return divmod(real_index + self.start_offset, self.items_per_row)
 
 
 class HiresGridControl(b.BitmapGridControl):

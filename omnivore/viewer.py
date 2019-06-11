@@ -210,6 +210,7 @@ class SegmentViewer:
         # e.g. the Apple 2 hires and text modes. If one is needed, create and
         # return it here.
         for s in editor.document.segments:
+            log.debug(f"calc_segment_specific_linked_base: checking {s} for specific display in {cls.ui_name}")
             if cls.is_segment_specific_for_display(s):
                 linked_base = LinkedBase(editor=editor)
                 linked_base.find_segment(s, data_model_changed=False)
