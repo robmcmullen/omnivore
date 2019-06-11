@@ -286,7 +286,6 @@ class SawxFrame(wx.Frame):
             yield index, control, control.editor
 
     def close_all_tabs(self):
-        self.activate_timer(False)
         editors = list(self.editors)
         for editor in editors:
             log.debug(f"Closing {editor}")

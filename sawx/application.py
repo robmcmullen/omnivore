@@ -209,15 +209,25 @@ class SawxApp(wx.App):
     #### Shutdown
 
     def quit(self):
+        frames_with_unsaved_stuff = []
+        for frame in wx.GetTopLevelWindows():
+            try:
+                if frame.is_dirty:
+                    frames_with_unsaved_stuff.append(frame)
+            except AttributeError as e:
+                pass
+        if frames_with_unsaved_stuff:
+            frame = frames_with_unsaved_stuff[0]
+            if not frame.confirm("There is unsaved data.\n\nQuit anyway?", "Confirm Loss of Unsaved Data"):
+                return
+
+        self.activate_timer(False)
         for frame in wx.GetTopLevelWindows():
             log.debug(f"closing frame {frame}")
             try:
-                if frame.is_dirty:
-                    log.warning(f"frame {frame} has unsaved changes")
+                frame.close_all_tabs()
             except AttributeError as e:
                 log.error(f"error {e} closing {frame}")
-            else:
-                frame.close_all_tabs()
         self.ExitMainLoop()
 
     #### Application information
