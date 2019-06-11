@@ -144,8 +144,13 @@ class SawxAction:
         return action_key
 
     def perform_as_menu_item(self, action_key):
+        # NOTE: call this using a CallAfter
         log.debug(f"performing as menu item: {action_key}")
-        wx.CallAfter(self.perform, action_key)
+        try:
+            self.perform(action_key)
+        except RuntimeError as e:
+            log.error(e)
+            self.editor.frame.error(str(e))
 
     def perform_as_keystroke(self, action_key):
         log.debug(f"performing as keystroke: {action_key}")
@@ -153,6 +158,9 @@ class SawxAction:
             self.perform(action_key)
         except AttributeError as e:
             raise errors.ProcessKeystrokeNormally(e)
+        except RuntimeError as e:
+            log.error(e)
+            self.editor.frame.error(str(e))
 
     def perform(self, action_key):
         raise AttributeError(f"no perform method defined for {self}")

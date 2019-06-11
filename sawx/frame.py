@@ -357,7 +357,7 @@ class SawxFrame(wx.Frame):
         if action is not None:
             log.debug(f"on_menu: action_key={action_key}, action={action}")
             try:
-                action.perform_as_menu_item(action_key)
+                wx.CallAfter(action.perform_as_menu_item, action_key)
             except AttributeError:
                 log.debug(f"on_menu: no perform method for {action}")
         evt.Skip()
