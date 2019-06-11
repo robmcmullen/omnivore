@@ -66,7 +66,7 @@ class DrawTextImageCache(object):
 
     def draw_cached_text(self, parent, dc, rect, text, style):
         k = (text, style, rect.width, rect.height)
-        draw_log.debug(str(k))
+        # draw_log.debug(str(k))
         try:
             bmp = self.cache[k]
         except KeyError:
@@ -147,7 +147,7 @@ class DrawTextImageCache(object):
         dc.DestroyClippingRegion()
 
     def draw_item(self, parent, dc, rect, text, style, col_widths, col):
-        draw_log.debug(str((text, rect)))
+        # draw_log.debug(str((text, rect)))
         for i, c in enumerate(text):
             s = style[i]
             self.draw_text(parent, dc, rect, c, s)
@@ -184,9 +184,9 @@ class HexByteImageCache(DrawTextImageCache):
         dc.DrawBitmap(bmp, rect.x, rect.y)
 
     def draw_item(self, parent, dc, rect, data, style, col_widths, col):
-        draw_log.debug(str((rect, data)))
+        # draw_log.debug(str((rect, data)))
         for i, c in enumerate(data):
-            draw_log.debug(str((i, c, rect)))
+            # draw_log.debug(str((i, c, rect)))
             self.draw_text(parent, dc, rect, c, style[i])
             rect.x += col_widths[col + i]
 
