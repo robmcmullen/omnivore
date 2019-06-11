@@ -263,6 +263,12 @@ class SegmentViewer:
         self.control.segment_viewer = None
         self.control = None
 
+    def lost_focus(self):
+        try:
+            self.control.end_editing()
+        except AttributeError:
+            pass
+
     ##### Initialization and serialization
 
     def create_post(self):

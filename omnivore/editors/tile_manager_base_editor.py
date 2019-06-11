@@ -372,11 +372,14 @@ class TileManagerBase(SawxEditor):
         viewer.update_toolbar()
 
     def set_focused_viewer(self, viewer):
-        self.focused_viewer = viewer
-        self.focused_viewer_changed_event(viewer)
-        self.caret_handler = viewer.linked_base
-        viewer.linked_base.segment_selected_event(viewer.linked_base.segment_uuid)
-        self.set_menu_for_viewer(viewer)
+        if self.focused_viewer != viewer:
+            if self.focused_viewer is not None:
+                self.focused_viewer.lost_focus()
+            self.focused_viewer = viewer
+            self.focused_viewer_changed_event(viewer)
+            self.caret_handler = viewer.linked_base
+            viewer.linked_base.segment_selected_event(viewer.linked_base.segment_uuid)
+            self.set_menu_for_viewer(viewer)
 
     def set_menu_for_viewer(self, viewer):
         """Update menubar/toolbar for the current viewer.
