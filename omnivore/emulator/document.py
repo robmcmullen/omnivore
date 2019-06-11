@@ -165,14 +165,12 @@ class EmulationDocument(DiskImageDocument):
     def create_segments(self):
         emu = self.emulator
         ec = Container(emu.raw_array, force_numpy_data=True)
-        print(f"created container for {emu.raw_array}")
         for offset, count, origin, name in emu.save_state_memory_blocks:
             s = Segment(ec, offset, origin, name, length=count)
             ec.segments.append(s)
-            print(f"added segment {s}")
-        self.collection = Collection(emu.ui_name, container=ec)
-        log.debug(f"Emulator: {emu} collection:{self.collection}")
-        self.load_collection(self.collection, self.file_metadata)
+        collection = Collection(emu.ui_name, container=ec, guess=False)
+        log.debug(f"Emulator: {emu} collection:{collection.verbose_info}")
+        self.load_collection(collection, self.file_metadata)
 
     ##### Emulator commands
 
