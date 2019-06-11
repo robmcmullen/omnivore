@@ -72,6 +72,10 @@ class HiresTable(SegmentVirtualTable):
         style = self.apple2_segment.style
         return data, style
 
+    @property
+    def segment(self):
+        return self.apple2_segment
+
     def calc_byte_order(self, segment):
         byte_order = a2.hires_byte_order(len(segment))
         return byte_order[0:len(segment)]
