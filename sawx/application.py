@@ -173,9 +173,10 @@ class SawxApp(wx.App):
 
     def on_idle(self, evt):
         if self.active_frame is not None:
-            wx.CallAfter(self.active_frame.active_editor.idle_when_active)
             t = time.time()
             if t > self.last_clipboard_check_time + self.clipboard_check_interval:
+                log.debug("checking clipboard")
+                wx.CallAfter(self.active_frame.active_editor.idle_when_active)
                 wx.CallAfter(self.active_frame.sync_can_paste)
                 self.last_clipboard_check_time = time.time()
                 if self.debug_show_focused:
