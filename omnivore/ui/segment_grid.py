@@ -339,7 +339,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     ##### editing
 
     def verify_keycode_can_start_edit(self, c):
-        return True
+        return False
 
     def mouse_event_in_edit_cell(self, evt):
         r, c, _ = self.get_row_col_from_event(evt)
