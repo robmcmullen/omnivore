@@ -179,7 +179,7 @@ class SawxFrame(wx.Frame):
             self.sync_can_paste()
         log.debug("sync_active_tab: sync done")
 
-    def add_editor(self, editor):
+    def add_editor(self, editor, args=None):
         editor.frame = self
         control = editor.create_control(self.notebook)
         editor.control = control
@@ -190,6 +190,7 @@ class SawxFrame(wx.Frame):
             self.close_editor(self.active_editor)
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
+        editor.show(args)
 
     def add_document(self, document, current_editor=None, args=None):
         if current_editor is not None and current_editor.can_edit_document(document):
@@ -199,8 +200,7 @@ class SawxFrame(wx.Frame):
         new_editor = editor_cls(document)
         log.debug(f"load_file: Created editor {new_editor}")
         # have to add before load so the control exists
-        self.add_editor(new_editor)
-        new_editor.show(args)
+        self.add_editor(new_editor, args)
         return new_editor
 
     def close_editor(self, editor, remove=True, quit=False):
