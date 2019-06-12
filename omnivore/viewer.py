@@ -19,7 +19,7 @@ from . import clipboard_commands
 import logging
 log = logging.getLogger(__name__)
 caret_log = logging.getLogger("caret")
-# caret_log.setLevel(logging.DEBUG)
+event_log = logging.getLogger("event")
 
 
 known_viewers = {}
@@ -348,24 +348,25 @@ class SegmentViewer:
 
     def on_sync_caret_to_index(self, evt):
         flags = evt.flags
-        caret_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+        event_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if self.control == flags.source_control or self.control == flags.advance_caret_position_in_control:
-            caret_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
+            event_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
         else:
-            caret_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
+            event_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
             self.sync_caret(flags)
 
     def sync_caret(self, flags):
         if self.has_caret:
             other = flags.sync_caret_from_control
             if other:
-                print("Converting carets in {self.ui_name} from {other.ui_name}")
+                event_log.debug(f"Converting carets in {self.ui_name} from {other.segment_viewer.ui_name}")
                 self.control.caret_handler.convert_carets_from(other.caret_handler)
                 self.control.keep_current_caret_on_screen(flags)
+                flags.refreshed_as_side_effect.add(self.control)
             else:
-                caret_log.debug(f"sync_caret: caret position/selection unchanged")
+                event_log.debug(f"sync_caret: caret position/selection unchanged")
         else:
-            caret_log.debug(f"sync_caret: {self.ui_name} refreshed as side effect")
+            event_log.debug(f"sync_caret: {self.ui_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
 
     @property
@@ -389,6 +390,7 @@ class SegmentViewer:
         pass
 
     def on_recalc_view(self, evt):
+        event_log.debug(f"on_recalc_view: {self.ui_name}")
         self.recalc_view()
 
     def recalc_view(self):
@@ -402,6 +404,9 @@ class SegmentViewer:
         self.control.set_caret_index(control, index, bit)
 
     def on_refresh_view(self, evt):
+        event_log.debug(f"on_refresh_view: {self.ui_name} flags={evt.flags}")
+        if self.control in evt.flags.refreshed_as_side_effect:
+            event_log.debug(f"on_refresh_view: skipping already refreshed {self.ui_name}")
         self.refresh_view(evt.flags)
 
     def refresh_view(self, flags):

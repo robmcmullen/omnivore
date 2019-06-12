@@ -24,6 +24,7 @@ from .. import clipboard_helpers
 import logging
 log = logging.getLogger(__name__)
 clipboard_log = logging.getLogger("clipboard")
+event_log = logging.getLogger("event")
 
 
 class DummyLinkedBase(object):
@@ -600,7 +601,7 @@ class ByteEditor(TileManagerBase):
         """Perform the UI updates given the StatusFlags or BatchFlags flags
         
         """
-        log.debug("processing flags: %s" % str(flags))
+        event_log.debug(f"process_flags: {self.ui_name}, flags={flags}")
         d = self.document
         visible_range = False
 
@@ -621,25 +622,25 @@ class ByteEditor(TileManagerBase):
             self.linked_base.sync_caret_to_index_event(flags=flags)
 
         if flags.data_model_changed:
-            log.debug(f"process_flags: data_model_changed")
+            event_log.debug(f"process_flags: data_model_changed")
             d.data_model_changed_event(flags=flags)
             d.change_count += 1
             flags.rebuild_ui = True
         elif flags.byte_values_changed:
-            log.debug(f"process_flags: byte_values_changed")
+            event_log.debug(f"process_flags: byte_values_changed")
             d.change_count += 1
             d.byte_values_changed_event(flags=flags)
             flags.refresh_needed = True
         elif flags.byte_style_changed:
-            log.debug(f"process_flags: byte_style_changed")
+            event_log.debug(f"process_flags: byte_style_changed")
             d.change_count += 1
             d.byte_style_changed_event(flags=flags)
             flags.rebuild_ui = True
             flags.refresh_needed = True
 
         if flags.rebuild_ui:
-            log.debug(f"process_flags: rebuild_ui")
+            event_log.debug(f"process_flags: rebuild_ui")
             d.recalc_event(flags=flags)
         if flags.refresh_needed:
-            log.debug(f"process_flags: refresh_needed")
+            event_log.debug(f"process_flags: refresh_needed")
             d.recalc_event(flags=flags)
