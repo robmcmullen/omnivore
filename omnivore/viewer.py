@@ -163,6 +163,17 @@ class SegmentViewer:
         return self.linked_base.segment
 
     @property
+    def caret_conversion_segment(self):
+        """If the segment used to display the carets and selection is different
+        than the segment in the linked base, supply the alternate segment here.
+
+        This can happen when the control uses computed data from the current
+        segment, or uses an alternate ordering from the current segment. See
+        `HiresPage1Viewer` for an example.
+        """
+        return self.linked_base.segment
+
+    @property
     def editor(self):
         return self.linked_base.editor
 
@@ -181,12 +192,6 @@ class SegmentViewer:
     @property
     def is_focused_viewer(self):
         return self.linked_base.editor.focused_viewer == self
-
-    @property
-    def can_copy(self):
-        if self.has_caret:
-            return self.control.caret_handler.has_selection
-        return False
 
     ##### Class methods
 
@@ -542,6 +547,14 @@ class SegmentViewer:
         data = self.segment[indexes].copy()
         return data
 
+    def update_current_selection(self, caret_handler):
+        if caret_handler.has_selection:
+            message = self.linked_base.set_current_selection(caret_handler)
+        else:
+            self.linked_base.clear_current_selection()
+            message = ""
+        self.editor.frame.status_message(message)
+
     ##### Clipboard & Copy/Paste
 
     supported_clipboard_data = [
@@ -563,28 +576,14 @@ class SegmentViewer:
 
     ##### Status info and text utilities
 
-    def get_selected_status_message(self):
-        carets = self.linked_base.carets_with_selection
-        if len(carets) == 0:
-            return ""
-        if len(carets) == 1:
-            c = carets[0]
-            num = c.num_selected
-            if num == 1: # python style, 4:5 indicates a single byte
-                return "[1 byte selected %s]" % self.get_label_of_selections(carets)
-            elif num > 0:
-                return "[%d bytes selected %s]" % (num, self.get_label_of_selections(carets))
-        else:
-            return "[%d ranges selected]" % (len(carets))
-
     def show_status_message(self, msg):
         s = self.get_selected_status_message()
         if s:
             msg = "%s %s" % (msg, s)
         self.frame.status_message(msg)
 
-    def get_label_at_index(self, index):
-        return self.segment.label(index)
+    def get_address_at_index(self, index):
+        return self.segment.address(index)
 
     def get_label_of_selections(self, carets):
         labels = []

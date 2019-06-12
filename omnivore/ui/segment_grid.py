@@ -7,6 +7,7 @@ from sawx.keybindings import KeyBindingControlMixin
 from sawx.ui.mouse_mode import MouseMode
 from sawx.utils.command import DisplayFlags
 from sawx.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
+from .selection import CurrentSelection
 from ..arch.disasm import get_style_name
 # from sawx.framework import actions as fa
 # from ..byte_edit import actions as ba
@@ -145,6 +146,9 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     def calc_default_table(self, linked_base):
         return self.default_table_cls(linked_base, self.items_per_row)
 
+    def calc_caret_handler(self):
+        return CurrentSelection(self)
+
     def recalc_view(self):
         # just recreate everything. If a subclass wants something different,
         # let it do it itself.
@@ -220,6 +224,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
 
         log.debug(f"\n\ncommit before: {self.caret_handler.carets} flags={flags}")
         linked_base = self.segment_viewer.linked_base
+        self.segment_viewer.update_current_selection(self.caret_handler)
         self.mouse_mode.refresh_ranges(self.caret_handler)
         if flags.viewport_origin is not None:
             self.move_viewport_origin(flags.viewport_origin)

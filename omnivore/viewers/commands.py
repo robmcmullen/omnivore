@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..commands import SetRangeCommand, SetRangeValueCommand, ChangeStyleCommand, SetRangeValueModifyIndexesCommand
+from ..commands import SetSelectionCommand, SetRangeCommand, ChangeStyleCommand, SetRangeValueModifyIndexesCommand
 from sawx.utils.permute import bit_reverse_table
 
 from ..disassembler import miniasm
@@ -9,33 +9,33 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class SetValueCommand(SetRangeValueCommand):
+class SetValueCommand(SetSelectionCommand):
     short_name = "set_value"
     ui_name = "Set Value"
 
 
-class ZeroCommand(SetRangeValueCommand):
+class ZeroCommand(SetSelectionCommand):
     short_name = "zero"
     ui_name = "Zero Bytes"
 
-    def __init__(self, segment, ranges):
-        SetRangeValueCommand.__init__(self, segment, ranges, 0)
+    def __init__(self, segment, current_selection):
+        super().__init__(segment, current_selection, 0)
 
 
-class FFCommand(SetRangeValueCommand):
+class FFCommand(SetSelectionCommand):
     short_name = "ff"
     ui_name = "FF Bytes"
 
-    def __init__(self, segment, ranges):
-        SetRangeValueCommand.__init__(self, segment, ranges, 0xff)
+    def __init__(self, segment, current_selection):
+        super().__init__(segment, current_selection, 0xff)
 
 
-class NOPCommand(SetRangeValueCommand):
+class NOPCommand(SetSelectionCommand):
     short_name = "nop"
     ui_name = "NOP Bytes"
 
 
-class SetHighBitCommand(SetRangeCommand):
+class SetHighBitCommand(SetSelectionCommand):
     short_name = "set_high_bit"
     ui_name = "Set High Bit"
 
@@ -43,7 +43,7 @@ class SetHighBitCommand(SetRangeCommand):
         return np.bitwise_or(orig, 0x80)
 
 
-class ClearHighBitCommand(SetRangeCommand):
+class ClearHighBitCommand(SetSelectionCommand):
     short_name = "clear_high_bit"
     ui_name = "Clear High Bit"
 
@@ -51,7 +51,7 @@ class ClearHighBitCommand(SetRangeCommand):
         return np.bitwise_and(orig, 0x7f)
 
 
-class BitwiseNotCommand(SetRangeCommand):
+class BitwiseNotCommand(SetSelectionCommand):
     short_name = "bitwise_not"
     ui_name = "Bitwise NOT"
 
@@ -59,7 +59,7 @@ class BitwiseNotCommand(SetRangeCommand):
         return np.invert(orig)
 
 
-class OrWithCommand(SetRangeValueCommand):
+class OrWithCommand(SetSelectionCommand):
     short_name = "or_value"
     ui_name = "OR With"
 
@@ -67,7 +67,7 @@ class OrWithCommand(SetRangeValueCommand):
         return np.bitwise_or(orig, self.data)
 
 
-class AndWithCommand(SetRangeValueCommand):
+class AndWithCommand(SetSelectionCommand):
     short_name = "and_value"
     ui_name = "AND With"
 
@@ -75,7 +75,7 @@ class AndWithCommand(SetRangeValueCommand):
         return np.bitwise_and(orig, self.data)
 
 
-class XorWithCommand(SetRangeValueCommand):
+class XorWithCommand(SetSelectionCommand):
     short_name = "xor_value"
     ui_name = "XOR With"
 
@@ -83,7 +83,7 @@ class XorWithCommand(SetRangeValueCommand):
         return np.bitwise_xor(orig, self.data)
 
 
-class LeftShiftCommand(SetRangeCommand):
+class LeftShiftCommand(SetSelectionCommand):
     short_name = "left_shift"
     ui_name = "Left Shift"
 
@@ -91,7 +91,7 @@ class LeftShiftCommand(SetRangeCommand):
         return np.left_shift(orig, 1)
 
 
-class RightShiftCommand(SetRangeCommand):
+class RightShiftCommand(SetSelectionCommand):
     short_name = "right_shift"
     ui_name = "Right Shift"
 
@@ -99,7 +99,7 @@ class RightShiftCommand(SetRangeCommand):
         return np.right_shift(orig, 1)
 
 
-class LeftRotateCommand(SetRangeCommand):
+class LeftRotateCommand(SetSelectionCommand):
     short_name = "left_rotate"
     ui_name = "Left Rotate"
 
@@ -108,7 +108,7 @@ class LeftRotateCommand(SetRangeCommand):
         return np.bitwise_or(np.left_shift(orig, 1), rotated)
 
 
-class RightRotateCommand(SetRangeCommand):
+class RightRotateCommand(SetSelectionCommand):
     short_name = "right_rotate"
     ui_name = "Right Rotate"
 
@@ -117,7 +117,7 @@ class RightRotateCommand(SetRangeCommand):
         return np.bitwise_or(np.right_shift(orig, 1), rotated)
 
 
-class ReverseBitsCommand(SetRangeCommand):
+class ReverseBitsCommand(SetSelectionCommand):
     short_name = "reverse_bits"
     ui_name = "Reverse Bits"
 
@@ -125,7 +125,7 @@ class ReverseBitsCommand(SetRangeCommand):
         return bit_reverse_table[orig]
 
 
-class RandomBytesCommand(SetRangeCommand):
+class RandomBytesCommand(SetSelectionCommand):
     short_name = "random_bytes"
     ui_name = "Random Bytes"
 
@@ -133,7 +133,7 @@ class RandomBytesCommand(SetRangeCommand):
         return np.random.randint(0, 256, len(orig), dtype=np.uint8)
 
 
-class RampUpCommand(SetRangeValueCommand):
+class RampUpCommand(SetSelectionCommand):
     short_name = "ramp_up"
     ui_name = "Ramp Up"
 
@@ -152,7 +152,7 @@ class RampUpCommand(SetRangeValueCommand):
         return np.arange(first, last, step)
 
 
-class RampDownCommand(SetRangeValueCommand):
+class RampDownCommand(SetSelectionCommand):
     short_name = "ramp_down"
     ui_name = "Ramp Down"
 
@@ -170,7 +170,7 @@ class RampDownCommand(SetRangeValueCommand):
         return np.arange(first, last, step)
 
 
-class AddValueCommand(SetRangeValueCommand):
+class AddValueCommand(SetSelectionCommand):
     short_name = "add_value"
     ui_name = "Add"
 
@@ -178,7 +178,7 @@ class AddValueCommand(SetRangeValueCommand):
         return orig + self.data
 
 
-class SubtractValueCommand(SetRangeValueCommand):
+class SubtractValueCommand(SetSelectionCommand):
     short_name = "subtract_value"
     ui_name = "Subtract"
 
@@ -186,7 +186,7 @@ class SubtractValueCommand(SetRangeValueCommand):
         return orig - self.data
 
 
-class SubtractFromCommand(SetRangeValueCommand):
+class SubtractFromCommand(SetSelectionCommand):
     short_name = "subtract_from"
     ui_name = "Subtract From"
 
@@ -194,7 +194,7 @@ class SubtractFromCommand(SetRangeValueCommand):
         return self.data - orig
 
 
-class MultiplyCommand(SetRangeValueCommand):
+class MultiplyCommand(SetSelectionCommand):
     short_name = "multiply"
     ui_name = "Multiply"
 
@@ -202,7 +202,7 @@ class MultiplyCommand(SetRangeValueCommand):
         return orig * self.data
 
 
-class DivideByCommand(SetRangeValueCommand):
+class DivideByCommand(SetSelectionCommand):
     short_name = "divide"
     ui_name = "Divide By"
 
@@ -210,7 +210,7 @@ class DivideByCommand(SetRangeValueCommand):
         return orig // self.data
 
 
-class DivideFromCommand(SetRangeValueCommand):
+class DivideFromCommand(SetSelectionCommand):
     short_name = "divide_from"
     ui_name = "Divide From"
 
@@ -218,7 +218,7 @@ class DivideFromCommand(SetRangeValueCommand):
         return self.data // orig
 
 
-class ReverseSelectionCommand(SetRangeCommand):
+class ReverseSelectionCommand(SetSelectionCommand):
     short_name = "reverse_selection"
     ui_name = "Reverse Selection"
 
@@ -226,7 +226,7 @@ class ReverseSelectionCommand(SetRangeCommand):
         return orig[::-1,...]
 
 
-class ReverseGroupCommand(SetRangeValueCommand):
+class ReverseGroupCommand(SetSelectionCommand):
     short_name = "reverse_group"
     ui_name = "Reverse In Groups"
 

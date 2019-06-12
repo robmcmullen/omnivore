@@ -26,16 +26,14 @@ class IndexRangeAction(ViewerAction):
         return self.cmd.ui_name
 
     def calc_enabled(self, action_key):
-        state = self.viewer.control.caret_handler.has_selection
-        return self.viewer.control.caret_handler.has_selection
+        return self.editor.can_copy
 
     def get_cmd(self, editor, segment, ranges):
         return self.cmd(segment, ranges)
 
     def perform(self, action_key):
         e = self.editor
-        ranges = self.viewer.control.get_selected_ranges()
-        cmd = self.get_cmd(e, e.segment, ranges)
+        cmd = self.get_cmd(e, e.segment, e.current_selection)
         e.process_command(cmd)
 
 

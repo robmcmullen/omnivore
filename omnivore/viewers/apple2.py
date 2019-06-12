@@ -176,6 +176,10 @@ class HiresPage1Viewer(AppleSegmentChecker, b.BitmapViewer):
         data = segment[indexes].copy()
         return data
 
+    @property
+    def caret_conversion_segment(self):
+        return self.control.table.segment
+
 
 class HiresPage2Viewer(HiresPage1Viewer):
     name = "hgr2"

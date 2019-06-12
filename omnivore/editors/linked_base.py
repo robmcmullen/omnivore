@@ -55,6 +55,7 @@ class LinkedBase:
         self.restore_session_segment_uuid = None
         self.has_origin = False
         self.segment_view_params = {}
+        self.current_selection = None
 
         self.ensure_visible_event = EventHandler(self)
         self.sync_caret_to_index_event = EventHandler(self)
@@ -247,6 +248,19 @@ class LinkedBase:
     #     self.segment.clear_style_bits(selected=True)
 
     #### selection utilities
+
+    @property
+    def can_copy(self):
+        return self.current_selection is not None
+
+    def set_current_selection(self, caret_handler):
+        print(f"set_current_selection: {caret_handler}")
+        self.current_selection = caret_handler
+        return caret_handler.get_selected_status_message()
+
+    def clear_current_selection(self):
+        print(f"clear_current_selection")
+        self.current_selection = None
 
     def adjust_selection(self, old_segment):
         """Adjust the selection of the current segment so that it is limited to the
