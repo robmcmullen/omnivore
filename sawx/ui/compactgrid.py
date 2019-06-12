@@ -927,6 +927,10 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         self.scroll_timer.Start(self.scroll_delay, True)
 
     def ensure_visible(self, row, cell, flags):
+        """Make sure a `row`, `cell` is visible in the grid.
+
+        Returns boolean to indicate if the position was already visible.
+        """
         sx, sy = self.parent.GetViewStart()
         if row < sy:
             sy2 = row
@@ -943,7 +947,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         caret_log.debug(f"ensure_visible: row={row}, cell={cell} sx={sx} sy={sy} sx2={sx2} sy2={sy2} fully_vis: {self.fully_visible_rows}, {self.fully_visible_cells}")
         if sx == sx2 and sy == sy2:
             # print("Already visible! Not moving")
-            return
+            return True
         caret_log.debug("ensure_visible: before=%d,%d after=%d,%d" % (sy, sx, sy2, sx2))
         if self.parent.automatic_refresh:
             self.parent.move_viewport_origin((sy2, sx2))
@@ -951,6 +955,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
             flags.source_control = self.parent
             flags.viewport_origin = (sy2, sx2)
             caret_log.debug("Moving viewport origin to %d,%d; flags=%s" % (sy2, sx2, flags))
+        return False
 
     def process_motion_scroll(self, row, cell, flags):
         if row < 0:
@@ -1746,15 +1751,15 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
 
     def keep_index_on_screen(self, index, flags):
         row, col = self.table.index_to_row_col(index)
-        self.main.ensure_visible(row, col, flags)
+        return self.main.ensure_visible(row, col, flags)
 
     def keep_caret_on_screen(self, caret, flags):
         cell = self.line_renderer.col_to_cell(*caret.rc)
-        self.main.ensure_visible(caret.rc[0], cell, flags)
+        return self.main.ensure_visible(caret.rc[0], cell, flags)
 
     def keep_current_caret_on_screen(self, flags):
         caret = self.caret_handler.current
-        self.keep_caret_on_screen(caret, flags)
+        return self.keep_caret_on_screen(caret, flags)
 
     def draw_carets(self, dc, start_row, visible_rows):
         caret_log.debug(f"draw_carets: using caret_handler {self.caret_handler}")
