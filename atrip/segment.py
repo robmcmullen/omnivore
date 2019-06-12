@@ -188,6 +188,15 @@ class Segment:
         index = self.reverse_offset[container_index]
         return index
 
+    def calc_indexes_from_other_segment(self, other_segment_indexes, other_segment):
+        """Convert a list of indexes from another segment by mapping it to the
+        container and then looking up each index that corresponds to that
+        container index in this segment.
+        """
+        container_indexes = other_segment.container_offset[other_segment_indexes]
+        indexes = self.reverse_offset[container_indexes]
+        return indexes
+
     #### creation
 
     def calc_segments(self):
@@ -343,10 +352,21 @@ class Segment:
         w = np.where(matches == True)[0]
         return w
 
-    def update_data_style_from_disasm_type(self):
-        self.container.update_data_style_from_disasm_type()
+    def convert_style(self, from_style, to_style):
+        indexes = self.get_style_indexes(**from_style)
+        indexes = self.container_offset[indexes]
+        c = self.container
+        c.clear_style_at_indexes(indexes, **from_style)
+
+        # it's possible the mask includes more bits than the style, as in the
+        # user styles
+        c.clear_style_at_indexes(indexes, **to_style)
+        c.set_style_at_indexes(indexes, **to_style)
 
     #### disassembly type
+
+    def update_data_style_from_disasm_type(self):
+        self.container.update_data_style_from_disasm_type()
 
     def set_disasm_ranges(self, ranges, value):
         indexes = self.calc_source_indexes_from_ranges(ranges)
