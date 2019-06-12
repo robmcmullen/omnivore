@@ -840,9 +840,6 @@ class DisplayFlags:
         # moved and need to be updated.
         self.old_carets = None
 
-        # list of caret position & selection converted to indexes from row/col
-        self.carets_to_indexes = []
-
         # if True will add the old carets to the current caret to increase the
         # number of carets by one
         self.add_caret = False
@@ -854,6 +851,9 @@ class DisplayFlags:
         # the control as the basis for how much the index needs to be adjusted
         # to get to the next column.
         self.advance_caret_position_in_control = None
+
+        # sync the carets in all other controls from the given control.
+        self.sync_caret_from_control = None
 
         if args:
             for flags in args:
@@ -916,8 +916,8 @@ class DisplayFlags:
             self.source_control = flags.source_control
         if flags.advance_caret_position_in_control:
             self.advance_caret_position_in_control = flags.advance_caret_position_in_control
-        if flags.carets_to_indexes:
-            self.carets_to_indexes = flags.carets_to_indexes
+        if flags.sync_caret_from_control:
+            self.sync_caret_from_control = flags.sync_caret_from_control
 
 
 

@@ -1390,9 +1390,9 @@ class ColLabelWindow(AuxWindow):
 ##### Main grid
 
 try:
-    from .compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl, DisplayFlags
+    from .compactgrid_mouse import MouseEventMixin, Caret, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl, DisplayFlags
 except ModuleNotFoundError:
-    from compactgrid_mouse import MouseEventMixin, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl, DisplayFlags
+    from compactgrid_mouse import MouseEventMixin, Caret, MultiCaretHandler, MouseMode, NormalSelectMode, RectangularSelectMode, GridCellTextCtrl, DisplayFlags
 
 
 class CompactGridEvent(wx.PyCommandEvent):
