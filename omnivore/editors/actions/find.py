@@ -27,3 +27,17 @@ class find(SawxAction):
     def perform(self, action_key):
         minibuffer = self.get_minibuffer(action_key)
         self.editor.control.show_minibuffer(minibuffer)
+
+
+class find_to_selection(SawxAction):
+    def calc_name(self, action_key):
+        return "Find to Selection"
+
+    def perform(self, action_key):
+        e = self.editor
+        e.focused_viewer.segment.convert_style({'match':True}, {'selected':True})
+        e.control.on_hide_minibuffer_or_cancel(True)  # refreshes current control, but others need refreshing
+        flags = e.calc_status_flags()
+        flags.refresh_needed = True
+        flags.refreshed_as_side_effect.add(e.focused_viewer.control)
+        e.process_flags(flags)

@@ -284,15 +284,6 @@ class LinkedBase:
             g.clear_style_bits(selected=True)
         self.document.change_count += 1
 
-    def convert_ranges(self, from_style, to_style):
-        s = self.segment
-        ranges = s.get_style_ranges(**from_style)
-        s.clear_style_bits(**from_style)
-        s.clear_style_bits(**to_style)
-        s.set_style_ranges(ranges, **to_style)
-        self.selected_ranges = s.get_style_ranges(selected=True)
-        self.document.change_count += 1
-
     def get_segments_from_selection(self, size=-1):
         s = self.segment
         segments = []
