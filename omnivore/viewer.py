@@ -355,34 +355,12 @@ class SegmentViewer:
             caret_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
             self.sync_caret(flags)
 
-    def convert_indexes_from_other_control(self, carets_to_indexes, other_control):
-        """The index from one control is the offset from the beginning of that
-        segment's data. This is not necessarily the same index used in another
-        segment, because the segments may be in different orders. We have to
-        convert the other segment's index to the container index and then back
-        that out into the current segment to find out the index that should be
-        used in this segment.
-        """
-        try:
-            other_segment = other_control.table.segment
-            this_segment = self.control.table.segment
-        except AttributeError:
-            # source is not another viewer, or current viewer has its own
-            # method for placing carets
-            return carets_to_indexes
-        converted = []
-        for other_index, anchor1, anchor2 in carets_to_indexes:
-            index = this_segment.calc_index_from_other_segment(other_index, other_segment)
-            converted.append((index, anchor1, anchor2))
-            print(f"converted {other_index} from {other_segment} to {index}")
-        return converted
-
     def sync_caret(self, flags):
         if self.has_caret:
-            if flags.carets_to_indexes:
-                caret_log.debug(f"sync_caret: {self.ui_name} has carets; syncing from {flags.carets_to_indexes}")
-                indexes = self.convert_indexes_from_other_control(flags.carets_to_indexes, flags.source_control)
-                self.control.caret_handler.convert_from_indexes(self.control.table, indexes)
+            other = flags.sync_caret_from_control
+            if other:
+                print("Converting carets in {self.ui_name} from {other.ui_name}")
+                self.control.caret_handler.convert_carets_from(other.caret_handler)
                 self.control.keep_current_caret_on_screen(flags)
             else:
                 caret_log.debug(f"sync_caret: caret position/selection unchanged")

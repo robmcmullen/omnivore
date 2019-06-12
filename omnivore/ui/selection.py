@@ -53,6 +53,17 @@ class SelectionMixin:
         dest_indexes = dest_segment.calc_indexes_from_other_segment(indexes[0:count], self.segment)
         return dest_indexes
 
+    def convert_carets_from(self, other_char_handler):
+        new_carets = []
+        for caret in other_char_handler.carets:
+            other_index, _ = other_char_handler.table.get_index_range(*caret.rc)
+            index = self.segment.calc_index_from_other_segment(other_index, other_char_handler.segment)
+            r, c = self.table.index_to_row_col(index)
+            new_caret = cg.Caret(r, c)
+            log.debug(f"converted {caret} from {other_char_handler.control},index={other_index} to {self.control},index={index}, new_caret")
+            new_carets.append(new_caret)
+        self.carets = new_carets
+
 
 class FrozenSelection(SelectionMixin, cg.MultiCaretHandler):
     def __init__(self, current_selection):

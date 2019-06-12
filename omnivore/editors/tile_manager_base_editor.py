@@ -364,8 +364,8 @@ class TileManagerBase(SawxEditor):
         if viewer.has_caret and not c.caret_handler.has_carets:
             c.caret_handler.move_current_caret_to_index(c.table, 0)
             flags = c.create_mouse_event_flags()
-            flags.carets_to_indexes = [(0, -1, -1)]
             flags.source_control = c
+            flags.sync_caret_from_control = c
             self.linked_base.sync_caret_to_index_event(flags=flags)
             wx.CallAfter(c.SetFocus)
         self.update_pane_names()

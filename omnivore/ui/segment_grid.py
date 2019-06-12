@@ -220,7 +220,8 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
             self.edit_source.EmulateKeyPress(evt)
 
     def commit_change(self, flags):
-        flags.carets_to_indexes = self.caret_handler.convert_to_indexes(self.table)
+        flags.advance_caret_position_in_control = self
+        flags.sync_caret_from_control = self
 
         log.debug(f"\n\ncommit before: {self.caret_handler.carets} flags={flags}")
         linked_base = self.segment_viewer.linked_base
@@ -250,8 +251,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         if selection_before:
             ch.collapse_selections_to_carets()
             ch.refresh_style_from_selection(self.table)
-        flags.carets_to_indexes = ch.convert_to_indexes(self.table)
-        # self.segment_viewer.linked_base.sync_caret_to_index_event(flags=flags)
+        flags.sync_caret_from_control = self
 
 
     ##### Rectangular regions
