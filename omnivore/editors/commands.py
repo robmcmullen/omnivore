@@ -84,7 +84,9 @@ class FindAllCommand(Command):
                     match = self.all_matches[self.current_match_index]
                     start = match[0]
                     log.debug("Starting at match_index %d = %s" % (self.current_match_index, match))
-                    undo.flags.carets_to_indexes = [(start, match[0], match[1])]
+                    control = editor.focused_viewer.control
+                    control.caret_handler.set_caret_from_indexes(start, match[0], match[1])
+                    undo.flags.sync_caret_from_control = control
                     undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (self.current_match_index + 1, len(self.all_matches), start + self.origin, self.match_ids[start]))
             undo.flags.refresh_needed = True
 
@@ -117,7 +119,9 @@ class FindNextCommand(Command):
         try:
             match = all_matches[index]
             start = match[0]
-            undo.flags.carets_to_indexes = [(start, match[0], match[1])]
+            control = editor.focused_viewer.control
+            control.caret_handler.set_caret_from_indexes(start, match[0], match[1])
+            undo.flags.sync_caret_from_control = control
             c = self.search_command
             undo.flags.message = ("Match %d of %d, found at $%04x in %s" % (index + 1, len(all_matches), start + c.origin, c.match_ids[start]))
             cmd.current_caret_index = start

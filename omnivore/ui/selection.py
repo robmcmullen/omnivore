@@ -64,6 +64,16 @@ class SelectionMixin:
             new_carets.append(new_caret)
         self.carets = new_carets
 
+    def set_caret_from_indexes(self, index, anchor_start, anchor_end):
+        table = self.table
+        r, c = table.index_to_row_col(index)
+        caret = cg.Caret(r, c)
+        r, c = table.index_to_row_col(anchor_start)
+        caret.anchor_start = caret.anchor_initial_start = (r, c)
+        r, c = table.index_to_row_col(anchor_end)
+        caret.anchor_end = caret.anchor_initial_end = (r, c)
+        self.carets = [caret]
+
 
 class FrozenSelection(SelectionMixin, cg.MultiCaretHandler):
     def __init__(self, current_selection):
