@@ -513,7 +513,7 @@ class Segment:
             rawindex = self.container_offset[index]
             yield index, self.container.comments.get(rawindex, "")
 
-    def label(self, index, lower_case=True):
+    def address(self, index, lower_case=True):
         if lower_case:
             return "%04x" % (index + self.origin)
         else:
