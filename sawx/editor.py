@@ -17,6 +17,7 @@ from .filesystem import fsopen as open
 import logging
 log = logging.getLogger(__name__)
 clipboard_log = logging.getLogger("sawx.clipboard")
+event_log = logging.getLogger("event")
 
 
 def get_editors():
@@ -467,10 +468,12 @@ class SawxEditor:
         """Process a single command and immediately update the UI to reflect
         the results of the command.
         """
+        event_log.debug(f"\nprocess_command: starting command {command}")
         f = self.calc_status_flags()
         undo = self.process_batch_command(command, f, batch)
         if undo.flags.success:
             self.process_flags(f)
+        event_log.debug(f"process_command: finished command {command}\n")
         return undo
 
     def process_batch_command(self, command, f, batch=None):
