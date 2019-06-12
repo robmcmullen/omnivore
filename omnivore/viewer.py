@@ -361,8 +361,9 @@ class SegmentViewer:
             if other:
                 event_log.debug(f"Converting carets in {self.ui_name} from {other.segment_viewer.ui_name}")
                 self.control.caret_handler.convert_carets_from(other.caret_handler)
-                self.control.keep_current_caret_on_screen(flags)
-                flags.refreshed_as_side_effect.add(self.control)
+                if not self.control.keep_current_caret_on_screen(flags):
+                    # screen was scrolled, so no need for refresh
+                    flags.refreshed_as_side_effect.add(self.control)
             else:
                 event_log.debug(f"sync_caret: caret position/selection unchanged")
         else:
