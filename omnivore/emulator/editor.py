@@ -9,7 +9,6 @@ import json
 
 # Local imports.
 from ..editors.byte_editor import ByteEditor
-from ..arch.machine import Machine, Atari800
 from .document import EmulationDocument
 from .. import guess_emulator
 
