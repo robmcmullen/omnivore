@@ -297,8 +297,12 @@ for dtype_name in ['ANTIC', 'GTIA', 'POKEY', 'PIA']:
 
 from ..utils.archutil import Labels
 filename = "./omnivore/templates/atari800.labels"
-labels1 = Labels.from_file(filename)
-print(labels1.labels)
+try:
+    labels1 = Labels.from_file(filename)
+except:
+    log.warning("Can't find local labels for emulator labels test")
+else:
+    print(labels1.labels)
 
 class LabelTable(cg.VariableWidthHexTable):
     want_col_header = False
