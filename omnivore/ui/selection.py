@@ -22,7 +22,7 @@ class SelectionMixin:
             viewer = self.control.segment_viewer
             caret = carets[0]
             anchor_start, _ = table.get_index_range(*caret.anchor_start)
-            anchor_end, _ = table.get_index_range(*caret.anchor_end)
+            _, anchor_end = table.get_index_range(*caret.anchor_end)
             num = anchor_end - anchor_start
             if num == 1:
                 text = f"[1 byte selected ${viewer.get_address_at_index(anchor_start)}]"
@@ -46,11 +46,11 @@ class SelectionMixin:
                 current += 1
             else:
                 anchor_start, _ = table.get_index_range(*caret.anchor_start)
-                anchor_end, _ = table.get_index_range(*caret.anchor_end)
+                _, anchor_end = table.get_index_range(*caret.anchor_end)
                 count = anchor_end - anchor_start
                 indexes[current:current + count] = np.arange(anchor_start, anchor_end, dtype=np.uint32)
                 current += count
-        dest_indexes = dest_segment.calc_indexes_from_other_segment(indexes[0:count], self.segment)
+        dest_indexes = dest_segment.calc_indexes_from_other_segment(indexes[0:current], self.segment)
         return dest_indexes
 
     def convert_carets_from(self, other_char_handler):
