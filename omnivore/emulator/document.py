@@ -35,11 +35,11 @@ class EmulationDocument(DiskImageDocument):
 
     metadata_extension = ".omniemu"
 
-    # Only one emulator is allowed at one time for now. I think that's a
-    # livable restriction for now. Besides, most emulators can't run multiple
-    # instances of themselves, e.g. atari800 uses global variables for most of
-    # its state.
-    current_emulator = None
+    # Only one instance of a particular emulator type is allowed at one time
+    # for now. I think that's a livable restriction for now. Besides, most
+    # emulators can't run multiple instances of themselves, e.g. atari800 uses
+    # global variables for most of its state.
+    current_emulators = {}
 
     def __init__(self, file_metadata, emulator_type, emulator, source_document=None):
         super().__init__(file_metadata)
@@ -67,8 +67,6 @@ class EmulationDocument(DiskImageDocument):
 
     @classmethod
     def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False, extra_metadata=None):
-        if cls.current_emulator is not None:
-            raise RuntimeError(f"Only one emulator at a time, I'm afraid.\n\nYou currently have an {cls.current_emulator.ui_name} running.")
         try:
             emu_cls = find_emulator(emulator_type)
         except UnknownEmulatorError:
@@ -81,13 +79,15 @@ class EmulationDocument(DiskImageDocument):
             else:
                 # if emulator name specified but not known, return error
                 raise RuntimeError(f"Unknown emulator {emulator_type}")
+        if emu_cls.ui_name in cls.current_emulators:
+            raise RuntimeError(f"Only one {emu_cls.ui_name} emulator at a time, I'm afraid.\n\nYou currently have one running.")
         emu = emu_cls()
         emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
         doc = cls(None, emulator_type, emu, source_document)
         if extra_metadata:
             doc.restore_save_points_from_dict(extra_metadata)
-        cls.current_emulator = emu
+        cls.current_emulators[emu_cls.ui_name] = emu
         return doc
 
     @property
