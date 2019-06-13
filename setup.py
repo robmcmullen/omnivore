@@ -356,7 +356,7 @@ setup(
     'configobj',
     'bson<1.0.0',
     'jsonpickle',
-    'pyopengl-accelerate',
+    # 'pyopengl-accelerate',  # not required, and a pain on some platform/os combos
     'pyopengl',
     'sawx>=1.2',
     'atrip',
