@@ -290,7 +290,7 @@ class ByteEditor(TileManagerBase):
         "comment_add": "Ctrl+;",
         "comment_remove": "Shift+Ctrl+;",
 
-        "emu_boot_disk_image": "Ctrl+T",  # TEST binding
+        "find_to_selection": "Ctrl+T",  # TEST binding
     }
 
     module_search_order = ["omnivore.viewers.actions", "omnivore.editors.actions", "sawx.actions", "omnivore.jumpman.actions"]

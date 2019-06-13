@@ -55,11 +55,25 @@ class SelectionMixin:
 
     def convert_carets_from(self, other_char_handler):
         new_carets = []
+        table = self.table
+        other_table = other_char_handler.table
+        other_segment = other_char_handler.segment
         for caret in other_char_handler.carets:
-            other_index, _ = other_char_handler.table.get_index_range(*caret.rc)
-            index = self.segment.calc_index_from_other_segment(other_index, other_char_handler.segment)
-            r, c = self.table.index_to_row_col(index)
+            other_index, _ = other_table.get_index_range(*caret.rc)
+            index = self.segment.calc_index_from_other_segment(other_index, other_segment)
+            r, c = table.index_to_row_col(index)
             new_caret = cg.Caret(r, c)
+
+            # other_index, _ = other_table.get_index_range(*caret.anchor_start)
+            # index = self.segment.calc_index_from_other_segment(other_index, other_segment)
+            # r, c = table.index_to_row_col(index)
+            # caret.anchor_start = caret.anchor_initial_start = (r, c)
+
+            # _, other_index = other_table.get_index_range(*caret.anchor_end)
+            # index = self.segment.calc_index_from_other_segment(other_index, other_segment)
+            # r, c = table.index_to_row_col(index)
+            # caret.anchor_end = caret.anchor_initial_end = (r, c)
+
             log.debug(f"converted {caret} from {other_char_handler.control},index={other_index} to {self.control},index={index}, new_caret")
             new_carets.append(new_caret)
         self.carets = new_carets
@@ -73,6 +87,22 @@ class SelectionMixin:
         r, c = table.index_to_row_col(anchor_end)
         caret.anchor_end = caret.anchor_initial_end = (r, c)
         self.carets = [caret]
+
+    def convert_style_to_carets(self):
+        table = self.table
+        ranges = self.segment.get_style_ranges(selected=True)
+        print(ranges)
+        new_carets = []
+        for start, end in ranges:
+            r, c = table.index_to_row_col(end - 1)
+            caret = cg.Caret(r, c)
+            r, c = table.index_to_row_col(end)
+            caret.anchor_end = caret.anchor_initial_end = (r, c)
+            r, c = table.index_to_row_col(start)
+            caret.anchor_start = caret.anchor_initial_start = (r, c)
+            new_carets.append(caret)
+        self.carets = new_carets
+        print(self.carets)
 
 
 class FrozenSelection(SelectionMixin, cg.MultiCaretHandler):

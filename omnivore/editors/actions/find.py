@@ -35,9 +35,12 @@ class find_to_selection(SawxAction):
 
     def perform(self, action_key):
         e = self.editor
-        e.focused_viewer.segment.convert_style({'match':True}, {'selected':True})
+        v = e.focused_viewer
         e.control.on_hide_minibuffer_or_cancel(True)  # refreshes current control, but others need refreshing
+        v.segment.convert_style({'match':True}, {'selected':True})
+        v.control.caret_handler.convert_style_to_carets()
         flags = e.calc_status_flags()
         flags.refresh_needed = True
-        flags.refreshed_as_side_effect.add(e.focused_viewer.control)
+        flags.sync_caret_from_control = v.control
+        # flags.refreshed_as_side_effect.add(v.control)
         e.process_flags(flags)
