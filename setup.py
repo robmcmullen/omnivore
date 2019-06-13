@@ -359,7 +359,7 @@ setup(
     # 'pyopengl-accelerate',  # not required, and a pain on some platform/os combos
     'pyopengl',
     'sawx>=1.2',
-    'atrip',
+    'atrip>=0.3',
     'numpy',
     ],
     cmdclass = {"clean": clean_py},
