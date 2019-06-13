@@ -836,6 +836,7 @@ class TileManager(wx.Window):
         if info is not None:
             info.Hide()
             self.do_layout(layout_changed=True)
+            self.set_leaf_focus(self.current_leaf_focus)
 
     def show_minibuffer(self, minibuffer, **kwargs):
         # minibuffer_pane_info is stored in the TaskWindow instance because all
