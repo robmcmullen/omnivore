@@ -12,7 +12,7 @@ from ..arch.disasm import get_style_name
 # from sawx.framework import actions as fa
 # from ..byte_edit import actions as ba
 # from ..viewers import actions as va
-from ..commands import SetRangeValueCommand
+from ..commands import SetSelectionCommand
 from .. import clipboard_helpers
 
 import logging
@@ -379,16 +379,11 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
         self.process_edit(val)
 
     def process_edit(self, val):
-        ranges = self.calc_ranges_for_edit()
-        print(f"process_edit: ranges={ranges}")
-        cmd = self.calc_edit_command(ranges, val)
+        cmd = self.calc_edit_command(val)
         flags = self.segment_viewer.editor.process_command(cmd)
 
-    def calc_ranges_for_edit(self):
-        return self.get_selected_ranges_including_carets()
-
-    def calc_edit_command(self, ranges, val):
-        cmd = SetRangeValueCommand(self.segment_viewer.segment, ranges, val, advance=True)
+    def calc_edit_command(self, val):
+        cmd = SetSelectionCommand(self.segment_viewer.segment, self.caret_handler, val, advance=True)
         return cmd
 
     def end_editing(self):
