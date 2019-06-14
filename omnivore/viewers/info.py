@@ -248,7 +248,7 @@ class CommentsPanel(wx.VListBox):
             index = segment.reverse_offset[item[0]]
             if index < 0:
                 raise IndexError
-            label = v.get_label_at_index(index)
+            label = segment.address(index)
             font = self.normal_font
             segment_font = self.bold_font
         except IndexError:
@@ -257,12 +257,18 @@ class CommentsPanel(wx.VListBox):
             # segment, index = v.editor.find_in_user_segment(item[0])
             segment = None
             if segment is not None:
-                label = segment.label(index)
+                label = segment.address(index)
             else:
                 index = item[0]
                 label = "%04x" % index
-        if segment not in segment_seen:
+        show = False
+        if segment is None and segment not in segment_seen:
             segment_seen.add(segment)
+            show = True
+        elif segment is not None and segment.uuid not in segment_seen:
+            segment_seen.add(segment.uuid)
+            show = True
+        if show:
             self.items.append(CommentItem._make((segment, 0, str(segment), segment_font, self.SEGMENT_TITLE)))
         self.items.append(CommentItem._make((segment, index, "  %s: %s" % (label, item[1]), font, self.COMMENT_ENTRY)))
 
