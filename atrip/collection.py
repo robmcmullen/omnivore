@@ -183,6 +183,26 @@ class Collection:
 
     #### search utilities
 
+    def find_boot_media(self):
+        """Find the first bootable media in the collection.
+
+        Should usually be in the first container, but will continue looking
+        through containers if not in the first.
+        """
+        for container in self.containers:
+            if container.media is not None:
+                return container.media
+        log.warning(f"No bootable media found in {self}, attempting to find an interesting segment")
+        for s in self.document.collection.iter_segments():
+            if isinstance(s, ContainerHeader):
+                continue
+            return s
+        else:
+            try:
+                return self.containers[0]
+            except IndexError:
+                raise errors.MediaError("find_boot_media: no containers, so no booting!")
+
     def find_dirent(self, filename, match_case=False):
         try:
             disk_input, pathname = filename.split(":", 1)
