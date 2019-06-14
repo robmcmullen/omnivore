@@ -78,8 +78,17 @@ class TileManagerBase(SawxEditor):
     def has_command_line_viewer_override(self, args):
         return bool(args)
 
-    def get_default_layout(self):
-        template_name = self.document.calc_layout_template_name(self.editor_id)
+    @property
+    def layout_template_search_order(self):
+        """Override this to return a list of better guesses for a default
+        layout based on the current state of the editor
+        """
+        return [self.editor_id]
+
+    def get_default_layout(self, template_name=None):
+        if template_name is None:
+            template_name = self.default_layout_template_name
+        template_name = self.document.calc_layout_template_name(template_name)
         log.debug("template from: %s" % template_name)
         try:
             data = get_template(template_name)
@@ -94,23 +103,39 @@ class TileManagerBase(SawxEditor):
                 layout = {}
         return layout
 
-    def get_layout_metadata(self, s, keyword):
-        """get the TileManager layout
-        """
-        layout_dict = s.get(keyword, {})
-        if not layout_dict:
-            layout_dict = self.get_default_layout().get(keyword, {})
-        return layout_dict
-
-    def restore_layout_and_viewers(self, s):
-        viewers = self.get_layout_metadata(s, "viewers")
+    def calc_viewers_from_layout(self, s):
+        viewers = s.get("viewers", {})
         if viewers:
-            layout = self.get_layout_metadata(s, "layout")
+            layout = s.get("layout", {})
             if layout:
                 self.control.restore_layout(layout)
-        else:
+        return viewers
+
+    def restore_layout(self, s):
+        """Create a layout of viewers, either from the saved layout in the
+        session file, or by using a list of template names to find a default
+        layout.
+
+        Returns: the layout session dict used
+        """
+        log.debug(f"restore_layout: trying saved layout")
+        viewers = self.calc_viewers_from_layout(s)
+        if not viewers:
+            for template_name in self.layout_template_search_order:
+                log.debug(f"restore_layout: trying template {template_name}")
+                s = self.get_default_layout(template_name)
+                viewers = self.calc_viewers_from_layout(s)
+                if viewers:
+                    log.debug(f"restore_layout: using template {template_name}")
+                    break
+        if not viewers:
+            log.debug(f"restore_layout: no template {default_name}, falling back to {self.default_viewers}")
             viewers = [{'name':name, 'uuid':name} for name in self.default_viewers.split(",")]
+
         log.critical(viewers)
+
+        if "initial_segment_type" in s:
+            self.change_initial_segment(s["initial_segment_type"])
 
         viewer_metadata = {}
         for v in viewers:
@@ -118,6 +143,14 @@ class TileManagerBase(SawxEditor):
             log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
 
         self.create_viewers(viewer_metadata)
+
+        return s
+
+    def change_initial_segment(self, segment_ui_name):
+        """Change the initial viewed segment to the first one that matches
+        the ui_name
+        """
+        pass
 
     def set_initial_focused_viewer(self):
         if self.focused_viewer is None:
@@ -127,71 +160,6 @@ class TileManagerBase(SawxEditor):
             print(("setting focus to %s" % viewer))
             self.set_focused_viewer(viewer)
             self.force_focus(viewer)
-
-
-    def from_metadata_dict(self, e):
-        log.debug("metadata: %s" % str(e))
-        viewers = e.get('viewers', [])
-        log.debug("metadata: viewers=%s" % str(viewers))
-        
-        if not viewers:
-            try:
-                e_default = self.get_default_layout()
-                print(("using defaults from template: template=%s" % str(e_default)))
-            except OSError:
-                log.error("No template for default layout; falling back to minimal setup.")
-            else:
-                e.update(e_default)
-                viewers = e.get('viewers', [])
-            log.debug("from layout: viewers=%s" % str(viewers))
-
-        layout = e.get('layout', {})
-        log.debug("metadata: layout=%s" % str(layout))
-
-        viewer_metadata = {}
-        for v in viewers:
-            viewer_metadata[v['uuid']] = v
-            log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
-
-        log.debug("task arguments: '%s'" % self.task_arguments)
-        if self.task_arguments or not viewer_metadata:
-            names = self.task_arguments if self.task_arguments else self.default_viewers
-            log.debug("overriding viewers: %s" % str(names))
-            override_viewer_metadata = {}
-            for viewer_name in names.split(","):
-                if viewer_name == "emulator":
-                    continue
-                override_viewer_metadata[viewer_name.strip()] = {}
-                log.debug("metadata: clearing viewer[%s] because specified in task args" % (viewer_name.strip()))
-            if override_viewer_metadata:
-                # found some specified viewers, so override the default layout
-                viewer_metadata = override_viewer_metadata
-                layout = {}  # empty layout so it isn't cluttered with unused windows
-
-        linked_bases = {}
-        for b in e.get('linked bases', []):
-            base = LinkedBase(editor=self)
-            base.from_metadata_dict(b)
-            linked_bases[base.uuid] = base
-            log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
-        uuid = e.get("center_base", None)
-        try:
-            self.center_base = linked_bases[uuid]
-        except KeyError:
-            self.center_base = LinkedBase(editor=self)
-        self.create_viewers(layout, viewer_metadata, e, linked_bases)
-        viewer = None
-        if 'focused viewer' in e:
-            u = e['focused viewer']
-            viewer = self.find_viewer_by_uuid(u)
-        if viewer is None:
-            for viewer in self.viewers:
-                if not self.control.in_sidebar(viewer.control):
-                    break
-        print(("setting focus to %s" % viewer))
-        print("center base", self.center_base.segment_uuid)
-        self.set_focused_viewer(viewer)
-        self.task.segments_changed = self.document.segments
 
     def serialize_session(self, s):
         s["layout"] = self.control.calc_layout()

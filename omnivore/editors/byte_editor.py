@@ -389,12 +389,24 @@ class ByteEditor(TileManagerBase):
         self.create_viewers(viewer_metadata)
         self.center_base.view_segment_uuid(None)
 
+    @property
+    def layout_template_search_order(self):
+        # Try container name, filesystem name
+        s = self.center_base.segment
+        order = [s.name]
+        try:
+            order.append(s.filesystem.ui_name)
+        except AttributeError:
+            pass
+        order.append(self.editor_id)
+        return order
+
     def restore_session(self, s):
         log.debug("metadata: %s" % str(s))
         if 'diff highlight' in s:
             self.diff_highlight = bool(s['diff highlight'])
         self.restore_linked_bases(s)
-        self.restore_layout_and_viewers(s)
+        self.restore_layout(s)
         self.restore_view_segment_uuid(s)
 
     def restore_legacy_session(self, s):
@@ -408,7 +420,7 @@ class ByteEditor(TileManagerBase):
     def restore_linked_bases(self, s):
         linked_bases = {}
         for b in s.get("linked bases", []):
-            base = LinkedBase(editor=self)
+            base = LinkedBase(self)
             base.restore_session(b)
             linked_bases[base.uuid] = base
             log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
@@ -416,11 +428,24 @@ class ByteEditor(TileManagerBase):
         try:
             self.center_base = linked_bases[uuid]
         except KeyError:
-            self.center_base = LinkedBase(editor=self)
+            # no saved session, so find the first interesting segment to display
+            segment = self.document.collection.find_boot_media()
+            log.debug(f"default boot media found: {segment}")
+            self.center_base = LinkedBase(self, segment)
             linked_bases[self.center_base.uuid] = self.center_base
 
         log.critical(f"linked_bases: {linked_bases}")
         self.linked_bases = linked_bases
+
+    def change_initial_segment(self, ui_name):
+        """Change the initial viewed segment to the first one that matches
+        the ui_name
+        """
+        for segment in self.document.collection.iter_segments():
+            if segment.ui_name == ui_name:
+                log.debug(f"change_initial_segment: changing to segment {segment}")
+                self.center_base.restore_session_segment_uuid = segment.uuid
+                break
 
     def restore_view_segment_uuid(self, s):
         for uuid, lb in self.linked_bases.items():

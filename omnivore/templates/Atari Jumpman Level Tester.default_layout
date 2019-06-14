@@ -1,0 +1,44 @@
+{
+	"initial_segment_type": "Jumpman Level",
+        "layout": {"sidebars": [{"side": 16, "views": [{"child_uuid": "d190c9b3-18b6-4b80-a1fe-463951c6553c", "show_title": true, "use_close_button": true}, {"child_uuid": "4f39aa80-3410-4488-bb54-755ee0abbda4", "show_title": true, "use_close_button": true}, {"child_uuid": "eecf8b21-54d0-461c-8d0b-f91672f92cb8", "show_title": true, "use_close_button": true}]}], "tile_manager": {"direction": 4, "ratio_in_parent": 1.0, "views": [{"child_uuid": "5d382def-a5ae-4be3-bd72-28ba6be73ce2", "ratio_in_parent": 0.5, "show_title": true, "use_close_button": true}, {"direction": 8, "ratio_in_parent": 0.25, "views": [{"child_uuid": "eca80b47-b66f-4487-be79-3f64c5947822", "ratio_in_parent": 0.5, "show_title": true, "use_close_button": true}, {"child_uuid": "d19d2b28-313d-42c0-ba71-6cef5a3c9834", "ratio_in_parent": 0.5, "show_title": true, "use_close_button": true}]}, {"child_uuid": "4ba4d800-8091-404b-9d94-1f265389e4a6", "ratio_in_parent": 0.25, "show_title": true, "use_close_button": true}]}},
+        "viewers": [
+            {
+                "control": {},
+                "linked base": "6f210f18-1dbe-4045-9437-a886af550a26",
+                "name": "comments",
+                "uuid": "4f39aa80-3410-4488-bb54-755ee0abbda4"
+            },
+            {
+                "control": {},
+                "linked base": "6f210f18-1dbe-4045-9437-a886af550a26",
+                "name": "segments",
+                "uuid": "d190c9b3-18b6-4b80-a1fe-463951c6553c"
+            },
+            {
+                "control": {},
+                "linked base": "6f210f18-1dbe-4045-9437-a886af550a26",
+                "name": "undo",
+                "uuid": "eecf8b21-54d0-461c-8d0b-f91672f92cb8"
+            },
+            {
+                "assembly_source": "",
+                "control": {"items_per_row": 160, "zoom": 4},
+                "linked base": "6f210f18-1dbe-4045-9437-a886af550a26",
+                "name": "jumpman",
+                "old_trigger_mapping": {},
+                "uuid": "5d382def-a5ae-4be3-bd72-28ba6be73ce2"
+            },
+            {
+                "control": {},
+                "linked base": "6f210f18-1dbe-4045-9437-a886af550a26",
+                "name": "level_summary",
+                "uuid": "eca80b47-b66f-4487-be79-3f64c5947822"
+            },
+            {
+                "control": {},
+                "linked base": "6f210f18-1dbe-4045-9437-a886af550a26",
+                "name": "trigger_painting",
+                "uuid": "d19d2b28-313d-42c0-ba71-6cef5a3c9834"
+            }
+        ]
+}

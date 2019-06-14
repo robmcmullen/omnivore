@@ -51,7 +51,7 @@ class LinkedBase:
         if segment is None:
             segment = blank_segment
         self.segment = segment
-        self.segment_uuid = None
+        self.segment_uuid = segment.uuid
         self.restore_session_segment_uuid = None
         self.has_origin = False
         self.segment_view_params = {}
@@ -157,10 +157,7 @@ class LinkedBase:
                     continue
 
     def find_first_valid_segment_uuid(self):
-        for s in self.document.collection.iter_segments():
-            if isinstance(s, ContainerHeader):
-                continue
-            break
+        s = self.document.collection.find_boot_media()
         return s.uuid
 
     def find_segment(self, segment, refresh=False, data_model_changed=True):
