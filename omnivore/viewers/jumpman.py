@@ -22,7 +22,7 @@ from . import actions as va
 from ..jumpman import mouse_modes as jm
 from ..jumpman import commands as jc
 from .bitmap import BitmapGridControl, BitmapViewer, BitmapLineRenderer
-from .info import BaseInfoViewer
+from .info import NonCaretInfoViewer
 
 import logging
 log = logging.getLogger(__name__)
@@ -464,7 +464,7 @@ class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
         evt.Skip()
 
 
-class TriggerPaintingViewer(JumpmanOtherViewerToolbarMixin, BaseInfoViewer):
+class TriggerPaintingViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     name = "trigger_painting"
 
     ui_name = "Jumpman Trigger Painting"
@@ -513,7 +513,7 @@ class JumpmanInfoPanel(JumpmanControlMouseModeMixin, InfoPanel):
         return jm.possible_jumpman_segment and bool(jm.level_builder.objects)
 
 
-class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, BaseInfoViewer):
+class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     name = "level_summary"
 
     ui_name = "Jumpman Level Summary"

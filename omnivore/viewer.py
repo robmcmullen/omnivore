@@ -287,6 +287,7 @@ class SegmentViewer:
         self.document.recalc_event += self.on_recalc_view
         self.linked_base.ensure_visible_event += self.on_ensure_visible
         self.linked_base.sync_caret_event += self.on_sync_caret
+        self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
         self.linked_base.refresh_event += self.on_refresh_view
         self.linked_base.recalc_event += self.on_recalc_view
 
@@ -369,6 +370,24 @@ class SegmentViewer:
         else:
             event_log.debug(f"sync_caret: {self.ui_name} refreshed as side effect")
             flags.refreshed_as_side_effect.add(self.control)
+
+    def on_sync_caret_to_index(self, evt):
+        flags = evt.flags
+        event_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+        if self.control == flags.source_control:
+            event_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
+        else:
+            event_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
+            self.sync_caret_to_index(flags)
+
+    def sync_caret_to_index(self, flags):
+        if self.has_caret:
+            self.control.caret_handler.set_caret_from_indexes(flags.caret_index)
+            if not self.control.keep_current_caret_on_screen(flags):
+                # screen was scrolled, so no need for refresh
+                flags.refreshed_as_side_effect.add(self.control)
+            else:
+                event_log.debug(f"sync_caret: caret position/selection unchanged")
 
     @property
     def window_title(self):

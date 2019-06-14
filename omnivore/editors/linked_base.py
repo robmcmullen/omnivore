@@ -10,7 +10,7 @@ import json
 
 from atrip import Container, ContainerHeader, Segment
 
-from sawx.utils.command import DisplayFlags
+from sawx.ui.compactgrid import DisplayFlags
 from sawx.events import EventHandler
 
 from ..commands import CoalescingChangeByteCommand
@@ -59,6 +59,7 @@ class LinkedBase:
 
         self.ensure_visible_event = EventHandler(self)
         self.sync_caret_event = EventHandler(self)
+        self.sync_caret_to_index_event = EventHandler(self)
         self.refresh_event = EventHandler(self)
         self.recalc_event = EventHandler(self)
         self.update_trace = EventHandler(self)
@@ -206,6 +207,12 @@ class LinkedBase:
         flags = DisplayFlags()
         flags.byte_values_changed = True
         self.process_flags(flags)
+
+    def sync_caret_to_index(self, index):
+        flags = DisplayFlags()
+        flags.caret_index = index
+        print(f"sync_caret_to_index: index={index}")
+        self.sync_caret_to_index_event(flags=flags)
 
     #### command flag processors
 

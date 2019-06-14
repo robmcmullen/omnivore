@@ -44,6 +44,10 @@ class BaseInfoViewer(SegmentViewer):
         return 0
 
 
+class NonCaretInfoViewer(BaseInfoViewer):
+    has_caret = False
+
+
 class VirtualTableInfoViewer(BaseInfoViewer):
     """Info viewer for data that based on data from the segment but doesn't
     display the actual bytes segment in any one-to-one manner. This decouples
@@ -203,10 +207,10 @@ class CommentsPanel(wx.VListBox):
         v = self.segment_viewer
         item = self.items[index]
         if item.segment == v.segment:
-            v.sync_caret_to_index(item.index)
+            v.linked_base.sync_caret_to_index(item.index)
         else:
             v.linked_base.find_segment(item.segment)
-            v.sync_caret_to_index(item.index)
+            v.linked_base.sync_caret_to_index(item.index)
         if item.segment != self.last_segment:
             self.update_items(item.segment)
 
@@ -288,7 +292,7 @@ class CommentsPanel(wx.VListBox):
         self.Refresh()
 
 
-class CommentsViewer(BaseInfoViewer):
+class CommentsViewer(NonCaretInfoViewer):
     name = "comments"
 
     ui_name = "Comments"
@@ -307,7 +311,7 @@ class CommentsViewer(BaseInfoViewer):
         return len(self.control.items)
 
 
-class UndoViewer(BaseInfoViewer):
+class UndoViewer(NonCaretInfoViewer):
     name = "undo"
 
     ui_name = "Undo History"
@@ -329,7 +333,7 @@ class UndoViewer(BaseInfoViewer):
         return 0
 
 
-class SegmentListViewer(BaseInfoViewer):
+class SegmentListViewer(NonCaretInfoViewer):
     name = "segments"
 
     ui_name = "Segments"
