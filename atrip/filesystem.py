@@ -129,6 +129,7 @@ class Dirent(Segment):
     """Abstract base class for a directory entry
 
     """
+    ui_name = "Dirent"
     extra_serializable_attributes = ['file_num', 'in_use', 'is_sane']
 
     def __init__(self, directory, file_num, start, length, parent=None):
@@ -138,7 +139,7 @@ class Dirent(Segment):
         self.is_sane = True
         if parent is None:
             parent = directory
-        Segment.__init__(self, parent, start, name=f"Dirent {file_num}", length=length)
+        Segment.__init__(self, parent, start, name=f"{self.ui_name} {file_num}", length=length)
         self.init_dirent()
 
     def init_dirent(self):

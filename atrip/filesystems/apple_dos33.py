@@ -14,6 +14,7 @@ except NameError:
 
 
 class Dos33BootSegment(Segment):
+    ui_name = "DOS 3.3 Boot"
     def __init__(self, filesystem):
         media = filesystem.media
         Segment.__init__(self, media, 0, 0, name="Boot Sectors", length=256*37)
@@ -127,6 +128,7 @@ class Dos33VTOC(VTOC):
 
 
 class Dos33Dirent(Dirent):
+    ui_name = "DOS 3.3 Dirent"
     format = np.dtype([
         ('track', 'u1'),
         ('sector', 'u1'),
@@ -271,13 +273,7 @@ class Dos33Dirent(Dirent):
 
 
 class Dos33Directory(Directory):
-    def __init__(self, filesystem):
-        self.filesystem = filesystem
-        offset, length = self.find_segment_location()
-        Segment.__init__(self, filesystem.media, offset, name="Directory", length=length)
-
-        # Each segment is a dirent
-        self.segments = self.calc_dirents()
+    ui_name = "DOS 3.3 Directory"
 
     def find_segment_location(self):
         media = self.media

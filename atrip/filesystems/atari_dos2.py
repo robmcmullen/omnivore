@@ -12,6 +12,7 @@ except NameError:
 
 
 class AtariDosBootSegment(Segment):
+    ui_name = "DOS2 Boot Segment"
     boot_record_type = np.dtype([
         ('BFLAG', 'u1'),
         ('BRCNT', 'u1'),
@@ -125,6 +126,7 @@ class AtariDos2SectorVTOC(AtariDos1SectorVTOC):
 
 
 class AtariDosDirent(Dirent):
+    ui_name = "DOS2 Dirent"
     extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'flag:int', 'num_sectors', 'starting_sector', 'basename', 'ext']
 
     # ATR Dirent structure described at http://atari.kensclassics.org/dos.htm
@@ -314,13 +316,7 @@ class AtariDosDirent(Dirent):
 
 
 class AtariDos2Directory(Directory):
-    def __init__(self, filesystem):
-        self.filesystem = filesystem
-        offset, length = self.find_segment_location()
-        Segment.__init__(self, filesystem.media, offset, name="Directory", length=length)
-
-        # Each segment is a dirent
-        self.segments = self.calc_dirents()
+    ui_name = "DOS2 Directory"
 
     def find_segment_location(self):
         media = self.media

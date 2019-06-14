@@ -37,6 +37,7 @@ class AtariJumpmanBootSegment(AtariDosBootSegment):
 
 
 class AtariJumpmanDirent(Dirent):
+    ui_name = "Jumpman Level"
     name_offset = 0x2bec - 0x2800
     dirent_size = 0x800
     extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'id', 'level_name']
@@ -46,6 +47,7 @@ class AtariJumpmanDirent(Dirent):
         self.id = b''
         self.level_name = b''
         Dirent.__init__(self, directory, file_num, start, self.dirent_size)
+        self.name = str(self)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.id == other.id

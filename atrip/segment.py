@@ -50,6 +50,7 @@ class ArrayWrapper:
 
 
 class Segment:
+    ui_name = "Data Segment"
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid']
     extra_serializable_attributes = []
 
