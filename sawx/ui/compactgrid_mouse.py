@@ -382,7 +382,7 @@ class MultiCaretHandler:
                     index = self.current.index
                     self.current.set_initial_selection(index, index)
                 visible_range = True
-                self.sync_caret_event = flags
+                # self.sync_caret_event = flags
                 log.debug("caret_moved")
         elif flags.force_single_caret:
             log.debug(f"force_single_caret: caret_index={flags.caret_index}")
@@ -390,7 +390,7 @@ class MultiCaretHandler:
                 c = Caret(flags.caret_index)
                 self.carets.force_single_caret(c)
                 caret_moved = True
-                self.sync_caret_event = flags
+                # self.sync_caret_event = flags
 
         if flags.index_range is not None:
             log.debug(f"index_range: {flags.index_range}")
