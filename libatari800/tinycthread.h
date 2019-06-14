@@ -204,12 +204,12 @@ typedef pthread_mutex_t mtx_t;
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int mtx_init(mtx_t *mtx, int type);
+int tiny_mtx_init(mtx_t *mtx, int type);
 
 /** Release any resources used by the given mutex.
 * @param mtx A mutex object.
 */
-void mtx_destroy(mtx_t *mtx);
+void tiny_mtx_destroy(mtx_t *mtx);
 
 /** Lock the given mutex.
 * Blocks until the given mutex can be locked. If the mutex is non-recursive, and
@@ -219,7 +219,7 @@ void mtx_destroy(mtx_t *mtx);
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int mtx_lock(mtx_t *mtx);
+int tiny_mtx_lock(mtx_t *mtx);
 
 /** Lock the given mutex, or block until a specific point in time.
 * Blocks until either the given mutex can be locked, or the specified TIME_UTC
@@ -230,7 +230,7 @@ int mtx_lock(mtx_t *mtx);
 * thrd_timedout if the time specified was reached without acquiring the
 * requested resource, or thrd_error if the request could not be honored.
 */
-int mtx_timedlock(mtx_t *mtx, const struct timespec *ts);
+int tiny_mtx_timedlock(mtx_t *mtx, const struct timespec *ts);
 
 /** Try to lock the given mutex.
 * The specified mutex shall support either test and return or timeout. If the
@@ -240,14 +240,14 @@ int mtx_timedlock(mtx_t *mtx, const struct timespec *ts);
 * requested is already in use, or @ref thrd_error if the request could not be
 * honored.
 */
-int mtx_trylock(mtx_t *mtx);
+int tiny_mtx_trylock(mtx_t *mtx);
 
 /** Unlock the given mutex.
 * @param mtx A mutex object.
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int mtx_unlock(mtx_t *mtx);
+int tiny_mtx_unlock(mtx_t *mtx);
 
 /* Condition variable */
 #if defined(_TTHREAD_WIN32_)
@@ -265,12 +265,12 @@ typedef pthread_cond_t cnd_t;
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int cnd_init(cnd_t *cond);
+int tiny_cnd_init(cnd_t *cond);
 
 /** Release any resources used by the given condition variable.
 * @param cond A condition variable object.
 */
-void cnd_destroy(cnd_t *cond);
+void tiny_cnd_destroy(cnd_t *cond);
 
 /** Signal a condition variable.
 * Unblocks one of the threads that are blocked on the given condition variable
@@ -280,7 +280,7 @@ void cnd_destroy(cnd_t *cond);
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int cnd_signal(cnd_t *cond);
+int tiny_cnd_signal(cnd_t *cond);
 
 /** Broadcast a condition variable.
 * Unblocks all of the threads that are blocked on the given condition variable
@@ -290,7 +290,7 @@ int cnd_signal(cnd_t *cond);
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int cnd_broadcast(cnd_t *cond);
+int tiny_cnd_broadcast(cnd_t *cond);
 
 /** Wait for a condition variable to become signaled.
 * The function atomically unlocks the given mutex and endeavors to block until
@@ -302,7 +302,7 @@ int cnd_broadcast(cnd_t *cond);
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int cnd_wait(cnd_t *cond, mtx_t *mtx);
+int tiny_cnd_wait(cnd_t *cond, mtx_t *mtx);
 
 /** Wait for a condition variable to become signaled.
 * The function atomically unlocks the given mutex and endeavors to block until
@@ -316,7 +316,7 @@ int cnd_wait(cnd_t *cond, mtx_t *mtx);
 * specified in the call was reached without acquiring the requested resource, or
 * @ref thrd_error if the request could not be honored.
 */
-int cnd_timedwait(cnd_t *cond, mtx_t *mtx, const struct timespec *ts);
+int tiny_cnd_timedwait(cnd_t *cond, mtx_t *mtx, const struct timespec *ts);
 
 /* Thread */
 #if defined(_TTHREAD_WIN32_)
@@ -326,12 +326,12 @@ typedef pthread_t thrd_t;
 #endif
 
 /** Thread start function.
-* Any thread that is started with the @ref thrd_create() function must be
+* Any thread that is started with the @ref tiny_thrd_create() function must be
 * started through a function of this type.
 * @param arg The thread argument (the @c arg argument of the corresponding
-*        @ref thrd_create() call).
+*        @ref tiny_thrd_create() call).
 * @return The thread return value, which can be obtained by another thread
-* by using the @ref thrd_join() function.
+* by using the @ref tiny_thrd_join() function.
 */
 typedef int (*thrd_start_t)(void *arg);
 
@@ -347,29 +347,29 @@ typedef int (*thrd_start_t)(void *arg);
 * original thread has exited and either been detached or joined to another
 * thread.
 */
-int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
+int tiny_thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
 
 /** Identify the calling thread.
 * @return The identifier of the calling thread.
 */
-thrd_t thrd_current(void);
+thrd_t tiny_thrd_current(void);
 
 /** Dispose of any resources allocated to the thread when that thread exits.
  * @return thrd_success, or thrd_error on error
 */
-int thrd_detach(thrd_t thr);
+int tiny_thrd_detach(thrd_t thr);
 
 /** Compare two thread identifiers.
 * The function determines if two thread identifiers refer to the same thread.
 * @return Zero if the two thread identifiers refer to different threads.
 * Otherwise a nonzero value is returned.
 */
-int thrd_equal(thrd_t thr0, thrd_t thr1);
+int tiny_thrd_equal(thrd_t thr0, thrd_t thr1);
 
 /** Terminate execution of the calling thread.
 * @param res Result code of the calling thread.
 */
-TTHREAD_NORETURN void thrd_exit(int res);
+TTHREAD_NORETURN void tiny_thrd_exit(int res);
 
 /** Wait for a thread to terminate.
 * The function joins the given thread with the current thread by blocking
@@ -380,7 +380,7 @@ TTHREAD_NORETURN void thrd_exit(int res);
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int thrd_join(thrd_t thr, int *res);
+int tiny_thrd_join(thrd_t thr, int *res);
 
 /** Put the calling thread to sleep.
 * Suspend execution of the calling thread.
@@ -393,13 +393,13 @@ int thrd_join(thrd_t thr, int *res);
 * @return 0 (zero) on successful sleep, -1 if an interrupt occurred,
 *         or a negative value if the operation fails.
 */
-int thrd_sleep(const struct timespec *duration, struct timespec *remaining);
+int tiny_thrd_sleep(const struct timespec *duration, struct timespec *remaining);
 
 /** Yield execution to another thread.
 * Permit other threads to run, even if the current thread would ordinarily
 * continue to run.
 */
-void thrd_yield(void);
+void tiny_thrd_yield(void);
 
 /* Thread local storage */
 #if defined(_TTHREAD_WIN32_)
@@ -425,21 +425,21 @@ typedef void (*tss_dtor_t)(void *val);
 * for DLLs loaded with LoadLibraryEx.  In order to be certain, you
 * should use @ref thrd_create whenever possible.
 */
-int tss_create(tss_t *key, tss_dtor_t dtor);
+int tiny_tss_create(tss_t *key, tss_dtor_t dtor);
 
 /** Delete a thread-specific storage.
 * The function releases any resources used by the given thread-specific
 * storage.
 * @param key The key that shall be deleted.
 */
-void tss_delete(tss_t key);
+void tiny_tss_delete(tss_t key);
 
 /** Get the value for a thread-specific storage.
 * @param key The thread-specific storage identifier.
 * @return The value for the current thread held in the given thread-specific
 * storage.
 */
-void *tss_get(tss_t key);
+void *tiny_tss_get(tss_t key);
 
 /** Set the value for a thread-specific storage.
 * @param key The thread-specific storage identifier.
@@ -448,7 +448,7 @@ void *tss_get(tss_t key);
 * @return @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
-int tss_set(tss_t key, void *val);
+int tiny_tss_set(tss_t key, void *val);
 
 #if defined(_TTHREAD_WIN32_)
   typedef struct {

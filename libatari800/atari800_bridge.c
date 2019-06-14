@@ -65,12 +65,19 @@ int threaded_frame(void *arg);
 int init_thread() {
 	int err;
 
-	err = mtx_init(&calculating_frame, mtx_plain);
-	if (err == thrd_success) {
-		err = cnd_init(&talking_stick);
+	err = tiny_mtx_init(&calculating_frame, mtx_plain);
+	if (err != thrd_success) {
+		printf("init_thread: failed creating mutex\n");
+		return err;
 	}
-	if (err == thrd_success) {
-		err = thrd_create(&frame_thread, threaded_frame, (void *)NULL);
+	err = tiny_cnd_init(&talking_stick);
+	if (err != thrd_success) {
+		printf("init_thread: failed creating condition variable\n");
+		return err;
+	}
+	err = tiny_thrd_create(&frame_thread, threaded_frame, (void *)NULL);
+	if (err != thrd_success) {
+		printf("init_thread: failed creating thread\n");
 	}
 	return err;
 }
@@ -221,7 +228,7 @@ int PLATFORM_Exit(int run_monitor)
 
 	LIBATARI800_Status->breakpoint_id = 0;
 
-	err = cnd_broadcast(&talking_stick);
+	err = tiny_cnd_broadcast(&talking_stick);
 	if (err == thrd_error) {
 		printf("cnd_broadcast failed in PLATFORM_Exit\n");
 	}
@@ -233,7 +240,7 @@ int PLATFORM_Exit(int run_monitor)
 
 	printf("Waiting for main thread to handle breakpoint...\n");
 
-	err = cnd_wait(&talking_stick, &calculating_frame);
+	err = tiny_cnd_wait(&talking_stick, &calculating_frame);
 	if (err == thrd_error) {
 		printf("cnd_wait failed in PLATFORM_Exit\n");
 	}
@@ -270,7 +277,7 @@ int threaded_frame(void *arg) {
 	int err = thrd_success;
 
 	while (err == thrd_success) {
-		err = cnd_wait(&talking_stick, &calculating_frame);
+		err = tiny_cnd_wait(&talking_stick, &calculating_frame);
 		if (err == thrd_error) {
 			printf("cnd_wait failed in threaded_frame\n");
 		}
@@ -302,7 +309,7 @@ int threaded_frame(void *arg) {
 	#endif
 		Atari800_nframes++;
 
-		err = cnd_broadcast(&talking_stick);
+		err = tiny_cnd_broadcast(&talking_stick);
 		if (err == thrd_error) {
 			printf("cnd_broadcast failed in threaded_frame\n");
 		}
@@ -326,7 +333,7 @@ int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emul
 	memory_access = status->memory_access;
 	access_type = status->access_type;
 
-	err = cnd_broadcast(&talking_stick);
+	err = tiny_cnd_broadcast(&talking_stick);
 	if (err == thrd_error) {
 		printf("cnd_broadcast failed in a8bridge_calc_frame\n");
 	}
@@ -340,7 +347,7 @@ int a8bridge_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emul
 	printf("a8bridge_calc_frame waiting for frame or breakpoint\n");
 #endif
 
-	err = cnd_wait(&talking_stick, &calculating_frame);
+	err = tiny_cnd_wait(&talking_stick, &calculating_frame);
 	if (err == thrd_error) {
 		printf("cnd_wait failed in a8bridge_calc_frame\n");
 	}

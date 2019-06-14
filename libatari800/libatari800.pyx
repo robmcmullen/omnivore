@@ -26,6 +26,7 @@ def start_emulator(args):
     cdef char *fake_args[10]
     cdef char **argv = fake_args
     cdef int argc
+    cdef int err
     cdef char *progname="pyatari800"
     cdef char **c_args = to_cstring_array(args)
 
@@ -36,7 +37,9 @@ def start_emulator(args):
         fake_args[argc] = arg
         argc += 1
 
-    a8bridge_init(argc, argv)
+    err = a8bridge_init(argc, argv)
+    if err != 1:
+        raise RuntimeError(f"Failed starting emulator: error code {err}")
     free(c_args)
 
 def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):
