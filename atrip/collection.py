@@ -7,7 +7,7 @@ import numpy as np
 
 from . import errors
 from .utils import to_numpy, to_numpy_list, uuid
-from .container import guess_container, Container
+from .container import guess_container, Container, ContainerHeader
 from .compressor import guess_compressor_list, compress_in_reverse_order, Uncompressed
 from .archiver import Archiver, find_container_items_in_archive, PlainFileArchiver
 from .filesystem import Dirent
@@ -193,7 +193,7 @@ class Collection:
             if container.media is not None:
                 return container.media
         log.warning(f"No bootable media found in {self}, attempting to find an interesting segment")
-        for s in self.document.collection.iter_segments():
+        for s in self.iter_segments():
             if isinstance(s, ContainerHeader):
                 continue
             return s
