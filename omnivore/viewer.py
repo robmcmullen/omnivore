@@ -286,7 +286,7 @@ class SegmentViewer:
         self.document.structure_changed_event += self.on_recalc_data_model
         self.document.recalc_event += self.on_recalc_view
         self.linked_base.ensure_visible_event += self.on_ensure_visible
-        self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
+        self.linked_base.sync_caret_event += self.on_sync_caret
         self.linked_base.refresh_event += self.on_refresh_view
         self.linked_base.recalc_event += self.on_recalc_view
 
@@ -346,13 +346,13 @@ class SegmentViewer:
         if flags.index_visible is not None:
             self.control.keep_index_on_screen(flags.index_visible, flags)
 
-    def on_sync_caret_to_index(self, evt):
+    def on_sync_caret(self, evt):
         flags = evt.flags
-        event_log.debug("sync_caret_to_index_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
+        event_log.debug("sync_caret_event: for %s using %s; flags=%s" % (self.control, self.linked_base, str(flags)))
         if self.control == flags.source_control or self.control == flags.advance_caret_position_in_control:
-            event_log.debug(f"sync_caret_to_index_event: skipping {self.control} because is the source of the carets")
+            event_log.debug(f"sync_caret_event: skipping {self.control} because is the source of the carets")
         else:
-            event_log.debug("sync_caret_to_index_event: syncing %s" % self.control)
+            event_log.debug("sync_caret_event: syncing %s" % self.control)
             self.sync_caret(flags)
 
     def sync_caret(self, flags):

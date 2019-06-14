@@ -644,7 +644,7 @@ class ByteEditor(TileManagerBase):
 
         control = flags.sync_caret_from_control
         if control:
-            self.linked_base.sync_caret_to_index_event(flags=flags)
+            self.linked_base.sync_caret_event(flags=flags)
 
         if flags.data_model_changed:
             event_log.debug(f"process_flags: data_model_changed")

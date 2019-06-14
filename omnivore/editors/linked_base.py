@@ -58,7 +58,7 @@ class LinkedBase:
         self.current_selection = None
 
         self.ensure_visible_event = EventHandler(self)
-        self.sync_caret_to_index_event = EventHandler(self)
+        self.sync_caret_event = EventHandler(self)
         self.refresh_event = EventHandler(self)
         self.recalc_event = EventHandler(self)
         self.update_trace = EventHandler(self)

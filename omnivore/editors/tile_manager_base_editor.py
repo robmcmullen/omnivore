@@ -334,7 +334,7 @@ class TileManagerBase(SawxEditor):
             flags = c.create_mouse_event_flags()
             flags.source_control = c
             flags.sync_caret_from_control = c
-            self.linked_base.sync_caret_to_index_event(flags=flags)
+            self.linked_base.sync_caret_event(flags=flags)
             wx.CallAfter(c.SetFocus)
         self.update_pane_names()
         viewer.update_toolbar()
