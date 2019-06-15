@@ -1272,6 +1272,7 @@ class AuxWindow(wx.ScrolledCanvas):
         self.char_width = dc.GetCharWidth()
         self.char_height = max(dc.GetCharHeight(), 2)
         self.row_skip = self.calc_row_skip()
+        self.SetBackgroundColour(self.parent.view_params.empty_background_color)
 
     def calc_row_skip(self):
         return 1
