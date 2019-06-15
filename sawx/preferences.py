@@ -170,9 +170,9 @@ class SawxEditorPreferences(SawxPreferences):
     def set_defaults(self):
         SawxPreferences.set_defaults(self)
         self.text_font = fonts.str_to_font(fonts.default_font)
-        self.background_color = wx.Colour(wx.WHITE)
+        self._background_color = wx.Colour(wx.WHITE)
         self.text_color = wx.Colour(wx.BLACK)
-        self.empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
+        self._empty_background_color = wx.Colour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE).Get(False))
         self.header_font = fonts.str_to_font(fonts.default_font + "bold")
         self.row_header_bg_color = wx.Colour(224, 224, 224)
         self.col_header_bg_color = wx.Colour(224, 224, 224)
@@ -183,10 +183,10 @@ class SawxEditorPreferences(SawxPreferences):
         self.cell_padding_width = 2
 
         self.unfocused_caret_color = wx.Colour(128, 128, 128)
-        self.highlight_background_color = wx.Colour(100, 200, 230)
-        self.data_background_color = wx.Colour(224, 224, 224)
-        self.match_background_color = wx.Colour(255, 255, 180)
-        self.comment_background_color = wx.Colour(255, 180, 200)
+        self._highlight_background_color = wx.Colour(100, 200, 230)
+        self._data_background_color = wx.Colour(224, 224, 224)
+        self._match_background_color = wx.Colour(255, 255, 180)
+        self._comment_background_color = wx.Colour(255, 180, 200)
         self.error_background_color = wx.Colour(255, 128, 128)
         self.diff_text_color = wx.Colour(255, 0, 0)
 
@@ -210,6 +210,60 @@ class SawxEditorPreferences(SawxPreferences):
         dc.SetFont(self._text_font)
         self.text_font_char_width = dc.GetCharWidth()
         self.text_font_char_height = dc.GetCharHeight()
+
+    @property
+    def background_color(self):
+        return self._background_color
+
+    @background_color.setter
+    def background_color(self, value):
+        self._background_color = value
+        self.normal_brush = wx.Brush(self.background_color, wx.SOLID)
+
+    @property
+    def highlight_background_color(self):
+        return self._highlight_background_color
+
+    @highlight_background_color.setter
+    def highlight_background_color(self, value):
+        self._highlight_background_color = value
+        self.selected_brush = wx.Brush(self.highlight_background_color, wx.SOLID)
+
+    @property
+    def data_background_color(self):
+        return self._data_background_color
+
+    @data_background_color.setter
+    def data_background_color(self, value):
+        self._data_background_color = value
+        self.data_brush = wx.Brush(self.data_background_color, wx.SOLID)
+
+    @property
+    def match_background_color(self):
+        return self._match_background_color
+
+    @match_background_color.setter
+    def match_background_color(self, value):
+        self._match_background_color = value
+        self.match_brush = wx.Brush(self.match_background_color, wx.SOLID)
+
+    @property
+    def comment_background_color(self):
+        return self._comment_background_color
+
+    @comment_background_color.setter
+    def comment_background_color(self, value):
+        self._comment_background_color = value
+        self.comment_brush = wx.Brush(self.comment_background_color, wx.SOLID)
+
+    @property
+    def empty_background_color(self):
+        return self._empty_background_color
+
+    @empty_background_color.setter
+    def empty_background_color(self, value):
+        self._empty_background_color = value
+        self.empty_brush = wx.Brush(self.empty_background_color, wx.SOLID)
 
     def calc_cell_size_in_pixels(self, chars_per_cell):
         width = self.cell_padding_width * 2 + self.text_font_char_width * chars_per_cell
