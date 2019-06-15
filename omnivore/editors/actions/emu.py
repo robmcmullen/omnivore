@@ -5,7 +5,7 @@ import sys
 
 import wx
 
-from sawx.action import SawxAction, SawxRadioListAction
+from sawx.action import SawxAction, SawxNameChangeAction, SawxRadioListAction
 from sawx.frame import SawxSingleEditorFrame
 
 from ... import commands
@@ -66,7 +66,7 @@ class emu_restore(SawxAction):
         print(f"Restoring saved state from file")
 
 
-class emu_pause_resume(SawxAction):
+class emu_pause_resume(SawxNameChangeAction):
     """Stop or restart the emulation
     """
     def calc_name(self, action_key):
