@@ -429,8 +429,12 @@ class ByteEditor(TileManagerBase):
             self.center_base = linked_bases[uuid]
         except KeyError:
             # no saved session, so find the first interesting segment to display
-            segment = self.document.collection.find_boot_media()
-            log.debug(f"default boot media found: {segment}")
+            segment = self.document.collection.find_interesting_segment_to_edit()
+            log.debug(f"most interesting segment: {segment}")
+            if segment is None:
+                segment = self.document.collection.find_boot_media()
+                log.debug(f"default boot media found: {segment}")
+            log.debug(f"restoring segment {segment.uuid}")
             self.center_base = LinkedBase(self, segment)
             linked_bases[self.center_base.uuid] = self.center_base
 
