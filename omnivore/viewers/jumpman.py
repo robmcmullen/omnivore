@@ -501,11 +501,6 @@ class JumpmanInfoPanel(JumpmanControlMouseModeMixin, InfoPanel):
         ("antic_colors", "Game Colors", 0x2a, 9),
         ("label", "# Columns with Ladders", "num_ladders", 12),
         ("label", "# Columns with Downropes", "num_downropes", 6),
-        ("custom_code", "Custom Code"),
-        ("multi_line_label", "Code Summary", "custom_code_info"),
-        ("multi_line_label", "Action Vectors", "action_vector_info"),
-        ("multi_line_label", "Coin Trigger Functions", "coin_trigger_info"),
-        ("multi_line_label", "Other Labels", "other_label_info"),
     ]
 
     def is_valid_data(self):
@@ -540,6 +535,43 @@ class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def get_notification_count(self):
         return 0
 
+
+class JumpmanCustomCodePanel(JumpmanInfoPanel):
+    fields = [
+        ("custom_code", "Custom Code"),
+        ("multi_line_label", "Code Summary", "custom_code_info"),
+        ("multi_line_label", "Action Vectors", "action_vector_info"),
+        ("multi_line_label", "Coin Trigger Functions", "coin_trigger_info"),
+        ("multi_line_label", "Other Labels", "other_label_info"),
+    ]
+
+
+class CustomCodeViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
+    name = "custom_code"
+
+    ui_name = "Jumpman Custom Code"
+
+    @classmethod
+    def create_control(cls, parent, linked_base, mdict):
+        control = JumpmanCustomCodePanel(parent, linked_base, size=(350, 150))
+        return control
+
+    def recalc_data_model(self):
+        pass
+
+    def show_caret(self, control, index, bit):
+        pass
+
+    # @on_trait_change('linked_base.segment_selected_event')
+    def process_segment_selected(self, evt):
+        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        if evt is not Undefined:
+            self.recalc_view()
+
+    ##### Spring Tab interface
+
+    def get_notification_count(self):
+        return 0
 
 
 ##### Class level utilities
