@@ -131,6 +131,11 @@ class AtariJumpman(AtariDos2):
     def calc_directory_segment(self):
         return AtariJumpmanDirectory(self)
 
+    def find_interesting_segment(self):
+        levels = list(self.iter_dirents())
+        if levels:
+            return levels[0]
+        return None
 
 
 class AtariJumpmanLevelTesterBootSegment(AtariDosBootSegment):

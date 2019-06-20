@@ -113,7 +113,17 @@ class Filesystem:
         for segment in self.media.segments:
             if isinstance(segment, Dirent):
                 yield segment
-            yield from segment.yield_for_segment(Dirent)
+            yield from segment.iter_segments(Dirent)
+
+    #### utilities
+
+    def find_interesting_segment(self):
+        """If the filesystem has some interesting segment that might be better
+        to display than the first segment in the container, identify that here
+        and an editor can use this info to display that segment in the initial
+        view.
+        """
+        return None
 
 
 class NoFilesystem(Filesystem):

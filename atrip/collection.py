@@ -183,6 +183,22 @@ class Collection:
 
     #### search utilities
 
+    def find_interesting_segment_to_edit(self):
+        """Find the the first segment that might be "interesting" that an
+        editor can use as an initial segment display.
+
+        Largely depends on the filesystem to locate something interesting.
+
+        Returns: None if nothing is super interesting
+        """
+        segment = None
+        for container in self.containers:
+            if container.filesystem is not None:
+                segment = container.filesystem.find_interesting_segment()
+                if segment is not None:
+                    break
+        return segment
+
     def find_boot_media(self):
         """Find the first bootable media in the collection.
 
