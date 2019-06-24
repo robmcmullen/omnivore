@@ -44,12 +44,16 @@ class emu_boot_disk_image(SawxAction):
     def perform(self, action_key):
         print(f"Booting disk image using {self.editor.document.emulator_class_override}")
         source_document = self.editor.document
-        doc = EmulationDocument.create_document(source_document, source_document.emulator_class_override)
-        doc.boot(source_document.collection.containers[0])
-        print(f"emulator document: {doc}")
-        editor = EmulatorEditor(doc)
-        frame = SawxSingleEditorFrame(editor)
-        frame.Show()
+        try:
+            doc = EmulationDocument.create_document(source_document, source_document.emulator_class_override)
+        except errors.EmulatorInUseError as e:
+            print(f"Currently running emulator: {e.current_emulator_document}")
+        else:
+            doc.boot(source_document.collection.containers[0])
+            print(f"emulator document: {doc}")
+            editor = EmulatorEditor(doc)
+            frame = SawxSingleEditorFrame(editor)
+            frame.Show()
 
 class emu_boot_segment(SawxAction):
     def calc_name(self, action_key):

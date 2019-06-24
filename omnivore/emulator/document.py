@@ -10,7 +10,7 @@ from sawx.document import SawxDocument
 from sawx.utils.nputil import to_numpy
 from sawx.events import EventHandler
 
-from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError, EmulatorError
+from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError, EmulatorError, EmulatorInUseError
 
 from ..document import DiskImageDocument
 
@@ -39,7 +39,7 @@ class EmulationDocument(DiskImageDocument):
     # for now. I think that's a livable restriction for now. Besides, most
     # emulators can't run multiple instances of themselves, e.g. atari800 uses
     # global variables for most of its state.
-    current_emulators = {}
+    emulator_document = {}
 
     def __init__(self, file_metadata, emulator_type, emulator, source_document=None):
         super().__init__(file_metadata)
@@ -47,7 +47,6 @@ class EmulationDocument(DiskImageDocument):
         self.boot_segment = None
         self.emulator_type = emulator_type
         self.emulator = emulator
-        self.__class__.current_emulator = emulator
         self.skip_frames_on_boot = 0
         self.emu_container = None
         self.collection = None
@@ -79,15 +78,18 @@ class EmulationDocument(DiskImageDocument):
             else:
                 # if emulator name specified but not known, return error
                 raise RuntimeError(f"Unknown emulator {emulator_type}")
-        if emu_cls.ui_name in cls.current_emulators:
-            raise RuntimeError(f"Only one {emu_cls.ui_name} emulator at a time, I'm afraid.\n\nYou currently have one running.")
+        emu_doc = cls.emulator_document.get(emu_cls.ui_name, None)
+        if emu_doc is not None:
+            error = EmulatorInUseError(f"Only one {emu_cls.ui_name} emulator at a time, I'm afraid.\n\nYou currently have one running.")
+            error.current_emulator_document = emu_doc
+            raise error
         emu = emu_cls()
         emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
         doc = cls(None, emulator_type, emu, source_document)
         if extra_metadata:
             doc.restore_save_points_from_dict(extra_metadata)
-        cls.current_emulators[emu_cls.ui_name] = emu
+        cls.emulator_document[emu_cls.ui_name] = doc
         return doc
 
     @property
