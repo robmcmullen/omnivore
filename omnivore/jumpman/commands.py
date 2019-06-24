@@ -11,7 +11,7 @@ from sawx.ui.dialogs import prompt_for_hex, prompt_for_string, ChooseOnePlusCust
 from sawx.utils.textutil import text_to_int
 
 from .. import errors
-from ..viewers.commands import SetValueCommand
+from ..commands import SetRangeValueCommand
 from ..viewers.actions import ViewerAction
 
 from .parser import DrawObjectBounds, is_valid_level_segment
@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 def trigger_dialog(event, segment_viewer, obj):
-    model = segment_viewer.linked_base.jumpman_playfield_model
+    model = segment_viewer.segment.jumpman_playfield_model
     possible_labels = model.get_triggers()
     label = model.get_trigger_label(obj.trigger_function)
     if label is None and obj.trigger_function:
@@ -47,7 +47,7 @@ def trigger_dialog(event, segment_viewer, obj):
     dlg.Destroy()
     return addr
 
-class JumpmanBaseCommand(SetValueCommand):
+class JumpmanBaseCommand(SetRangeValueCommand):
     def set_undo_flags(self, flags):
         # FIXME: need to add new flags to control rebuilding of objects, etc?
         flags.byte_values_changed = True

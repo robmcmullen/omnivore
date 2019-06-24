@@ -85,7 +85,7 @@ class JumpmanSelectMode(NormalSelectMode):
 
         # Don't know how to set multiple ranges simultaneously in numpy, so use
         # a slow python loop
-        s = screen.style.reshape((h, w))
+        s = screen._style.reshape((h, w))
 #        s[:] = 0
         for x in range(startx, startx + 8):
             x = x & 0x1f

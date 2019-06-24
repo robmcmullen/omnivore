@@ -15,8 +15,8 @@ drawlog = logging.getLogger("refresh")
 
 
 class JumpmanPlayfieldModel(object):
-    def __init__(self, linked_base):
-        self.linked_base = linked_base
+    def __init__(self, segment):
+        self.segment = segment
         self.possible_jumpman_segment = ju.is_valid_level_segment(self.segment)
         self.items_per_row = 160
         self.antic_lines = 88
@@ -41,15 +41,11 @@ class JumpmanPlayfieldModel(object):
         self.screen_state = None
         self.trigger_state = None
 
-    @property
-    def segment(self):
-        return self.linked_base.segment
-
     def init_level_builder(self, segment_viewer):
         log.debug("init_level_builder")
         self.segment_viewer = segment_viewer
         self.possible_jumpman_segment = ju.is_valid_level_segment(self.segment)
-        self.level_builder = ju.JumpmanLevelBuilder(self.linked_base.document.user_segments)
+        self.level_builder = ju.JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
         self.cached_screen = None
         self.valid_level = False
         self.force_refresh = True
@@ -208,7 +204,7 @@ class JumpmanPlayfieldModel(object):
                 return
             drawlog.debug("draw_playfield: computing image")
             self.compute_image()
-            self.mouse_mode.draw_extra_objects(self.level_builder, self.playfield, self.linked_base.segment)
+            self.mouse_mode.draw_extra_objects(self.level_builder, self.playfield, self.segment)
         else:
             self.bad_image()
         # self.mouse_mode.draw_overlay(bitimage)  # FIXME!
@@ -287,8 +283,8 @@ class JumpmanPlayfieldModel(object):
         self.custom_code = None
         if not self.assembly_source:
             return
-        self.linked_base.editor.metadata_dirty = True
-        d = self.linked_base.document
+        self.segment_viewer.editor.metadata_dirty = True
+        d = self.segment_viewer.document
         path = d.filesystem_path()
         if not path:
             self.assembly_error = f"Assembly error:\nPlease save the level before\ncompiling the assembly source"
@@ -360,7 +356,7 @@ class JumpmanPlayfieldModel(object):
         source, level_addr, harvest_addr = self.get_level_addrs()
         ranges, data = code.get_ranges(source)
         cmd = jc.MoveObjectCommand(source, ranges, data)
-        self.linked_base.editor.process_command(cmd)
+        self.segment_viewer.editor.process_command(cmd)
 
     def update_trigger_mapping(self):
         # only create old trigger mapping if one doesn't exist

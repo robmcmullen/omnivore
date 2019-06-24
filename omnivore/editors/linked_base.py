@@ -68,7 +68,6 @@ class LinkedBase:
 
         ##### Jumpman-specific stuff
         self.jumpman_trigger_selected_event = EventHandler(self)
-        self.jumpman_playfield_model = jp.JumpmanPlayfieldModel(self)
 
     #### Properties
 
@@ -79,6 +78,10 @@ class LinkedBase:
     @property
     def window(self):
         return self.editor.window
+
+    @property
+    def frame(self):
+        return self.editor.frame
 
     @property
     def document(self):

@@ -103,7 +103,11 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
 
 class JumpmanSegmentTable(cg.HexTable):
     def __init__(self, linked_base, bytes_per_row):
-        self.model = linked_base.jumpman_playfield_model
+        s = linked_base.segment
+        if not hasattr(s, "jumpman_playfield_model") or s.jumpman_playfield_model is None:
+            s.jumpman_playfield_model = jp.JumpmanPlayfieldModel(s)
+            print(f"CREATED playfield for {s} in JumpmanSegmentTable")
+        self.model = s.jumpman_playfield_model
         cg.HexTable.__init__(self, self.model.playfield, self.model.playfield.style, self.model.items_per_row, 0x7000)
 
     @property
@@ -131,10 +135,6 @@ class JumpmanGridControl(BitmapGridControl):
         if hasattr(self, 'segment_viewer'):
             return JumpmanFrameRenderer(self, self.segment_viewer)
         return SegmentGridControl.calc_line_renderer(self)
-
-    def recalc_view_extra_setup(self):
-        self.model.init_level_builder(self.segment_viewer)
-        self.segment_viewer._antic_color_registers = self.segment_viewer.current_level.level_colors
 
     def refresh_view(self, *args, **kwargs):
         drawlog.debug("refresh_view")
@@ -266,7 +266,11 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
 
     @property
     def current_level(self):
-        return self.linked_base.jumpman_playfield_model
+        s = self.segment
+        if not hasattr(s, "jumpman_playfield_model") or s.jumpman_playfield_model is None:
+            s.jumpman_playfield_model = jp.JumpmanPlayfieldModel(s)
+            print(f"CREATED playfield model for {s} in current_level")
+        return s.jumpman_playfield_model
 
     ##### Initialization and serialization
 
@@ -323,7 +327,8 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         """Rebuild the entire UI after a document formatting (or other
         structural change) or loading a new document.
         """
-        self.antic_color_registers = self.current_level.level_colors  # refresh forced here
+        print("recalc_view")
+        self.recalc_data_model()
 
     ##### Jumpman level construction
 
@@ -380,7 +385,7 @@ class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
 
     def recalc_view(self):
         try:
-            level = self.segment_viewer.linked_base.jumpman_playfield_model
+            level = self.segment_viewer.segment.jumpman_playfield_model
         except ValueError:
             self.SetItems([])
             self.triggers = [None]
@@ -504,7 +509,7 @@ class JumpmanInfoPanel(JumpmanControlMouseModeMixin, InfoPanel):
     ]
 
     def is_valid_data(self):
-        jm = self.linked_base.jumpman_playfield_model
+        jm = self.segment_viewer.segment.jumpman_playfield_model
         return jm.possible_jumpman_segment and bool(jm.level_builder.objects)
 
 
