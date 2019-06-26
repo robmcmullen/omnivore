@@ -2,28 +2,11 @@ import wx
 
 from .filesystem import find_image_path
 
+default_icon_size = 24
+
 import logging
 log = logging.getLogger(__name__)
 
-
-global_art_ids = {
-    "quit": wx.ART_QUIT,
-    "new_file": wx.ART_NEW,
-    "open_file": wx.ART_FILE_OPEN,
-    "save_file": wx.ART_FILE_SAVE,
-    "save_as": wx.ART_FILE_SAVE_AS,
-    "copy": wx.ART_COPY,
-    "cut": wx.ART_CUT,
-    "paste": wx.ART_PASTE,
-    "undo": wx.ART_UNDO,
-    "redo": wx.ART_REDO,
-}
-
-
-def get_art_id(action_key):
-    global global_art_ids
-
-    return global_art_ids.get(action_key, wx.ART_QUESTION)
 
 found_bitmaps = {}
 
@@ -31,23 +14,34 @@ def get_bitmap(action_key, icon_size):
     try:
         bitmap = find_bitmap(action_key, icon_size)
     except KeyError:
-        art_id = get_art_id(action_key)
-        bitmap = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR, icon_size)
+        try:
+            bitmap = find_bitmap("question-mark", icon_size)
+        except KeyError:
+            bitmap = wx.ArtProvider.GetBitmap(wx.ART_QUESTION, wx.ART_TOOLBAR, (icon_size, icon_size))
         bitmap_key = (action_key, icon_size)
         found_bitmaps[bitmap_key] = bitmap
     return bitmap
 
 def find_bitmap(action_key, icon_size=0):
     bitmap_key = (action_key, icon_size)
+    if icon_size < 16:
+        icon_size = default_icon_size
     try:
         bitmap = found_bitmaps[bitmap_key]
     except KeyError:
-        try:
-            path = find_image_path(action_key + ".png")
-        except OSError:
-            log.warning(f"No icon found for {action_key}")
-            raise KeyError
-        else:
+        path = None
+        action_key_dashes = action_key.replace("_", "-")
+        for prefix in [action_key, f"{action_key}-{icon_size}", f"icons8-{action_key}-{icon_size}", f"icons8-{action_key_dashes}-{icon_size}"]:
+            print("PREFIX!", prefix)
+            try:
+                path = find_image_path(prefix + ".png")
+            except OSError:
+                log.warning(f"No icon found at {prefix} for {action_key}")
+
+        if path is not None:
             bitmap = wx.Bitmap(wx.Image(path))
+            print("USING", path)
             found_bitmaps[bitmap_key] = bitmap
+        else:
+            raise KeyError
     return bitmap

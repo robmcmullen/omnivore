@@ -131,6 +131,7 @@ def find_action_factory(module_search_order, action_key):
 
 class SawxAction:
     name = "base action"
+    icon = None
 
     def __init__(self, editor, action_key):
         self.editor = editor
@@ -141,7 +142,7 @@ class SawxAction:
         return self.name
 
     def calc_icon_name(self, action_key):
-        return action_key
+        return self.icon or action_key
 
     def perform_as_menu_item(self, action_key):
         # NOTE: call this using a CallAfter

@@ -265,6 +265,7 @@ class SawxApp(wx.App):
         info.SetVersion(self.app_version)
         info.SetDescription(self.app_description)
         info.SetWebSite(self.app_website)
+        info.SetArtists(["icons8.com"])
 
         dialog = wx.adv.AboutBox(info)
 

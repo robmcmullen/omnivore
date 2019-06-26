@@ -147,7 +147,7 @@ class SawxEditor:
 
     session_save_file_extension = ""
 
-    tool_bitmap_size = (24, 24)
+    tool_bitmap_size = 0  # default size for platform
 
     preferences_module = "sawx.preferences"
 

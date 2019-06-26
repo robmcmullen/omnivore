@@ -55,6 +55,8 @@ class new_file_from_template(SawxListAction):
         frame.load_file(item["uri"])
 
 class open_file(SawxAction):
+    icon = "file"
+
     def calc_name(self, action_key):
         return "Open"
 
@@ -65,6 +67,7 @@ class open_file(SawxAction):
             frame.load_file(path, self.editor)
 
 class save_file(SawxAction):
+    icon = "save"
     ext_list = [("All Documents", ".*")]
 
     def calc_name(self, action_key):
