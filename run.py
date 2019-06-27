@@ -91,11 +91,11 @@ def main(argv):
     OmnivoreApp.app_description = "The 8-bit Reverse Engineering Toolbox"
     OmnivoreApp.app_website = "https://playermissile.com/omnivore"
     OmnivoreApp.about_dialog_credits = f"""Contributors:<ul>
-<li>Chris Barker for bug reports and fixes on macOS</a>
 <li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari 8-bit Podcast</a> for beta testing
 <li>Wade Ripkowski of <a href=\"http://inverseatascii.info\">Inverse ATASCII, the Atari 8-bit Productivity Podcast</a> for beta testing
-<li>Jeff Tranter, for <a href=\"https://github.com/robmcmullen/udis\">udis</a>, the Universal Disassembler for 8-bit microprocessors
+<li>Jeff Tranter for his work on <a href=\"https://github.com/robmcmullen/udis\">udis</a>, which became the basis for my Cython-based fast disassembler
 <li>Charles Mangin for the Apple ][ and KIM-1 memory maps
+<li>Steve Boswell for the <a href=\"https://github.com/ChoccyHobNob/EightBit-Atari-Fonts\">huge selection of Atari 8-bit fonts</a>
 </ul>
 """
     OmnivoreApp.app_blank_page = f"""<html>
