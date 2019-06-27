@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 found_bitmaps = {}
 
-def get_bitmap(action_key, icon_size):
+def get_bitmap(action_key, icon_size=0):
     try:
         bitmap = find_bitmap(action_key, icon_size)
     except KeyError:

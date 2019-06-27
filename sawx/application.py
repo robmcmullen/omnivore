@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 class SawxApp(wx.App):
     app_name = "Sawx Framework"  # user visible application name
 
-    default_uri = "about://app"  # when no files specified on the command line
+    default_uri = None  # when no files specified on the command line, will default to app_blank_uri
 
     app_version = "dev"
 
@@ -34,20 +34,28 @@ class SawxApp(wx.App):
 
     app_website = "http://playermissile.com/sawx"
 
+    app_author = "Rob McMullen"
+
     app_icon = "icon://omnivore.ico"
 
     app_error_email_to = "feedback@playermissile.com"
 
-    about_uri = "about://app"  # for Help->About menu item
-
-    about_image = "icon://omnivore256.png"  # for Help->About menu item
-
-    about_html = f"""<html>
+    app_blank_page = f"""<html>
 <h2>{app_name} {app_version}</h2>
 
 <h3>{app_description}</h3>
+"""
 
-<p><img src="{about_image}">
+    app_blank_uri = "about://app"
+
+    about_dialog_image = "omnivore256"
+
+    about_dialog_credits = ""
+
+    about_dialog_image_credits = f"""Images & Graphics:<ul>
+<li>All the good looking icons are from <a href="https://icons8.com">icons8.com</a>
+<li>I needed a few icons too esoteric for a design house, so a couple are poorly designed. Those are mine.
+</ul>
 """
 
     default_editor = "simple_editor"
@@ -104,6 +112,9 @@ class SawxApp(wx.App):
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.deactivate_app_event = EventHandler(self)
         self.Bind(wx.EVT_ACTIVATE_APP, self.on_activate_app)
+
+        from .ui.dialogs import SawxAboutDialog
+        wx.CallAfter(SawxAboutDialog)
         return True
 
     def OnExit(self):
@@ -146,7 +157,7 @@ class SawxApp(wx.App):
 
         if extra_args:
             log.debug(f"files to load: {extra_args}")
-            frame = self.new_frame(uri=self.about_uri)
+            frame = self.new_frame(uri=self.app_blank_uri)
             while len(extra_args) > 0:
                 path = extra_args.pop(0)
                 frame.load_file(path, default_editor, task_arguments, show_progress_bar=False)
@@ -249,25 +260,88 @@ class SawxApp(wx.App):
         image = wx.Image(data)
         return wx.Bitmap(image)
 
-    def show_about_dialog(self):
-        info = wx.adv.AboutDialogInfo()
+    @property
+    def about_dialog_html(self):
+        return f"""<html>
+<body text="#ffffff" bgcolor="#222255" link="#aaaaaa" vlink="#ff0000" alink="#000088">
 
-        # Load the image to be displayed in the about box.
-        #image = self.about_image.create_image()
-        icon = wx.Icon()
+<h2>{self.app_name} {self.app_version}</h2>
+
+<h3>{self.app_description}</h3>
+
+<p>by {self.app_author} <a href="{self.app_website}">{self.app_website}</a>
+
+<p>{self.about_dialog_system_versions}
+
+<p>{self.about_dialog_credits}
+
+<p>{self.about_dialog_image_credits}
+"""
+
+    @property
+    def about_dialog_system_versions(self):
+        import sys
+        major, minor, micro = sys.version_info[0:3]
+        desc = f"Python {major}.{minor}.{micro}\n<ul>"
+        import wx
+        desc += "<li>wxPython %s\n" % wx.version()
         try:
-            icon.CopyFromBitmap(self.about_image_bitmap)
-            info.SetIcon(icon)
+            import sawx
+            desc += "<li>sawx %s\n" % sawx.__version__
         except:
-            log.error("AboutDialog: bad icon file: %s" % self.about_image)
+            pass
+        try:
+            import numpy
+            desc += "<li>numpy %s\n" % numpy.version.version
+        except:
+            pass
+        try:
+            import OpenGL
+            import OpenGL.GL as gl
+            desc += "<li>PyOpenGL %s\n" % OpenGL.__version__
+            desc += "<li>OpenGL %s\n" % gl.glGetString(gl.GL_VERSION).encode('utf-8')
+            desc += "<li>OpenGL Vendor: %s\n" % gl.glGetString(gl.GL_VENDOR).encode('utf-8')
+            desc += "<li>OpenGL Renderer: %s\n" % gl.glGetString(gl.GL_RENDERER).encode('utf-8')
+            desc += "<li>GLSL primary: %s\n" % gl.glGetString(gl.GL_SHADING_LANGUAGE_VERSION).encode('utf-8')
+            num_glsl = gl.glGetInteger(gl.GL_NUM_SHADING_LANGUAGE_VERSIONS)
+            desc += "<li>GLSL supported: "
+            for i in range(num_glsl):
+                v = gl.glGetStringi(gl.GL_SHADING_LANGUAGE_VERSION, i).encode('utf-8')
+                desc += v + ", "
+            desc += "\n"
+        except:
+            pass
+        try:
+            import gdal
+            desc += "<li>GDAL %s\n" % gdal.VersionInfo()
+        except:
+            pass
+        try:
+            import pyproj
+            desc += "<li>PyProj %s\n" % pyproj.__version__
+        except:
+            pass
+        try:
+            import netCDF4
+            desc += "<li>netCDF4 %s\n" % netCDF4.__version__
+        except:
+            pass
+        try:
+            import shapely
+            desc += "<li>Shapely %s\n" % shapely.__version__
+        except:
+            pass
+        try:
+            import omnivore_framework
+            desc += "<li>Omnivore %s\n" % omnivore_framework.__version__
+        except:
+            pass
+        desc += "</ul>"
+        return desc
 
-        info.SetName(self.app_name)
-        info.SetVersion(self.app_version)
-        info.SetDescription(self.app_description)
-        info.SetWebSite(self.app_website)
-        info.SetArtists(["icons8.com"])
-
-        dialog = wx.adv.AboutBox(info)
+    def show_about_dialog(self):
+        from .ui.dialogs import SawxAboutDialog
+        SawxAboutDialog.show_or_raise()
 
     def show_preferences_dialog(self, parent, page_name=None):
         dialog = PreferencesDialog(parent, page_name)
@@ -288,6 +362,8 @@ class SawxApp(wx.App):
     def new_frame(self, uri=None):
         if uri is None:
             uri = self.default_uri
+        if uri is None:
+            uri = self.app_blank_uri
         frame = SawxFrame(None, uri)
         return frame
 

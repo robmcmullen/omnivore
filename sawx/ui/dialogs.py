@@ -7,9 +7,13 @@ import wx
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
 
+from .. import art
 from ..utils.processutil import which
 from ..utils.textutil import text_to_int
 from .dropscroller import ReorderableList, PickledDropTarget, PickledDataObject
+
+import logging
+log = logging.getLogger(__name__)
 
 
 class SimplePromptDialog(wx.TextEntryDialog):
@@ -747,6 +751,68 @@ class ChooseOnePlusCustomDialog(wx.Dialog):
             label = self.list.GetString(index)
             custom = None
         return label, custom
+
+
+class HtmlAboutDialog(wx.Dialog):
+    """Simple 'About' dialog with an image on the left and HTML text on
+    the right.
+    """
+    border = 20
+
+    def __init__(self, parent, title, html, bitmap):
+        wx.Dialog.__init__(self, parent, -1, title,
+                           size=(700, 500), pos=wx.DefaultPosition,
+                           style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        self.SetBackgroundColour("#222255")
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.bitmap = wx.StaticBitmap(self, -1, bitmap)
+        sizer.Add(self.bitmap, 0, wx.ALIGN_TOP|wx.ALL, self.border)
+
+        self.html = wx.html.HtmlWindow(self, -1, size=(400, 400))
+        self.html.SetPage(html)
+        sizer.Add(self.html, 1, wx.EXPAND|wx.ALL, 0)
+
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        self.Layout()
+
+        self.Bind(wx.EVT_ACTIVATE, self.on_activate)
+        self.Bind(wx.html.EVT_HTML_LINK_CLICKED, self.on_link_clicked)
+
+    def on_activate(self, evt):
+        log.debug(f"on_link_clicked: {evt.GetActive()}")
+        if not evt.GetActive():
+            wx.CallAfter(self.Destroy)
+
+    def on_link_clicked(self, evt):
+        href = evt.GetLinkInfo().GetHref()
+        log.debug(f"on_link_clicked: {href}")
+
+
+class SawxAboutDialog(HtmlAboutDialog):
+    @classmethod
+    def is_shown(cls):
+        for frame in wx.GetTopLevelWindows():
+            if isinstance(frame, HtmlAboutDialog):
+                return frame
+        return None
+
+    @classmethod
+    def show_or_raise(cls):
+        frame = cls.is_shown()
+        if frame:
+            frame.Raise()
+        else:
+            frame = cls()
+
+    def __init__(self):
+        app = wx.GetApp()
+        bitmap = art.get_bitmap(app.about_dialog_image)
+        html = app.about_dialog_html
+        HtmlAboutDialog.__init__(self, None, app.app_name, html, bitmap)
+        wx.CallAfter(self.Show)
 
 
 if __name__ == "__main__":

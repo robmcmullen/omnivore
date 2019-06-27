@@ -156,7 +156,7 @@ def init_filesystems(app):
     wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
     global about
-    about['app'] = app.about_html.encode('utf-8')
+    about['app'] = app.app_blank_page.encode('utf-8')
 
     global image_paths
     path = get_image_path("icons")
