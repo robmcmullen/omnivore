@@ -5,7 +5,7 @@ import wx
 from .action import get_action_id
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger("toolbar")
 sync_log = logging.getLogger("sync-toolbar")
 
 

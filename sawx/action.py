@@ -7,7 +7,7 @@ from . import art
 from . import errors
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger("action")
 sync_log = logging.getLogger("sync")
 
 
