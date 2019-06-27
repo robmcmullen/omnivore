@@ -129,6 +129,7 @@ void a8bridge_configure_state_arrays(input_template_t *input, output_template_t 
 	machine type*/
 	LIBATARI800_Input_array = input;
 	LIBATARI800_Status = &output->status;
+	LIBATARI800_History = NULL;
 	memory_access = output->status.memory_access;
 	access_type = output->status.access_type;
 
