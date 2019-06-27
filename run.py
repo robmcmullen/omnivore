@@ -88,13 +88,23 @@ def main(argv):
     OmnivoreApp.app_name = "Omnivore"
     OmnivoreApp.app_version = __version__
     OmnivoreApp.app_icon = "icon://omnivore.ico"
-    OmnivoreApp.app_description = "The 8-bit Binary Editor, Emulator, and Reverse Engineering Toolbox"
+    OmnivoreApp.app_description = "The 8-bit Reverse Engineering Toolbox"
     OmnivoreApp.app_website = "https://playermissile.com/omnivore"
-    OmnivoreApp.about_html = f"""<h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version}</h2>
+    OmnivoreApp.about_dialog_credits = f"""Contributors:<ul>
+<li>Chris Barker for bug reports and fixes on macOS</a>
+<li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari 8-bit Podcast</a> for beta testing
+<li>Wade Ripkowski of <a href=\"http://inverseatascii.info\">Inverse ATASCII, the Atari 8-bit Productivity Podcast</a> for beta testing
+<li>Jeff Tranter, for <a href=\"https://github.com/robmcmullen/udis\">udis</a>, the Universal Disassembler for 8-bit microprocessors
+<li>Charles Mangin for the Apple ][ and KIM-1 memory maps
+</ul>
+"""
+    OmnivoreApp.app_blank_page = f"""<html>
+<h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version}</h2>
 
 <h3>{OmnivoreApp.app_description}</h3>
 
-<p><img src="{OmnivoreApp.about_image}">"""
+<p><img src="icon://omnivore256.png">"""
+
     run(OmnivoreApp, image_paths, template_paths)
 
     logging.shutdown()
