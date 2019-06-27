@@ -80,7 +80,7 @@ class EmulationDocument(DiskImageDocument):
                 raise RuntimeError(f"Unknown emulator {emulator_type}")
         emu_doc = cls.emulator_document.get(emu_cls.ui_name, None)
         if emu_doc is not None:
-            error = EmulatorInUseError(f"Only one {emu_cls.ui_name} emulator at a time, I'm afraid.\n\nYou currently have one running.")
+            error = EmulatorInUseError(f"Only one {emu_doc.emulator.ui_name} emulator can run at one time.")
             error.current_emulator_document = emu_doc
             raise error
         emu = emu_cls()
