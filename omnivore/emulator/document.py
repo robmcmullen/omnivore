@@ -150,7 +150,7 @@ class EmulationDocument(DiskImageDocument):
 
     #####
 
-    def boot(self, segment=None):
+    def boot(self, segment=None, start_immediately=True):
         emu = self.emulator
         emu.configure_emulator([])
         if segment is None:
@@ -168,7 +168,8 @@ class EmulationDocument(DiskImageDocument):
             emu.next_frame()
         self.create_segments()
         self.create_timer()
-        # self.start_timer()
+        if start_immediately:
+            self.start_timer()
 
     def load(self, segment=None):
         SawxDocument.load(self, segment)
