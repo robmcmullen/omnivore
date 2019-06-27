@@ -48,6 +48,12 @@ class emu_boot_disk_image(SawxAction):
             doc = EmulationDocument.create_document(source_document, source_document.emulator_class_override)
         except errors.EmulatorInUseError as e:
             print(f"Currently running emulator: {e.current_emulator_document}")
+            doc = e.current_emulator_document
+            doc.pause_emulator()
+            if self.editor.frame.confirm(f"Only one instance of {doc.emulator_type} can be running at any one time.\n\nReplace with the new boot image? Current emulation\nwill be lost.", "Replace Emulator"):
+                doc.boot(source_document.collection.containers[0])
+            else:
+                doc.restart_emulator()
         else:
             doc.boot(source_document.collection.containers[0])
             print(f"emulator document: {doc}")
