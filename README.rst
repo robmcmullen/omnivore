@@ -14,6 +14,17 @@ menubars, toolbars, and popup menus. Also includes many small utilities and
 convenience classes, such as a tile layout control that can replace more complicated controls like the wx.aui.AuiManager.
 
 
+Images
+======
+
+Professionally design icons supplied by `icons8 <https://icons8.com>`_ which
+provides established open-source projects with a free license.
+
+I did need some icons that were too esoteric/project-specific for a design
+house, so there are several I created myself. You'll note those in the source
+because they don't start with ``icons8-`` in the ``sawx/icons`` directory.
+
+
 Disclaimer
 ==========
 

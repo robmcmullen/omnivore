@@ -54,7 +54,7 @@ class SawxApp(wx.App):
 
     about_dialog_image_credits = f"""Images & Graphics:<ul>
 <li>All the good looking icons are from <a href="https://icons8.com">icons8.com</a>
-<li>I needed a few icons too esoteric for a design house, so a couple are poorly designed. Those are mine.
+<li>I needed a few icons too esoteric for a design house, so I did create a few myself... and I'm not an artist. At all.
 </ul>
 """
 
@@ -113,8 +113,6 @@ class SawxApp(wx.App):
         self.deactivate_app_event = EventHandler(self)
         self.Bind(wx.EVT_ACTIVATE_APP, self.on_activate_app)
 
-        from .ui.dialogs import SawxAboutDialog
-        wx.CallAfter(SawxAboutDialog)
         return True
 
     def OnExit(self):
@@ -271,18 +269,19 @@ class SawxApp(wx.App):
 
 <p>by {self.app_author} <a href="{self.app_website}">{self.app_website}</a>
 
-<p>{self.about_dialog_system_versions}
+<p>using {self.about_dialog_system_versions}
 
 <p>{self.about_dialog_credits}
 
 <p>{self.about_dialog_image_credits}
+</html>
 """
 
     @property
     def about_dialog_system_versions(self):
         import sys
         major, minor, micro = sys.version_info[0:3]
-        desc = f"Python {major}.{minor}.{micro}\n<ul>"
+        desc = f"Python {major}.{minor}.{micro}:\n<ul>"
         import wx
         desc += "<li>wxPython %s\n" % wx.version()
         try:
