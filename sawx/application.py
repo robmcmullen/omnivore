@@ -87,6 +87,8 @@ class SawxApp(wx.App):
 
     _preferences = None
 
+    in_bootup_process = True
+
     #### Initialization
 
     def OnInit(self):
@@ -164,6 +166,12 @@ class SawxApp(wx.App):
         frame.Show()
         if options.show_prefs:
             wx.CallAfter(self.show_preferences_dialog, frame)
+        wx.CallAfter(self.done_with_bootup)
+
+    @classmethod
+    def done_with_bootup(cls):
+        log.debug("done_with_bootup")
+        cls.in_bootup_process = False
 
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon

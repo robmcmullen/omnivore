@@ -364,8 +364,12 @@ class SawxFrame(wx.Frame):
     def on_page_changed(self, evt):
         index = evt.GetSelection()
         editor = self.find_editor_from_index(index)
-        log.debug(f"on_page_changed: page id: {index}, {editor.document.uri}")
-        self.make_active(editor, force=True, in_event_loop=True)
+
+        # Can get stuck in a loop if the page changes while you're still in the
+        # initial process of displaying the frame.
+        still_booting = wx.GetApp().in_bootup_process
+        log.debug(f"on_page_changed: page id: {index}, {editor.document.uri}, still_booting={still_booting}")
+        self.make_active(editor, force=True, in_event_loop=not still_booting)
         evt.Skip()
 
     def on_page_closing(self, evt):
