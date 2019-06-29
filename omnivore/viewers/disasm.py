@@ -13,6 +13,7 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..viewer import SegmentViewer
 
 from .commands import MiniAssemblerCommand
+from ..disassembler.miniasm import get_miniasm
 
 import logging
 log = logging.getLogger(__name__)
@@ -152,6 +153,10 @@ class DisassemblyControl(SegmentGridControl):
 
     def advance_caret_position(self, evt, flags):
         self.caret_handler.move_carets_vertically(self.table, 1)
+
+    def verify_keycode_can_start_edit(self, c):
+        miniasm = get_miniasm(self.segment_viewer.document.cpu)
+        return miniasm.can_start_edit(c)
 
 
 class DisassemblyViewer(SegmentViewer):

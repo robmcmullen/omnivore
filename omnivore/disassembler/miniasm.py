@@ -209,6 +209,13 @@ class MiniAssembler(object):
             modelist.sort()
             log.debug("%s: %s" % (mnemonic, modelist))
             self.ops[mnemonic] = modelist
+
+        # Create lookup set to quickly determine if a character can start an
+        # opcode (both character and ordinal value of char are valid)
+        self.start_char_in_op = set()
+        for mnemonic in self.ops.keys():
+            self.start_char_in_op.add(mnemonic[0])
+            self.start_char_in_op.add(ord(mnemonic[0]))
     
     addrre = re.compile(r'\$[0-9a-fA-F]+')
     immediatere = re.compile(r'#?\$[0-9a-fA-F]+')
@@ -284,6 +291,13 @@ class MiniAssembler(object):
         log.debug(f"op: {opstr} operands: {operands}, origin: {origin}")
         data = self.parse_operands(opstr, operands, origin)
         return data
+
+    def can_start_edit(self, c):
+        """Return True if the specified character is the start of an assembler
+        command
+        """
+        return c in self.start_char_in_op
+
 
 
 _miniassemblers = {}
