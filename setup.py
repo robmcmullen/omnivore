@@ -359,8 +359,8 @@ setup(
     'jsonpickle',
     # 'pyopengl-accelerate',  # not required, and a pain on some platform/os combos
     'pyopengl',
-    'sawx>=1.2',
-    'atrip>0.4',
+    'sawx>=1.3.1',
+    'atrip>0.4.2',
     'numpy',
     ],
     cmdclass = {"clean": clean_py},
