@@ -1,5 +1,6 @@
 # cython: language_level=3
 from libc.stdio cimport printf
+from libc.string cimport strstr, strcasestr
 import cython
 import numpy as np
 cimport numpy as np
@@ -340,6 +341,32 @@ cdef class StringifiedDisassembly:
             num_entries -= 1
             h += 1
 
+    cdef search(self, history_entry_t *h, int num_entries, search_bytes, int match_case):
+        cdef char *search = search_bytes
+        cdef char *text = self.disasm_text.text_ptr
+        cdef char *found
+        cdef int pc = h.pc
+        matches = []
+        # printf("Searching for: %s in %d lines\n", search, num_entries)
+        while num_entries > 0:
+            stringifier = stringifier_map[h.disassembler_type]
+            count = stringifier(h, text, self.hex_case, self.mnemonic_case, self.jmp_targets_data)
+            text[count] = 0
+
+            if match_case:
+                found = strstr(text, search)
+            else:
+                found = strcasestr(text, search)
+            if found:
+                matches.append((h.pc - pc, h.pc - pc + h.num_bytes))
+                # printf("disassembler: %d, remaining: %d, line: %s, found: %s\n", h.disassembler_type, num_entries, text, found)
+            num_entries -= 1
+            h += 1
+
+        # printf("Searched for: %s, found %d matches\n", search, len(matches))
+        return matches
+
+
 
 cdef class ParsedDisassembly:
     cdef history_entry_t *history_entries
@@ -437,6 +464,11 @@ cdef class ParsedDisassembly:
         output = StringifiedDisassembly(index, num_lines_requested, self.jmp_targets, labels, mnemonic_lower, hex_lower)
         output.parse_history_entries(h, num_lines_requested)
         return output
+
+    def search(self, search_bytes, match_case=False, labels=None):
+        cdef history_entry_t *h = &self.history_entries[0]
+        output = StringifiedDisassembly(0, 100, self.jmp_targets, labels, not match_case, not match_case)
+        return output.search(h, self.num_entries, search_bytes, match_case)
 
 
 cdef int data_style = 0

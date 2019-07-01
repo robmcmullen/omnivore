@@ -16,7 +16,6 @@ class BaseSearcher(object):
         self.search_copy = search_copy
         if len(self.search_text) > 0:
             self.matches = self.get_matches(editor)
-            self.set_style(editor)
         else:
             self.matches = []
 
@@ -28,9 +27,6 @@ class BaseSearcher(object):
         rs = re.escape(bytes(self.search_text))
         matches = [(i.start(), i.end()) for i in re.finditer(rs, text)]
         return matches
-
-    def set_style(self, editor):
-        editor.segment.set_style_ranges(self.matches, match=True)
 
 
 class HexSearcher(BaseSearcher):

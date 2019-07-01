@@ -75,8 +75,9 @@ class FindAllCommand(Command):
                 if len(self.all_matches) == 0:
                     undo.flags.message = "Not found"
                 else:
-                # Need to use a tuple in order for bisect to search the list
-                # of tuples
+                    editor.segment.set_style_ranges(self.all_matches, match=True)
+                    # Need to use a tuple in order for bisect to search the
+                    # list of tuples
                     caret_tuple = (self.current_caret_index, 0)
                     self.current_match_index = bisect.bisect_left(self.all_matches, caret_tuple)
                     if self.current_match_index >= len(self.all_matches):

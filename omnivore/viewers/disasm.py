@@ -14,6 +14,7 @@ from ..viewer import SegmentViewer
 
 from .commands import MiniAssemblerCommand
 from ..disassembler.miniasm import get_miniasm
+from ..utils import searchutil
 
 import logging
 log = logging.getLogger(__name__)
@@ -106,6 +107,9 @@ class DisassemblyTable(SegmentTable):
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         self.parsed = self.current.stringify(start_row, visible_rows, self.linked_base.document.labels)
 
+    def search(self, search_bytes, match_case=False):
+        return self.current.search(search_bytes, match_case, self.linked_base.document.labels)
+
     def rebuild(self):
         segment = self.linked_base.segment
         self.current = self.linked_base.document.disassembler.parse(segment, self.max_num_entries)
@@ -159,14 +163,44 @@ class DisassemblyControl(SegmentGridControl):
         return miniasm.can_start_edit(c)
 
 
+# Disassembly searcher uses the __call__ method to return the object because it
+# needs access to the particular viewer's CPU type and disassembly table.
+# Normal searchers just use the segment's raw data and returns itself in the
+# constructor.
+class DisassemblySearcher(searchutil.BaseSearcher):
+    def __init__(self, viewer):
+        self.search_text = None
+        self.matches = []
+        self.table = viewer.table
+        self.ui_name = viewer.document.cpu
+
+    def __call__(self, editor, search_text, search_copy):
+        self.search_text = self.get_search_text(search_text)
+        if len(self.search_text) > 0:
+            self.matches = self.get_matches(editor)
+        else:
+            self.matches = []
+        return self
+
+    def __str__(self):
+        return f"{self.ui_name} matches: {self.matches}"
+
+    def get_matches(self, editor):
+        match_case = editor.last_search_settings.get('match_case', False)
+        search_bytes = self.search_text
+        if not match_case:
+            search_bytes = search_bytes.lower()
+        matches = self.table.search(search_bytes, match_case)
+        log.debug("instruction matches: %s" % str(matches))
+        return matches
+
+
 class DisassemblyViewer(SegmentViewer):
     name = "disasm"
 
     ui_name = "Static Disassembly"
 
     control_cls = DisassemblyControl
-
-    # trait defaults
 
     # initialization
 
@@ -175,6 +209,12 @@ class DisassemblyViewer(SegmentViewer):
     @property
     def table(self):
         return self.control.table
+
+    @property
+    def searchers(self):
+        # Replace the normal viewer searcher class attribute with a searcher
+        # that is custom to the cpu shown in this viewer
+        return [DisassemblySearcher(self)]
 
     def set_event_handlers(self):
         self.document.cpu_changed_event += self.on_cpu_changed
