@@ -69,6 +69,11 @@ class SetSelectionCommand(ChangeByteValuesCommand):
     def get_data(self, orig):
         return self.data
 
+    def change_data_at_indexes(self, indexes):
+        old_data = self.segment[indexes].copy()
+        self.segment[indexes] = self.get_data(old_data)
+        return (old_data, indexes)
+
     def do_change(self, editor, undo):
         indexes = self.get_indexes()
         i1 = min(indexes)
@@ -76,9 +81,7 @@ class SetSelectionCommand(ChangeByteValuesCommand):
         undo.flags.index_range = i1, i2
         if self.advance:
             undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
-        old_data = self.segment[indexes].copy()
-        self.segment[indexes] = self.get_data(old_data)
-        return (old_data, indexes)
+        return self.change_data_at_indexes(indexes)
 
     def undo_change(self, editor, old_data):
         old_data, indexes = old_data

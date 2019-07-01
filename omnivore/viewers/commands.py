@@ -274,23 +274,19 @@ class ClearTraceCommand(ChangeStyleCommand):
         editor.can_trace = False
 
 
-class MiniAssemblerCommand(SetRangeValueModifyIndexesCommand):
+class MiniAssemblerCommand(SetSelectionCommand):
     short_name = "miniasm"
     ui_name = "Assemble"
-    serialize_order =  [
-            ('segment', 'int'),
-            ('ranges', 'int_list'),
-            ('data', 'string'),
-            ]
 
-    def __init__(self, segment, cpu, ranges, data, advance=False, rango_to_index_function=None):
-        SetRangeValueModifyIndexesCommand.__init__(self, segment, ranges, data, advance, rango_to_index_function)
+    def __init__(self, segment, cpu, selection, data, advance=False):
+        SetSelectionCommand.__init__(self, segment, selection, data, advance)
         self.cpu = cpu
 
-    def get_data_and_indexes(self, indexes):
-        changed_bytes = []
-        new_indexes = []
-        print("INDEXES!", indexes)
+    def change_data_at_indexes(self, indexes):
+        new_data = np.empty(len(indexes) + 100, dtype=np.uint8)
+        new_indexes = np.empty(len(indexes) + 100, dtype=np.uint8)
+        total = 0
+        indexes.sort()  # carets may be out of order, so force increasing
         next_valid_start = 0
         for index in indexes:
             if index < next_valid_start:
@@ -298,10 +294,15 @@ class MiniAssemblerCommand(SetRangeValueModifyIndexesCommand):
                 continue
             pc = self.segment.origin + index
             d = miniasm.process(self.cpu, self.data, pc)
-            changed_bytes.extend(d)
-            next_valid_start = index + len(d)
-            new_indexes.extend(range(index, next_valid_start))
-        return changed_bytes, new_indexes
+            count = len(d)
+            new_data[total:total + count] = d
+            next_valid_start = index + count
+            new_indexes[total:total + count] = np.arange(index, next_valid_start)
+            total += count
+        indexes = new_indexes[0:total]
+        old_data = self.segment[indexes]
+        self.segment[indexes] = new_data[0:total]
+        return old_data, indexes
 
 
 class SetCommentCommand(ChangeStyleCommand):

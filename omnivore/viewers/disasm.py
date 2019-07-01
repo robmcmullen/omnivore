@@ -147,8 +147,8 @@ class DisassemblyControl(SegmentGridControl):
                 ranges.append((start, end))
         return ranges
 
-    def calc_edit_command(self, ranges, val):
-        cmd = MiniAssemblerCommand(self.segment_viewer.segment, self.segment_viewer.document.cpu, ranges, val, advance=True)
+    def calc_edit_command(self, val):
+        cmd = MiniAssemblerCommand(self.segment_viewer.segment, self.segment_viewer.document.cpu, self.caret_handler, val, advance=True)
         return cmd
 
     def advance_caret_position(self, evt, flags):
