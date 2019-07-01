@@ -41,6 +41,9 @@ class emu_boot_disk_image(SawxAction):
     def calc_name(self, action_key):
         return "Boot Disk Image"
 
+    def do_boot(self, doc, source_document):
+        doc.boot(source_document.collection.containers[0])
+
     def perform(self, action_key):
         print(f"Booting disk image using {self.editor.document.emulator_class_override}")
         source_document = self.editor.document
@@ -51,22 +54,22 @@ class emu_boot_disk_image(SawxAction):
             doc = e.current_emulator_document
             doc.pause_emulator()
             if self.editor.frame.confirm(f"Only one {doc.emulator.ui_name} emulator can be running at any one time.\n\nReplace with the new boot image? Current emulation\nwill be lost.", "Replace Emulator"):
-                doc.boot(source_document.collection.containers[0])
+                self.do_boot(doc, source_document)
             else:
                 doc.restart_emulator()
         else:
-            doc.boot(source_document.collection.containers[0])
+            self.do_boot(doc, source_document)
             print(f"emulator document: {doc}")
             editor = EmulatorEditor(doc)
             frame = SawxSingleEditorFrame(editor)
             frame.Show()
 
-class emu_boot_segment(SawxAction):
+class emu_boot_segment(emu_boot_disk_image):
     def calc_name(self, action_key):
         return "Boot Segment"
 
-    def perform(self, action_key):
-        print(f"Booting segment using {self.editor.document.emulator_class_override}")
+    def do_boot(self, doc, source_document):
+        doc.boot(self.editor.focused_viewer.segment)
 
 class emu_restore(SawxAction):
     def calc_name(self, action_key):

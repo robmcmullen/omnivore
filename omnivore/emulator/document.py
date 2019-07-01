@@ -154,8 +154,6 @@ class EmulationDocument(DiskImageDocument):
         emu = self.emulator
         emu.configure_emulator([])
         if segment is None:
-            segment = self.source_document.segment_parser.image.create_emulator_boot_segment()
-        elif segment.origin == 0:
             segment = emu.find_default_boot_segment(self.source_document.segments)
 
         if segment is not None:
