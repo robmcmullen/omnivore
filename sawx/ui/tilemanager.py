@@ -845,7 +845,7 @@ class TileManager(wx.Window):
         if self.minibuffer_panel is None:
             panel = wx.Panel(self, name="minibuffer_parent", style=wx.NO_BORDER)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
-            bmp = art.find_bitmap('cancel')
+            bmp = art.get_bitmap('cancel')
             close = wx.BitmapButton(panel, -1, bmp, size=(bmp.GetWidth()+10, bmp.GetHeight()+10), style=wx.NO_BORDER)
             close.Bind(wx.EVT_BUTTON, self.on_hide_minibuffer_or_cancel)
             sizer.Add(close, 0, wx.EXPAND)
