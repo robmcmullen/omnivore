@@ -10,7 +10,6 @@ from sawx.ui import compactgrid as cg
 from ..ui.segment_grid import SegmentGridControl, SegmentVirtualTable
 from ..viewer import SegmentViewer
 from .emulator import EmulatorViewerMixin
-from . import actions as va
 from . import bitmap as b
 from ..arch.bitmap_renderers import MemoryAccessMap
 
@@ -58,10 +57,6 @@ class MemoryAccessGridControl(b.BitmapGridControl):
     @property
     def scale_height(self):
         return self.bitmap_renderer.scale_height
-
-    def get_extra_actions(self):
-        actions = [None, va.BitmapZoomAction]
-        return actions
 
 
 class MemoryAccessViewer(EmulatorViewerMixin, SegmentViewer):

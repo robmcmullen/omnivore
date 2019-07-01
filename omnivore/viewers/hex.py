@@ -8,7 +8,6 @@ from sawx.ui import compactgrid as cg
 from ..arch.disasm import get_style_name
 
 from ..viewer import SegmentViewer
-# from .actions import ViewerWidthAction
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,6 +83,3 @@ class HexEditViewer(SegmentViewer):
 
     def update_carets(self, flags):
         pass
-
-    def calc_viewer_popup_actions(self, popup_data):
-        return [ViewerWidthAction]

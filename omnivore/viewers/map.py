@@ -66,8 +66,3 @@ class MapViewer(CharViewer):
     def set_draw_pattern(self, value):
         log.debug("new draw pattern: %s" % str(value))
         self.draw_pattern = np.asarray([value], dtype=np.uint8)
-
-    #### popup menus
-
-    def common_popup_actions(self):
-        return [fa.CutAction, fa.CopyAction, fa.PasteAction, None, fa.SelectAllAction, fa.SelectNoneAction, fa.SelectInvertAction]

@@ -14,7 +14,6 @@ from .utils import searchutil
 from .ui.segment_grid import SegmentGridControl
 from .viewers.mouse_modes import NormalSelectMode
 from . import clipboard_commands
-# from . import actions as va
 
 import logging
 log = logging.getLogger(__name__)
@@ -105,7 +104,7 @@ class SegmentViewer:
         "view_width",
         "view_zoom",
         None,
-        "copy"
+        "copy",
         "cut",
         "paste",
         None,
@@ -608,15 +607,6 @@ class SegmentViewer:
 
     def activate_spring_tab(self):
         self.recalc_view()
-
-    #### popup menus
-
-    def calc_viewer_popup_actions(self, popup_data):
-        # for subclasses!
-        return [va.ViewerWidthAction, va.ViewerZoomAction]
-
-    def popup_context_menu_from_actions(self, *args, **kwargs):
-        self.editor.popup_context_menu_from_actions(self.control, *args, **kwargs)
 
 
 class PlaceholderControl(wx.Window):

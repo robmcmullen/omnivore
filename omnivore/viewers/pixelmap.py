@@ -14,7 +14,6 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 
 from ..viewer import SegmentViewer
 from . import bitmap as b
-from . import actions as va
 from ..arch import pixel_converters as px
 from ..arch import colors
 
@@ -221,10 +220,6 @@ class PixelGridControl(SegmentGridControl):
 
     def verify_line_renderer(self):
         self.recalc_line_renderer()
-
-    def get_extra_actions(self):
-        actions = [None, va.BitmapWidthAction, va.BitmapZoomAction]
-        return actions
 
 
 class PixelViewer(SegmentViewer):

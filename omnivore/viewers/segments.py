@@ -1,8 +1,6 @@
 import sys
 import wx
 
-# from pyface.action.api import Action, ActionItem, Separator
-
 from .actions import *
 
 import logging
@@ -127,33 +125,32 @@ class SegmentList(wx.ListBox):
         if selected == -1:
             event.Skip()
             return
+        uuid = self.index_to_segment_uuid[selected]
         e = self.linked_base.editor
-        d = e.document
-        t = e.task
-        segment = d.segments[selected]
+        # d = e.document
 
-        # include disabled action showing the name of the segment clicked upon
-        # because it may be different than the selected item
-        name = segment.name
-        if not name:
-            name = str(segment)
-        actions = [
-            Action(name=name, task=t, enabled=False),
-            None,
-            ]
-        if selected > 0:
-            actions.append(SelectSegmentInAllAction(segment_uuid=selected, task=t))
-            actions.append(ParseSubSegmentsAction(segment_uuid=selected, task=t))
-            actions.append(SetSegmentOriginAction(segment_uuid=selected, task=t))
-            actions.append(DeleteUserSegmentAction(segment_uuid=selected, task=t))
-            actions.append(None)
-        savers = e.get_extra_segment_savers(segment)
-        savers.extend(segment.savers)
-        for saver in savers:
-            action = SaveSegmentAsFormatAction(saver=saver, segment_uuid=selected, task=t, name="Save as %s" % saver.export_data_name)
-            actions.append(action)
-        if actions:
-            e.popup_context_menu_from_actions(self, actions)
+        # # include disabled action showing the name of the segment clicked upon
+        # # because it may be different than the selected item
+        # name = segment.name
+        # if not name:
+        #     name = str(segment)
+        # actions = [
+        #     Action(name=name, task=t, enabled=False),
+        #     None,
+        #     ]
+        # if selected > 0:
+        #     actions.append(SelectSegmentInAllAction(segment_uuid=uuid, task=t))
+        #     actions.append(ParseSubSegmentsAction(segment_uuid=uuid, task=t))
+        #     actions.append(SetSegmentOriginAction(segment_uuid=uuid, task=t))
+        #     actions.append(DeleteUserSegmentAction(segment_uuid=uuid, task=t))
+        #     actions.append(None)
+        # savers = e.get_extra_segment_savers(segment)
+        # savers.extend(segment.savers)
+        # for saver in savers:
+        #     action = SaveSegmentAsFormatAction(saver=saver, segment_uuid=selected, task=t, name="Save as %s" % saver.export_data_name)
+        #     actions.append(action)
+        # if actions:
+        #     e.popup_context_menu_from_actions(self, actions)
 
     def on_tooltip(self, evt):
         pos = evt.GetPosition()

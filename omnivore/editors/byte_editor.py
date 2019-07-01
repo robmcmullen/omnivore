@@ -610,17 +610,6 @@ class ByteEditor(TileManagerBase):
         if self.diff_highlight and self.document.has_baseline:
             self.document.update_baseline()
 
-    def do_popup(self, control, popup):
-        # The popup event may happen on a control that isn't the focused
-        # viewer, and the focused_viewer needs to point to that control for
-        # actions to work in the correct viewer. The focus needs to be forced
-        # to that control, we can't necessarily count on the ActivatePane call
-        # to work before the popup.
-        self.focused_viewer = control.segment_viewer
-        ret = FrameworkEditor.do_popup(self, control, popup)
-        wx.CallAfter(self.force_focus, control.segment_viewer)
-        return ret
-
     #### command processing
 
     def calc_status_flags(self):

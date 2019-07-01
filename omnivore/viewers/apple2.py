@@ -15,7 +15,6 @@ from ..utils import apple2util as a2
 from ..editors.linked_base import LinkedBase
 
 from ..viewer import SegmentViewer
-from . import actions as va
 from . import bitmap as b
 from . import char as c
 
@@ -111,10 +110,6 @@ class HiresGridControl(b.BitmapGridControl):
         if hasattr(self, 'segment_viewer'):
             return HiresLineRenderer(self, self.segment_viewer)
         return SegmentGridControl.calc_line_renderer(self)
-
-    def get_extra_actions(self):
-        actions = [None, va.BitmapZoomAction]
-        return actions
 
     ##### Keyboard handling
 
