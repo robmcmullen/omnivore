@@ -202,6 +202,9 @@ class CPUParamTableViewer(EmulatorViewerMixin, VirtualTableInfoViewer):
     def linked_base_segment_identifier(self):
         return ""
 
+    def recalc_view(self):
+        self.control.recalc_view()
+
 
 class CPU6502Viewer(CPUParamTableViewer):
     name = "cpu6502"
