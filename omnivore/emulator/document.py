@@ -231,8 +231,8 @@ class EmulationDocument(DiskImageDocument):
         self.emulator_update_screen_event(True)
         self.priority_level_refresh_event(100)
 
-    def restart_emulator(self):
-        print("restart")
+    def resume_emulator(self):
+        print("resume")
         self.start_timer()
         self.emulator_update_screen_event(True)
 

@@ -57,7 +57,7 @@ class emu_boot_disk_image(SawxAction):
                 self.do_boot(doc, source_document)
                 doc.recalc_event(True)
             else:
-                doc.restart_emulator()
+                doc.resume_emulator()
         else:
             self.do_boot(doc, source_document)
             print(f"emulator document: {doc}")
@@ -94,7 +94,7 @@ class emu_pause_resume(SawxNameChangeAction):
         if self.editor.document.emulator_running:
             self.editor.document.pause_emulator()
         else:
-            self.editor.document.restart_emulator()
+            self.editor.document.resume_emulator()
 
 
 class emu_step(SawxAction):
