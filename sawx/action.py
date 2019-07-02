@@ -316,7 +316,7 @@ class SawxListAction(SawxActionListMixin, SawxAction):
         raise NotImplementedError
 
 
-class SawxPersistentDictAction(SawxActionListMixin, SawxAction):
+class SawxPersistentDictAction(SawxListAction):
     json_name = "test_action"
 
     canonical_dict = None
