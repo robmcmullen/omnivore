@@ -5,6 +5,7 @@ import wx
 
 from . import art
 from . import errors
+from .persistence import get_json_data, save_json_data
 
 import logging
 log = logging.getLogger("action")
@@ -313,6 +314,29 @@ class SawxListAction(SawxActionListMixin, SawxAction):
 
     def perform(self, action_key):
         raise NotImplementedError
+
+
+class SawxPersistentDictAction(SawxActionListMixin, SawxAction):
+    json_name = "test_action"
+
+    canonical_dict = None
+
+    @classmethod
+    def reload(cls):
+        data = get_json_data(cls.json_name, {})
+        cls.canonical_dict = data
+
+    def calc_list_items(self):
+        if self.canonical_dict is None:
+            self.reload()
+        return sorted(self.__class__.canonical_dict.keys())
+
+    @classmethod
+    def add(cls, label, layout):
+        if cls.canonical_dict is None:
+            cls.reload()
+        cls.canonical_dict[label] = layout
+        save_json_data(cls.json_name, cls.canonical_dict)
 
 
 class SawxRadioListAction(SawxActionListMixin, SawxActionRadioMixin, SawxAction):
