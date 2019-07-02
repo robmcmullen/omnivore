@@ -1568,6 +1568,11 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     def map_char_events(self):
         self.main.Bind(wx.EVT_CHAR, self.on_char)
 
+    def unmap_events(self):
+        self.main.Unbind(wx.EVT_PAINT)
+        self.main.Unbind(wx.EVT_SIZE)
+        self.main.Unbind(wx.EVT_TIMER)
+
     def get_row_cell_from_event(self, evt):
         row, cell = self.main.pixel_pos_to_row_cell(evt.GetX(), evt.GetY())
         return row, cell
