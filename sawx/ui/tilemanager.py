@@ -1284,7 +1284,7 @@ class ViewContainer(object):
         log.warning("maximize not implemented yet")
 
 
-class TileSplit(TileWindowBase, ViewContainer):
+class TileSplit(ViewContainer, TileWindowBase):
     class HorizontalLayout(object):
         @classmethod
         def calc_size(cls, tile_split):
