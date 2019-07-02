@@ -111,7 +111,7 @@ class TileManagerBase(SawxEditor):
                 self.control.restore_layout(layout)
         return viewers
 
-    def restore_layout(self, s):
+    def restore_layout(self, s, force=False):
         """Create a layout of viewers, either from the saved layout in the
         session file, or by using a list of template names to find a default
         layout.
@@ -142,7 +142,7 @@ class TileManagerBase(SawxEditor):
             viewer_metadata[v['uuid']] = v
             log.debug("metadata: viewer[%s]=%s" % (v['uuid'], str(v)))
 
-        self.create_viewers(viewer_metadata)
+        self.create_viewers(viewer_metadata, force)
 
         return s
 
@@ -151,7 +151,7 @@ class TileManagerBase(SawxEditor):
         """
         log.critical(f"replace_layout: replacing current layout")
         self.control.remove_all()
-        self.restore_layout(s)
+        self.restore_layout(s, True)
 
     def change_initial_segment(self, segment_ui_name):
         """Change the initial viewed segment to the first one that matches
@@ -271,7 +271,7 @@ class TileManagerBase(SawxEditor):
             state = v.linked_base == self.center_base
         return state
 
-    def create_viewers(self, viewer_metadata):
+    def create_viewers(self, viewer_metadata, force=False):
         # Create a set of viewers from a list
         import pprint
         log.debug("viewer_metadata: %s" % str(list(viewer_metadata.keys())))
@@ -282,7 +282,7 @@ class TileManagerBase(SawxEditor):
         viewers = list(viewer_metadata.keys())
 
         center_base_used = False
-        while not self.viewers:
+        if not self.viewers or force:
             for uuid in viewers:
                 log.debug("loading viewer: %s" % uuid)
                 e = viewer_metadata[uuid]
