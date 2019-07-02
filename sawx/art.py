@@ -31,17 +31,18 @@ def find_bitmap(action_key, icon_size=0):
     except KeyError:
         path = None
         action_key_dashes = action_key.replace("_", "-")
-        for prefix in [action_key, f"{action_key}-{icon_size}", f"icons8-{action_key}-{icon_size}", f"icons8-{action_key_dashes}-{icon_size}"]:
-            print("PREFIX!", prefix)
+        possibilities = [action_key, f"{action_key}-{icon_size}", f"icons8-{action_key}-{icon_size}", f"icons8-{action_key_dashes}-{icon_size}"]
+        for prefix in possibilities:
             try:
                 path = find_image_path(prefix + ".png")
             except OSError:
-                log.warning(f"No icon found at {prefix} for {action_key}")
+                continue
 
         if path is not None:
+            log.debug(f"find_bitmap: using {path} for {action_key}")
             bitmap = wx.Bitmap(wx.Image(path))
-            print("USING", path)
             found_bitmaps[bitmap_key] = bitmap
         else:
+            log.warning(f"find_bitmap: no icon for {action_key}; checked prefixes {possibilities}")
             raise KeyError
     return bitmap
