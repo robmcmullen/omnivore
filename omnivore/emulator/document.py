@@ -219,7 +219,7 @@ class EmulationDocument(DiskImageDocument):
             self.emulator_update_screen_event(True)
             self.priority_level_refresh_event(100)
             print(f"generating breakpoint event: {breakpoint} at cycles={self.emulator.cycles_since_power_on}")
-            self.emulator_breakpoint_event = breakpoint
+            self.emulator_breakpoint_event(breakpoint)
             self.stop_timer()
         self.last_update_time = now
 
