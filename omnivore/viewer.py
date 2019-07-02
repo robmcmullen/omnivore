@@ -264,7 +264,12 @@ class SegmentViewer:
     ##### Cleanup
 
     def prepare_for_destroy(self):
-        self.control.segment_viewer = None
+        log.debug(f"prepare_for_destroy: {self}")
+        del self.control.segment_viewer
+        try:
+            self.control.unmap_events()
+        except AttributeError:
+            pass
         self.control = None
 
     def lost_focus(self):
@@ -315,10 +320,11 @@ class SegmentViewer:
 
         # 'control' is handled during viewer creation process
 
-    def serialize_session(self, s):
+    def serialize_session(self, s, save_linked_bases=True):
         s['name'] = self.name
         s['uuid'] = self.uuid
-        s['linked base'] = self.linked_base.uuid
+        if save_linked_bases:
+            s['linked base'] = self.linked_base.uuid
         s['control'] = {}
         try:
             self.control.serialize_extra_to_dict(s['control'])

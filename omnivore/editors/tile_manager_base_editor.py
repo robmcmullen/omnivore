@@ -146,6 +146,13 @@ class TileManagerBase(SawxEditor):
 
         return s
 
+    def replace_layout(self, s):
+        """Replace the existing layout with an entirely new layout.
+        """
+        log.critical(f"replace_layout: replacing current layout")
+        self.control.remove_all()
+        self.restore_layout(s)
+
     def change_initial_segment(self, segment_ui_name):
         """Change the initial viewed segment to the first one that matches
         the ui_name
@@ -161,27 +168,31 @@ class TileManagerBase(SawxEditor):
             self.set_focused_viewer(viewer)
             self.force_focus(viewer)
 
-    def serialize_session(self, s):
+    def serialize_session(self, s, save_linked_bases=True):
         s["layout"] = self.control.calc_layout()
         s["viewers"] = []
         bases = {}
         for v in self.viewers:
             b = v.linked_base
             bases[b.uuid] = b
-            e = {"linked base": v.linked_base.uuid}
-            v.serialize_session(e)
+            if save_linked_bases:
+                e = {"linked base": v.linked_base.uuid}
+            else:
+                e = {}
+            v.serialize_session(e, save_linked_bases)
             s["viewers"].append(e)
-        if self.center_base is not None:
-            bases[self.center_base.uuid] = self.center_base
-            s["center_base"] = self.center_base.uuid
-        else:
-            s["center_base"] = None
-        s["linked bases"] = []
-        for u, b in bases.items():
-            e = {}
-            b.serialize_session(e)
-            s["linked bases"].append(e)
         s["focused viewer"] = self.focused_viewer.uuid
+        if save_linked_bases:
+            if self.center_base is not None:
+                bases[self.center_base.uuid] = self.center_base
+                s["center_base"] = self.center_base.uuid
+            else:
+                s["center_base"] = None
+            s["linked bases"] = []
+            for u, b in bases.items():
+                e = {}
+                b.serialize_session(e)
+                s["linked bases"].append(e)
 
     #### viewer utilities
 
@@ -380,12 +391,13 @@ class TileManagerBase(SawxEditor):
         else:
             v = evt.child.segment_viewer
             if v == self.focused_viewer:
-                log.debug("on_pane_active: already current viewer %s" % v)
+                log.debug("on_viewer_active: already current viewer %s" % v)
             else:
-                log.debug("on_pane_active: activated viewer %s %s" % (v, v.window_title))
+                log.debug("on_viewer_active: activated viewer %s %s" % (v, v.window_title))
                 self.set_focused_viewer(v)
 
     def on_viewer_close(self, evt):
+        log.debug(f"on_viewer_close: child window {evt.child}")
         try:
             v = evt.child.segment_viewer
         except AttributeError:
@@ -393,7 +405,7 @@ class TileManagerBase(SawxEditor):
             # viewer). It can be closed without any further action.
             pass
         else:
-            log.debug("on_pane_close: closed viewer %s %s" % (v, v.window_title))
+            log.debug("on_viewer_close: closed viewer %s %s" % (v, v.window_title))
 
             # Keep a reference to the linked base
             linked_base_save = v.linked_base
@@ -401,13 +413,14 @@ class TileManagerBase(SawxEditor):
             self.viewers.remove(v)
             v.prepare_for_destroy()
 
-            from .. import viewers as omnivore8bit_viewers
+            from .. import viewer as omnivore8bit_viewers
             if not self.viewers:
                 v = self.add_viewer(omnivore8bit_viewers.PlaceholderViewer, linked_base_save)
             self.set_focused_viewer(self.viewers[0])
             del v
 
     def on_viewer_replace(self, evt):
+        log.debug(f"on_viewer_replace: child window {evt.child}")
         try:
             v = evt.child.segment_viewer
         except AttributeError:
