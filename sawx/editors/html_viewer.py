@@ -58,7 +58,7 @@ class HtmlViewer(SawxEditor):
 
     @classmethod
     def can_edit_document_exact(cls, document):
-        return document.mime == "text/html"
+        return document.mime == "text/html" and document.uri != "about://app"
 
 
 class TitleScreen(HtmlViewer):
@@ -70,4 +70,4 @@ class TitleScreen(HtmlViewer):
 
     @classmethod
     def can_edit_document_exact(cls, document):
-        return document.uri == "about://app"
+        return document.mime == "text/html" and document.uri == "about://app"
