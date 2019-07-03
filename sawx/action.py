@@ -316,27 +316,35 @@ class SawxListAction(SawxActionListMixin, SawxAction):
         raise NotImplementedError
 
 
+persistent_dict = {}
+
 class SawxPersistentDictAction(SawxListAction):
     json_name = "test_action"
 
-    canonical_dict = None
+    @classmethod
+    def get_dict(cls):
+        global persistent_dict
+
+        if cls.json_name not in persistent_dict:
+            cls.reload()
+        return persistent_dict[cls.json_name]
 
     @classmethod
     def reload(cls):
+        global persistent_dict
+
         data = get_json_data(cls.json_name, {})
-        cls.canonical_dict = data
+        persistent_dict[cls.json_name] = data
 
     def calc_list_items(self):
-        if self.canonical_dict is None:
-            self.reload()
-        return sorted(self.__class__.canonical_dict.keys())
+        d = self.get_dict()
+        return sorted(d.keys())
 
     @classmethod
-    def add(cls, label, layout):
-        if cls.canonical_dict is None:
-            cls.reload()
-        cls.canonical_dict[label] = layout
-        save_json_data(cls.json_name, cls.canonical_dict)
+    def add(cls, label, data):
+        d = cls.get_dict()
+        d[label] = data
+        save_json_data(cls.json_name, d)
 
 
 class SawxRadioListAction(SawxActionListMixin, SawxActionRadioMixin, SawxAction):
