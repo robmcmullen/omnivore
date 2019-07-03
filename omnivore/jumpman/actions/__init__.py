@@ -1,7 +1,9 @@
+from atrip.machines.atari8bit.jumpman.parser import is_valid_level_segment
+
+
 from ...viewers.actions import ViewerAction, ViewerActionMixin, ViewerListAction, ViewerRadioAction
 from ...editors.actions.segment import segment_select
 from .. import commands as jc
-from ..parser import is_valid_level_segment
 from .. import mouse_modes as mm
 
 import logging

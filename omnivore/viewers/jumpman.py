@@ -6,6 +6,8 @@ import numpy as np
 
 from atrip import Segment, style_bits
 from atrip.machines.atari8bit import powerup_colors
+from atrip.machines.atari8bit.jumpman import parser as ju
+from atrip.machines.atari8bit.jumpman import playfield as jp
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
@@ -14,8 +16,6 @@ from sawx.persistence import get_template
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel
 from ..arch.bitmap_renderers import BaseRenderer
-from ..jumpman import parser as ju
-from ..jumpman import playfield as jp
 from ..jumpman import savers as js
 
 from ..viewer import SegmentViewer
@@ -354,6 +354,38 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         level.set_trigger_root(trigger_root)
         self.can_erase_objects = trigger_root is not None
         self.control.refresh_view()
+
+    #### command processing
+
+    def save_changes(self, command_cls=None, add=False):
+        if command_cls is None:
+            if add:
+                command_cls = jc.CreateObjectCommand
+            else:
+                command_cls = jc.MoveObjectCommand
+        level = self.current_level
+        builder = level.level_builder
+        source, level_addr, old_harvest_addr = level.get_level_addrs()
+        level_data, harvest_addr, ropeladder_data, num_coins = builder.create_level_definition(level_addr, source[0x46], source[0x47])
+        index = level_addr - source.origin
+        ranges = [(0x18,0x2a), (0x3e,0x3f), (0x4e,0x50), (index,index + len(level_data))]
+        pdata = np.empty([1], dtype=np.uint8)
+        if level.coin_harvest_diff < 0:
+            pdata[0] = num_coins
+        else:
+            pdata[0] = max(0, num_coins - level.coin_harvest_diff)
+        hdata = np.empty([2], dtype=np.uint8)
+        hdata.view(dtype="<u2")[0] = harvest_addr
+        data = np.hstack([ropeladder_data, pdata, hdata, level_data])
+        cmd = command_cls(source, ranges, data)
+        self.editor.process_command(cmd)
+        level.cached_screen = None
+        log.debug("saved changes, new objects=%s" % builder.objects)
+
+    def save_assembly(self, source, ranges, data):
+        cmd = jc.MoveObjectCommand(source, ranges, data)
+        self.segment_viewer.editor.process_command(cmd)
+
 
 
 ##### Trigger painting viewer

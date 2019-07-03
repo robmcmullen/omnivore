@@ -14,10 +14,6 @@ from .. import errors
 from ..commands import SetRangeValueCommand
 from ..viewers.actions import ViewerAction
 
-from .parser import DrawObjectBounds, is_valid_level_segment
-
-import logging
-progress_log = logging.getLogger("progress")
 
 import logging
 log = logging.getLogger(__name__)

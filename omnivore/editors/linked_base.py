@@ -15,7 +15,6 @@ from sawx.events import EventHandler
 
 from ..commands import CoalescingChangeByteCommand
 from ..utils.segmentutil import Segment
-from ..jumpman import playfield as jp
 
 import logging
 log = logging.getLogger(__name__)

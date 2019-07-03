@@ -5,11 +5,11 @@ import os
 # Major package imports.
 import numpy as np
 from atrip import style_bits
+from atrip.machines.atari8bit.jumpman import parser as jp
 
 # Local imports.
 from sawx.utils.command import Overlay
 
-from . import parser as jp
 from . import commands as jc
 from ..viewers.mouse_modes import NormalSelectMode
 
@@ -293,7 +293,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.objects.remove(self.pending_remove)
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
-            self.control.model.save_changes()
+            self.control.segment_viewer.save_changes()
             self.resync_objects()
             self.control.refresh_view()
         else:
