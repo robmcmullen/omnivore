@@ -7,8 +7,9 @@ import numpy as np
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
 
+from atrip.machines import atari8bit
+
 from ..viewer import SegmentViewer
-from ..arch import colors
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class AnticColorViewer(SegmentViewer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._antic_color_registers = list(colors.powerup_colors())
+        self._antic_color_registers = list(atari8bit.powerup_colors())
         self._color_standard_name = "NTSC"
         self._color_standard = None
         self._color_registers = None
@@ -30,7 +31,7 @@ class AnticColorViewer(SegmentViewer):
 
     @antic_color_registers.setter
     def antic_color_registers(self, value):
-        baseline = list(colors.powerup_colors())
+        baseline = list(atari8bit.powerup_colors())
         # need to operate on a copy of the colors to make sure we're not
         # changing some global value. Also force as python int so we're not
         # mixing numpy and python values.
@@ -59,13 +60,13 @@ class AnticColorViewer(SegmentViewer):
     @property
     def color_standard(self):
         if self._color_standard is None:
-            self._color_standard = colors.valid_color_standards[self.color_standard_name]
+            self._color_standard = atari8bit.valid_color_standards[self.color_standard_name]
         return self._color_standard
 
     @property
     def color_registers(self):
         if self._color_registers is None:
-            self._color_registers = colors.get_color_registers(self.antic_color_registers, self.color_standard)
+            self._color_registers = atari8bit.get_color_registers(self.antic_color_registers, self.color_standard)
         return self._color_registers
 
     def colors_changed(self):

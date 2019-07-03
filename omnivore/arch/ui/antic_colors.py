@@ -6,7 +6,7 @@ import wx.lib.sized_controls as sc
 import wx.lib.colourselect as csel
 import wx.lib.colourchooser.canvas as canvas
 
-from ...arch import colors
+from atrip.machines import atari8bit
 
 
 #704  2C0  PCOLR0
@@ -107,7 +107,7 @@ class AnticPalette(canvas.Canvas):
             y = self.BORDER + (high // 16) * self.VERTICAL_STEP
             for low in range(16):
                 x = self.BORDER + low * self.HORIZONTAL_STEP
-                c = colors.gtia_ntsc_to_rgb(high + low)
+                c = atari8bit.gtia_ntsc_to_rgb(high + low)
                 array[y:y+self.VERTICAL_STEP,x:x+self.HORIZONTAL_STEP,:] = c
         width = array.shape[1]
         height = array.shape[0]
@@ -201,7 +201,7 @@ class AnticColorDialog(wx.Dialog):
         self.color_registers.SetSelection(self.current_register)
 
     def get_color(self, register):
-        return colors.gtia_ntsc_to_rgb(self.colors[register])
+        return atari8bit.gtia_ntsc_to_rgb(self.colors[register])
 
     def on_button(self, event):
         if event.GetId() == wx.ID_OK:

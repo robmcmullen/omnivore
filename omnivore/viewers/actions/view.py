@@ -7,10 +7,10 @@ import wx
 
 from sawx.ui import dialogs
 from atrip.char_mapping import font_mapping_list
+from atrip.machines import atari8bit
 
 from . import ViewerAction, ViewerListAction, ViewerRadioListAction
 from .. import commands
-from ...arch import colors
 from ...arch.bitmap_renderers import bitmap_renderer_list
 from ...arch.fonts import font_list, font_groups, prompt_for_font_from_group
 from ...arch.font_renderers import font_renderer_list
@@ -81,7 +81,7 @@ class view_antic_powerup_colors(ColorAction):
     name = 'ANTIC Powerup Colors'
 
     def perform(self, action_key):
-        self.viewer.antic_color_registers = colors.powerup_colors()
+        self.viewer.antic_color_registers = atari8bit.powerup_colors()
 
 
 class view_color_standards(ViewerRadioListAction):
@@ -93,7 +93,7 @@ class view_color_standards(ViewerRadioListAction):
         return str(item)
 
     def calc_list_items(self):
-        return colors.color_standard_list
+        return atari8bit.color_standard_list
 
     def calc_checked_list_item(self, action_key, index, item):
         return self.viewer.color_standard_name == item.name

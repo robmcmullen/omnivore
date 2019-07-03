@@ -7,6 +7,8 @@ import wx
 
 from sawx.persistence import iter_templates
 
+from atrip.machines import atari8bit
+
 from . import colors
 
 import logging
@@ -40,7 +42,7 @@ class AnticFont(object):
         self.set_fonts(segment_viewer, font_data, font_renderer, reverse)
 
     def set_colors(self, segment_viewer, playfield_colors):
-        fg, bg = colors.gr0_colors(playfield_colors)
+        fg, bg = atari8bit.gr0_colors(playfield_colors)
         conv = segment_viewer.color_standard
         fg = conv(fg)
         bg = conv(bg)

@@ -12,7 +12,7 @@ from sawx.events import EventHandler
 
 # Local imports.
 from . import fonts
-from . import colors
+from atrip.machines import atari8bit
 from . import disasm
 from . import memory_map
 # from . import antic_renderers

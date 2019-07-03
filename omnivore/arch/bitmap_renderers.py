@@ -7,6 +7,7 @@ from atrip import style_bits
 from sawx.utils.permute import bit_reverse_table
 from sawx.utils.nputil import intscale, intwscale, intwscale_font
 
+from atrip.machines import atari8bit
 from . import colors
 try:
     from . import antic_speedups as speedups

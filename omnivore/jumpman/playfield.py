@@ -4,10 +4,10 @@ import wx
 
 import numpy as np
 from atrip import Segment, Container, style_bits
+from atrip.machines.atari8bit import powerup_colors
 
 from . import parser as ju
 from . import commands as jc
-from ..arch.colors import powerup_colors
 
 import logging
 log = logging.getLogger(__name__)

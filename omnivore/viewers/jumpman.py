@@ -3,7 +3,9 @@ import sys
 
 import wx
 import numpy as np
+
 from atrip import Segment, style_bits
+from atrip.machines.atari8bit import powerup_colors
 
 from sawx.utils.nputil import intscale
 from sawx.ui import compactgrid as cg
@@ -12,7 +14,6 @@ from sawx.persistence import get_template
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel
 from ..arch.bitmap_renderers import BaseRenderer
-from ..arch.colors import powerup_colors
 from ..jumpman import parser as ju
 from ..jumpman import playfield as jp
 from ..jumpman import savers as js

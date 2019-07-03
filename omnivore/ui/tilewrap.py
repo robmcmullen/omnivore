@@ -157,7 +157,7 @@ if __name__ == '__main__':
     sys.path[0:0] = [".."]
     print(sys.path)
     import omnivore.arch.fonts as fonts
-    import omnivore.arch.colors as colors
+    from atrip.machines import atari8bit 
 
     class Wrapper(object):
         def __init__(self, **kwargs):
@@ -183,13 +183,13 @@ if __name__ == '__main__':
             ("other", [0x20, 0x25, 0x26, ]),
             ("special", list(range(0x21, 0x25)), list(range(0x74, 0x76)),),
                 ]
-            color_converter = colors.gtia_ntsc_to_rgb
+            color_converter = atari8bit.gtia_ntsc_to_rgb
             highlight_color = (100, 200, 230)
             unfocused_caret_color = (128, 128, 128)
             background_color = (255, 255, 255)
             match_background_color = (255, 255, 180)
             comment_background_color = (255, 180, 200)
-            antic_font = fonts.AnticFont(fonts.A8DefaultFont, 4, colors.powerup_colors(), highlight_color, match_background_color, comment_background_color, color_converter)
+            antic_font = fonts.AnticFont(fonts.A8DefaultFont, 4, atari8bit.powerup_colors(), highlight_color, match_background_color, comment_background_color, color_converter)
             editor = Wrapper(antic_font=antic_font, antic_tile_map=tile_map, highlight_color=highlight_color)
             task = Wrapper(active_editor=editor)
             panel = TileWrapControl(self, task)
