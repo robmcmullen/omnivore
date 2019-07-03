@@ -190,7 +190,7 @@ class CPU6502Table(sg.SegmentVirtualTable):
 
 
 class CPUParamTableViewer(EmulatorViewerMixin, VirtualTableInfoViewer):
-    name = "<base class>"
+    name = ""
 
     viewer_category = "Emulator"
 
