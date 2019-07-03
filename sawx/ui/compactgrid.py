@@ -1269,8 +1269,7 @@ class AuxWindow(wx.ScrolledCanvas):
     def set_font_metadata(self):
         dc = wx.MemoryDC()
         dc.SetFont(self.parent.view_params.header_font)
-        self.char_width = dc.GetCharWidth()
-        self.char_height = max(dc.GetCharHeight(), 2)
+        _, self.char_height = self.parent.view_params.calc_cell_size_in_pixels(1)
         self.row_skip = self.calc_row_skip()
         self.SetBackgroundColour(self.parent.view_params.empty_background_color)
 
