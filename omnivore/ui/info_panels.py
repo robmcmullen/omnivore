@@ -432,7 +432,7 @@ class AnticColorsField(InfoField):
         if dlg.ShowModal() == wx.ID_OK:
             linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, dlg.colors, self.undo_label)
             # # linked_base.force_data_model_update()
-            linked_base.document.byte_style_changed_event(True)
+            linked_base.document.byte_style_changed_event(flags=True)
 
 
 class DropDownField(InfoField):
