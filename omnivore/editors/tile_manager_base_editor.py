@@ -179,7 +179,7 @@ class TileManagerBase(SawxEditor):
                 e = {"linked base": v.linked_base.uuid}
             else:
                 e = {}
-            v.serialize_session(e, save_linked_bases)
+            v.serialize_session(e)
             s["viewers"].append(e)
         s["focused viewer"] = self.focused_viewer.uuid
         if save_linked_bases:

@@ -320,11 +320,9 @@ class SegmentViewer:
 
         # 'control' is handled during viewer creation process
 
-    def serialize_session(self, s, save_linked_bases=True):
+    def serialize_session(self, s):
         s['name'] = self.name
         s['uuid'] = self.uuid
-        if save_linked_bases:
-            s['linked base'] = self.linked_base.uuid
         s['control'] = {}
         try:
             self.control.serialize_extra_to_dict(s['control'])
