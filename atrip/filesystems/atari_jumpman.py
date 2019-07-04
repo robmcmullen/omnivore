@@ -6,6 +6,7 @@ from ..filesystem import VTOC, Dirent, Directory, Filesystem
 from ..file_type import guess_file_type
 from ..char_mapping import internal_to_atascii, atascii_to_internal
 from .atari_dos2 import AtariDos2, AtariDosBootSegment
+from ..machines.atari8bit.jumpman import playfield
 
 try:  # Expensive debugging
     _xd = _expensive_debugging
@@ -48,6 +49,8 @@ class AtariJumpmanDirent(Dirent):
         self.level_name = b''
         Dirent.__init__(self, directory, file_num, start, self.dirent_size)
         self.name = str(self)
+        self.origin = 0x2800
+        self.jumpman_playfield_model = playfield.JumpmanPlayfieldModel(self)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.id == other.id
@@ -108,7 +111,6 @@ class AtariJumpmanDirectory(Directory):
         while pointer < len(self):
             filenum = pointer // AtariJumpmanDirent.dirent_size
             dirent = AtariJumpmanDirent(self, filenum)
-            dirent.origin = 0x2800
             pointer += AtariJumpmanDirent.dirent_size
             segments.append(dirent)
         return segments

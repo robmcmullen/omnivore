@@ -20,7 +20,7 @@ def is_valid_level_segment(segment, strict=True):
             addr = segment[0x38]*256 + segment[0x37]
             if addr >= segment.origin and addr < segment.origin + len(segment):
                 return True
-            log.debug("Failed strict jumpman level test: level table={addr} not in segment range {segment.origin} - {segment.origin + len(segment)}")
+            log.debug(f"Failed strict jumpman level test for {segment.name}: level table=${addr:x} not in segment range ${segment.origin:x} - ${segment.origin + len(segment):x}")
         else:
             return True
     return False
@@ -1113,6 +1113,7 @@ class JumpmanCustomCode:
         asm = Assemble(filename)
         if not asm:
             raise SyntaxError(asm.errors)
+        self.filename = filename
         self.asm = asm
         self.ranges = []
         self.data = []
@@ -1131,9 +1132,10 @@ class JumpmanCustomCode:
             ranges.append("$%04x-$%04x" % (first, last))
             total += len(raw)
         return f"""\
-Total bytes: {total}
+{self.filename}
+Total bytes: {total} (${total:x})
 Ranges: {",".join(ranges)}
-Custom game loop? {"YES" if self.custom_gameloop else "NO, using standard game loop"}
+Game loop: {"Custom" if self.custom_gameloop else "Standard"}
 """
 
     @property
@@ -1143,7 +1145,7 @@ Custom game loop? {"YES" if self.custom_gameloop else "NO, using standard game l
             summary.append((addr, self.vector_labels_used.get(name, self.vector_defaults[addr]), name))
         print(summary)
         summary.sort()
-        return "\n".join(["$%04x    %s: $%04x" % (addr, name, subroutine) for addr, subroutine, name in summary]) + "\n"
+        return "\n".join(["$%04x    %s = $%04x" % (addr, name, subroutine) for addr, subroutine, name in summary]) + "\n"
 
     @property
     def coin_trigger_summary(self):

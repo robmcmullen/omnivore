@@ -248,50 +248,44 @@ class JumpmanPlayfieldModel:
 
     ##### Custom code handling
 
-    def set_assembly_source(self, src, do_compile=True):
+    def set_assembly_source(self, src):
         """Assembly source file is required to be in the same directory as the
         jumpman disk image. It's also assumed to be on the local filesystem
         since pyatasm can't handle the virtual filesystem.
         """
         self.assembly_source = src
-        if do_compile:
-            self.manual_recompile_needed = False
-            self.compile_assembly_source()
-        else:
-            self.manual_recompile_needed = True
+        self.assembly_error = ""
+        self.compile_assembly_source()
 
     def compile_assembly_source(self):
+        log.debug(f"compile_assembly_source: compiling {self.assembly_source}")
         self.custom_code = None
-        if not self.assembly_source:
+        filename = self.assembly_source
+        if not filename:
             return
         self.segment_viewer.editor.metadata_dirty = True
-        d = self.segment_viewer.document
-        path = d.filesystem_path()
-        if not path:
-            self.assembly_error = f"Assembly error:\nPlease save the level before\ncompiling the assembly source"
+        self.assembly_error = ""
+        if not os.path.isabs(filename):
+            # relative path; attempt to supply absolute path using document
+            d = self.segment_viewer.document
+            path = d.filesystem_path()
+            if path:
+                dirname = os.path.dirname(path)
+                filename = os.path.join(dirname, self.assembly_source)
+
+        try:
+            log.debug("compiling jumpman level code in %s" % filename)
+            self.custom_code = ju.JumpmanCustomCode(filename)
+        except SyntaxError as e:
+            self.assembly_error = f"Assembly error:\n{str(e)}"
             log.error(self.assembly_error)
-            return
-        dirname = os.path.dirname(d.filesystem_path())
-        if dirname:
-            filename = os.path.join(dirname, self.assembly_source)
-            try:
-                log.debug("compiling jumpman level code in %s" % filename)
-                self.custom_code = ju.JumpmanCustomCode(filename)
-                self.manual_recompile_needed = False
-            except SyntaxError as e:
-                self.assembly_error = f"Assembly error:\n{str(e)}"
-                log.error(self.assembly_error)
-                self.manual_recompile_needed = True
-            except ImportError:
-                self.assembly_source = ""
-                self.assembly_error = f"Assembly error:\nPlease install pyatasm to\ncompile custom code"
-                log.error(self.assembly_error)
-                self.old_trigger_mapping = dict()
-            else:
-                self.assembly_error = ""
-            if self.custom_code:
-                self.update_trigger_mapping()
-                self.save_assembly()
+        except ImportError:
+            self.assembly_error = f"Assembly error:\nPlease install pyatasm to\ncompile custom code"
+            log.error(self.assembly_error)
+            self.old_trigger_mapping = dict()
+        if self.custom_code:
+            self.update_trigger_mapping()
+            self.save_assembly()
 
     @property
     def custom_code_info(self):
@@ -300,7 +294,7 @@ class JumpmanPlayfieldModel:
                 return self.assembly_error
             return self.custom_code.info
         except AttributeError:
-            return "No custom code"
+            return "No custom code\n"
 
     @property
     def action_vector_info(self):
@@ -309,7 +303,7 @@ class JumpmanPlayfieldModel:
                 return ""
             return self.custom_code.vector_summary
         except AttributeError:
-            return "No custom code"
+            return "No custom code\n"
 
     @property
     def coin_trigger_info(self):
@@ -318,7 +312,7 @@ class JumpmanPlayfieldModel:
                 return ""
             return self.custom_code.coin_trigger_summary
         except AttributeError:
-            return "No custom code"
+            return "No custom code\n"
 
     @property
     def other_label_info(self):
@@ -327,7 +321,7 @@ class JumpmanPlayfieldModel:
                 return ""
             return self.custom_code.label_summary
         except AttributeError:
-            return "No custom code"
+            return "No custom code\n"
 
     def save_assembly(self):
         log.debug("save_assembly: code=%s" % self.custom_code)
