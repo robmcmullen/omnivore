@@ -199,7 +199,10 @@ class LabelField(InfoField):
         return c
 
     def fill_data(self, linked_base):
-        value = getattr(self.panel.linked_base.segment.jumpman_playfield_model, self.attr_name)
+        try:
+            value = getattr(self.panel.linked_base.segment.jumpman_playfield_model, self.attr_name)
+        except AttributeError:
+            value = 0
         self.ctrl.SetLabel(str(value))
         self.set_background(linked_base, value <= self.max_val)
 
@@ -229,7 +232,10 @@ class MultiLineLabelField(InfoField):
         return c
 
     def fill_data(self, linked_base):
-        value = getattr(self.panel.linked_base.segment.jumpman_playfield_model, self.attr_name)
+        try:
+            value = getattr(self.panel.linked_base.segment.jumpman_playfield_model, self.attr_name)
+        except AttributeError:
+            value = ""
         self.ctrl.SetLabel(str(value))
 
     def clear_data(self):
@@ -479,11 +485,13 @@ class CoinsNeededField(DropDownField):
     same_line = True
 
     def bytes_to_control_data(self, raw):
-        e = self.panel.linked_base.segment.jumpman_playfield_model
-        if not hasattr(e, 'num_coins'):
+        try:
+            e = self.panel.linked_base.segment.jumpman_playfield_model
+        except AttributeError:
             return 0
+        num = e.num_coins
         value = reduce_from_little_endian(raw)
-        diff = e.num_coins - value
+        diff = num - value
         if diff < 0:
             diff = 0
         diff = min(diff, len(self.choices) - 1)
@@ -514,7 +522,10 @@ class CustomCodeField(InfoField):
         return c
 
     def fill_data(self, linked_base):
-        name = linked_base.segment.jumpman_playfield_model.assembly_source
+        try:
+            name = linked_base.segment.jumpman_playfield_model.assembly_source
+        except AttributeError:
+            return
         if name:
             self.ctrl.SetLabel(name)
         elif linked_base.document.is_on_local_filesystem:

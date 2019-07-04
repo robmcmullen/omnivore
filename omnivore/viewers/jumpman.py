@@ -4,7 +4,7 @@ import sys
 import wx
 import numpy as np
 
-from atrip import Segment, style_bits
+from atrip import Container, Segment, style_bits
 from atrip.machines.atari8bit import powerup_colors
 from atrip.machines.atari8bit.jumpman import parser as ju
 from atrip.machines.atari8bit.jumpman import playfield as jp
@@ -103,12 +103,23 @@ class JumpmanFrameRenderer(BitmapLineRenderer):
 
 
 class JumpmanSegmentTable(cg.HexTable):
+    invalid_playfield_model = None
+
+    @classmethod
+    def get_invalid_playfield_model(cls):
+        if cls.invalid_playfield_model is None:
+            c = Container([0], force_numpy_data=True)
+            s = Segment(c)
+            cls.invalid_playfield_model = jp.JumpmanPlayfieldModel(s)
+        return cls.invalid_playfield_model
+
     def __init__(self, linked_base, bytes_per_row):
         s = linked_base.segment
-        if not hasattr(s, "jumpman_playfield_model") or s.jumpman_playfield_model is None:
-            s.jumpman_playfield_model = jp.JumpmanPlayfieldModel(s)
-            print(f"CREATED playfield for {s} in JumpmanSegmentTable")
-        self.model = s.jumpman_playfield_model
+        try:
+            model = s.jumpman_playfield_model
+        except AttributeError:
+            model = self.get_invalid_playfield_model()
+        self.model = model
         cg.HexTable.__init__(self, self.model.playfield, self.model.playfield.style, self.model.items_per_row, 0x7000)
 
     @property
@@ -268,10 +279,11 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
     @property
     def current_level(self):
         s = self.segment
-        if not hasattr(s, "jumpman_playfield_model") or s.jumpman_playfield_model is None:
-            s.jumpman_playfield_model = jp.JumpmanPlayfieldModel(s)
-            print(f"CREATED playfield model for {s} in current_level")
-        return s.jumpman_playfield_model
+        try:
+            model = s.jumpman_playfield_model
+        except AttributeError:
+            model = JumpmanSegmentTable.get_invalid_playfield_model()
+        return model
 
     ##### Initialization and serialization
 
@@ -419,7 +431,7 @@ class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
     def recalc_view(self):
         try:
             level = self.segment_viewer.segment.jumpman_playfield_model
-        except ValueError:
+        except (AttributeError, ValueError):
             self.SetItems([])
             self.triggers = [None]
         else:
@@ -542,7 +554,10 @@ class JumpmanInfoPanel(JumpmanControlMouseModeMixin, InfoPanel):
     ]
 
     def is_valid_data(self):
-        jm = self.segment_viewer.segment.jumpman_playfield_model
+        try:
+            jm = self.segment_viewer.segment.jumpman_playfield_model
+        except AttributeError:
+            return False
         return jm.possible_jumpman_segment and bool(jm.level_builder.objects)
 
 
