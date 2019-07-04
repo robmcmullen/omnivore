@@ -169,9 +169,10 @@ class add_assembly_source(ViewerAction):
     name = 'Custom Code...'
 
     def perform(self, event):
-        filename = prompt_for_string(self.viewer.control, "Enter MAC/65 assembly source filename for custom code", "Source File For Custom Code", self.viewer.current_level.assembly_source)
-        if filename is not None:
-            self.linked_base.jumpman_playfield_model.set_assembly_source(filename)
+        linked_base = self.viewer.linked_base
+        path = linked_base.frame.prompt_local_file_dialog("Assembly Source File")
+        if path is not None:
+            linked_base.segment.jumpman_playfield_model.set_assembly_source(path)
 
 
 class compile_assembly_source(ViewerAction):

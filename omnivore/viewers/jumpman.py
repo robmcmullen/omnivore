@@ -287,13 +287,13 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
 
     ##### Initialization and serialization
 
-    def restore_session(self, s):
+    # def restore_session(self, s):
         # ignore bitmap renderer in restore because we always want to use the
         # JumpmanPlayfieldRenderer in Jumpman level edit mode
-        if 'assembly_source' in s:
-            self.current_level.set_assembly_source(s['assembly_source'], False)
-        if 'old_trigger_mapping' in s:
-            self.current_level.old_trigger_mapping = s['old_trigger_mapping']
+        # if 'assembly_source' in s:
+        #     self.current_level.set_assembly_source(s['assembly_source'])
+        # if 'old_trigger_mapping' in s:
+        #     self.current_level.old_trigger_mapping = s['old_trigger_mapping']
 
     def serialize_session(self, s):
         super().serialize_session(s)
@@ -396,8 +396,7 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
 
     def save_assembly(self, source, ranges, data):
         cmd = jc.MoveObjectCommand(source, ranges, data)
-        self.segment_viewer.editor.process_command(cmd)
-
+        self.editor.process_command(cmd)
 
 
 ##### Trigger painting viewer
@@ -591,7 +590,6 @@ class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
 
 class JumpmanCustomCodePanel(JumpmanInfoPanel):
     fields = [
-        ("custom_code", "Custom Code"),
         ("multi_line_label", "Code Summary", "custom_code_info"),
         ("multi_line_label", "Action Vectors", "action_vector_info"),
         ("multi_line_label", "Coin Trigger Functions", "coin_trigger_info"),

@@ -236,7 +236,7 @@ class MultiLineLabelField(InfoField):
             value = getattr(self.panel.linked_base.segment.jumpman_playfield_model, self.attr_name)
         except AttributeError:
             value = ""
-        self.ctrl.SetLabel(str(value))
+        self.ctrl.SetLabel(str(value).rstrip() + "\n")
 
     def clear_data(self):
         self.ctrl.SetLabel("")
@@ -507,55 +507,6 @@ class CoinsNeededField(DropDownField):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
         raw[0] = max(0, e.num_coins - e.coin_harvest_diff)
         self.panel.linked_base.change_bytes(self.byte_offset, self.byte_offset + self.byte_count, raw, self.undo_label)
-
-
-class CustomCodeField(InfoField):
-    keyword = "custom_code"
-    same_line = True
-
-    def set_args(self, args):
-        self.field_name = args[0]
-
-    def create_control(self):
-        c = wx.Button(self.parent, -1, "assembly")
-        c.Bind(wx.EVT_BUTTON, self.on_load)
-        return c
-
-    def fill_data(self, linked_base):
-        try:
-            name = linked_base.segment.jumpman_playfield_model.assembly_source
-        except AttributeError:
-            return
-        if name:
-            self.ctrl.SetLabel(name)
-        elif linked_base.document.is_on_local_filesystem:
-            self.ctrl.SetLabel("Import Assembly Source")
-        else:
-            self.ctrl.SetLabel("Save level before importing custom code")
-
-    def enable(self, state=True):
-        self.parent.Enable(state)
-        state = self.panel.linked_base.document.is_on_local_filesystem
-        self.ctrl.Enable(state)
-
-    def clear_data(self):
-        pass
-
-    def on_load(self, evt):
-        linked_base = self.panel.linked_base
-        path = linked_base.frame.prompt_local_file_dialog("Assembly Source File")
-        if path is not None:
-            try:
-                with open(path, "r") as fh:
-                    text = fh.read()
-                filename = linked_base.document.save_adjacent(".asm", text)
-            except (IOError, RuntimeError) as e:
-                log.error(f"Assembly load error: {e}")
-                linked_base.frame.error(str(e), "Assembly Load Error")
-            else:
-                linked_base.segment.jumpman_playfield_model.set_assembly_source(filename, False)
-                self.fill_data(linked_base)
-                linked_base.segment.jumpman_playfield_model.compile_assembly_source()
 
 
 PANELTYPE = wx.lib.scrolledpanel.ScrolledPanel
