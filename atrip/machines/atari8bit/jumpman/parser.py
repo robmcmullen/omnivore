@@ -19,10 +19,12 @@ def is_valid_level_segment(segment, strict=True):
         if strict:
             addr = segment[0x38]*256 + segment[0x37]
             if addr >= segment.origin and addr < segment.origin + len(segment):
-                return True
-            log.debug(f"Failed strict jumpman level test for {segment.name}: level table=${addr:x} not in segment range ${segment.origin:x} - ${segment.origin + len(segment):x}")
-        else:
-            return True
+                pass
+            else:
+                log.debug(f"is_valid_level_segment: failed strict test for {segment.name}: level table=${addr:x} not in segment range ${segment.origin:x} - ${segment.origin + len(segment):x}")
+                return False
+        log.debug(f"is_valid_level_segment: valid {segment.name}: level table=${addr:x}, segment range ${segment.origin:x} - ${segment.origin + len(segment):x}")
+        return True
     return False
 
 
