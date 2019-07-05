@@ -172,7 +172,7 @@ class add_assembly_source(ViewerAction):
         linked_base = self.viewer.linked_base
         path = linked_base.frame.prompt_local_file_dialog("Assembly Source File")
         if path is not None:
-            linked_base.segment.jumpman_playfield_model.set_assembly_source(path)
+            linked_base.segment.set_assembly_source(path)
 
 
 class compile_assembly_source(ViewerAction):

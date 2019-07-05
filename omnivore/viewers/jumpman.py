@@ -285,21 +285,6 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
             model = JumpmanSegmentTable.get_invalid_playfield_model()
         return model
 
-    ##### Initialization and serialization
-
-    # def restore_session(self, s):
-        # ignore bitmap renderer in restore because we always want to use the
-        # JumpmanPlayfieldRenderer in Jumpman level edit mode
-        # if 'assembly_source' in s:
-        #     self.current_level.set_assembly_source(s['assembly_source'])
-        # if 'old_trigger_mapping' in s:
-        #     self.current_level.old_trigger_mapping = s['old_trigger_mapping']
-
-    def serialize_session(self, s):
-        super().serialize_session(s)
-        s["assembly_source"] = self.current_level.assembly_source
-        s["old_trigger_mapping"] = self.current_level.old_trigger_mapping
-
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
         of the data
