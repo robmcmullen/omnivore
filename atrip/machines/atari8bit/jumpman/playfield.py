@@ -41,8 +41,9 @@ class JumpmanPlayfieldModel:
         self.trigger_state = None
 
     def init_level_builder(self, segment_viewer):
-        log.debug(f"init_level_builder: {self.segment}")
         self.segment_viewer = segment_viewer
+        self.segment = segment_viewer.segment
+        log.debug(f"init_level_builder: {self.segment}")
         self.possible_jumpman_segment = ju.is_valid_level_segment(self.segment)
         self.level_builder = ju.JumpmanLevelBuilder(self.segment_viewer.document.user_segments)
         self.cached_screen = None
