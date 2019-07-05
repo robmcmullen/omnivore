@@ -37,6 +37,7 @@ class JumpmanPlayfieldModel:
         self.force_refresh = False
         self.screen_state = None
         self.trigger_state = None
+        self.first_time_custom_code_check = True
 
     @property
     def assembly_source(self):
@@ -56,9 +57,14 @@ class JumpmanPlayfieldModel:
         self.generate_display_objects()
         self.level_colors = self.calc_level_colors()
         self.draw_playfield(True)
-        # print("OEUNOETUHSONESHUNOEHUSHOEU", self.assembly_source)
-        # if self.assembly_source:
-        #     self.compile_assembly_source()
+
+        # if assembly source is present but not compiled, only try to compile
+        # it once because the call to save_assembly will try to rebuild the
+        # data model which continually calls init_level_builder.
+        if self.first_time_custom_code_check:
+            self.first_time_custom_code_check = False
+            if self.assembly_source:
+                self.compile_assembly_source()
 
     @property
     def mouse_mode(self):
