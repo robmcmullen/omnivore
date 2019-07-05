@@ -372,9 +372,9 @@ class ByteEditor(TileManagerBase):
     #### file handling
 
     def show(self, args=None):
-        print("document", self.document)
-        print("collection", self.document.collection)
-        print("segments", self.document.segments)
+        log.critical(f"show: document {self.document}")
+        log.critical(f"show: collection {self.document.collection}")
+        log.critical(f"show: segments {self.document.segments}")
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
@@ -407,12 +407,12 @@ class ByteEditor(TileManagerBase):
         return order
 
     def restore_session(self, s):
-        log.debug("metadata: %s" % str(s))
+        log.debug("restore_session: %s" % str(s))
         if 'diff highlight' in s:
             self.diff_highlight = bool(s['diff highlight'])
         self.restore_linked_bases(s)
         self.restore_layout(s)
-        self.restore_view_segment_uuid(s)
+        # self.restore_view_segment_uuid(s)
 
     def restore_legacy_session(self, s):
         try:
@@ -428,10 +428,12 @@ class ByteEditor(TileManagerBase):
             base = LinkedBase(self)
             base.restore_session(b)
             linked_bases[base.uuid] = base
-            log.debug("metadata: linked_base[%s]=%s" % (base.uuid, base))
+            log.debug("restore_linked_bases: linked_base[%s]=%s" % (base.uuid, base))
         uuid = s.get("center_base", None)
+        log.critical(f"looking for center_base: {uuid}")
         try:
             self.center_base = linked_bases[uuid]
+            log.critical(f"found center_base: {self.center_base}")
         except KeyError:
             # no saved session, so find the first interesting segment to display
             segment = self.document.collection.find_interesting_segment_to_edit()
@@ -444,6 +446,7 @@ class ByteEditor(TileManagerBase):
             linked_bases[self.center_base.uuid] = self.center_base
 
         log.critical(f"linked_bases: {linked_bases}")
+        log.critical(f"center_base: {self.center_base}")
         self.linked_bases = linked_bases
 
     def change_initial_segment(self, ui_name):
@@ -453,14 +456,8 @@ class ByteEditor(TileManagerBase):
         for segment in self.document.collection.iter_segments():
             if segment.ui_name == ui_name:
                 log.debug(f"change_initial_segment: changing to segment {segment}")
-                self.center_base.restore_session_segment_uuid = segment.uuid
+                self.center_base.view_segment_uuid(segment.uuid, False)
                 break
-
-    def restore_view_segment_uuid(self, s):
-        for uuid, lb in self.linked_bases.items():
-            segment_uuid = lb.restore_session_segment_uuid
-            log.debug(f"restore_view_segment_uuid: {uuid}->{segment_uuid}")
-            lb.view_segment_uuid(segment_uuid)
 
     def rebuild_document_properties(self):
         if not self.document.has_baseline:

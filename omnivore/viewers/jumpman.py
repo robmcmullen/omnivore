@@ -313,6 +313,7 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         self.linked_base.jumpman_trigger_selected_event += self.on_jumpman_trigger_selected
 
     def recalc_data_model(self):
+        log.debug(f"recalc_data_model: segment={self.segment}")
         self.current_level.init_level_builder(self)
         self.antic_color_registers = self.current_level.level_colors
 
@@ -340,7 +341,6 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         """Rebuild the entire UI after a document formatting (or other
         structural change) or loading a new document.
         """
-        print("recalc_view")
         self.recalc_data_model()
 
     ##### Jumpman level construction

@@ -51,7 +51,6 @@ class LinkedBase:
             segment = blank_segment
         self.segment = segment
         self.segment_uuid = segment.uuid
-        self.restore_session_segment_uuid = None
         self.has_origin = False
         self.segment_view_params = {}
         self.current_selection = None
@@ -117,7 +116,7 @@ class LinkedBase:
         if 'segment view params' in e:
             self.segment_view_params = e['segment view params']
         if 'segment_uuid' in e:
-            self.restore_session_segment_uuid = e['segment_uuid']
+            self.view_segment_uuid(e['segment_uuid'], False)
 
     def serialize_session(self, mdict):
         # make sure to save latest values of currently viewed segment
@@ -185,24 +184,25 @@ class LinkedBase:
             self.task.segments_changed = self.document.segments  # FIXME
             self.segment_selected_event(self.segment_uuid)
 
-    def view_segment_uuid(self, uuid):
+    def view_segment_uuid(self, uuid, do_callbacks=True):
         log.debug(f"view_segment_uuid: changing to {uuid} from {self.segment_uuid}")
         doc = self.document
         if uuid is None:
             uuid = self.find_first_valid_segment_uuid()
         if uuid != self.segment_uuid:
             old_segment = self.segment
-            if old_segment is not None:
+            if old_segment is not None and old_segment != blank_segment:
                 self.save_segment_view_params(old_segment)
             self.segment = doc.collection[uuid]
             self.segment_uuid = uuid
-            self.recalc_event(True)
-            self.adjust_selection(old_segment)
+            if do_callbacks:
+                self.recalc_event(True)
+                self.adjust_selection(old_segment)
 
-            #self.show_trace()
-            self.segment_selected_event(self.segment_uuid)
-            #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
-            #self.task.update_window_title()
+                #self.show_trace()
+                self.segment_selected_event(self.segment_uuid)
+                #self.task.status_bar.message = "Switched to segment %s" % str(self.segment)
+                #self.task.update_window_title()
         log.debug(f"view_segment_uuid: changed to {self.segment_uuid}")
 
     def force_refresh(self):
