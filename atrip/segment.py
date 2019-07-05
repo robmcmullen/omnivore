@@ -293,6 +293,12 @@ class Segment:
             log.debug(f"moving start_addr to origin: {self.start_addr}")
             delattr(self, 'start_addr')
 
+    def restore_computed_defaults(self):
+        """Hook to recreate any computed defaults after the container has
+        been restored
+        """
+        pass
+
 
     @property
     def verbose_info(self):

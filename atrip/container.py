@@ -374,6 +374,7 @@ class Container:
             self.media.container = self
         for segment in self.iter_segments():
             segment.container = self
+            segment.restore_computed_defaults()
 
     def restore_backward_compatible_state(self, state):
         # convert old atrcopy stuff
