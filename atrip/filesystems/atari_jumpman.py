@@ -41,18 +41,19 @@ class AtariJumpmanDirent(Dirent):
     ui_name = "Jumpman Level"
     name_offset = 0x2bec - 0x2800
     dirent_size = 0x800
-    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'id', 'level_name']
+    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'id', 'level_name', 'assembly_source']
 
     def __init__(self, directory, file_num):
         start = file_num * self.dirent_size
         self.id = b''
         self.level_name = b''
+        self.assembly_source = None
         Dirent.__init__(self, directory, file_num, start, self.dirent_size)
         self.name = str(self)
         self.origin = 0x2800
-        self.restore_missing_serializable_defaults()
+        self.restore_computed_defaults()
 
-    def restore_missing_serializable_defaults(self):
+    def restore_computed_defaults(self):
         self.jumpman_playfield_model = playfield.JumpmanPlayfieldModel(self)
 
     def __eq__(self, other):
@@ -83,6 +84,14 @@ class AtariJumpmanDirent(Dirent):
 
     def sanity_check(self):
         return len(self) == 0x800
+
+    def set_assembly_source(self, src):
+        """Assembly source file is required to be in the same directory as the
+        jumpman disk image. It's also assumed to be on the local filesystem
+        since pyatasm can't handle the virtual filesystem.
+        """
+        self.assembly_source = src
+        self.jumpman_playfield_model.compile_assembly_source()
 
 
 class AtariJumpmanDirectory(Directory):

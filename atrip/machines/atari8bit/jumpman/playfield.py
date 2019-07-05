@@ -27,10 +27,8 @@ class JumpmanPlayfieldModel:
         self.num_coins = -1
         self.can_select_objects = False
         self.can_erase_objects = False
-        self.assembly_source = ""
         self.assembly_error = ""
         self.custom_code = None
-        self.manual_recompile_needed = False
         self.old_trigger_mapping = {}
         self.trigger_root = None
         self.current_level = None
@@ -39,6 +37,10 @@ class JumpmanPlayfieldModel:
         self.force_refresh = False
         self.screen_state = None
         self.trigger_state = None
+
+    @property
+    def assembly_source(self):
+        return self.segment.assembly_source
 
     def init_level_builder(self, segment_viewer):
         self.segment_viewer = segment_viewer
@@ -54,8 +56,9 @@ class JumpmanPlayfieldModel:
         self.generate_display_objects()
         self.level_colors = self.calc_level_colors()
         self.draw_playfield(True)
-        if self.manual_recompile_needed:
-            self.compile_assembly_source()
+        # print("OEUNOETUHSONESHUNOEHUSHOEU", self.assembly_source)
+        # if self.assembly_source:
+        #     self.compile_assembly_source()
 
     @property
     def mouse_mode(self):
@@ -249,30 +252,21 @@ class JumpmanPlayfieldModel:
 
     ##### Custom code handling
 
-    def set_assembly_source(self, src):
-        """Assembly source file is required to be in the same directory as the
-        jumpman disk image. It's also assumed to be on the local filesystem
-        since pyatasm can't handle the virtual filesystem.
-        """
-        self.assembly_source = src
-        self.assembly_error = ""
-        self.compile_assembly_source()
-
     def compile_assembly_source(self):
         log.debug(f"compile_assembly_source: compiling {self.assembly_source}")
         self.custom_code = None
+        self.assembly_error = ""
         filename = self.assembly_source
         if not filename:
             return
         self.segment_viewer.editor.metadata_dirty = True
-        self.assembly_error = ""
         if not os.path.isabs(filename):
             # relative path; attempt to supply absolute path using document
             d = self.segment_viewer.document
             path = d.filesystem_path()
             if path:
                 dirname = os.path.dirname(path)
-                filename = os.path.join(dirname, self.assembly_source)
+                filename = os.path.join(dirname, filename)
 
         try:
             log.debug("compiling jumpman level code in %s" % filename)
@@ -360,8 +354,6 @@ class JumpmanPlayfieldModel:
     ##### Jumpman coin triggers
 
     def get_triggers(self):
-        if self.custom_code is None and self.manual_recompile_needed == False:
-            self.compile_assembly_source()
         code = self.custom_code
         if code is None:
             return {}
