@@ -50,6 +50,9 @@ class AtariJumpmanDirent(Dirent):
         Dirent.__init__(self, directory, file_num, start, self.dirent_size)
         self.name = str(self)
         self.origin = 0x2800
+        self.restore_missing_serializable_defaults()
+
+    def restore_missing_serializable_defaults(self):
         self.jumpman_playfield_model = playfield.JumpmanPlayfieldModel(self)
 
     def __eq__(self, other):
