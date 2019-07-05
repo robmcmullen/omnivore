@@ -6,6 +6,7 @@ include atrip/archivers/*
 include atrip/compressors/*
 include atrip/filesystems/*
 include atrip/file_types/*
+recursive-include atrip/machines *.py
 include atrip/media_types/*
 include atrip/signatures/*
 include samples/air_defense*
