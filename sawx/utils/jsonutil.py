@@ -129,9 +129,13 @@ def unserialize(name, text):
         unserialized = jsonpickle.loads(text)
     except ValueError as e:
         log.error(f"JSON parsing error for extra metadata: {str(e)}")
+        import traceback
+        traceback.print_exc()
         unserialized = {}
     except AttributeError as e:
         log.error(f"JSON library error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         unserialized = {}
     return unserialized
 
