@@ -171,7 +171,7 @@ class JumpmanSelectMode(NormalSelectMode):
 
 
 class AnticDSelectMode(JumpmanSelectMode):
-    icon = "select"
+    icon = "cursor"
     menu_item_name = "Select"
     menu_item_tooltip = "Select regions"
     min_mouse_distance = 2
@@ -328,7 +328,7 @@ class AnticDSelectMode(JumpmanSelectMode):
 
 
 class DrawMode(JumpmanSelectMode):
-    icon = "select"
+    icon = "cursor"
     menu_item_name = "Draw"
     menu_item_tooltip = "Draw stuff"
     drawing_object = jp.Girder
