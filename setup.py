@@ -324,11 +324,52 @@ setup(
     include_package_data=True,
     scripts = ["scripts/omnivore"],
     entry_points={
-        "sawx.remember": 'fonts = omnivore.arch.fonts',
+        "atrip.archivers": [
+            'zip = atrip.archivers.zip',
+            'tar = atrip.archivers.tar',
+        ],
 
-        "sawx.documents": '00byte = omnivore.document',
+        "atrip.compressors": [
+            'zlib = atrip.compressors.zlib',
+            'gzip = atrip.compressors.gzip',
+            'bzip = atrip.compressors.bzip',
+            'lzma = atrip.compressors.lzma',
+            'Z = atrip.compressors.unix_compress',
+            'lz4 = atrip.compressors.lz4',
+            'dcm = atrip.compressors.dcm',
+        ],
 
-        "sawx.editors": '00byte = omnivore.editors.byte_editor',
+        "atrip.stringifiers": [
+            'hexify = atrip.stringifiers.hexify',
+            'c_bytes = atrip.stringifiers.c_bytes',
+            'basic_data = atrip.stringifiers.basic_data',
+        ],
+
+        "atrip.media_types": [
+            'atari_disks = atrip.media_types.atari_disks',
+            'atari_carts = atrip.media_types.atari_carts',
+            'atari_tapes = atrip.media_types.atari_tapes',
+            'apple_disks = atrip.media_types.apple_disks',
+        ],
+
+        "atrip.filesystems": [
+            'atari_dos = atrip.filesystems.atari_dos2',
+            'atari_cas = atrip.filesystems.atari_cas',
+            'atari_jumpman = atrip.filesystems.atari_jumpman',
+            'kboot = atrip.filesystems.kboot',
+            'apple_dos33 = atrip.filesystems.apple_dos33',
+        ],
+
+        "atrip.file_types": [
+            'atari_xex = atrip.file_types.atari_xex',
+        ],
+
+        "atrip.signatures": [
+            'atari2600_cart = atrip.signatures.atari2600_cart',
+            'atari2600_starpath = atrip.signatures.atari2600_starpath',
+            'atari5200_cart = atrip.signatures.atari5200_cart',
+            'vectrex = atrip.signatures.vectrex',
+        ],
 
         "omnivore.viewers": [
             'bitmap = omnivore.viewers.bitmap',
@@ -345,12 +386,29 @@ setup(
             'disasm = omnivore.viewers.disasm',
             'history = omnivore.viewers.history',
         ],
+
+        "sawx.documents": [
+            '00byte = omnivore.document',
+        ],
+
+        "sawx.editors": [
+            '00byte = omnivore.editors.byte_editor',
+        ],
+
+        "sawx.loaders": [
+            '00atrip = atrip.omnivore_loader',
+        ],
+
+        "sawx.remember": [
+            'fonts = omnivore.arch.fonts',
+        ],
     },
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
     zip_safe = False,
     install_requires = [
     'python-slugify',
     'ply',
+    'lz4',
     'construct<2.9',  # Construct 2.9 changed the String class
     'pytz',
     'pyparsing',

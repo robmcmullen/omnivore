@@ -2,9 +2,24 @@ include LICENSE
 include LICENSE.apache
 include LICENSE.MIT
 include LICENSE.tinycthread
+include LICENSE.unlzw
 include README.rst
+recursive-include atrip/templates *
+include atrip/archivers/*
+include atrip/compressors/*
+include atrip/filesystems/*
+include atrip/file_types/*
+recursive-include atrip/machines *.py
+include atrip/media_types/*
+include atrip/signatures/*
 recursive-include omnivore/templates *
 include samples/air_defense*
+include samples/dos_sd*
+include samples/dos_ed*
+include samples/dos_dd*
+include samples/kboot*
+include samples/mydos*
+include samples/sd_dd*
 recursive-include lib6502 *.h
 recursive-include libatari800 *.h
 recursive-include libatari800 *.inc
@@ -20,3 +35,5 @@ prune libatari800/atari800/src/amiga
 recursive-include libatasm *.h
 recursive-include libdebugger *.h
 recursive-include libudis *.h
+recursive-include scripts *
+recursive-include utils *
