@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from sawx.utils import events
+from sawx import events
 
 
 def mp_do_nothing(sender, *args):
