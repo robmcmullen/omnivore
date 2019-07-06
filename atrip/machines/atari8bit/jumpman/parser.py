@@ -1,6 +1,7 @@
 import numpy as np
 
 from atrip import style_bits
+from atrip.assembler import get_default_assembler
 
 from sawx.utils.runtime import get_all_subclasses
 
@@ -1111,10 +1112,10 @@ class JumpmanCustomCode:
 
     def __init__(self, filename):
         # raise ImportError and let caller handle it
-        from pyatasm import Assemble
-        asm = Assemble(filename)
+        assembler = get_default_assembler()
+        asm = assembler.assemble(filename)
         if not asm:
-            raise SyntaxError(asm.errors)
+            raise SyntaxError("\n".join(asm.errors))
         self.filename = filename
         self.asm = asm
         self.ranges = []

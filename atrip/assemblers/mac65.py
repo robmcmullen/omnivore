@@ -1,9 +1,9 @@
-from ..assembler.assembler_base import AssemblerBase, AssemblerResult
-from .libatasm import mac65_assemble
+from ..assembler import Assembler, AssemblerResult
+from .libmac65 import mac65_assemble
 
-class ATasm(AssemblerBase):
-    name = "atasm"
-    ui_name = "ATasm (MAC/65)"
+class MAC65(Assembler):
+    name = "mac65"
+    ui_name = "MAC/65 (ATasm)"
     cpu = "6502"
 
     comment_char = ";"
@@ -13,7 +13,7 @@ class ATasm(AssemblerBase):
     data_byte_separator = ", "
 
     def __init__(self, verbose=False):
-        AssemblerBase.__init__(self, verbose)
+        Assembler.__init__(self, verbose)
 
     def assemble(self, source):
         if isinstance(source, str):
