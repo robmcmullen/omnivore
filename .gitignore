@@ -1,0 +1,12 @@
+lib6502/lib6502.c
+libatari800/libatari800.c
+libatasm/libatasm.c
+libudis/libudis.c
+libudis/parse_udis_cpu.c
+libudis/stringify_udis_cpu.c
+libudis/stringify_udis_cpu.h
+omnivore/arch/antic_speedups.c
+omnivore/arch/pixel_speedups.c
+omnivore/disassembler/cputables.py
+omnivore/disassembler/valid_cpus.py
+test/tmp.*
