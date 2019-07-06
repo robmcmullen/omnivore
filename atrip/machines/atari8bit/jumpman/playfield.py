@@ -284,6 +284,7 @@ class JumpmanPlayfieldModel:
             self.assembly_error = f"Assembly error:\nPlease install pyatasm to\ncompile custom code"
             log.error(self.assembly_error)
             self.old_trigger_mapping = dict()
+            raise RuntimeError(self.assembly_error)
         if self.custom_code:
             self.update_trigger_mapping()
             self.save_assembly()
