@@ -215,11 +215,13 @@ class SawxFrame(wx.Frame):
             wx.CallAfter(self.find_active_editor)
         del editor
 
-    def load_file(self, path, current_editor=None, args=None, show_progress_bar=True):
+    def load_file(self, path, current_editor=None, args=None, show_progress_bar=None):
         try:
             filesystem.filesystem_path(path)
         except FileNotFoundError:
             show_progress_bar = False
+        if show_progress_bar is None:
+            show_progress_bar = wx.GetApp().show_progress_bar_on_load
         if show_progress_bar:
             # usually True except when loading a file before the Frame is shown
             # (as in app startup). It uses Yield and can cause refresh events

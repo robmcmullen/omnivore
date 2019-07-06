@@ -78,6 +78,8 @@ class SawxApp(wx.App):
 
     toolbar_check_interval = .75
 
+    show_progress_bar_on_load = False
+
     window_sizes = {
         "default": [800, 600],
         "last_window_size": [1000, 800],
