@@ -66,7 +66,7 @@ if __name__ == "__main__":
     os.close(fh)
     used = {}
     files = []
-    print "Creating image %s" % out
+    print(f"Creating image: {out}")
     for entry in options.files:
         entry = entry.lower()
         if entry.startswith("d"):
