@@ -419,7 +419,6 @@ setup(
     'pyopengl',
     'pyatasm',
     'sawx>=1.4.0',
-    'atrip>=0.5.0',
     'numpy',
     ],
     cmdclass = {"clean": clean_py},
