@@ -79,9 +79,22 @@ if "clean" in sys.argv:
     # prevent extensions from being 
     ext_modules = []
 else:
-    if not os.path.exists("omnivore/disassembler/cputables.py"):
+    cputables_path = "omnivore/disassembler/cputables.py"
+    parse_gen_path = "libudis/parse_udis_cpu.c"
+    if not os.path.exists(cputables_path):
         subprocess.run([sys.executable, 'libudis/cpugen.py'])
-    if not os.path.exists("libudis/parse_udis_cpu.c"):
+    out = {}
+    exec(compile(open(cputables_path).read(), cputables_path, 'exec'), out)
+    processors = out['processors']
+    if '6502' not in processors:
+        for path in [cputables_path, parse_gen_path]:
+            try:
+                os.unlink(path)
+            except IOError:
+                pass
+        sys.exit("Disassemblers not generated; try 'git submodule init; git submodule update' and rerun.")
+
+    if not os.path.exists(parse_gen_path):
         subprocess.run([sys.executable, 'libudis/parse_gen.py'])
 
     extensions = [
