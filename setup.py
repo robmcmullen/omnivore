@@ -389,18 +389,24 @@ setup(
 
         "sawx.documents": [
             '00byte = omnivore.document',
+            '99text = sawx.documents.text',
         ],
 
         "sawx.editors": [
             '00byte = omnivore.editors.byte_editor',
+            'html = sawx.editors.html_viewer',
+            'text = sawx.editors.text_editor',
         ],
 
         "sawx.loaders": [
             '00atrip = atrip.omnivore_loader',
+            '99fleep = sawx.loaders.fleep',
+            '98text = sawx.loaders.text',
         ],
 
         "sawx.remember": [
             'fonts = omnivore.arch.fonts',
+            'app = sawx.application',
         ],
     },
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
@@ -417,8 +423,6 @@ setup(
     'jsonpickle',
     # 'pyopengl-accelerate',  # not required, and a pain on some platform/os combos
     'pyopengl',
-    'pyatasm',
-    'sawx>=1.4.0',
     'numpy',
     ],
     cmdclass = {"clean": clean_py},
