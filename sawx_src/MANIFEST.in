@@ -1,0 +1,3 @@
+include LICENSE
+include run.py
+include sawx/templates/*

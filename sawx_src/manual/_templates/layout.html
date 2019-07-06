@@ -1,0 +1,15 @@
+{% extends "!layout.html" %}
+{% block relbar1 %}
+<div id="titleLine">
+<center><a href="https://playermissile.com/omnivore/"><img src="{{ pathto("_static/doc-logo.png", 1) }}" alt="Omnivore XL, the 8-bit Binary Editor"/></a></center>
+<hr>
+</div>
+    {{ super() }}
+{% endblock %}
+
+{% block footer %}
+<div class="footer">
+<hr>
+Updated {{ last_updated }} by Rob McMullen &lt;feedback@playermissile.com&gt;
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+__author__ = "Rob McMullen"
+__author_email__ = "feedback@playermissile.com"
+__url__ = "http://playermissile.com/sawx"
+__download_url__ = "https://github.com/robmcmullen/sawx/archive"
+__bug_report_url__ = "https://github.com/robmcmullen/sawx/issues"
