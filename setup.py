@@ -335,7 +335,10 @@ setup(
     ext_modules = ext_modules,
     packages = find_packages(exclude=["libudis"]),
     include_package_data=True,
-    scripts = ["scripts/omnivore"],
+    scripts = [
+        "scripts/atrip",
+        "scripts/omnivore",
+    ],
     entry_points={
         "atrip.archivers": [
             'zip = atrip.archivers.zip',
@@ -425,6 +428,9 @@ setup(
     platforms = ["Windows", "Linux", "Mac OS-X", "Unix"],
     zip_safe = False,
     install_requires = [
+    'pathlib2',  # pip install processes from the top down!
+    'numpy',
+
     'python-slugify',
     'ply',
     'lz4',
@@ -436,7 +442,14 @@ setup(
     'jsonpickle',
     # 'pyopengl-accelerate',  # not required, and a pain on some platform/os combos
     'pyopengl',
+    'fleep',  # not actually required
+    'appdirs',
+    'wxpython',
+    'pillow',
+    'six',
+
     'numpy',
+    'pathlib2',  # python setup.py develop processes from the bottom up!
     ],
     cmdclass = {"clean": clean_py},
 )
