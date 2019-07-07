@@ -41,7 +41,8 @@ class AtariJumpmanDirent(Dirent):
     ui_name = "Jumpman Level"
     name_offset = 0x2bec - 0x2800
     dirent_size = 0x800
-    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'id', 'level_name', 'assembly_source']
+    extra_serializable_attributes = ['file_num', 'in_use', 'is_sane', 'id', 'level_name']
+    dependent_file_attributes = ['assembly_source']
 
     def __init__(self, directory, file_num):
         start = file_num * self.dirent_size

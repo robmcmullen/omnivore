@@ -53,6 +53,7 @@ class Segment:
     ui_name = "Data Segment"
     base_serializable_attributes = ['origin', 'error', 'name', 'verbose_name', 'uuid']
     extra_serializable_attributes = []
+    dependent_file_attributes = []
 
     def __init__(self, container_or_segment, offset_or_offset_list=None, origin=0, name="All", error=None, verbose_name=None, length=None):
         self.init_empty()
@@ -109,6 +110,17 @@ class Segment:
 
     def __len__(self):
         return np.alen(self.container_offset)
+
+    @property
+    def dependent_files(self):
+        files = []
+        for key in self.dependent_file_attributes:
+            value = getattr(self, key)
+            if isinstance(value, str):
+                files.append(value)
+            else:
+                files.extend(value)
+        return files
 
     #### dunder methods and convenience functions to operate on data (not style)
 
@@ -235,10 +247,7 @@ class Segment:
                 value = getattr(self, key)
             return key, value
 
-        for key in self.base_serializable_attributes:
-            key, value = get_value(key)
-            state[key] = value
-        for key in self.extra_serializable_attributes:
+        for key in self.base_serializable_attributes + self.extra_serializable_attributes + self.dependent_file_attributes:
             key, value = get_value(key)
             state[key] = value
         state['container_offset'] = utils.collapse_to_ranges(self.container_offset, compact=True)
@@ -265,10 +274,7 @@ class Segment:
         # to loop through and set container attributes for each one.
         self.container = None
 
-        for key in self.base_serializable_attributes:
-            if key in state:
-                setattr(self, key, state.pop(key))
-        for key in self.extra_serializable_attributes:
+        for key in self.base_serializable_attributes + self.extra_serializable_attributes + self.dependent_file_attributes:
             if key in state:
                 setattr(self, key, state.pop(key))
         self.restore_missing_serializable_defaults()
