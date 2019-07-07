@@ -405,10 +405,10 @@ class EmulatorBase(Debugger):
         # a history entry by setting it to NONE.
         frame_number = int(self.status['frame_number'][0])
         if force or self.frame_history.is_memorable(frame_number):
-            print(f"Saving history at {frame_number}")
+            log.debug(f"Saving history at {frame_number}")
             d = self.calc_current_state()
             self.frame_history.save_frame(frame_number, d)
-            self.print_history(frame_number)
+            # self.print_history(frame_number)
 
     def get_history(self, frame_number):
         frame_number = int(frame_number)
