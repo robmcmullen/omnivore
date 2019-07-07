@@ -1134,8 +1134,10 @@ class JumpmanCustomCode:
         for first, last, raw in self.asm.segments:
             ranges.append("$%04x-$%04x" % (first, last))
             total += len(raw)
+
         return f"""\
 {self.filename}
+Compiled: {self.asm.timestamp}
 Total bytes: {total} (${total:x})
 Ranges: {",".join(ranges)}
 Game loop: {"Custom" if self.custom_gameloop else "Standard"}

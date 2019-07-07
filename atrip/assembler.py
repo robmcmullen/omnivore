@@ -1,4 +1,5 @@
 import os
+import time
 import inspect
 import pkg_resources
 
@@ -10,6 +11,7 @@ log = logging.getLogger(__name__)
 
 class AssemblerResult:
     def __init__(self):
+        self.timestamp = time.ctime()
         self.errors = []
         self.segments = []
         self.transitory_equates = {}
