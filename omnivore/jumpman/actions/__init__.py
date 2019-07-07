@@ -184,8 +184,11 @@ class compile_assembly_source(ViewerAction):
     """
     name = 'Recompile Code'
 
+    def calc_enabled(self, action_key):
+        return bool(hasattr(self.editor.linked_base.segment, "jumpman_playfield_model") and self.editor.linked_base.segment.assembly_source)
+
     def perform(self, event):
-        self.editor.linked_base.jumpman_playfield_model.compile_assembly_source(True)
+        self.editor.linked_base.segment.jumpman_playfield_model.compile_assembly_source()
 
 
 class jumpman_level_list(ViewerActionMixin, segment_select):

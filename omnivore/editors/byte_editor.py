@@ -192,7 +192,7 @@ class ByteEditor(TileManagerBase):
             "set_trigger",
             None,
             "add_assembly_source",
-            "recompile_assembly_source",
+            "compile_assembly_source",
         ],
         ["Generate",
             ["Compression",
