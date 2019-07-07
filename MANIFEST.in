@@ -13,6 +13,7 @@ recursive-include atrip/machines *.py
 include atrip/media_types/*
 include atrip/signatures/*
 recursive-include omnivore/templates *
+recursive-include omnivore/icons *
 recursive-include sawx/icons *
 include samples/air_defense*
 include samples/dos_sd*
