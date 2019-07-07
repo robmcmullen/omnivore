@@ -284,7 +284,8 @@ else:
             include_dirs = ["libdebugger", "libudis", np.get_include()],
             ),
         Extension("atrip.assemblers.libmac65",
-            sources = ["libmac65/libmac65.pyx",
+            sources = [
+                "libmac65/libmac65.pyx",
                 "libmac65/cython_interface.c",
                 "libmac65/atasm/src/asm.c",
                 "libmac65/atasm/src/symbol.c",

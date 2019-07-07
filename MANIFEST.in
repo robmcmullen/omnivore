@@ -34,6 +34,7 @@ prune libatari800/atari800/src/win32
 prune libatari800/atari800/src/falcon
 prune libatari800/atari800/src/amiga
 recursive-include libmac65 *.h
+include libmac65/*.pyx  # somehow not included by setup.py
 recursive-include libdebugger *.h
 recursive-include libudis *.h
 recursive-include scripts *
