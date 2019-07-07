@@ -3,6 +3,7 @@ import time
 import wx
 import wx.lib.inspection
 
+from ..frame import SawxFrame
 from ..action import SawxAction, SawxNameChangeAction, SawxListAction
 from ..persistence import iter_templates
 from ..ui.dialogs import prompt_for_dec, get_file_dialog_wildcard
@@ -12,6 +13,14 @@ from .. import errors
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class new_window(SawxAction):
+    name = "New Window"
+
+    def perform(self, event=None):
+        frame = SawxFrame(None, wx.GetApp().app_blank_uri)
+        frame.Show()
 
 
 class new_blank_file(SawxAction):

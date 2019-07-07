@@ -150,6 +150,8 @@ class DebugTextEditor(TextEditor):
             ["New",
                 "new_file",
             ],
+            "new_window",
+            None,
             "open_file",
             ["Open Recent",
                 "open_recent",

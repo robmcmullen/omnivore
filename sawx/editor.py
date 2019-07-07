@@ -90,6 +90,8 @@ class SawxEditor:
                 None,
                 "new_file_from_template",
             ],
+            "new_window",
+            None,
             "open_file",
             ["Open Recent",
                 "open_recent",
