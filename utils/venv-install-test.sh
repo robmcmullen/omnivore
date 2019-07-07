@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VENV=/tmp/omnivore-install-test$$
-OMNIVORE=$HOME/src/refactor/omnivore
+OMNIVORE=$HOME/src/omnivore
 
 /usr/bin/python3 -m venv $VENV
 source $VENV/bin/activate
