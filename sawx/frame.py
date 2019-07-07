@@ -394,6 +394,7 @@ class SawxFrame(wx.Frame):
 
     def on_activate(self, evt):
         wx.CallAfter(self.sync_active_tab)
+        evt.Skip()
 
     def on_char_hook(self, evt):
         key_id = (evt.GetModifiers(), evt.GetKeyCode())
