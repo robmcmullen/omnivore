@@ -666,3 +666,10 @@ class ByteEditor(TileManagerBase):
         if flags.refresh_needed:
             event_log.debug(f"process_flags: refresh_needed")
             d.recalc_event(flags=flags)
+
+    #### idle handler
+
+    def idle_when_active(self):
+        segment = self.linked_base.segment
+        if segment.has_dependent_files:
+            segment.check_dependent_files()

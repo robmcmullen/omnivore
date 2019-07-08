@@ -8,10 +8,8 @@ from ..char_mapping import internal_to_atascii, atascii_to_internal
 from .atari_dos2 import AtariDos2, AtariDosBootSegment
 from ..machines.atari8bit.jumpman import playfield
 
-try:  # Expensive debugging
-    _xd = _expensive_debugging
-except NameError:
-    _xd = False
+import logging
+log = logging.getLogger(__name__)
 
 
 class AtariJumpmanBootSegment(AtariDosBootSegment):
@@ -92,6 +90,12 @@ class AtariJumpmanDirent(Dirent):
         since pyatasm can't handle the virtual filesystem.
         """
         self.assembly_source = src
+        self.jumpman_playfield_model.compile_assembly_source()
+
+    def update_dependent_file(self, path):
+        # Currently, this is assuming that there is only one dependent source
+        # file, so as soon as this is triggered, recompile the code.
+        log.debug(f"update_dependent_file: recompiling {path}")
         self.jumpman_playfield_model.compile_assembly_source()
 
 

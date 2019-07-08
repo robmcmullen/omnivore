@@ -1,3 +1,5 @@
+import os
+import collections
 import bisect
 import io
 import json
@@ -111,17 +113,6 @@ class Segment:
     def __len__(self):
         return np.alen(self.container_offset)
 
-    @property
-    def dependent_files(self):
-        files = []
-        for key in self.dependent_file_attributes:
-            value = getattr(self, key)
-            if isinstance(value, str):
-                files.append(value)
-            else:
-                files.extend(value)
-        return files
-
     #### dunder methods and convenience functions to operate on data (not style)
 
     def __str__(self):
@@ -159,6 +150,55 @@ class Segment:
         for segment in self.segments:
             yield (segment, level)
             yield from segment.iter_menu(level + 1)
+
+    #### dependent files
+
+    @property
+    def has_dependent_files(self):
+        return bool(self.dependent_file_attributes)
+
+    @property
+    def dependent_files(self):
+        """List of all dependent files attached to the segment.
+
+        Each attribute in the dependent_file_attributes list can either return
+        a filename or a list of filenames, so this property gathers all of
+        those into a single list.
+        """
+        files = []
+        for key in self.dependent_file_attributes:
+            value = getattr(self, key)
+            if isinstance(value, str):
+                files.append(value)
+            else:
+                files.extend(value)
+        if not hasattr(self, 'dependent_file_timestamps'):
+            self.dependent_file_timestamps = collections.defaultdict(int)
+        return files
+
+    def check_dependent_files(self):
+        """Check timestamps of dependent files and trigger an update if the
+        file has changed since the last check.
+
+        Note that there will always be at least one update event the first time
+        a dependent file is seen, because the update timestamp is set to zero
+        (unix time corresponding to Jan 1, 1970) on initialization.
+        """
+        log.debug(f"check_dependent_files: segment={self}")
+        for path in self.dependent_files:
+            current = os.stat(path).st_mtime
+            previous = self.dependent_file_timestamps[path]
+            if current > previous:
+                log.debug(f"check_dependent_files: {path}, old={previous}, new={current}")
+                self.update_dependent_file(path)
+                self.dependent_file_timestamps[path] = current
+
+    def update_dependent_file(self, path):
+        """Used in subclasses to perform an action on dependent file.
+
+        path: the pathname of the changed file
+        """
+        pass
 
     #### offsets
 
