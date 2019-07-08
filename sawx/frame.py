@@ -37,6 +37,7 @@ class SawxFrame(wx.Frame):
         self.raw_statusbar = statusbar.RawStatusBar(self)
 
         self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char_hook)
 
@@ -213,6 +214,7 @@ class SawxFrame(wx.Frame):
         editor.control = None
         if not quit:
             wx.CallAfter(self.find_active_editor)
+        editor.prepare_destroy()
         del editor
 
     def load_file(self, path, current_editor=None, args=None, show_progress_bar=None):
@@ -394,6 +396,10 @@ class SawxFrame(wx.Frame):
 
     def on_activate(self, evt):
         wx.CallAfter(self.find_active_editor)
+        evt.Skip()
+
+    def on_close(self, evt):
+        self.close_all_tabs()
         evt.Skip()
 
     def on_char_hook(self, evt):

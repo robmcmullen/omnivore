@@ -269,11 +269,16 @@ class SawxEditor:
     def preferences(self):
         return self.get_preferences()
 
+    #### document destruction
+
     def prepare_destroy(self):
         """Release any resources held by the editor, but don't delete the main
         control as that will be deleted by the tabbed notebook control.
         """
-        pass
+        self.document.halt_background_processing()
+        self.document.prepare_destroy()
+
+    #### document creation
 
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Sawx editors")

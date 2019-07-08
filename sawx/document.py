@@ -299,18 +299,18 @@ class SawxDocument:
 
     #### Cleanup functions
 
-    def add_cleanup_function(self, func):
-        if not hasattr(self, "global_resource_cleanup_functions"):
-            self.global_resource_cleanup_functions = []
-        # Prevent same function from being added multiple times
-        if func not in self.global_resource_cleanup_functions:
-            self.global_resource_cleanup_functions.append(func)
+    def halt_background_processing(self):
+        """Phase 1 of destruction: stop and cleanup any background processing
+        before removing any attributes.
 
-    def global_resource_cleanup(self):
-        if hasattr(self, "global_resource_cleanup_functions"):
-            for f in self.global_resource_cleanup_functions:
-                log.debug("Calling cleanup function %s" % f)
-                f()
+        UI elements may by refreshing on timers or in response to background
+        processing events, so stop all of that before attempting any other
+        attribute cleanup."""
+        pass
+
+    def prepare_destroy(self):
+        """Phase 2 of destruction: actually destroy resources"""
+        pass
 
     #### file identification
 

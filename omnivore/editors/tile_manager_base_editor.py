@@ -55,6 +55,7 @@ class TileManagerBase(SawxEditor):
         self.viewers = []
 
     def prepare_destroy(self):
+        self.document.halt_background_processing()
         self.focused_viewer = None
         # Operate on copy of list because you can't iterate and remove from the
         # same list

@@ -182,7 +182,16 @@ class EmulationDocument(DiskImageDocument):
         log.debug(f"Emulator: {emu} collection:{collection.verbose_info}")
         self.load_collection(collection, self.file_metadata)
 
-    ##### Emulator commands
+    #### cleanup
+
+    def halt_background_processing(self):
+        print(f"STOPPING TIMERS! {self}")
+        self.stop_timer()
+
+    def prepare_destroy(self):
+        pass
+
+    #### timer control
 
     def create_timer(self):
         cls = self.__class__
@@ -222,6 +231,8 @@ class EmulationDocument(DiskImageDocument):
             self.emulator_breakpoint_event(breakpoint)
             self.stop_timer()
         self.last_update_time = now
+
+    #### emulator commands
 
     def pause_emulator(self):
         print("pause")
