@@ -85,12 +85,13 @@ class AtariJumpmanDirent(Dirent):
         return len(self) == 0x800
 
     def set_assembly_source(self, src):
-        """Assembly source file is required to be in the same directory as the
-        jumpman disk image. It's also assumed to be on the local filesystem
-        since pyatasm can't handle the virtual filesystem.
+        """Attach an assembly language source file to this segment, to be
+        compiled and used as the custom code for this level.
+
+        Note that it will be automatically recompiled during idle time, and so
+        is not immediately compiled when added here.
         """
         self.assembly_source = src
-        self.jumpman_playfield_model.compile_assembly_source()
 
     def update_dependent_file(self, path):
         # Currently, this is assuming that there is only one dependent source
