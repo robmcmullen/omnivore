@@ -393,7 +393,7 @@ class SawxFrame(wx.Frame):
         evt.Skip()
 
     def on_activate(self, evt):
-        wx.CallAfter(self.sync_active_tab)
+        wx.CallAfter(self.find_active_editor)
         evt.Skip()
 
     def on_char_hook(self, evt):
