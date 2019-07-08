@@ -206,6 +206,7 @@ class SawxFrame(wx.Frame):
 
     def close_editor(self, editor, remove=True, quit=False):
         control = editor.control
+        editor.prepare_destroy()
         if remove:
             index = self.find_index_of_editor(editor)
             self.notebook.RemovePage(index)
@@ -214,7 +215,6 @@ class SawxFrame(wx.Frame):
         editor.control = None
         if not quit:
             wx.CallAfter(self.find_active_editor)
-        editor.prepare_destroy()
         del editor
 
     def load_file(self, path, current_editor=None, args=None, show_progress_bar=None):
