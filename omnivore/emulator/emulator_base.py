@@ -222,6 +222,11 @@ class EmulatorBase(Debugger):
         log.debug(f"Copying {segment} to memory: {start:#04x}-{end:#04x}")
         self.main_memory[start:end] = segment.data[:count]
 
+    #### cleanup
+
+    def prepare_destroy(self):
+        pass
+
     ##### Machine boot
 
     def find_default_boot_segment(self, segments):

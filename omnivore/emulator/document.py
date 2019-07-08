@@ -187,6 +187,16 @@ class EmulationDocument(DiskImageDocument):
     def halt_background_processing(self):
         print(f"STOPPING TIMERS! {self}")
         self.stop_timer()
+        try:
+            emu_doc = self.emulator_document.pop(self.emulator.ui_name)
+            if emu_doc != self:
+                print(f"Weird: emulator not same as remembered!")
+        except KeyError:
+            log.error(f"Emulator instance not found! Weird.")
+        else:
+            emu = self.emulator
+            print(f"Removing emulator {emu}")
+            emu.prepare_destroy()
 
     def prepare_destroy(self):
         pass
