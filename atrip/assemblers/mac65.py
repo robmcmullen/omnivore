@@ -19,7 +19,10 @@ class MAC65(Assembler):
         if isinstance(source, str):
             source = source.encode("utf-8")
         result = AssemblerResult()
-        result.errors, text = mac65_assemble(source)
+        errors, text = mac65_assemble(source)
+        errors = errors.strip()
+        if errors:
+            result.errors = [errors]
         self.current_parser = self.null_parser
         result.first_addr = None
         result.last_addr = None

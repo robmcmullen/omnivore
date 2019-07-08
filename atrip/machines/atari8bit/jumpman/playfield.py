@@ -279,6 +279,10 @@ class JumpmanPlayfieldModel:
         if self.custom_code:
             self.update_trigger_mapping()
             self.save_assembly()
+        else:
+            # error in the code, cause a refresh that will update the code
+            # viewer
+            self.segment_viewer.editor.document.byte_values_changed_event(flags=True)
 
     @property
     def custom_code_info(self):
