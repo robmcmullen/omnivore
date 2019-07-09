@@ -620,7 +620,7 @@ class ByteEditor(TileManagerBase):
         return DisplayFlags()
 
     def process_flags(self, flags):
-        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        """Perform the UI updates described by the DisplayFlags instance
         
         """
         event_log.debug(f"process_flags: {self.ui_name}, flags={flags}")

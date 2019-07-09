@@ -9,7 +9,7 @@ from . import errors
 from . import clipboard
 from .preferences import find_editor_preferences
 from .utils import jsonutil
-from .utils.command import StatusFlags
+from .utils.command import DisplayFlags
 from .utils.pyutil import get_plugins
 from .menubar import MenuDescription
 from .filesystem import fsopen as open
@@ -456,7 +456,7 @@ class SawxEditor:
     #### command processing
 
     def calc_status_flags(self):
-        return StatusFlags()
+        return DisplayFlags()
 
     def undo(self):
         undo = self.document.undo_stack.undo(self)
@@ -494,7 +494,7 @@ class SawxEditor:
         return undo
 
     def process_flags(self, flags):
-        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        """Perform the UI updates described by the DisplayFlags instance
         
         """
         log.debug("processing flags: %s" % str(flags))

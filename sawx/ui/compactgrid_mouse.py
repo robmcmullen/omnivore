@@ -4,6 +4,8 @@ import weakref
 
 import wx
 
+from sawx.utils.command import DisplayFlags
+
 try:
     from atrcopy import match_bit_mask, comment_bit_mask, user_bit_mask, selected_bit_mask, diff_bit_mask
 except ImportError:
@@ -353,7 +355,7 @@ class MultiCaretHandler:
         return invert_ranges(ranges, caret_handler.document_length)
 
     def process_char_flags(self, flags):
-        """Perform the UI updates given the StatusFlags or BatchFlags flags
+        """Perform the UI updates described by the DisplayFlags instance
         
         """
         visible_range = False
@@ -762,164 +764,6 @@ class RectangularSelectMode(NormalSelectMode):
         if extra:
             msg += " " + extra
         cg.show_status_message(msg)
-
-
-
-
-
-
-class DisplayFlags:
-    def __init__(self, source_control=None, args=[]):
-        # True if command successfully completes, must set to False on failure
-        self.success = True
-
-        # True if command made a change to the document and therefore should be recorded
-        self.changed_document = True
-
-        # List of errors encountered
-        self.errors = []
-
-        # Message displayed to the user
-        self.message = ""
-
-        # has any data values changed, forcing all views to be refreshed?
-        self.byte_values_changed = False
-
-        # has any data style changed, forcing all views to be refreshed?
-        self.byte_style_changed = False
-
-        # has anything in the data or metadata changed to require a rebuild
-        # of the data model?
-        self.data_model_changed = False
-
-        # set to True if the all views of the data need to be refreshed
-        self.refresh_needed = False
-
-        # ensure the specified index is visible
-        self.index_visible = None
-
-        # ensure the specified index range is visible
-        self.index_range = None
-
-        # set to True if the index_range should be selected
-        self.select_range = False
-
-        # set caret index to position
-        self.caret_index = None
-
-        # keep any selection instead of erasing during a caret move
-        self.keep_selection = None
-
-        # set if document properties have changed, but not the actual data
-        self.metadata_dirty = None
-
-        # set if user interface needs to be updated (very heavyweight call!)
-        self.rebuild_ui = None
-
-        # the source control on which the event happened, if this is the
-        # result of a user interface change
-        self.source_control = source_control
-
-        # if the source control is refreshed as a side-effect of some action,
-        # set this flag so that the event manager can skip that control when
-        # it refreshes the others
-        self.skip_source_control_refresh = False
-
-        # if the portion of the window looking at the data needs to be changed,
-        # these will be the new upper left coordinates
-        self.viewport_origin = None
-
-        # list of viewers that have been refreshed during the caret_flags
-        # processing so it won't be updated again
-        self.refreshed_as_side_effect = set()
-
-        # set if the user is selecting by entire rows
-        self.selecting_rows = False
-
-        # if not None, will contain the set carets to determine if any have
-        # moved and need to be updated.
-        self.old_carets = None
-
-        # if True will add the old carets to the current caret to increase the
-        # number of carets by one
-        self.add_caret = False
-
-        # if True will remove all carets except the current caret
-        self.force_single_caret = False
-
-        # move the caret(s) to the next edit position (usually column) using
-        # the control as the basis for how much the index needs to be adjusted
-        # to get to the next column.
-        self.advance_caret_position_in_control = None
-
-        # sync the carets in all other controls from the given control.
-        self.sync_caret_from_control = None
-
-        if args:
-            for flags in args:
-                self.add_flags(flags)
-
-    def __str__(self):
-        flags = []
-        flags.append(f"source_control={self.source_control}")
-        for name in dir(self):
-            if name.startswith("_"):
-                continue
-            val = getattr(self, name)
-            if val is None or not val or hasattr(val, "__call__"):
-                continue
-            flags.append("%s=%s" % (name, val))
-        return ", ".join(flags)
-
-    def add_flags(self, flags, cmd=None):
-        if flags.message is not None:
-            self.message += flags.message
-        if flags.errors:
-            if cmd is not None:
-                self.errors.append("In %s:" % str(cmd))
-            for e in flags.errors:
-                self.errors.append("  %s" % e)
-            self.errors.append("")
-        if flags.byte_values_changed:
-            self.byte_values_changed = True
-        if flags.byte_style_changed:
-            self.byte_style_changed = True
-        if flags.refresh_needed:
-            self.refresh_needed = True
-        if flags.select_range:
-            self.select_range = True
-        if flags.metadata_dirty:
-            self.metadata_dirty = True
-        if flags.rebuild_ui:
-            self.rebuild_ui = True
-
-        # Expand the index range to include the new range specified in flags
-        if flags.index_range is not None:
-            if self.index_range is None:
-                self.index_range = flags.index_range
-            else:
-                s1, s2 = self.index_range
-                f1, f2 = flags.index_range
-                if f1 < s1:
-                    s1 = f1
-                if f2 > s2:
-                    s2 = f1
-                self.index_range = (s1, s2)
-
-        if flags.caret_index is not None:
-            self.caret_index = flags.caret_index
-        if flags.force_single_caret:
-            self.force_single_caret = flags.force_single_caret
-        if flags.keep_selection:
-            self.keep_selection = flags.keep_selection
-        if flags.source_control:
-            self.source_control = flags.source_control
-        if flags.advance_caret_position_in_control:
-            self.advance_caret_position_in_control = flags.advance_caret_position_in_control
-        if flags.sync_caret_from_control:
-            self.sync_caret_from_control = flags.sync_caret_from_control
-
-
 
 
 class GridCellTextCtrl(wx.TextCtrl):

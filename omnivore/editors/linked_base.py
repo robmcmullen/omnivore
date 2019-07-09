@@ -10,7 +10,7 @@ import json
 
 from atrip import Container, ContainerHeader, Segment
 
-from sawx.ui.compactgrid import DisplayFlags
+from sawx.utils.command import DisplayFlags
 from sawx.events import EventHandler
 
 from ..commands import CoalescingChangeByteCommand

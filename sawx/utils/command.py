@@ -165,8 +165,8 @@ class UndoStack(HistoryList):
         return None
 
 
-class StatusFlags(object):
-    def __init__(self, *args):
+class DisplayFlags:
+    def __init__(self, source_control=None, args=[]):
         # True if command successfully completes, must set to False on failure
         self.success = True
 
@@ -207,9 +207,6 @@ class StatusFlags(object):
         # keep any selection instead of erasing during a caret move
         self.keep_selection = None
 
-        # set caret column to position, if supported
-        self.caret_column = None
-
         # set if document properties have changed, but not the actual data
         self.metadata_dirty = None
 
@@ -218,7 +215,7 @@ class StatusFlags(object):
 
         # the source control on which the event happened, if this is the
         # result of a user interface change
-        self.source_control = None
+        self.source_control = source_control
 
         # if the source control is refreshed as a side-effect of some action,
         # set this flag so that the event manager can skip that control when
@@ -252,11 +249,16 @@ class StatusFlags(object):
         # to get to the next column.
         self.advance_caret_position_in_control = None
 
-        for flags in args:
-            self.add_flags(flags)
+        # sync the carets in all other controls from the given control.
+        self.sync_caret_from_control = None
+
+        if args:
+            for flags in args:
+                self.add_flags(flags)
 
     def __str__(self):
         flags = []
+        flags.append(f"source_control={self.source_control}")
         for name in dir(self):
             if name.startswith("_"):
                 continue
@@ -303,8 +305,6 @@ class StatusFlags(object):
 
         if flags.caret_index is not None:
             self.caret_index = flags.caret_index
-        if flags.caret_column is not None:
-            self.caret_column = flags.caret_column
         if flags.force_single_caret:
             self.force_single_caret = flags.force_single_caret
         if flags.keep_selection:
@@ -313,12 +313,8 @@ class StatusFlags(object):
             self.source_control = flags.source_control
         if flags.advance_caret_position_in_control:
             self.advance_caret_position_in_control = flags.advance_caret_position_in_control
-
-
-class DisplayFlags(StatusFlags):
-    def __init__(self, source_control=None):
-        StatusFlags.__init__(self)
-        self.source_control = source_control
+        if flags.sync_caret_from_control:
+            self.sync_caret_from_control = flags.sync_caret_from_control
 
 
 class UndoInfo(object):
@@ -422,14 +418,14 @@ class Batch(Command):
         return self
 
     def perform(self, editor, undo_info):
-        flags = StatusFlags()
+        flags = DisplayFlags()
         for c in self.commands:
             undo = c.perform(editor)
             flags.add_flags(undo.flags)
         undo_info.flags = flags
 
     def undo(self, editor):
-        flags = StatusFlags()
+        flags = DisplayFlags()
         for c in reversed(self.commands):
             undo = c.undo(editor)
             flags.add_flags(undo.flags)
@@ -453,7 +449,7 @@ class Overlay(Command):
         return self.last_command
 
     def perform_setup(self, editor):
-        flags = StatusFlags()
+        flags = DisplayFlags()
         last = self.last_command
         if last is not None:
             undo = last.undo(editor)
