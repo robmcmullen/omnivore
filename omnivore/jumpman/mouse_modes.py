@@ -11,6 +11,7 @@ from atrip.machines.atari8bit.jumpman import parser as jp
 from sawx.utils.command import Overlay
 
 from . import commands as jc
+from ..commands import ChangeByteCommand
 from ..viewers.mouse_modes import NormalSelectMode
 
 import logging
@@ -79,20 +80,15 @@ class JumpmanSelectMode(NormalSelectMode):
         # x: 16 - hx, 16 - hx + 6 inclusive
         # y: 0 - hy/2, 0 - hy/2 + 2 inclusive
         hx = hx & 0x1f
-        hy = (hy & 0x1f) // 2
-        startx = (16 - hx) & 0x1f
-        starty = (0 - hy) & 0xf
+        hy = hy & 0x1f
 
-        # Don't know how to set multiple ranges simultaneously in numpy, so use
-        # a slow python loop
-        s = screen._style.reshape((h, w))
-#        s[:] = 0
-        for x in range(startx, startx + 8):
-            x = x & 0x1f
-            s[0:h:, x::32] |= style_bits.comment_bit_mask
-        for y in range(starty, starty + 4):
-            y = y & 0xf
-            s[y:h:16,:] |= style_bits.comment_bit_mask
+        # Fast numpy algorithmic way to generate a grid: create a function and
+        # have it generate true/false values for each coordinate input pair.
+        y, x = np.mgrid[:h,:w]
+        allergic = np.logical_or((2 * y + 0x20 + hy) & 0x1f < 7, (x + 0x30 + hx) & 0x1f <= 7).astype(np.uint8) * style_bits.comment_bit_mask
+        style = screen.style
+        style |= allergic.flat
+
 
     def get_xy(self, evt):
         c = self.control
