@@ -12,9 +12,12 @@ def mac65_assemble(source):
     errfile_c = errfile
 
     exitval = py_assemble(source_c, listfile_c, errfile_c)
-    with open(errfile, "r") as fh:
-        errors = fh.read()
+    try:
+        with open(errfile, "r") as fh:
+            errors = fh.read()
         #print errors
+    except IOError as e:
+        return str(e), None
     if exitval == 1:
         #print "ERROR!!!!"
         text = None
