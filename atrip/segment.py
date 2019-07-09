@@ -41,6 +41,13 @@ class ArrayWrapper:
         self.np_data[self.order] &= other
         return self
 
+    def __or__(self, other):
+        return self.np_data[self.order] | other
+
+    def __ior__(self, other):
+        self.np_data[self.order] |= other
+        return self
+
     def __getitem__(self, index):
         return self.np_data[self.order[index]]
 
