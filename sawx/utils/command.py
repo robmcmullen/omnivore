@@ -421,17 +421,17 @@ class Batch(Command):
     def get_recordable_command(self):
         return self
 
-    def perform(self, document, undo_info):
+    def perform(self, editor, undo_info):
         flags = StatusFlags()
         for c in self.commands:
-            undo = c.perform(document)
+            undo = c.perform(editor)
             flags.add_flags(undo.flags)
         undo_info.flags = flags
 
-    def undo(self, document):
+    def undo(self, editor):
         flags = StatusFlags()
         for c in reversed(self.commands):
-            undo = c.undo(document)
+            undo = c.undo(editor)
             flags.add_flags(undo.flags)
         undo = UndoInfo()
         undo.flags = flags
@@ -452,17 +452,17 @@ class Overlay(Command):
     def get_recordable_command(self):
         return self.last_command
 
-    def perform_setup(self, document):
+    def perform_setup(self, editor):
         flags = StatusFlags()
         last = self.last_command
         if last is not None:
-            undo = last.undo(document)
+            undo = last.undo(editor)
             flags.add_flags(undo.flags)
         undo = UndoInfo(editor)
         undo.flags = flags
         return undo
 
-    def undo(self, document):
+    def undo(self, editor):
         # Not used because the overlay is replaced by the last command.  See
         # get_recordable_command above
         pass
