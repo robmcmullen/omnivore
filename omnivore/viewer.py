@@ -428,8 +428,6 @@ class SegmentViewer:
 
     def on_refresh_view(self, evt):
         event_log.debug(f"on_refresh_view: {self.ui_name} flags={evt.flags}")
-        if self.control in evt.flags.refreshed_as_side_effect:
-            event_log.debug(f"on_refresh_view: skipping already refreshed {self.ui_name}")
         self.refresh_view(evt.flags)
 
     def refresh_view(self, flags):
