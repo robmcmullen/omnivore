@@ -88,7 +88,8 @@ def main(argv):
     OmnivoreApp.app_name = "Omnivore"
     OmnivoreApp.app_version = __version__
     OmnivoreApp.app_icon = "icon://omnivore.ico"
-    OmnivoreApp.app_description = "The 8-bit Reverse Engineering Toolbox"
+    OmnivoreApp.app_tagline = "8-bit Software Archaeology"
+    OmnivoreApp.app_description = "Reverse engineering, emulation, and debugging to help preserve the software ecosystem of 8-bit computers. Particulary the Atari 400/800 family because those were super awesome. But others are, like, totally fine and have lots of pretty cool things and stuff."
     OmnivoreApp.app_website = "https://playermissile.com/omnivore"
     OmnivoreApp.about_dialog_credits = f"""Contributors:<ul>
 <li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari 8-bit Podcast</a> for beta testing
@@ -101,7 +102,9 @@ def main(argv):
     OmnivoreApp.app_blank_page = f"""<html>
 <h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version}</h2>
 
-<h3>{OmnivoreApp.app_description}</h3>
+<h3>{OmnivoreApp.app_tagline}</h3>
+
+<p>{OmnivoreApp.app_description}</p>
 
 <p><img src="icon://omnivore256.png">"""
 

@@ -30,7 +30,7 @@ class SawxApp(wx.App):
 
     app_version = "dev"
 
-    app_description = "Sawx framework for wxPython applications"
+    app_tagline = "Sawx framework for wxPython applications"
 
     app_website = "http://playermissile.com/sawx"
 
@@ -43,7 +43,7 @@ class SawxApp(wx.App):
     app_blank_page = f"""<html>
 <h2>{app_name} {app_version}</h2>
 
-<h3>{app_description}</h3>
+<h3>{app_tagline}</h3>
 """
 
     app_blank_uri = "about://app"
@@ -275,7 +275,7 @@ class SawxApp(wx.App):
 
 <h2>{self.app_name} {self.app_version}</h2>
 
-<h3>{self.app_description}</h3>
+<h3>{self.app_tagline}</h3>
 
 <p>by {self.app_author} <a href="{self.app_website}">{self.app_website}</a>
 
