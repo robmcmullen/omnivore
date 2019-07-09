@@ -175,7 +175,9 @@ class Segment:
         files = []
         for key in self.dependent_file_attributes:
             value = getattr(self, key)
-            if isinstance(value, str):
+            if value is None:
+                continue
+            elif isinstance(value, str):
                 files.append(value)
             else:
                 files.extend(value)
@@ -193,17 +195,30 @@ class Segment:
         """
         log.debug(f"check_dependent_files: segment={self}")
         for path in self.dependent_files:
-            current = os.stat(path).st_mtime
-            previous = self.dependent_file_timestamps[path]
-            if current > previous:
-                log.debug(f"check_dependent_files: {path}, old={previous}, new={current}")
-                self.update_dependent_file(path)
-                self.dependent_file_timestamps[path] = current
+            try:
+                current = os.stat(path).st_mtime
+            except IOError as e:
+                self.error_in_dependent_file(path, e)
+            else:
+                previous = self.dependent_file_timestamps[path]
+                if current > previous:
+                    log.debug(f"check_dependent_files: {path}, old={previous}, new={current}")
+                    self.update_dependent_file(path)
+                    self.dependent_file_timestamps[path] = current
 
     def update_dependent_file(self, path):
         """Used in subclasses to perform an action on dependent file.
 
         path: the pathname of the changed file
+        """
+        pass
+
+    def error_in_dependent_file(self, path, error):
+        """Used in subclasses to report and error in a particular file from the
+        list of dependent files.
+
+        path: the pathname of the changed file
+        error: the error as reported by python
         """
         pass
 

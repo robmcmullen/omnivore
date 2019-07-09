@@ -99,6 +99,10 @@ class AtariJumpmanDirent(Dirent):
         log.debug(f"update_dependent_file: recompiling {path}")
         self.jumpman_playfield_model.compile_assembly_source()
 
+    def error_in_dependent_file(self, path, error):
+        log.error(f"error_in_dependent_file: {path}: {error}")
+        self.jumpman_playfield_model.compile_assembly_source()
+
 
 class AtariJumpmanDirectory(Directory):
     ui_name = "Jumpman Levels"
