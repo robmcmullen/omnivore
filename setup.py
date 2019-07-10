@@ -110,7 +110,7 @@ else:
                   extra_link_args = extra_link_args,
                   include_dirs = [np.get_include()],
                   ),
-        Extension("omnivore.emulator.atari8bit.libatari800",
+        Extension("omnivore.emulators.atari8bit.libatari800",
             sources = [
                 "libatari800/atari800_bridge.c",
                 "libatari800/atari800_antic.c",
@@ -247,7 +247,7 @@ else:
             include_dirs = [libatari800_config_include, "libatari800/atari800/src", "libatari800/atari800/src/libatari800", "libdebugger", "libudis", np.get_include()],
             undef_macros = [ "NDEBUG" ],
         ),
-        Extension("omnivore.emulator.generic6502.lib6502",
+        Extension("omnivore.emulators.generic6502.lib6502",
             sources = [
                 "lib6502/lib6502.pyx",
                 "lib6502/6502-emu_wrapper.c",
@@ -391,6 +391,12 @@ setup(
             'atari2600_starpath = atrip.signatures.atari2600_starpath',
             'atari5200_cart = atrip.signatures.atari5200_cart',
             'vectrex = atrip.signatures.vectrex',
+        ],
+
+        "omnivore.emulators": [
+            'atari8bit = omnivore.emulators.atari8bit.atari800',
+            'apple2 = omnivore.emulators.apple2.crabapple',
+            'generic6502 = omnivore.emulators.generic6502.generic6502',
         ],
 
         "omnivore.viewers": [

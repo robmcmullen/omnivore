@@ -8,9 +8,9 @@ import numpy as np
 import json
 
 # Local imports.
-from ..editors.byte_editor import ByteEditor
-from .document import EmulationDocument
-from .. import guess_emulator
+from .byte_editor import ByteEditor
+from ..documents.emulation_document import EmulationDocument
+from ..emulator import guess_emulator
 
 from sawx.utils.processutil import run_detach
 
@@ -18,7 +18,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class EmulatorEditor(ByteEditor):
+class EmulationEditor(ByteEditor):
     """Editor that holds an emulator instance and the associated viewers.
     """
 
@@ -28,7 +28,7 @@ class EmulatorEditor(ByteEditor):
     default_viewers = "hex,bitmap,char,disasm"
     default_viewers = "hex,bitmap,disasm"
 
-    preferences_module = "omnivore.emulator.preferences"
+    preferences_module = "omnivore.editors.emulation_preferences"
 
     menubar_desc = [
         ["File",

@@ -6,7 +6,7 @@ from . import libatari800 as liba8
 from . import dtypes as d
 from . import akey
 from .colors import NTSC
-from ..emulator_base import EmulatorBase
+from ...emulator import Emulator
 from ...errors import FrameNotFinishedError
 
 import logging
@@ -72,7 +72,7 @@ def ntsc_color_map():
     return rmap, gmap, bmap
 
 
-class Atari800(EmulatorBase):
+class Atari800Mixin:
     cpu = "6502"
     name = "atari800"
     ui_name = "Atari 800"
@@ -91,7 +91,7 @@ class Atari800(EmulatorBase):
     def serialize_to_dict(self):
         if not self.is_frame_finished:
             raise FrameNotFinishedError("atari800 can't save its internal state in the middle of a frame.")
-        return EmulatorBase.serialize_to_dict(self)
+        return Emulator.serialize_to_dict(self)
 
     def compute_color_map(self):
         self.rmap, self.gmap, self.bmap = ntsc_color_map()
@@ -295,7 +295,7 @@ class Atari800(EmulatorBase):
         self.input['start'] = state
 
 
-class Atari800XL(Atari800):
+class Atari800XLMixin(Atari800Mixin):
     cpu = "6502"
     name = "atari800xl"
     ui_name = "Atari 800XL"
@@ -308,7 +308,7 @@ class Atari800XL(Atari800):
         return emu_args
 
 
-class Atari5200(Atari800):
+class Atari5200Mixin(Atari800Mixin):
     cpu = "6502"
     name = "atari5200"
     ui_name = "Atari 5200"
@@ -474,23 +474,16 @@ try:
             self.input['select'] = 1 if wx.GetKeyState(wx.WXK_F3) or self.forced_modifier=='select' else 0
             self.input['start'] = 1 if wx.GetKeyState(wx.WXK_F4) or self.forced_modifier=='start' else 0
 
-    class wxAtari800(wxMixin, Atari800):
-        pass
-
-    class wxAtari800XL(wxMixin, Atari800XL):
-        pass
-
-    class wxAtari5200(wxMixin, Atari5200):
-        pass
-
-
 except ImportError:
-    class wxAtari800:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("wx not available! Can't run wxAtari800")
-    class wxAtari800XL:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("wx not available! Can't run wxAtari800XL")
-    class wxAtari5200:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("wx not available! Can't run wxAtari5200")
+    class wxMixin:
+        pass
+
+
+class Atari800(wxMixin, Atari800Mixin, Emulator):
+    pass
+
+class Atari800XL(wxMixin, Atari800XLMixin, Emulator):
+    pass
+
+class Atari5200(wxMixin, Atari5200Mixin, Emulator):
+    pass

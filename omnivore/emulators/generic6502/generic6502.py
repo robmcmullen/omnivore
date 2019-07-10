@@ -6,7 +6,7 @@ np.set_printoptions(formatter={'int':hex})
 
 from . import lib6502
 from . import dtypes as d
-from ..emulator_base import EmulatorBase
+from ...emulator import Emulator
 from ... import disassembler as disasm
 
 import logging
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 debug_frames = False
 
 
-class Generic6502(EmulatorBase):
+class Generic6502(Emulator):
     cpu = "6502"
     name = "6502"
     ui_name = "Generic 6502"

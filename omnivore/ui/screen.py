@@ -14,7 +14,7 @@ import numpy as np
 
 from sawx.ui.compactgrid import MultiCaretHandler
 
-from ..emulator.atari8bit.colors import NTSC
+from ..emulators.atari8bit.colors import NTSC
 from .intscale import intscale
 from .ui_wx import wxGLSLTextureCanvas, wxLegacyTextureCanvas
 

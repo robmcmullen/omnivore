@@ -1,15 +1,18 @@
 import os
 import tempfile
+import inspect
+import pkg_resources
 
 import numpy as np
 
 from atrip import find_container
 
-from ..debugger import Debugger
-from ..debugger.dtypes import FRAME_STATUS_DTYPE
-from .save_state import FrameHistory
-from .. import disassembler as disasm
-from ..utils.archutil import Labels, load_memory_map
+from .debugger import Debugger
+from .debugger.dtypes import FRAME_STATUS_DTYPE
+from .emulators.save_state import FrameHistory
+from . import disassembler as disasm
+from .utils.archutil import Labels, load_memory_map
+from . import errors
 
 import logging
 log = logging.getLogger(__name__)
@@ -22,7 +25,7 @@ FRAME_BREAKPOINT = 2
 FRAME_WATCHPOINT = 3
 
 
-class EmulatorBase(Debugger):
+class Emulator(Debugger):
     cpu = "<base>"
     ui_name = "<pretty name>"
 
@@ -500,3 +503,56 @@ class EmulatorBase(Debugger):
     @property
     def num_cpu_history_entries(self):
         return len(self.cpu_history)
+
+
+_emulators = None
+
+default_emulator = None
+
+default_emulator_precidence = ["atari800xl", "atari800", "crabapple", "6502"]
+
+def find_first_emulator(precidence, emulators=None):
+    if emulators is None:
+        emulators = find_emulators()
+    for name in precidence:
+        for e in emulators:
+            if e.name == name:
+                return e
+
+def _find_emulators():
+    global default_emulator
+
+    emulators = []
+    for entry_point in pkg_resources.iter_entry_points('omnivore.emulators'):
+        mod = entry_point.load()
+        log.debug(f"find_emulators: Found module {entry_point.name}={mod.__name__}")
+        for name, obj in inspect.getmembers(mod):
+            if inspect.isclass(obj) and Emulator in obj.__mro__[1:]:
+                if obj not in emulators:
+                    log.debug(f"find_emulators:   found emulator class {name}")
+                    emulators.append(obj)
+    default_emulator = find_first_emulator(default_emulator_precidence, emulators)
+    log.debug(f"find_emulators: Found default emulator {default_emulator}")
+    emulators.sort(key=lambda e:e.ui_name)
+    return emulators
+
+def find_emulators():
+    global _emulators
+
+    if _emulators is None:
+        _emulators = _find_emulators()
+    return _emulators
+
+def find_emulator(emulator_name):
+    for e in find_emulators():
+        log.debug(f"find_emulator: looking for {emulator_name}, checking {e.name}")
+        if e.name == emulator_name or e == emulator_name:
+            return e
+    raise errors.UnknownEmulatorError("Unknown emulator '%s'" % emulator_name)
+
+def guess_emulator(document):
+    for e in find_emulators():
+        log.debug(f"trying emulator {e.ui_name} for {document}")
+        if e.guess_from_document(document):
+            return e
+    raise errors.UnknownEmulatorError(f"No emulator for {document.mime}")

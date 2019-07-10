@@ -10,8 +10,8 @@ from sawx.document import SawxDocument
 from sawx.utils.nputil import to_numpy
 from sawx.events import EventHandler
 
-from .. import find_emulator, guess_emulator, default_emulator, UnknownEmulatorError, EmulatorError, EmulatorInUseError
-
+from .. import emulator as em
+from .. import errors
 from ..document import DiskImageDocument
 
 import logging
@@ -67,20 +67,22 @@ class EmulationDocument(DiskImageDocument):
     @classmethod
     def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False, extra_metadata=None):
         try:
-            emu_cls = find_emulator(emulator_type)
-        except UnknownEmulatorError:
+            emu_cls = em.find_emulator(emulator_type)
+        except errors.UnknownEmulatorError:
             if not emulator_type:
                 # if no value specified, try to determine from binary data
                 try:
-                    emu_cls = guess_emulator(source_document)
-                except UnknownEmulatorError:
-                    emu_cls = default_emulator
+                    emu_cls = em.guess_emulator(source_document)
+                except errors.UnknownEmulatorError:
+                    emu_cls = em.default_emulator
             else:
                 # if emulator name specified but not known, return error
                 raise RuntimeError(f"Unknown emulator {emulator_type}")
+        if emu_cls is None:
+            raise RuntimeError(f"Couldn't determine an emulator for:\n\n{source_document.uri}\n\nand no default emulator specified. Chose an emulator in preferences")
         emu_doc = cls.emulator_document.get(emu_cls.ui_name, None)
         if emu_doc is not None:
-            error = EmulatorInUseError(f"Only one {emu_doc.emulator.ui_name} emulator can run at one time.")
+            error = errors.EmulatorInUseError(f"Only one {emu_doc.emulator.ui_name} emulator can run at one time.")
             error.current_emulator_document = emu_doc
             raise error
         emu = emu_cls()
@@ -160,7 +162,7 @@ class EmulationDocument(DiskImageDocument):
             boot_data = segment.data
             origin = segment.origin
         else:
-            raise EmulatorError(f"Can't find bootable segment in {self.source_document}")
+            raise errors.EmulatorError(f"Can't find bootable segment in {self.source_document}")
         emu.boot_from_segment(segment)
         for i in range(self.skip_frames_on_boot):
             emu.next_frame()

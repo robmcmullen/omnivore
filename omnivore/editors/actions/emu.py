@@ -10,9 +10,9 @@ from sawx.frame import SawxSingleEditorFrame
 
 from ... import commands
 from ... import errors
-from ...emulator import known_emulators
-from ...emulator.document import EmulationDocument
-from ...emulator.editor import EmulatorEditor
+from ...emulator import find_emulators
+from ...documents.emulation_document import EmulationDocument
+from ...editors.emulation_editor import EmulationEditor
 
 import logging
 log = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class emu_list(SawxRadioListAction):
 
     def calc_list_items(self):
         items = [None]
-        items.extend(known_emulators)
+        items.extend(find_emulators())
         return items
 
     def calc_checked_list_item(self, action_key, index, item):
@@ -61,7 +61,7 @@ class emu_boot_disk_image(SawxAction):
         else:
             self.do_boot(doc, source_document)
             print(f"emulator document: {doc}")
-            editor = EmulatorEditor(doc)
+            editor = EmulationEditor(doc)
             frame = SawxSingleEditorFrame(editor)
             frame.Show()
 
