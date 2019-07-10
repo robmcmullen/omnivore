@@ -9,6 +9,7 @@ import wx
 from ..ui.screen import BitmapScreen
 
 from sawx.ui import compactgrid as cg
+from sawx.ui import checkpointtree as ct
 from sawx.utils.command import DisplayFlags
 from ..ui import segment_grid as sg
 from ..viewer import SegmentViewer
@@ -140,6 +141,31 @@ class VideoViewer(EmulatorViewerMixin, SegmentViewer):
 
     def get_notification_count(self):
         return 0
+
+
+class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
+    name = "checkpoint"
+
+    ui_name = "Checkpoint Viewer"
+
+    has_caret = False
+
+    priority_refresh_frame_count = 59 # about once per second
+
+    @classmethod
+    def create_control(cls, parent, linked_base, mdict):
+        return ct.CheckpointTree(parent, linked_base.emulator)
+
+    def show_caret(self, control, index, bit):
+        pass
+
+    @property
+    def window_title(self):
+        emu = self.emulator
+        return f"{emu.ui_name} (frame {emu.current_frame_number})"
+
+    def recalc_view(self):
+        self.control.recalc_view()
 
 
 class CPU6502Table(sg.SegmentVirtualTable):

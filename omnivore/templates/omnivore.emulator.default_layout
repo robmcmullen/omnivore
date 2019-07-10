@@ -1,24 +1,78 @@
 {
-    "layout": {"sidebars": [], "tile_manager": {"direction": 4, "ratio_in_parent": 1.0, "views": [{"child_uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9", "ratio_in_parent": 0.24742268041237114, "show_title": true, "use_close_button": true}, {"child_uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b", "ratio_in_parent": 0.7525773195876289, "show_title": true, "use_close_button": true}]}},
-    "linked bases": [
-        {
-            "segment number": 0,
-            "segment view params": {"892c3634-bd50-4a86-9ba0-df84d4299d23": {"3fc1c976-dde9-408c-b102-0e226e8df9e9": [0, 0], "carets": [{"py/tuple": [0, 0, 0, 0, 0]}]}},
-            "uuid": "a3258186-6700-40f2-ad6c-a96fa350e978"
-        }
-    ], 
+    "layout": {
+      "sidebars": [],
+      "tile_manager": {
+        "direction": 4,
+        "ratio_in_parent": 1,
+        "views": [
+          {
+            "direction": 8,
+            "ratio_in_parent": 0.48876043673731534,
+            "views": [
+              {
+                "child_uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9",
+                "ratio_in_parent": 0.09843937575030012,
+                "show_title": true,
+                "use_close_button": true
+              },
+              {
+                "child_uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d",
+                "ratio_in_parent": 0.9015606242496998,
+                "show_title": true,
+                "use_close_button": true
+              }
+            ]
+          },
+          {
+            "direction": 8,
+            "ratio_in_parent": 0.5112395632626847,
+            "views": [
+              {
+                "child_uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b",
+                "ratio_in_parent": 0.37214885954381755,
+                "show_title": true,
+                "use_close_button": true
+              },
+              {
+                "child_uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802",
+                "ratio_in_parent": 0.6278511404561824,
+                "show_title": true,
+                "use_close_button": true
+              }
+            ]
+          }
+        ]
+      }
+    },
     "viewers": [
-        {
-            "control": {},
-            "linked base": "a3258186-6700-40f2-ad6c-a96fa350e978",
-            "name": "video",
-            "uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b"
-        }, 
-        {
-            "control": {"items_per_row": 13, "zoom": 1},
-            "linked base": "a3258186-6700-40f2-ad6c-a96fa350e978",
-            "name": "cpu6502",
-            "uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9"
-        }
+      {
+        "control": {},
+        "name": "video",
+        "uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b"
+      },
+      {
+        "control": {
+          "items_per_row": 13,
+          "zoom": 1
+        },
+        "name": "cpu6502",
+        "uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9"
+      },
+      {
+        "control": {
+          "items_per_row": 99,
+          "zoom": 1
+        },
+        "name": "cpuhistory",
+        "uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d"
+      },
+      {
+        "control": {
+          "items_per_row": -1,
+          "zoom": 1
+        },
+        "name": "checkpoint",
+        "uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802"
+      }
     ]
 }
