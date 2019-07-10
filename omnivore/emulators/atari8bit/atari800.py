@@ -84,10 +84,6 @@ class Atari800Mixin:
 
     low_level_interface = liba8
 
-    mime_types = set(["application/vnd.atari8bit.atr", "application/vnd.atari8bit.xex", "application/vnd.atari8bit.cart", "application/vnd.atari8bit.atr.jumpman_level_tester",])
-
-    # mime_prefix = "application/vnd.atari8bit"
-
     def serialize_to_dict(self):
         if not self.is_frame_finished:
             raise FrameNotFinishedError("atari800 can't save its internal state in the middle of a frame.")
@@ -313,8 +309,6 @@ class Atari5200Mixin(Atari800Mixin):
     name = "atari5200"
     ui_name = "Atari 5200"
 
-    mime_types = set(["application/vnd.atari5200.cart",])
-
     def process_args(self, emu_args):
         if not emu_args:
             emu_args = [
@@ -480,10 +474,12 @@ except ImportError:
 
 
 class Atari800(wxMixin, Atari800Mixin, Emulator):
-    pass
+    supported_filesystems = ["Atari DOS2", "Atari KBoot"]
+    supported_binaries = ["Atari 8-bit Object File"]
 
 class Atari800XL(wxMixin, Atari800XLMixin, Emulator):
-    pass
+    supported_filesystems = ["Atari DOS2", "Atari KBoot", "Atari Jumpman", "Atari Jumpman Level Tester"]
+    supported_binaries = ["Atari 8-bit Object File"]
 
 class Atari5200(wxMixin, Atari5200Mixin, Emulator):
     pass

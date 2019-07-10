@@ -29,8 +29,8 @@ class Emulator(Debugger):
     cpu = "<base>"
     ui_name = "<pretty name>"
 
-    mime_prefix = ""
-    mime_types = set()
+    supported_filesystems = []
+    supported_binaries = []
 
     serializable_attributes = ['input_raw', 'output_raw', 'frame_count']
     serializable_computed = {'input_raw', 'output_raw'}
@@ -146,15 +146,14 @@ class Emulator(Debugger):
 
     @classmethod
     def guess_from_document(cls, document):
-        try:
-            mime = document.metadata.mime
-        except:
-            pass
-        else:
-            if mime in cls.mime_types:
+        for container in document.collection.containers:
+            log.debug(f"guess_from_document: container {container}")
+            if container.filesystem.ui_name in cls.supported_filesystems:
                 return True
-            elif cls.mime_prefix and mime.startswith(cls.mime_prefix):
-                return True
+            for segment in container.iter_segments():
+                log.debug(f"guess_from_document: segment {segment}")
+                if segment.ui_name in cls.supported_binaries:
+                    return True
         return False
 
     ##### Video

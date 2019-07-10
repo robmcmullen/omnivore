@@ -22,8 +22,6 @@ class Generic6502(Emulator):
     name = "6502"
     ui_name = "Generic 6502"
 
-    mime_prefix = ""
-
     serializable_attributes = []
 
     input_array_dtype = d.INPUT_DTYPE

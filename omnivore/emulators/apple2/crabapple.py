@@ -20,7 +20,8 @@ class Crabapple(Generic6502):
     name = "crabapple"
     ui_name = "Crabapple 2+"
 
-    mime_types = set(["application/vnd.apple2.bin"])
+    supported_filesystems = []
+    supported_binaries = ["Apple DOS 3.3 Object File"]
 
     def configure_emulator_defaults(self):
         lib6502.set_a2_emulation_mode(1)
