@@ -383,6 +383,7 @@ setup(
 
         "atrip.file_types": [
             'atari_xex = atrip.file_types.atari_xex',
+            'apple_bsave = atrip.file_types.apple_dos33_bsave',
         ],
 
         "atrip.signatures": [
