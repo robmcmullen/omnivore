@@ -513,6 +513,8 @@ cdef class DisassemblyConfig:
 
         cdef int first_index = 0
         cdef np.uint8_t current_disasm_type = c_disasm_type[0]
+        if current_disasm_type > 127:
+            current_disasm_type = self.default_disasm_type
         cdef int start_index
         cdef int end_index = 0
         cdef int count
