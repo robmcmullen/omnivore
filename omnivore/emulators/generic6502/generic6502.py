@@ -85,8 +85,7 @@ class Generic6502(Emulator):
     def boot_from_raw(self, data, origin):
         # for now, simply copies data into main memory
         end = origin + len(data)
-        print("THOSEUHOEUROEUH", data)
-        log.debug(f"Copying data to memory: {origin:#04x}-{end:#04x}")
+        log.debug(f"Copying data to memory: {origin:#04x}-{end:#04x}, data={data}")
         self.main_memory[origin:end] = data
         self.cpu_state[0] = origin
         lib6502.restore_state(self.output_raw)

@@ -245,7 +245,7 @@ class EmulationEditor(ByteEditor):
                 emulator_type = guess_emulator(source_document)
             doc = EmulationDocument.create_document(source_document=source_document, emulator_type=emulator_type, skip_frames_on_boot=skip)
         log.debug(f"Using emulator {doc.emulator_type}")
-        doc.boot(source_document.collection.containers[0])
+        doc.boot()
         return doc
 
     #### template
