@@ -23,7 +23,8 @@ import sys
 module_dir = os.path.realpath(os.path.abspath(".."))
 if module_dir not in sys.path:
     sys.path.insert(0, module_dir)
-import omnivore.emulator.atari8bit as a8
+import omnivore.emulators.atari8bit as a8
+from omnivore.emulators.atari8bit.atari800 import Atari800
 import omnivore.ui.screen as screen
 akey = a8.akey
 
@@ -197,7 +198,7 @@ class EmulatorFrame(EmulatorControlBase, wx.Frame):
     def __init__(self, bootfile=None, autostart=True):
         wx.Frame.__init__(self, None, -1, "wxPython atari800 test", pos=(50,50),
                          size=(200,100), style=wx.DEFAULT_FRAME_STYLE)
-        EmulatorControlBase.__init__(self, a8.wxAtari800())
+        EmulatorControlBase.__init__(self, Atari800())
 
         self.CreateStatusBar()
 
