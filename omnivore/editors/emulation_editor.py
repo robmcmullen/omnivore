@@ -30,6 +30,8 @@ class EmulationEditor(ByteEditor):
 
     preferences_module = "omnivore.editors.emulation_preferences"
 
+    needs_tabless_frame = True
+
     menubar_desc = [
         ["File",
             ["New",
@@ -211,6 +213,8 @@ class EmulationEditor(ByteEditor):
         return self.document.emulator
 
     def __init__(self, document, *args, **kwargs):
+        if document.__class__ != EmulationDocument:
+            document = self.preprocess_document(document, *args, **kwargs)
         ByteEditor.__init__(self, document)
 
     #### ByteEditor interface
@@ -219,12 +223,12 @@ class EmulationEditor(ByteEditor):
         self.document.stop_timer()
         ByteEditor.prepare_destroy(self)
 
-    def preprocess_document(self, doc):
+    def preprocess_document(self, source_document, *args, **kwargs):
         args = {}
         skip = 0
-        log.debug(f"preprocess_document: EmulatorEditor, {doc}")
-        if self.task_arguments:
-            for arg in self.task_arguments.split(","):
+        log.debug(f"preprocess_document: EmulatorEditor, {source_document}")
+        if kwargs:
+            for arg in kwargs.split(","):
                 if "=" in arg:
                     arg, v = arg.split("=", 1)
                 else:
@@ -233,15 +237,15 @@ class EmulationEditor(ByteEditor):
             if "skip_frames" in args:
                 skip = int(args["skip_frames"])
         try:
-            doc.emulator_type
+            source_document.emulator_type
         except:
             try:
                 emulator_type = args['machine']
             except KeyError:
-                emulator_type = guess_emulator(doc)
-            doc = EmulationDocument.create_document(source_document=doc, emulator_type=emulator_type, skip_frames_on_boot=skip)
-        doc.boot()
+                emulator_type = guess_emulator(source_document)
+            doc = EmulationDocument.create_document(source_document=source_document, emulator_type=emulator_type, skip_frames_on_boot=skip)
         log.debug(f"Using emulator {doc.emulator_type}")
+        doc.boot(source_document.collection.containers[0])
         return doc
 
     #### menu

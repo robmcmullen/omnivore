@@ -422,6 +422,7 @@ setup(
 
         "sawx.editors": [
             '00byte = omnivore.editors.byte_editor',
+            '00emu = omnivore.editors.emulation_editor',
             'html = sawx.editors.html_viewer',
             'text = sawx.editors.text_editor',
         ],

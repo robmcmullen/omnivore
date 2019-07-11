@@ -194,7 +194,9 @@ class SawxFrame(wx.Frame):
         editor.show(args)
 
     def add_document(self, document, current_editor=None, args=None):
-        if current_editor is not None and current_editor.can_edit_document(document):
+        if current_editor.__class__ == type:
+            editor_cls = current_editor
+        elif current_editor is not None and current_editor.can_edit_document(document):
             editor_cls = current_editor.__class__
         else:
             editor_cls = editor_module.find_editor_class_for_document(document)
@@ -217,7 +219,8 @@ class SawxFrame(wx.Frame):
             wx.CallAfter(self.find_active_editor)
         del editor
 
-    def load_file(self, path, current_editor=None, args=None, show_progress_bar=None):
+    def load_file(self, path, current_editor=None, args=None, show_progress_bar=None, default_editor_cls=None):
+        log.debug(f"load_file: {path}, current_editor={current_editor}, args={args}")
         try:
             filesystem.filesystem_path(path)
         except FileNotFoundError:
@@ -236,6 +239,8 @@ class SawxFrame(wx.Frame):
                 current_editor.load_file(file_metadata)
                 return
             document = identify_document(file_metadata)
+            if default_editor_cls is not None:
+                current_editor = default_editor_cls
             new_editor = self.add_document(document, current_editor, args)
         except Exception as e:
             # force close the progress bar so the error dialog doesn't get lost
@@ -548,7 +553,7 @@ class FakeNotebook(wx.Panel):
         return page
 
 
-class SawxSingleEditorFrame(SawxFrame):
+class SawxTablessFrame(SawxFrame):
     def create_notebook(self):
         notebook = FakeNotebook(self)
         return notebook

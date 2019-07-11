@@ -163,6 +163,10 @@ class SawxEditor:
     # active frame when a new frame is added.
     transient = False
 
+    # flag to indicate that the editor needs its own frame, without a tabbed
+    # notebook and thus not shared with any other editor
+    needs_tabness_frame = False
+
     #### class methods
 
     @classmethod

@@ -1,113 +1,123 @@
 #!/usr/bin/env python
-import os
+
+# Standard library imports.
 import sys
-import ctypes
-import time
+import logging
 
-import numpy as np
 
-import omnivore
-import omnivore.debugger.dtypes as d
+last_trace_was_system_call = False
+trace_after_funcname = None
 
-class Segment:
-    def __init__(self, data, origin):
-        self.data = data
-        self.origin = origin
-        max_size = (1<<16) - origin
-        if max_size < len(data):
-            self.data = data[0:max_size]
+def trace_calls(frame, event, arg):
+    global last_trace_was_system_call, trace_after_funcname
 
-    def __len__(self):
-        return len(self.data)
-
-if __name__ == "__main__":
-    segment = None
-    if len(sys.argv) > 1:
-        emu_name = sys.argv[1]
-    else:
-        emu_name = "6502"
-    try:
-        if emu_name == "nes":
-            emu_name = "6502"
-            data = np.fromfile(os.path.join(os.path.dirname(__file__), "lib6502/6502-emu/test/nestest-real-6502.rom"), dtype=np.uint8)
-            segment = Segment(data, 0xc000)
-        emu_cls = omnivore.find_emulator(emu_name)
-    except omnivore.UnknownEmulatorError:
-        print(("Unknown emulator: %s" % emu_name))
-    else:
-        print(("Emulating: %s" % emu_cls.pretty_name))
-        emu = emu_cls()
-        emu.configure_emulator()
-        if segment is not None:
-            emu.stack_pointer = 0xfd
-            emu.boot_from_segment(segment, [])
-        hist = emu.cpu_history
-        # with open("state.a8", "wb") as fh:
-        #     fh.write(emu.state_array)
-        num_breaks = 5
-        first_entry_of_frame = 0
-        print(emu.main_memory[0xc000:])
-        print(emu.program_counter)
-        print(emu.current_cpu_status)
-        if emu_name == "atari800":
-            b = emu.create_breakpoint(0xf267)
+    # if event != 'call':
+    #     return
+    co = frame.f_code
+    func_name = co.co_name
+    # if func_name == 'write':
+    #     # Ignore write() calls from print statements
+    #     return
+    if trace_after_funcname is not None:
+        if func_name == trace_after_funcname:
+            trace_after_funcname = None
         else:
-            b = emu.create_breakpoint(0xf018)
-        print(b)
-        while emu.current_frame_number < 10:
-            brk = emu.next_frame()
-            print(emu.main_memory[0xc000:])
-            print(emu.current_cpu_status)
-            hist.summary()
-            if brk:
-                if brk.id == 0:
-                    # Stepping
-                    print(f"step {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
-                    print(emu.current_cpu_status)
-                    print(f"history: {first_entry_of_frame} -> {hist.next_entry_index}")
-                    current = hist.stringify(hist.next_entry_index-100, 100)
-                    print(f"{len(current)}, ")
-                    for instruction, result in current:
-                        print(instruction, result)
-                    print(f"HIT BREAKPOINT: current instruction = {emu.instructions_since_power_on}")
-                    time.sleep(1)
-                    num_breaks -= 1
-                    if num_breaks <= 0:
-                        brk.disable()
-                        print(f"DISABLING {brk}")
-                    else:
-                        emu.step_into(1)
-                        print(f"STILL ENABLED: {brk}")
-                    time.sleep(1)
-                else:
-                    print(f"break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
-                    time.sleep(.1)
-                    num_breaks -= 1
-                    if num_breaks <= 0:
-                        print(f"disabling break condition {brk} at {emu.current_cycle_in_frame} cycles into frame {emu.current_frame_number}")
-                        brk.disable()
-                        num_breaks = 10
-                        emu.step_into(1)
-            else:
-                print(f"completed frame {emu.current_frame_number}: {emu.current_cpu_status}")
-                hist.debug_range(first_entry_of_frame)
-                current = hist.stringify(first_entry_of_frame, 100)
-                print(first_entry_of_frame, current)
-                print(f"{len(current)}, ")
-                for instruction, result in current:
-                    print(instruction, result)
-                first_entry_of_frame = hist.next_entry_index
-                if emu.current_frame_number > 10:
-                    emu.debug_video()
-                    # emu.debug_state()
-                if emu.current_frame_number > 100:
-                    emu.keypress('A')
-                if emu.current_frame_number == 180:
-                    b = emu.create_breakpoint(0xf018)
-                # if emu.current_frame_number == 190:
-                #     b = emu.step_into(100)
+            # skip anything until it hits the trace_after function
+            return
+    func_line_no = frame.f_lineno
+    func_filename = co.co_filename
+    caller = frame.f_back
+    caller_line_no = caller.f_lineno
+    caller_filename = caller.f_code.co_filename
+    # if "/python2.7" in caller_filename or "agw/aui" in func_filename or "agw/aui" in caller_filename or "/logging/" in func_filename or "/wx/core.py" in func_filename or "/traits/" in func_filename or "/traits/" in caller_filename or "/traitsui/" in func_filename or "/traitsui/" in caller_filename or "/sre_" in caller_filename or "/logging/" in caller_filename:
+    if "/logging/" in caller_filename:
+        return
+    #     if not last_trace_was_system_call:
+    #         print('  <system calls>')
+    #         last_trace_was_system_call = True
+    #     return
+    last_trace_was_system_call = False
+    print(f'{event}: %s:%s -> %s %s:%s' % (caller_filename, caller_line_no, func_name, func_filename, func_line_no))
+    return
 
-        print(f"access frame {np.where(emu.memory_access_array > 0)[0]}")
-        print(f"read access {np.where(emu.access_type_array & d.ACCESS_TYPE_READ)[0]}")
-        print(f"write access{np.where(emu.access_type_array & d.ACCESS_TYPE_WRITE)[0]}")
-        print(f"exec access {np.where(emu.access_type_array & d.ACCESS_TYPE_EXECUTE)[0]}")
+def create_global_functions():
+    def what_called_me():
+        import traceback
+        stack = traceback.extract_stack()
+        count = len(stack) - 2
+        for i, item in enumerate(stack[:-1]):
+            print(("#%d %s in %s at %s:%d" % (count - i, item[3], item[2], item[0], item[1])))
+    import builtins
+    builtins.what_called_me = what_called_me
+
+create_global_functions()
+
+# # Force wx toolkit to be imported before loading plugins
+# from pyface.toolkit import toolkit_object
+# toolkit_object("init:_app")
+
+def main(argv):
+    """ Run the application.
+    """
+    logging.basicConfig(level=logging.WARNING)
+
+    if "--trace" in argv:
+        i = argv.index("--trace")
+        argv.pop(i)
+        sys.settrace(trace_calls)
+
+    if "--trace-after" in argv:
+        global trace_after_funcname
+        i = argv.index("--trace-after")
+        argv.pop(i)
+        funcname = argv.pop(i)
+        trace_after_funcname = funcname
+        sys.settrace(trace_calls)
+
+    from sawx.startup import run
+    from sawx.application import SawxApp
+    from sawx.filesystem import get_image_path
+    import omnivore
+    import atrip
+
+    image_paths = [get_image_path("icons", omnivore)]
+    template_paths = [get_image_path("templates", omnivore), get_image_path("templates/fonts", omnivore), atrip.get_template_path()]
+
+    from omnivore._version import __version__
+    OmnivoreApp = SawxApp
+    OmnivoreApp.app_name = "Omnivore"
+    OmnivoreApp.app_version = __version__
+    OmnivoreApp.app_icon = "icon://omnivore.ico"
+    OmnivoreApp.app_tagline = "8-bit Software Archaeology"
+    OmnivoreApp.app_description = "Reverse engineering, emulation, and debugging to help preserve the software ecosystem of 8-bit computers. Particulary the Atari 400/800 family because those were super awesome. But others are, like, totally fine and have lots of pretty cool things and stuff."
+    OmnivoreApp.app_website = "https://playermissile.com/omnivore"
+    OmnivoreApp.about_dialog_credits = f"""Contributors:<ul>
+<li>Kevin Savetz of <a href=\"http://ataripodcast.com\">ANTIC, the Atari 8-bit Podcast</a> for beta testing
+<li>Wade Ripkowski of <a href=\"http://inverseatascii.info\">Inverse ATASCII, the Atari 8-bit Productivity Podcast</a> for beta testing
+<li>Jeff Tranter for his work on <a href=\"https://github.com/robmcmullen/udis\">udis</a>, which became the basis for my Cython-based fast disassembler
+<li>Charles Mangin for the Apple ][ and KIM-1 memory maps
+<li>Steve Boswell for the <a href=\"https://github.com/ChoccyHobNob/EightBit-Atari-Fonts\">huge selection of Atari 8-bit fonts</a>
+</ul>
+"""
+    OmnivoreApp.app_blank_page = f"""<html>
+<h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version}</h2>
+
+<h3>{OmnivoreApp.app_tagline}</h3>
+
+<p>{OmnivoreApp.app_description}</p>
+
+<p><img src="icon://omnivore256.png">"""
+
+    sys.argv[1:1] = ["-t", "omnivore.emulator"]
+
+    run(OmnivoreApp, image_paths, template_paths)
+
+    logging.shutdown()
+
+
+if __name__ == '__main__':
+    import sys
+    from sawx.startup import setup_frozen_logging
+    
+    setup_frozen_logging()
+    main(sys.argv)

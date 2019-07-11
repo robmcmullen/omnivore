@@ -6,7 +6,7 @@ import sys
 import wx
 
 from sawx.action import SawxAction, SawxNameChangeAction, SawxRadioListAction
-from sawx.frame import SawxSingleEditorFrame
+from sawx.frame import SawxTablessFrame
 
 from ... import commands
 from ... import errors
@@ -62,7 +62,7 @@ class emu_boot_disk_image(SawxAction):
             self.do_boot(doc, source_document)
             print(f"emulator document: {doc}")
             editor = EmulationEditor(doc)
-            frame = SawxSingleEditorFrame(editor)
+            frame = SawxTablessFrame(editor)
             frame.Show()
 
 class emu_boot_segment(emu_boot_disk_image):

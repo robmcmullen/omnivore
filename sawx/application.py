@@ -7,7 +7,7 @@ import collections
 import wx
 import wx.adv
 
-from .frame import SawxFrame
+from .frame import SawxFrame, SawxTablessFrame
 from .editor import get_editors, find_editor_class_by_id
 from .filesystem import init_filesystems
 from .filesystem import fsopen as open
@@ -151,18 +151,18 @@ class SawxApp(wx.App):
                 task_arguments[item] = v
         log.debug("task arguments: %s" % task_arguments)
         try:
-            default_editor = find_editor_class_by_id(options.task_id)()
+            default_editor_cls = find_editor_class_by_id(options.task_id)
         except errors.EditorNotFound:
-            default_editor = None
-        log.debug(f"default editor: {default_editor}")
+            default_editor_cls = None
+        log.debug(f"default editor: {default_editor_cls}")
         log.debug(f"args: {args}")
 
         if extra_args:
             log.debug(f"files to load: {extra_args}")
-            frame = self.new_frame(uri=self.app_blank_uri)
+            frame = self.new_frame(uri=self.app_blank_uri, editor_cls=default_editor_cls)
             while len(extra_args) > 0:
                 path = extra_args.pop(0)
-                frame.load_file(path, default_editor, task_arguments, show_progress_bar=False)
+                frame.load_file(path, None, task_arguments, show_progress_bar=False, default_editor_cls=default_editor_cls)
         else:
             frame = self.new_frame()
         frame.Show()
@@ -368,12 +368,16 @@ class SawxApp(wx.App):
         log.debug(f"new window size: {value}")
         self.window_sizes["last_window_size"] = value
 
-    def new_frame(self, uri=None):
+    def new_frame(self, uri=None, editor_cls=None):
         if uri is None:
             uri = self.default_uri
         if uri is None:
             uri = self.app_blank_uri
-        frame = SawxFrame(None, uri)
+        if editor_cls.needs_tabless_frame:
+            frame_cls = SawxTablessFrame
+        else:
+            frame_cls = SawxFrame
+        frame = frame_cls(None, uri)
         return frame
 
     def show_focused(self):
