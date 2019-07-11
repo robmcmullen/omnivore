@@ -248,6 +248,14 @@ class EmulationEditor(ByteEditor):
         doc.boot(source_document.collection.containers[0])
         return doc
 
+    #### template
+
+    @property
+    def layout_template_search_order(self):
+        # search for emulator-specific templates before any generic ones
+        order = [self.editor_id + "." + self.document.emulator.name, self.editor_id]
+        return order
+
     #### menu
 
     def emu_generate_emulator_specific_key_actions(self):
