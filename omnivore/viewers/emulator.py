@@ -92,7 +92,7 @@ class EmulatorViewerMixin:
 
     def on_emulator_breakpoint(self, evt):
         log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.do_emulator_breakpoint()
+        self.do_emulator_breakpoint(evt)
 
     def do_emulator_breakpoint(self, evt):
         self.frame.status_message(f"{self.document.emulator.cycles_since_power_on} cycles")
