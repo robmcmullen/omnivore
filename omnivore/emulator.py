@@ -412,6 +412,9 @@ class Emulator(Debugger):
     def get_restart_summary(self):
         return self.restart_tree.get_summary()
 
+    def get_restart_of_frame(self, frame):
+        return self.current_restart.get_restart(frame)
+
     def save_history(self, force=False):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete

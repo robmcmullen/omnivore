@@ -123,7 +123,8 @@ class CheckpointTree(wx.ScrolledWindow):
 
         self.bg_color = wx.WHITE
         self.line_color = wx.BLUE
-        self.marker_color = wx.Colour(255, 0, 255)
+        self.marker_color = wx.Colour(255, 255, 255)
+        self.cursor_color = wx.Colour(255, 0, 255)
         self.create_dc_stuff()
 
         self.SetBackgroundColour(self.bg_color)
@@ -169,6 +170,7 @@ class CheckpointTree(wx.ScrolledWindow):
         self.hover_pen = wx.Pen(self.line_color, self.line_width * 2 + 1)
         self.marker_brush = wx.Brush(self.marker_color)
         self.marker_pen = wx.Pen(self.line_color, 1)
+        self.cursor_brush = wx.Brush(self.cursor_color)
 
     def on_size(self, event):
         size = self.GetVirtualSize()
@@ -205,6 +207,15 @@ class CheckpointTree(wx.ScrolledWindow):
             parent_y = self.level_to_y(parent_line.level)
             dc.SetPen(self.pen)
             dc.DrawLine(x1, y, x1, parent_y)
+
+        # current frame & restart number
+        xc = self.frame_to_x(self.source.current_frame_number)
+        restart = self.source.get_restart_of_frame(self.source.current_frame_number)
+        line = self.restart_lines[restart.restart_number]
+        yc = self.level_to_y(line.level)
+        dc.SetPen(self.marker_pen)
+        dc.SetBrush(self.cursor_brush)
+        dc.DrawCircle(xc, yc, self.marker_size)
 
     def frame_to_x(self, frame_number):
         return self.width_border + (self.x_scale * frame_number)
