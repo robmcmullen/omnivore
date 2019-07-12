@@ -373,7 +373,7 @@ class SawxApp(wx.App):
             uri = self.default_uri
         if uri is None:
             uri = self.app_blank_uri
-        if editor_cls.needs_tabless_frame:
+        if editor_cls is not None and editor_cls.needs_tabless_frame:
             frame_cls = SawxTablessFrame
         else:
             frame_cls = SawxFrame
