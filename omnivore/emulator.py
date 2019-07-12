@@ -415,6 +415,14 @@ class Emulator(Debugger):
     def get_restart_of_frame(self, frame):
         return self.current_restart.get_restart(frame)
 
+    def begin_restart(self):
+        cursor = self.current_frame_number
+        current = self.current_restart
+        if cursor < current.end_frame:
+            # we are restarting from someplace earlier in the history, so we
+            # need a new restart object
+            self.current_restart = self.restart_tree.create_restart(current.restart_number, cursor)
+
     def save_history(self, force=False):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete

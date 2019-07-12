@@ -256,6 +256,7 @@ class EmulationDocument(DiskImageDocument):
 
     def resume_emulator(self):
         print("resume")
+        self.emulator.begin_restart()
         self.start_timer()
         self.emulator_update_screen_event(True)
 

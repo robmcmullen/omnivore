@@ -42,7 +42,7 @@ class RestartTree(Serializable):
 
     def create_restart(self, restart_number, frame_number):
         restart = self.restarts[restart_number]
-        parent = restart.get_parent(frame_number)
+        parent = restart.get_restart(frame_number)
         index = len(self.restarts)
         new_restart = Restart(index, parent, frame_number)
         self.restarts.append(new_restart)
