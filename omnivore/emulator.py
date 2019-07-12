@@ -9,7 +9,7 @@ from atrip import find_container
 
 from .debugger import Debugger
 from .debugger.dtypes import FRAME_STATUS_DTYPE
-from .emulators.save_state import FrameHistory
+from .utils.historyutil import RestartTree
 from . import disassembler as disasm
 from .utils.archutil import Labels, load_memory_map
 from . import errors
@@ -54,7 +54,8 @@ class Emulator(Debugger):
         self.bootfile = None
         self.frame_count = 0
         self.frame_event = []
-        self.frame_history = FrameHistory()
+        self.restart_tree = RestartTree()
+        self.current_restart = self.restart_tree.emulator_start
         self.offsets = None
         self.names = None
         self.save_state_memory_blocks = None
@@ -142,7 +143,7 @@ class Emulator(Debugger):
 
     @property
     def has_save_points(self):
-        return len(self.frame_history) > 0
+        return len(self.current_restart) > 0
 
     @classmethod
     def guess_from_document(cls, document):
@@ -406,20 +407,25 @@ class Emulator(Debugger):
     def calc_current_state(self):
         return self.output_raw.copy()
 
+    #### history/checkpoints
+
+    def get_restart_summary(self):
+        return self.restart_tree.get_summary()
+
     def save_history(self, force=False):
         # History is saved in a big list, which will waste space for empty
         # entries but makes things extremely easy to manage. Simply delete
         # a history entry by setting it to NONE.
         frame_number = int(self.status['frame_number'][0])
-        if force or self.frame_history.is_memorable(frame_number):
+        if force or self.current_restart.is_memorable(frame_number):
             log.debug(f"Saving history at {frame_number}")
             d = self.calc_current_state()
-            self.frame_history.save_frame(frame_number, d)
+            self.current_restart.save_frame(frame_number, d)
             # self.print_history(frame_number)
 
     def get_history(self, frame_number):
         frame_number = int(frame_number)
-        raw = self.frame_history[frame_number]
+        raw = self.current_restart[frame_number]
         status = raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
         output = raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
         return status, output
@@ -434,27 +440,27 @@ class Emulator(Debugger):
         if frame_number < 0:
             return
         try:
-            d = self.frame_history[frame_number]
+            d = self.current_restart[frame_number]
         except KeyError:
             log.error(f"{frame_number} not in history")
             pass
         else:
             self.restore_state(d)
-            # self.frame_history[(frame_number + 1):] = []  # remove frames newer than this
-            # print(("  %d items remain in history" % len(self.frame_history)))
+            # self.current_restart[(frame_number + 1):] = []  # remove frames newer than this
+            # print(("  %d items remain in history" % len(self.current_restart)))
             # self.frame_event = []
 
     def print_history(self, frame_number):
-        d = self.frame_history[frame_number]
+        d = self.current_restart[frame_number]
         status = d[:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
         output = d[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
-        print("history[%d] of %d: %d %s" % (status['frame_number'], len(self.frame_history), len(d), output['state'][0][0:8]))
+        print("history[%d] of %d: %d %s" % (status['frame_number'], len(self.current_restart), len(d), output['state'][0][0:8]))
 
     def get_previous_history(self, frame_cursor):
-        return self.frame_history.get_previous_frame(frame_cursor)
+        return self.current_restart.get_previous_frame(frame_cursor)
 
     def get_next_history(self, frame_cursor):
-        return self.frame_history.get_next_frame(frame_cursor)
+        return self.current_restart.get_next_frame(frame_cursor)
 
     # graphics
 

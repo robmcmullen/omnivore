@@ -115,20 +115,20 @@ class EmulationDocument(DiskImageDocument):
 
     def restore_save_points_from_dict(self, e):
         # emulator type will already be set at document creation time
-        if 'frame_history' in e:
-            self.emulator.frame_history.restore_from_dict(e)
+        if 'restart_tree' in e:
+            self.emulator.restart_tree.restore_from_dict(e)
             self.emulator.configure_io_arrays()
             self.create_segments()
-        if 'current_frame' in e:
-            self.emulator.restore_from_dict(e['current_frame'])
+        if 'current_restart' in e:
+            self.emulator.restore_from_dict(e['current_restart'])
         self.skip_frames_on_boot = e.get('skip_frames_on_boot', 0)
 
     def serialize_extra_to_dict(self, mdict):
         DiskImageDocument.serialize_extra_to_dict(self, mdict)
 
         mdict["emulator_type"] = self.emulator.name
-        mdict.update(self.emulator.frame_history.serialize_to_dict())
-        mdict["current_frame"] = self.emulator.serialize_to_dict()
+        mdict.update(self.emulator.restart_tree.serialize_to_dict())
+        mdict["current_restart"] = self.emulator.serialize_to_dict()
         mdict["skip_frames_on_boot"] = self.skip_frames_on_boot
 
     def save_to_uri(self, uri, editor, saver=None, save_metadata=True):

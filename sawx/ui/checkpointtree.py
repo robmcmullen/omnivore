@@ -53,7 +53,10 @@ class RestartLine:
         self.end_frame = data[3]
         self.parent = data[0]
         self.restart_number = data[2]
-        current_largest_level = max(level[self.start_frame:self.end_frame + 1])
+        try:
+            current_largest_level = max(level[self.start_frame:self.end_frame + 1])
+        except ValueError:
+            current_largest_level = 0
         self.level = current_largest_level + 1
         level[self.start_frame:self.end_frame + 1] = self.level
         self.interesting_frames = {
@@ -135,6 +138,8 @@ class CheckpointTree(wx.ScrolledWindow):
         if source is None:
             source = self.source
         self.source = source
+        data = source.get_restart_summary()
+        print("DATA", data)
         parent_level = 0
         data.sort()
         order = get_order(data, parent_level)
@@ -260,7 +265,10 @@ if __name__ == '__main__':
     lines = RestartLines(order)
     print("restart_lines", lines)
 
+    class TestSource:
+        def get_restart_summary(self):
+            return list(data)
 
-    scroll = CheckpointTree(frame, lines)
+    scroll = CheckpointTree(frame, TestSource())
     frame.Show() 
     app.MainLoop()

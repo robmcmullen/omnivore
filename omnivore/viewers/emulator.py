@@ -152,6 +152,11 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
 
     priority_refresh_frame_count = 59 # about once per second
 
+    def set_event_handlers(self):
+        SegmentViewer.set_event_handlers(self)  # skip viewer mixin handlers, which skips the priority level refresh
+        self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
+        self.document.emulator_update_screen_event += self.on_emulator_update_screen
+
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
         return ct.CheckpointTree(parent, linked_base.emulator)
@@ -161,11 +166,20 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
 
     @property
     def window_title(self):
-        emu = self.emulator
-        return f"{emu.ui_name} (frame {emu.current_frame_number})"
+        return "Emulator Checkpoints"
 
     def recalc_view(self):
         self.control.recalc_view()
+
+    #### event handlers
+
+    def on_emulator_update_screen(self, evt):
+        log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        self.do_emulator_update_screen()
+
+    def do_emulator_update_screen(self):
+        self.control.recalc_view()
+        self.control.refresh_view()
 
 
 class CPU6502Table(sg.SegmentVirtualTable):
