@@ -32,6 +32,12 @@ STATESAV_DTYPE = np.dtype([
     ("SP", np.uint8),
     ("P", np.uint8),
     ("memory", np.uint8, MAIN_MEMORY_SIZE),
+    ("hires_graphics", np.uint8),
+    ("text_mode", np.uint8),
+    ("mixed_mode", np.uint8),
+    ("alt_page_select", np.uint8),
+    ("tv_line", np.uint8),
+    ("tv_cycle", np.uint8),
     ])
 
 CPU_DTYPE = np.dtype([

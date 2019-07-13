@@ -11,6 +11,15 @@ long cycles_per_frame;
 
 int apple2_mode = 0;
 
+/* Apple ][ graphics */
+int hires_graphics = 0;  /* 0 = lo res, 1 = hi res */
+int text_mode = 0; /* 0 = graphics, 1 = text */
+int mixed_mode = 0; /* 0 = full screen, 1 = text window */
+int alt_page_select = 0; /* 0 = page 1, 1 = page 2 */
+
+int tv_line = 0;
+int tv_cycle = 0;
+
 
 uint8_t simple_kernel[] = {
 	0xa9,0x00,0x85,0x80,0xa9,0x20,0x85,0x81,
@@ -42,6 +51,14 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 
 	cycles_per_scan_line = cycles_per;
 	cycles_per_frame = (long)(scan_lines * cycles_per_scan_line);
+
+	hires_graphics = 1;
+	text_mode = 0;
+	mixed_mode = 0;
+	alt_page_select = 0;
+
+	tv_line = 0;
+	tv_cycle = 0;
 
 	lib6502_init_debug_kernel();
 }
@@ -77,6 +94,12 @@ void lib6502_get_current_state(output_t *buf) {
 	save16(buf->PC, PC);
 	buf->SR = SR.byte;
 	memcpy(buf->memory, memory, 1<<16);
+	buf->hires_graphics = hires_graphics;
+	buf->text_mode = text_mode;
+	buf->mixed_mode = mixed_mode;
+	buf->alt_page_select = alt_page_select;
+	buf->tv_line = tv_line;
+	buf->tv_cycle = tv_cycle;
 }
 
 void lib6502_restore_state(output_t *buf) {
@@ -87,6 +110,12 @@ void lib6502_restore_state(output_t *buf) {
 	load16(PC, buf->PC);
 	SR.byte = buf->SR;
 	memcpy(memory, buf->memory, 1<<16);
+	hires_graphics = buf->hires_graphics;
+	text_mode = buf->text_mode;
+	mixed_mode = buf->mixed_mode;
+	alt_page_select = buf->alt_page_select;
+	tv_line = buf->tv_line;
+	tv_cycle = buf->tv_cycle;
 }
 
 uint16_t last_pc;
@@ -115,6 +144,8 @@ int lib6502_show_current_instruction(history_6502_t *entry)
 	entry->after2 = 0;
 	entry->before3 = 0;
 	entry->after3 = 0;
+	entry->tv_line = tv_line;
+	entry->tv_cycle = tv_line > 255 ? tv_cycle | 0x80 : tv_cycle;
 }
 
 int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_t *breakpoints)
@@ -131,13 +162,8 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	opcode = memory[PC];
 	inst = instructions[opcode];
 	count = lengths[inst.mode];
-	if (entry) {
-		lib6502_show_current_instruction(entry);
-		line = status->current_cycle_in_frame / cycles_per_scan_line;
-		cycles = status->current_cycle_in_frame % cycles_per_scan_line;
-		entry->scan_line = line;
-		entry->clock_cycle_in_scan_line = line > 255 ? cycles | 0x80 : cycles;
-	}
+	if (entry) lib6502_show_current_instruction(entry);
+
 	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback, opcode == 0x4c);
 	if (bpid >= 0) {
 		status->frame_status = FRAME_BREAKPOINT;
@@ -302,6 +328,11 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	status->instructions_since_power_on += 1;
 	status->current_cycle_in_frame += inst.cycles + extra_cycles;
 	status->cycles_since_power_on += inst.cycles + extra_cycles;
+	tv_cycle += inst.cycles + extra_cycles;
+	if (tv_cycle > cycles_per_scan_line) {
+		tv_cycle -= cycles_per_scan_line;
+		tv_line++;
+	}
 	return -1;
 }
 
@@ -368,7 +399,8 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 			return bpid;
 		}
 	} while (status->current_cycle_in_frame < status->final_cycle_in_frame);
-	status->frame_number += 1;
+	tv_cycle = status->current_cycle_in_frame - status->final_cycle_in_frame;
+	tv_line = 0;
 
 	return -1;
 }
@@ -396,6 +428,19 @@ int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoi
 
 	if (apple2_mode) {
 		memory[0xc000] = input->keychar;
+	}
+
+	if (status->frame_status != FRAME_BREAKPOINT) {
+		// If we are starting a new frame, check if number of cycles in the
+		// previous frame was larger than the number of cycles in a frame. Any
+		// extra cycles recorded in the last frame are skipped at the start of
+		// this frame
+		status->current_cycle_in_frame -= status->final_cycle_in_frame;
+		if (status->current_cycle_in_frame < 0) {
+			printf("warning: frame %d starting at negative cycle offset %d\n", status->frame_number, status->current_cycle_in_frame);
+		}
+		tv_cycle = status->current_cycle_in_frame;
+		tv_line = 0;
 	}
 	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints, history);
 	lib6502_get_current_state(output);

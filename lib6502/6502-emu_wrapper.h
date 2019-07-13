@@ -66,6 +66,14 @@ typedef struct {
     uint8_t SR;
 
     uint8_t memory[1<<16];
+
+    uint8_t hires_graphics;
+    uint8_t text_mode;
+    uint8_t mixed_mode;
+    uint8_t alt_page_select;
+    uint8_t tv_line;
+    uint8_t tv_cycle;
+
 } output_t;
 
 extern long cycles_per_frame;

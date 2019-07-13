@@ -267,13 +267,6 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_s
 		default:
 		output->frame_number += 1;
 		output->current_instruction_in_frame = 0;
-
-		// number of cycles may cross a frame boundary, so any extra cycles
-		// recorded in the last frame are skipped at the start of this frame
-		output->current_cycle_in_frame -= output->final_cycle_in_frame;
-		if (output->current_cycle_in_frame < 0) {
-			printf("warning: frame %d starting at negative cycle offset %d\n", output->frame_number, output->current_cycle_in_frame);
-		}
 		libdebugger_memory_access_start_frame(memory, output);
 	}
 	output->frame_status = FRAME_INCOMPLETE;

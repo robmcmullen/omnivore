@@ -44,8 +44,8 @@ typedef struct {
 	uint8_t after2;
 	uint8_t before3;
 	uint8_t after3;
-	uint8_t clock_cycle_in_scan_line;
-	uint8_t scan_line;
+	uint8_t tv_cycle;
+	uint8_t tv_line;
 } history_6502_t; /* 24 bytes */
 
 typedef struct {
