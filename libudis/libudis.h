@@ -67,8 +67,8 @@ typedef struct {
 	uint8_t after2;
 	uint8_t before3;
 	uint8_t after3;
-	uint8_t antic_xpos;
-	uint8_t antic_ypos;
+	uint8_t tv_cycle;
+	uint8_t tv_line;
 } history_atari800_t; /* 24 bytes */
 
 typedef struct {

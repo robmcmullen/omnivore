@@ -696,8 +696,8 @@ recreate_history_entry:
 			entry->after2 = 0;
 			entry->before3 = 0;
 			entry->after3 = 0;
-			entry->antic_xpos = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
-			entry->antic_ypos = ANTIC_ypos;
+			entry->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+			entry->tv_line = ANTIC_ypos;
 		}
 
 #ifdef MONITOR_BREAKPOINTS
