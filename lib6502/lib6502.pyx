@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 
 cdef extern:
-    int lib6502_init_cpu(float, float)
+    int lib6502_init_cpu(int, int)
     int lib6502_clear_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
     int lib6502_configure_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
     int lib6502_next_frame(np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf)
@@ -12,7 +12,7 @@ cdef extern:
     void lib6502_set_a2_emulation_mode(np.uint8_t value)
 
 def start_emulator(args):
-    lib6502_init_cpu(1.023, 60.0)  # apple 2 speed
+    lib6502_init_cpu(262, 65)  # apple 2 speed
 
 def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):
     cdef np.uint8_t[:] ibuf

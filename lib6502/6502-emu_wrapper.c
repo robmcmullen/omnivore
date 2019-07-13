@@ -6,6 +6,7 @@
 #include "libdebugger.h"
 #include "libudis.h"
 
+uint16_t cycles_per_scan_line;
 long cycles_per_frame;
 
 int apple2_mode = 0;
@@ -28,7 +29,7 @@ void lib6502_init_debug_kernel() {
 	PC = 0xf000;
 }
 
-void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
+void lib6502_init_cpu(int scan_lines, int cycles_per) {
 	init_tables();
 
 	A = 0;
@@ -39,7 +40,8 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 	PC = 0xfffe;
 	memset(memory, 0, sizeof(memory));
 
-	cycles_per_frame = (long)((frequency_mhz * 1000000.0) / refresh_rate_hz);
+	cycles_per_scan_line = cycles_per;
+	cycles_per_frame = (long)(scan_lines * cycles_per_scan_line);
 
 	lib6502_init_debug_kernel();
 }
@@ -47,11 +49,21 @@ void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz) {
 void lib6502_clear_state_arrays(void *input, output_t *output) {
 	frame_status_t *status = &output->status;
 
+	status->frame_number = 0;
 	status->frame_status = 0;
 	status->cycles_since_power_on = 0;
 	status->instructions_since_power_on = 0;
+	status->cycles_user = 0;
+	status->instructions_user = 0;
+	status->current_instruction_in_frame = 0;
 	status->use_memory_access = 1;
 	status->brk_into_debugger = 1;
+
+	status->final_cycle_in_frame = cycles_per_frame - 1;
+
+	// Initialize frame cycle count at max so first frame cycle count will
+	// start at zero
+	status->current_cycle_in_frame = cycles_per_frame - 1;
 }
 
 void lib6502_configure_state_arrays(void *input, output_t *output) {
@@ -108,8 +120,9 @@ int lib6502_show_current_instruction(history_6502_t *entry)
 int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_t *breakpoints)
 {
 	int count, bpid;
-	uint8_t last_sp, opcode;
+	uint8_t last_sp, opcode, cycles;
 	intptr_t index;
+	uint16_t line;
 	history_breakpoint_t *b;
 
 	last_pc = PC;
@@ -118,8 +131,13 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	opcode = memory[PC];
 	inst = instructions[opcode];
 	count = lengths[inst.mode];
-	if (entry) lib6502_show_current_instruction(entry);
-
+	if (entry) {
+		lib6502_show_current_instruction(entry);
+		line = status->current_cycle_in_frame / cycles_per_scan_line;
+		cycles = status->current_cycle_in_frame % cycles_per_scan_line;
+		entry->scan_line = line;
+		entry->clock_cycle_in_scan_line = line > 255 ? cycles | 0x80 : cycles;
+	}
 	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback, opcode == 0x4c);
 	if (bpid >= 0) {
 		status->frame_status = FRAME_BREAKPOINT;
@@ -379,7 +397,6 @@ int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoi
 	if (apple2_mode) {
 		memory[0xc000] = input->keychar;
 	}
-	status->final_cycle_in_frame = cycles_per_frame - 1;
 	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints, history);
 	lib6502_get_current_state(output);
 	return bpid;

@@ -61,7 +61,10 @@ class InstructionHistoryTable(cg.VirtualTable):
             if t == flags.DISASM_NEXT_INSTRUCTION:
                 h = h.view(dtype=dd.HISTORY_BREAKPOINT_DTYPE)
                 t = h['disassembler_type_cpu']
-            if t == flags.DISASM_ATARI800_HISTORY:
+            if t == flags.DISASM_ATARI800_HISTORY or t == flags.DISASM_6502_HISTORY:
+                # lib6502 uses same cycles/scanline info in history, named
+                # differently but having same meaning as antic_xpos and
+                # antic_ypos
                 h = h.view(dtype=dd.HISTORY_ATARI800_DTYPE)
                 x = h['antic_xpos']
                 y = h['antic_ypos']

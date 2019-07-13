@@ -31,8 +31,8 @@ HISTORY_6502_DTYPE = np.dtype([
     ("after2", np.uint8),
     ("before3", np.uint8),
     ("after3", np.uint8),
-    ("extra1", np.uint8),
-    ("extra2", np.uint8),
+    ("cycle_in_scan_line", np.uint8),
+    ("scan_line", np.uint8),
 ])
 
 HISTORY_ATARI800_DTYPE = np.dtype([

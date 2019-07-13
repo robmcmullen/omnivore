@@ -72,7 +72,7 @@ extern long cycles_per_frame;
 
 /* library functions defined in lib6502.c */
 
-void lib6502_init_cpu(float frequency_mhz, float refresh_rate_hz);
+void lib6502_init_cpu(int scan_lines, int cycles_per_scan_line);
 
 void lib6502_get_current_state(output_t *output);
 
