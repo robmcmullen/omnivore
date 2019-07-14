@@ -248,17 +248,19 @@ class EmulationDocument(DiskImageDocument):
 
     def pause_emulator(self):
         print("pause")
-        emu = self.emulator
-        self.stop_timer()
-        emu.cpu_history_show_next_instruction()
-        self.emulator_update_screen_event(True)
-        self.priority_level_refresh_event(100)
+        if not self.emulator_paused:
+            emu = self.emulator
+            self.stop_timer()
+            emu.cpu_history_show_next_instruction()
+            self.emulator_update_screen_event(True)
+            self.priority_level_refresh_event(100)
 
     def resume_emulator(self):
         print("resume")
-        self.emulator.begin_restart()
-        self.start_timer()
-        self.emulator_update_screen_event(True)
+        if self.emulator_paused:
+            self.emulator.begin_restart()
+            self.start_timer()
+            self.emulator_update_screen_event(True)
 
     def debugger_step(self):
         print("stepping")
@@ -282,11 +284,7 @@ class EmulationDocument(DiskImageDocument):
         except IndexError:
             log.warning("No previous frame")
         else:
-            emu.restore_history(desired)
-            frame_number = self.emulator.status['frame_number']
-            log.debug(f"showing frame {frame_number}")
-            self.emulator_update_screen_event(True)
-            self.priority_level_refresh_event(100)
+            self.checkpoint_restore(desired)
 
     def history_next(self):
         emu = self.emulator
@@ -295,8 +293,12 @@ class EmulationDocument(DiskImageDocument):
         except IndexError:
             log.warning(f"No next frame: current = {emu.current_frame_number}")
         else:
-            emu.restore_history(desired)
-            frame_number = self.emulator.status['frame_number']
-            log.debug(f"showing frame {frame_number}")
-            self.emulator_update_screen_event(True)
-            self.priority_level_refresh_event(100)
+            self.checkpoint_restore(desired)
+
+    def checkpoint_restore(self, checkpoint):
+        emu = self.emulator
+        emu.restore_history(checkpoint)
+        frame_number = self.emulator.status['frame_number']
+        log.debug(f"showing frame {frame_number}")
+        self.emulator_update_screen_event(True)
+        self.priority_level_refresh_event(100)

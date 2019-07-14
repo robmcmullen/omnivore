@@ -156,6 +156,7 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
         SegmentViewer.set_event_handlers(self)  # skip viewer mixin handlers, which skips the priority level refresh
         self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
         self.document.emulator_update_screen_event += self.on_emulator_update_screen
+        self.control.Bind(ct.EVT_CHECKPOINT_HOVER, self.on_over_line)
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -172,6 +173,12 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
         self.control.recalc_view()
 
     #### event handlers
+
+    def on_over_line(self, evt):
+        print("OVER LINE!", evt.GetLine(), evt.GetFrameNumber())
+        doc = self.document
+        doc.pause_emulator()
+        doc.checkpoint_restore(evt.GetFrameNumber())
 
     def on_emulator_update_screen(self, evt):
         log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
