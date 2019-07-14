@@ -251,12 +251,14 @@ else:
             sources = [
                 "lib6502/lib6502.pyx",
                 "lib6502/6502-emu_wrapper.c",
+                "lib6502/libcrabapple.c",
                 "lib6502/6502-emu/6502.c",
                 "libdebugger/libdebugger.c",
                 "libudis/history.c",
             ],
             depends = [
                 "lib6502/6502-emu_wrapper.h",
+                "lib6502/libcrabapple.h",
                 "lib6502/6502-emu/6502.h",
                 "libdebugger/libdebugger.h",
                 "libudis/libudis.h",

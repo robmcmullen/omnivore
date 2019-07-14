@@ -1,78 +1,89 @@
 {
-    "layout": {
-      "sidebars": [],
-      "tile_manager": {
-        "direction": 4,
-        "ratio_in_parent": 1,
-        "views": [
-          {
-            "direction": 8,
-            "ratio_in_parent": 0.48876043673731534,
-            "views": [
-              {
-                "child_uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9",
-                "ratio_in_parent": 0.09843937575030012,
-                "show_title": true,
-                "use_close_button": true
-              },
-              {
-                "child_uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d",
-                "ratio_in_parent": 0.9015606242496998,
-                "show_title": true,
-                "use_close_button": true
-              }
-            ]
-          },
-          {
-            "direction": 8,
-            "ratio_in_parent": 0.5112395632626847,
-            "views": [
-              {
-                "child_uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b",
-                "ratio_in_parent": 0.37214885954381755,
-                "show_title": true,
-                "use_close_button": true
-              },
-              {
-                "child_uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802",
-                "ratio_in_parent": 0.6278511404561824,
-                "show_title": true,
-                "use_close_button": true
-              }
-            ]
-          }
-        ]
-      }
+  "layout": {
+    "sidebars": [],
+    "tile_manager": {
+      "direction": 4,
+      "ratio_in_parent": 1,
+      "views": [
+        {
+          "direction": 8,
+          "ratio_in_parent": 0.5,
+          "views": [
+            {
+              "child_uuid": "2fdc6fa2-9874-4146-8123-ee9ed24da7f7",
+              "ratio_in_parent": 0.16,
+              "show_title": true,
+              "use_close_button": true
+            },
+            {
+              "child_uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9",
+              "ratio_in_parent": 0.08,
+              "show_title": true,
+              "use_close_button": true
+            },
+            {
+              "child_uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d",
+              "ratio_in_parent": 0.76,
+              "show_title": true,
+              "use_close_button": true
+            }
+          ]
+        },
+        {
+          "direction": 8,
+          "ratio_in_parent": 0.5,
+          "views": [
+            {
+              "child_uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b",
+              "ratio_in_parent": 0.5,
+              "show_title": true,
+              "use_close_button": true
+            },
+            {
+              "child_uuid": "325fae4c-b71d-49ee-9e2a-a873984a5123",
+              "ratio_in_parent": 0.5,
+              "show_title": true,
+              "use_close_button": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "viewers": [
+    {
+      "control": {},
+      "name": "video",
+      "uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b"
     },
-    "viewers": [
-      {
-        "control": {},
-        "name": "hgr1",
-        "uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b"
+    {
+      "control": {
+        "items_per_row": 13,
+        "zoom": 1
       },
-      {
-        "control": {
-          "items_per_row": 13,
-          "zoom": 1
-        },
-        "name": "cpu6502",
-        "uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9"
+      "name": "cpu6502",
+      "uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9"
+    },
+    {
+      "control": {
+        "items_per_row": 99,
+        "zoom": 1
       },
-      {
-        "control": {
-          "items_per_row": 99,
-          "zoom": 1
-        },
-        "name": "cpuhistory",
-        "uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d"
+      "name": "cpuhistory",
+      "uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d"
+    },
+    {
+      "control": {},
+      "name": "checkpoint",
+      "uuid": "2fdc6fa2-9874-4146-8123-ee9ed24da7f7"
+    },
+    {
+      "control": {
+        "items_per_row": 256,
+        "zoom": 2
       },
-      {
-        "control": {
-          "items_per_row": -1,
-          "zoom": 1
-        },
-        "name": "checkpoint",
-        "uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802"
-      }
-    ]
+      "name": "mem",
+      "uuid": "325fae4c-b71d-49ee-9e2a-a873984a5123"
+    }
+  ]
 }

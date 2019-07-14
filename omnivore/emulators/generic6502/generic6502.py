@@ -35,7 +35,7 @@ class Generic6502(Emulator):
 
     @property
     def current_cpu_status(self):
-        pc, a, x, y, sp, p = self.cpu_state
+        pc, a, x, y, sp, p, _ = self.cpu_state
         dtype = d.STATESAV_DTYPE
         state = self.state_array[0:int(d.STATESAV_DTYPE.itemsize)].view(dtype=d.STATESAV_DTYPE)[0]
         # print("raw: %s" % self.raw_array[0:32])

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "6502-emu_wrapper.h"
+#include "libcrabapple.h"
 #include "libdebugger.h"
 #include "libudis.h"
 
@@ -10,15 +11,6 @@ uint16_t cycles_per_scan_line;
 long cycles_per_frame;
 
 int apple2_mode = 0;
-
-/* Apple ][ graphics */
-int hires_graphics = 0;  /* 0 = lo res, 1 = hi res */
-int text_mode = 0; /* 0 = graphics, 1 = text */
-int mixed_mode = 0; /* 0 = full screen, 1 = text window */
-int alt_page_select = 0; /* 0 = page 1, 1 = page 2 */
-
-int tv_line = 0;
-int tv_cycle = 0;
 
 
 uint8_t simple_kernel[] = {
@@ -52,13 +44,7 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 	cycles_per_scan_line = cycles_per;
 	cycles_per_frame = (long)(scan_lines * cycles_per_scan_line);
 
-	hires_graphics = 1;
-	text_mode = 0;
-	mixed_mode = 0;
-	alt_page_select = 0;
-
-	tv_line = 0;
-	tv_cycle = 0;
+	liba2_init_graphics();
 
 	lib6502_init_debug_kernel();
 }
@@ -94,12 +80,7 @@ void lib6502_get_current_state(output_t *buf) {
 	save16(buf->PC, PC);
 	buf->SR = SR.byte;
 	memcpy(buf->memory, memory, 1<<16);
-	buf->hires_graphics = hires_graphics;
-	buf->text_mode = text_mode;
-	buf->mixed_mode = mixed_mode;
-	buf->alt_page_select = alt_page_select;
-	buf->tv_line = tv_line;
-	buf->tv_cycle = tv_cycle;
+	if (apple2_mode) liba2_get_current_state((a2_output_t *)buf);
 }
 
 void lib6502_restore_state(output_t *buf) {
@@ -110,12 +91,7 @@ void lib6502_restore_state(output_t *buf) {
 	load16(PC, buf->PC);
 	SR.byte = buf->SR;
 	memcpy(memory, buf->memory, 1<<16);
-	hires_graphics = buf->hires_graphics;
-	text_mode = buf->text_mode;
-	mixed_mode = buf->mixed_mode;
-	alt_page_select = buf->alt_page_select;
-	tv_line = buf->tv_line;
-	tv_cycle = buf->tv_cycle;
+	if (apple2_mode) liba2_restore_state((a2_output_t *)buf);
 }
 
 uint16_t last_pc;
@@ -148,13 +124,14 @@ int lib6502_show_current_instruction(history_6502_t *entry)
 	entry->tv_cycle = tv_line > 255 ? tv_cycle | 0x80 : tv_cycle;
 }
 
-int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_t *breakpoints)
+int lib6502_step_cpu(output_t *output, history_6502_t *entry, breakpoints_t *breakpoints)
 {
 	int count, bpid;
 	uint8_t last_sp, opcode, cycles;
 	intptr_t index;
 	uint16_t line;
 	history_breakpoint_t *b;
+	frame_status_t *status = &output->status;
 
 	last_pc = PC;
 	last_sp = SP;
@@ -162,7 +139,7 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	opcode = memory[PC];
 	inst = instructions[opcode];
 	count = lengths[inst.mode];
-	if (entry) lib6502_show_current_instruction(entry);
+	lib6502_show_current_instruction(entry);
 
 	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback, opcode == 0x4c);
 	if (bpid >= 0) {
@@ -219,60 +196,81 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 	// 7 cycle instructions (e.g. ROL $nnnn,X) don't have a penalty cycle for
 	// crossing a page boundary.
 	if (inst.cycles == 7) extra_cycles = 0;
-	if (entry) {
-		entry->cycles = inst.cycles + extra_cycles;
-		if (result_flag == BRANCH_TAKEN) {
-			entry->flag = FLAG_BRANCH_TAKEN;
+	cycles = inst.cycles + extra_cycles;
+
+	if (apple2_mode) liba2_copy_video((a2_output_t *)output, cycles);
+
+	entry->cycles = cycles;
+	if (result_flag == BRANCH_TAKEN) {
+		entry->flag = FLAG_BRANCH_TAKEN;
+	}
+	else if (result_flag == BRANCH_NOT_TAKEN) {
+		entry->flag = FLAG_BRANCH_NOT_TAKEN;
+	}
+	else if (entry->flag == FLAG_PEEK_MEMORY) {
+		entry->target_addr = (uint8_t *)read_addr - memory;
+		entry->before1 = *(uint8_t *)read_addr;
+		if (apple2_mode) {
+			liba2_read_softswitch(entry->target_addr);
 		}
-		else if (result_flag == BRANCH_NOT_TAKEN) {
-			entry->flag = FLAG_BRANCH_NOT_TAKEN;
+	}
+	else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY) {
+		entry->target_addr = (uint8_t *)write_addr - memory;
+		entry->before1 = before_value[0];
+		if (apple2_mode) {
+			liba2_write_softswitch(entry->target_addr);
 		}
-		else if (entry->flag == FLAG_PEEK_MEMORY) {
-			entry->target_addr = (uint8_t *)read_addr - memory;
-			entry->before1 = *(uint8_t *)read_addr;
+	}
+	else if (entry->flag == FLAG_MEMORY_ALTER) {
+		entry->target_addr = (uint8_t *)write_addr - memory;
+		entry->before1 = before_value[0];
+		entry->after1 = *(uint8_t *)write_addr;
+		if (apple2_mode) {
+			/* maybe read also? Does it get called twice? */
+			liba2_write_softswitch(entry->target_addr);
 		}
-		else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY) {
-			entry->target_addr = (uint8_t *)write_addr - memory;
-			entry->before1 = before_value[0];
+	}
+	else if (entry->a != A || entry->flag == FLAG_REG_A || entry->flag == FLAG_LOAD_A_FROM_MEMORY) {
+		if (entry->flag != 0) entry->flag = FLAG_REG_A;
+		entry->after1 = A;
+		if (apple2_mode) {
+			liba2_read_softswitch(entry->target_addr);
 		}
-		else if (entry->flag == FLAG_MEMORY_ALTER) {
-			entry->target_addr = (uint8_t *)write_addr - memory;
-			entry->before1 = before_value[0];
-			entry->after1 = *(uint8_t *)write_addr;
+	}
+	else if (entry->x != X || entry->flag == FLAG_REG_X || entry->flag == FLAG_LOAD_X_FROM_MEMORY) {
+		if (entry->flag != 0) entry->flag = FLAG_REG_X;
+		entry->after1 = X;
+		if (apple2_mode) {
+			liba2_read_softswitch(entry->target_addr);
 		}
-		else if (entry->a != A || entry->flag == FLAG_REG_A || entry->flag == FLAG_LOAD_A_FROM_MEMORY) {
-			if (entry->flag != 0) entry->flag = FLAG_REG_A;
-			entry->after1 = A;
+	}
+	else if (entry->y != Y || entry->flag == FLAG_REG_Y || entry->flag == FLAG_LOAD_Y_FROM_MEMORY) {
+		if (entry->flag != 0) entry->flag = FLAG_REG_Y;
+		entry->after1 = Y;
+		if (apple2_mode) {
+			liba2_read_softswitch(entry->target_addr);
 		}
-		else if (entry->x != X || entry->flag == FLAG_REG_X || entry->flag == FLAG_LOAD_X_FROM_MEMORY) {
-			if (entry->flag != 0) entry->flag = FLAG_REG_X;
-			entry->after1 = X;
-		}
-		else if (entry->y != Y || entry->flag == FLAG_REG_Y || entry->flag == FLAG_LOAD_Y_FROM_MEMORY) {
-			if (entry->flag != 0) entry->flag = FLAG_REG_Y;
-			entry->after1 = Y;
-		}
-		else if (entry->sp != SP) {
-			;
-		}
-		else if ((before_value_index > 0) && (write_addr >= memory) && (write_addr < memory + (256*256))) {
-			/* if write_addr outside of memory, the dest is a register */
-			entry->target_addr = (uint8_t *)write_addr - memory;
-			entry->after3 = before_value[0];
-			entry->after1 = *(uint8_t *)write_addr;
-			// entry->flag = FLAG_WRITE_ONE;
-		}
-		else if (write_addr && (write_addr >= memory) && (write_addr < memory + (256*256))) {
-			entry->target_addr = (uint8_t *)write_addr - memory;
-		}
-		else if (read_addr && (read_addr >= memory) && (read_addr < memory + (256*256))) {
-			entry->target_addr = (uint8_t *)read_addr - memory;
-			// entry->flag = FLAG_READ_ONE;
-		}
-		if (entry->sr != SR.byte) {
-			entry->flag |= FLAG_REG_SR;
-			entry->after3 = SR.byte;
-		}
+	}
+	else if (entry->sp != SP) {
+		;
+	}
+	else if ((before_value_index > 0) && (write_addr >= memory) && (write_addr < memory + (256*256))) {
+		/* if write_addr outside of memory, the dest is a register */
+		entry->target_addr = (uint8_t *)write_addr - memory;
+		entry->after3 = before_value[0];
+		entry->after1 = *(uint8_t *)write_addr;
+		// entry->flag = FLAG_WRITE_ONE;
+	}
+	else if (write_addr && (write_addr >= memory) && (write_addr < memory + (256*256))) {
+		entry->target_addr = (uint8_t *)write_addr - memory;
+	}
+	else if (read_addr && (read_addr >= memory) && (read_addr < memory + (256*256))) {
+		entry->target_addr = (uint8_t *)read_addr - memory;
+		// entry->flag = FLAG_READ_ONE;
+	}
+	if (entry->sr != SR.byte) {
+		entry->flag |= FLAG_REG_SR;
+		entry->after3 = SR.byte;
 	}
 
 	if (status->use_memory_access) {
@@ -326,9 +324,9 @@ int lib6502_step_cpu(frame_status_t *status, history_6502_t *entry, breakpoints_
 
 	status->current_instruction_in_frame += 1;
 	status->instructions_since_power_on += 1;
-	status->current_cycle_in_frame += inst.cycles + extra_cycles;
-	status->cycles_since_power_on += inst.cycles + extra_cycles;
-	tv_cycle += inst.cycles + extra_cycles;
+	status->current_cycle_in_frame += cycles;
+	status->cycles_since_power_on += cycles;
+	tv_cycle += cycles;
 	if (tv_cycle > cycles_per_scan_line) {
 		tv_cycle -= cycles_per_scan_line;
 		tv_line++;
@@ -382,14 +380,16 @@ int lib6502_register_callback(uint16_t token, uint16_t addr) {
 int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emulator_history_t *history)
 {
 	int cycles, bpid, count;
-	history_6502_t *entry;
+	history_6502_t *entry, dummy_entry;
 	history_frame_t *frame_entry;
+	output_t *output = (output_t *)status;
 
 	do {
 		last_pc = PC;
 		entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
+		if (!entry) entry = &dummy_entry;
 		status->breakpoint_id = -1;
-		bpid = lib6502_step_cpu(status, entry, breakpoints);
+		bpid = lib6502_step_cpu(output, entry, breakpoints);
 		if (last_pc >= 0x5074 && last_pc < 0xC000) {
 			status->instructions_user += 1;
 			status->cycles_user += cycles;
@@ -442,7 +442,7 @@ int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoi
 		tv_cycle = status->current_cycle_in_frame;
 		tv_line = 0;
 	}
-	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, (frame_status_t *)output, breakpoints, history);
+	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, status, breakpoints, history);
 	lib6502_get_current_state(output);
 	return bpid;
 }
