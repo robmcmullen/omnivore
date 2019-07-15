@@ -52,10 +52,8 @@ class Emulator(Debugger):
         self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
         self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
         self.bootfile = None
-        self.frame_count = 0
         self.frame_event = []
-        self.restart_tree = RestartTree()
-        self.current_restart = self.restart_tree.emulator_start
+        self.init_restart_tree()
         self.offsets = None
         self.names = None
         self.save_state_memory_blocks = None
@@ -342,7 +340,8 @@ class Emulator(Debugger):
     def coldstart(self):
         """Simulate an initial power-on startup.
         """
-        pass
+        self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
+        self.init_restart_tree()
 
     def warmstart(self):
         """Simulate a warm start; i.e. pressing the system reset button
@@ -408,6 +407,11 @@ class Emulator(Debugger):
         return self.output_raw.copy()
 
     #### history/checkpoints
+
+    def init_restart_tree(self):
+        self.frame_count = 0
+        self.restart_tree = RestartTree()
+        self.current_restart = self.restart_tree.emulator_start
 
     def get_restart_summary(self):
         return self.restart_tree.get_summary()

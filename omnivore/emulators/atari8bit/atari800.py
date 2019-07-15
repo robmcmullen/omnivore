@@ -219,6 +219,7 @@ class Atari800Mixin:
     def coldstart(self):
         """Simulate an initial power-on startup.
         """
+        super().coldstart()
         self.send_special_key(akey.AKEY_COLDSTART)
         self.configure_io_arrays()
 
