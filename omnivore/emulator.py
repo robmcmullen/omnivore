@@ -445,6 +445,21 @@ class Emulator(Debugger):
         self.low_level_interface.restore_state(state)
         self.output_raw[:] = state
 
+    def restore_restart(self, restart_number, frame_number):
+        print(f"restoring restart {restart_number} from frame number {frame_number}")
+        try:
+            restart = self.restart_tree[restart_number]
+        except IndexError:
+            log.error(f"{restart_number} not in history")
+        else:
+            try:
+                d = self.current_restart[frame_number]
+            except KeyError:
+                log.error(f"{frame_number} not in restart {restart_number}")
+            else:
+                self.current_restart = restart
+                self.restore_state(d)
+
     def restore_history(self, frame_number):
         print(("restoring state from frame %d" % frame_number))
         frame_number = int(frame_number)

@@ -38,7 +38,6 @@ def get_order(source, parent_level):
         if start not in subset_lookup:
             subset_lookup[start] = []
         subset_lookup[start].append(entry)
-        print(entry)
     processing_order = []
     for items in reversed(list(subset_lookup.values())):
         for item in items:
@@ -96,7 +95,7 @@ class RestartLines:
             if line.level > self.highest_level:
                 self.highest_level = line.level
             #print(level)
-            print("generate", line, line.level)
+            # print("generate", line, line.level)
 
     def find_line(self, frame_number, level):
         for line in self.lines:
@@ -118,12 +117,18 @@ class CheckpointTreeEvent(wx.PyCommandEvent):
         self.SetEventObject(obj)
         self.SetId(obj.GetId())
         self.line = line
+        self.restart_number = line.restart_number
         self.frame_number = frame_number
 
     def GetLine(self):
         """The RestartLine of the event
         """
         return self.line
+
+    def GetRestartNumber(self):
+        """The restart number of the event
+        """
+        return self.restart_number
 
     def GetFrameNumber(self):
         """The frame number of the event
@@ -166,13 +171,13 @@ class CheckpointTree(wx.ScrolledWindow):
             source = self.source
         self.source = source
         data = source.get_restart_summary()
-        print("DATA", data)
+        # print("DATA", data)
         parent_level = 0
         data.sort()
         order = get_order(data, parent_level)
         order[0:0] = [data[0]]
-        from pprint import pprint
-        pprint(order)
+        # from pprint import pprint
+        # pprint(order)
         lines = RestartLines(order)
         print("restart_lines", lines)
         self.set_lines(lines)
@@ -254,7 +259,7 @@ class CheckpointTree(wx.ScrolledWindow):
         sx, sy = self.GetViewStart()
         x, y = self.CalcUnscrolledPosition (ex, ey)
         size = self.GetVirtualSize()
-        print(ex, sx, x)
+        # print(ex, sx, x)
 
         frame_number = (x - self.width_border + self.x_scale // 2) // self.x_scale
         level = ((self.virtual_height - y) - self.height_border + self.level_height // 2) // self.level_height
@@ -271,10 +276,8 @@ class CheckpointTree(wx.ScrolledWindow):
                 over_line = line
                 evt = CheckpointTreeEvent(wxEVT_CHECKPOINT_HOVER, self, line, frame_number)
                 self.GetEventHandler().ProcessEvent(evt)
-            else:
-                print(f"not over any line")
         if old_over_line != over_line:
-            print("REFRESHING")
+            # print("REFRESHING")
             self.over_line = over_line
             wx.CallAfter(self.Refresh)
 

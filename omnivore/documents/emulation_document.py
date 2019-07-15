@@ -284,7 +284,7 @@ class EmulationDocument(DiskImageDocument):
         except IndexError:
             log.warning("No previous frame")
         else:
-            self.checkpoint_restore(desired)
+            self.checkpoint_restore(emu.current_restart, desired)
 
     def history_next(self):
         emu = self.emulator
@@ -293,11 +293,11 @@ class EmulationDocument(DiskImageDocument):
         except IndexError:
             log.warning(f"No next frame: current = {emu.current_frame_number}")
         else:
-            self.checkpoint_restore(desired)
+            self.checkpoint_restore(emu.current_restart, desired)
 
-    def checkpoint_restore(self, checkpoint):
+    def checkpoint_restore(self, restart_number, frame_number):
         emu = self.emulator
-        emu.restore_history(checkpoint)
+        emu.restore_restart(restart_number, frame_number)
         frame_number = self.emulator.status['frame_number']
         log.debug(f"showing frame {frame_number}")
         self.emulator_update_screen_event(True)

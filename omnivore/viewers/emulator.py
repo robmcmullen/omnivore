@@ -175,10 +175,10 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
     #### event handlers
 
     def on_over_line(self, evt):
-        print("OVER LINE!", evt.GetLine(), evt.GetFrameNumber())
+        print("OVER LINE!", evt.GetRestartNumber(), evt.GetFrameNumber(), evt.GetLine())
         doc = self.document
         doc.pause_emulator()
-        doc.checkpoint_restore(evt.GetFrameNumber())
+        doc.checkpoint_restore(evt.GetRestartNumber(), evt.GetFrameNumber())
 
     def on_emulator_update_screen(self, evt):
         log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))

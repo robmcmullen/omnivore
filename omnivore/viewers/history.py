@@ -117,7 +117,7 @@ class InstructionHistoryTable(cg.VirtualTable):
         self.current_num_rows = len(emu.cpu_history)
         c = Container(emu.cpu_history.entries.view(np.uint8), force_numpy_data=True)
         v.segment = Segment(c, 0)
-        print("CPU HISTORY ENTRIES", self.current_num_rows)
+        # print("CPU HISTORY ENTRIES", self.current_num_rows)
         self.init_boundaries()
 
 
