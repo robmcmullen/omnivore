@@ -161,7 +161,7 @@ class InstructionHistoryViewer(EmulatorViewerMixin, SegmentViewer):
 
     control_cls = InstructionHistoryGridControl
 
-    priority_refresh_frame_count = 1
+    priority_refresh_frame_count = 10
 
     # initialization
 
