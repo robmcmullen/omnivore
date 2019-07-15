@@ -341,6 +341,7 @@ setup(
     scripts = [
         "scripts/atrip",
         "scripts/omnivore",
+        "scripts/omnimu",
     ],
     entry_points={
         "atrip.archivers": [
