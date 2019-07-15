@@ -28,16 +28,46 @@
             "ratio_in_parent": 0.5112395632626847,
             "views": [
               {
-                "child_uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b",
+                "direction": 4,
                 "ratio_in_parent": 0.37214885954381755,
+                "views": [
+                  {
+                    "child_uuid": "d35c8424-a347-42d3-9812-0dc417c1ab5b",
+                    "ratio_in_parent": 0.5,
+                    "show_title": true,
+                    "use_close_button": true
+                  },
+                  {
+                    "child_uuid": "ae64ebf5-7134-4c5c-b5a2-a016d38de9cb",
+                    "ratio_in_parent": 0.5,
+                    "show_title": true,
+                    "use_close_button": true
+                  }
+                ]
+              },
+              {
+                "child_uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802",
+                "ratio_in_parent": 0.14395176059841924,
                 "show_title": true,
                 "use_close_button": true
               },
               {
-                "child_uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802",
-                "ratio_in_parent": 0.6278511404561824,
-                "show_title": true,
-                "use_close_button": true
+                "direction": 4,
+                "ratio_in_parent": 0.48389937985776316,
+                "views": [
+                  {
+                    "child_uuid": "eeb18605-f6b6-4eae-bcd3-184d284e106b",
+                    "ratio_in_parent": 0.5,
+                    "show_title": true,
+                    "use_close_button": true
+                  },
+                  {
+                    "child_uuid": "966fb4ea-04bc-47a0-91f0-7707a9eb1013",
+                    "ratio_in_parent": 0.5,
+                    "show_title": true,
+                    "use_close_button": true
+                  }
+                ]
               }
             ]
           }
@@ -67,12 +97,33 @@
         "uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d"
       },
       {
+        "control": {},
+        "name": "checkpoint",
+        "uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802"
+      },
+      {
+        "control": {
+          "items_per_row": 256,
+          "zoom": 1
+        },
+        "name": "mem",
+        "uuid": "ae64ebf5-7134-4c5c-b5a2-a016d38de9cb"
+      },
+      {
         "control": {
           "items_per_row": -1,
           "zoom": 1
         },
-        "name": "checkpoint",
-        "uuid": "a8f9c0d1-36d1-4653-9caf-706e9c275802"
+        "name": "antic",
+        "uuid": "eeb18605-f6b6-4eae-bcd3-184d284e106b"
+      },
+      {
+        "control": {
+          "items_per_row": -1,
+          "zoom": 1
+        },
+        "name": "gtia",
+        "uuid": "966fb4ea-04bc-47a0-91f0-7707a9eb1013"
       }
     ]
 }
