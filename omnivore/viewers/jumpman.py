@@ -285,6 +285,10 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
             model = JumpmanSegmentTable.get_invalid_playfield_model()
         return model
 
+    @property
+    def can_copy(self):
+        return self.current_level.mouse_mode.can_copy
+
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view
         of the data

@@ -32,6 +32,14 @@ class JumpmanSelectMode(NormalSelectMode):
     def resync_objects(self):
         pass
 
+    @property
+    def has_selection(self):
+        return bool(self.objects)
+
+    @property
+    def can_copy(self):
+        return self.can_paste and self.has_selection
+
     def all_objects_are_coins(self):
         if self.objects:
             state = True

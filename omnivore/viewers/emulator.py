@@ -35,6 +35,10 @@ class EmulatorViewerMixin:
         return self.linked_base.editor.document.emulator
 
     @property
+    def can_copy(self):
+        return False
+
+    @property
     def linked_base_segment_identifier(self):
         return ""
 

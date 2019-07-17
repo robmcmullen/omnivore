@@ -173,6 +173,10 @@ class SegmentViewer:
         return self.linked_base.segment
 
     @property
+    def can_copy(self):
+        return self.linked_base.can_copy
+
+    @property
     def editor(self):
         return self.linked_base.editor
 
