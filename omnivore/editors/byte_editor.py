@@ -497,6 +497,13 @@ class ByteEditor(TileManagerBase):
         data_objs = self.focused_viewer.control.calc_clipboard_data_objs(focused)
         return data_objs
 
+    def delete_selection_from(self, focused):
+        print("FOCUSED CONTROL", focused)
+        cmd = self.focused_viewer.calc_delete_command()
+        if cmd:
+            log.debug(f"deleting selection using command: {cmd}")
+            self.process_command(cmd)
+
     def paste_clipboard(self):
         clipboard_log.debug(f"focused: {self.focused_viewer}")
         data_obj = clipboard.get_clipboard_data(self.supported_clipboard_data)

@@ -321,6 +321,11 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
             o.y += 1
         self.current_level.save_objects(objects)
 
+    def calc_delete_command(self):
+        if self.can_copy:
+            objects = self.current_level.mouse_mode.objects
+            self.current_level.delete_objects(objects)
+
     #### update routines
 
     def set_event_handlers(self):

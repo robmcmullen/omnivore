@@ -579,6 +579,9 @@ class SegmentViewer:
     def calc_paste_command(self, clipboard_blob, *args, **kwargs):
         return clipboard_commands.PasteCommand(self.segment, clipboard_blob, *args, **kwargs)
 
+    def calc_delete_command(self):
+        pass
+
     def get_selected_ranges_and_indexes(self):
         return self.control.get_selected_ranges_and_indexes(self.linked_base)
 

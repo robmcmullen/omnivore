@@ -440,7 +440,7 @@ class SawxEditor:
 
     def delete_selection(self):
         focused = wx.Window.FindFocus()
-        clipboard_log.debug(f"deleting selection from {focused}")
+        log.debug(f"deleting selection from {focused}")
         self.delete_selection_from(focused)
 
     def delete_selection_from(self, focused):
