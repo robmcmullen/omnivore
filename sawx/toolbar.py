@@ -3,6 +3,7 @@ import collections
 import wx
 
 from .action import get_action_id
+from . import errors
 
 import logging
 log = logging.getLogger("toolbar")
@@ -47,3 +48,8 @@ class ToolbarDescription:
                 action.sync_tool_item_from_editor(action_key, toolbar_control, id)
             except AttributeError as e:
                 sync_log.debug(f"Skipping sync of {action_key} toolbar item from {action.editor}: {e}")
+            except errors.RecreateDynamicMenuBar:
+                raise
+            except:
+                log.error(f"Error in sync_with_editor for toolbar item {action_key}")
+                raise

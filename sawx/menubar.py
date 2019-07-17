@@ -3,6 +3,7 @@ import collections
 import wx
 
 from .action import get_action_id
+from . import errors
 
 import logging
 log = logging.getLogger("menubar")
@@ -125,3 +126,8 @@ def sync_with_editor(valid_id_map, control):
             action.sync_menu_item_from_editor(action_key, menu_item)
         except AttributeError as e:
             sync_log.debug(f"Skipping sync of {action_key} menu item from {action.editor}: {e}")
+        except errors.RecreateDynamicMenuBar:
+            raise
+        except:
+            log.error(f"Error in sync_menu_item_from_editor for {action_key}")
+            raise
