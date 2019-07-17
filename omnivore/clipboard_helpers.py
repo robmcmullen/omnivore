@@ -117,6 +117,15 @@ class TextBlob(ClipboardBlob):
         self.dest_carets = viewer.control.caret_handler.copy()
 
 
+class JumpmanBlob(ClipboardBlob):
+    data_format_name = "jumpman,objects"
+    ui_name = "Jumpman Objects"
+
+    def __init__(self, objects):
+        super().__init__()
+        self.data = objects
+
+
 class NumpyBlob(ClipboardBlob):
     data_format_name = "numpy"
     ui_name = "Single Selection"

@@ -17,6 +17,7 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..ui.info_panels import InfoPanel
 from ..arch.bitmap_renderers import BaseRenderer
 from ..jumpman import savers as js
+from .. import clipboard_helpers
 
 from ..viewer import SegmentViewer
 from . import actions as va
@@ -198,6 +199,16 @@ class JumpmanGridControl(BitmapGridControl):
             if not first:
                 self.refresh_view()
 
+    ##### Copy/paste
+
+    def calc_clipboard_data_objs(self, focused_control):
+        data_objs = []
+        objects = self.mouse_mode.objects
+        if len(objects) > 0:
+            blob = clipboard_helpers.JumpmanBlob(objects)
+            data_objs.append(blob.data_obj)
+        return data_objs
+
     ##### Keyboard handling
 
     def handle_char_move_backspace(self, evt, flags):
@@ -295,6 +306,21 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         """
         return [js.JumpmanSaveAsATR, js.JumpmanSaveAsXEX]
 
+    #### copy/paste
+
+    supported_clipboard_data = [
+        wx.CustomDataObject("jumpman,objects"),
+        ]
+
+    def calc_paste_command(self, clipboard_blob, *args, **kwargs):
+        objects = clipboard_blob.data
+        log.debug(f"calc_paste_command: pasting jumpman objects {objects}")
+        for o in objects:
+            # offset slightly so the pasted objects are seen
+            o.x += 1
+            o.y += 1
+        self.current_level.save_objects(objects)
+
     #### update routines
 
     def set_event_handlers(self):
@@ -306,16 +332,9 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         self.current_level.init_level_builder(self)
         self.antic_color_registers = self.current_level.level_colors
 
-    def update_bitmap(self, evt):
-        log.debug("BitmapViewer: machine bitmap changed for %s" % self.control)
-        if evt is not Undefined:
-            self.control.recalc_view()
-            self.linked_base.editor.update_pane_names()
-
-    def byte_values_changed(self, index_range):
-        log.debug("byte_values_changed: %s index_range=%s" % (self, str(index_range)))
-        if index_range is not Undefined:
-            self.control.recalc_view()
+    def on_refresh_view_for_value_change(self, evt):
+        self.recalc_view()
+        self.refresh_view(evt.flags)
 
     def on_jumpman_trigger_selected(self, evt):
         new_trigger_root = evt[0]
@@ -515,11 +534,9 @@ class TriggerPaintingViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    # @on_trait_change('linked_base.segment_selected_event')
-    def process_segment_selected(self, evt):
-        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.recalc_view()
+    def on_refresh_view_for_value_change(self, evt):
+        self.recalc_view()
+        self.refresh_view(evt.flags)
 
     ##### Spring Tab interface
 
@@ -565,11 +582,8 @@ class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    # @on_trait_change('linked_base.segment_selected_event')
-    def process_segment_selected(self, evt):
-        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.recalc_view()
+    def on_refresh_view_for_value_change(self, evt):
+        self.refresh_view(evt.flags)
 
     ##### Spring Tab interface
 
@@ -602,11 +616,9 @@ class CustomCodeViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    # @on_trait_change('linked_base.segment_selected_event')
-    def process_segment_selected(self, evt):
-        log.debug("process_segment_selected for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        if evt is not Undefined:
-            self.recalc_view()
+    def on_refresh_view_for_value_change(self, evt):
+        self.recalc_view()
+        self.refresh_view(evt.flags)
 
     ##### Spring Tab interface
 
