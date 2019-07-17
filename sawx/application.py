@@ -384,6 +384,28 @@ class SawxApp(wx.App):
         focused = self.active_frame.FindFocus()
         print(f"Focus at: {focused}" + focused.GetName() if focused is not None else "")
 
+    def find_frame_of_editor(self, editor):
+        """Find frame that contains the specified editor"""
+        for frame in wx.GetTopLevelWindows():
+            try:
+                for e in frame.editors:
+                    if e == editor:
+                        return frame
+            except AttributeError:
+                pass
+        raise KeyError("No frame found containing editor {editor}")
+
+    def find_editor_of_document(self, document):
+        """Find editor of the specified document"""
+        for frame in wx.GetTopLevelWindows():
+            try:
+                for e in frame.editors:
+                    if e.document == document:
+                        return e
+            except AttributeError:
+                pass
+        raise KeyError("No frame found containing editor {editor}")
+
     #### subprocess helpers
 
     def init_subprocesses(self):

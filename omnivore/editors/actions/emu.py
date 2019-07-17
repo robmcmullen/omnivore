@@ -55,6 +55,8 @@ class emu_boot_disk_image(SawxAction):
             doc.pause_emulator()
             if self.editor.frame.confirm(f"Only one {doc.emulator.ui_name} emulator can be running at any one time.\n\nReplace with the new boot image? Current emulation\nwill be lost.", "Replace Emulator"):
                 self.do_boot(doc, source_document)
+                editor = wx.GetApp().find_editor_of_document(doc)
+                editor.frame.Raise()
                 doc.recalc_event(True)
             else:
                 doc.resume_emulator()
