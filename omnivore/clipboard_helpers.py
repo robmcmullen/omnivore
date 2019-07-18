@@ -102,10 +102,10 @@ class TextBlob(ClipboardBlob):
     ui_name = "Text"
 
     def __init__(self, data_obj):
-        super().__init()
+        super().__init__()
         self.unpack_data_object(data_obj)
 
-    def unpack_data_object(self, viewer, data_obj):
+    def unpack_data_object(self, data_obj):
         fmts = data_obj.GetAllFormats()
         if wx.DF_TEXT in fmts:
             value = data_obj.GetText().encode('utf-8')
@@ -114,7 +114,6 @@ class TextBlob(ClipboardBlob):
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
         self.data = np.fromstring(value, dtype=np.uint8)
-        self.dest_carets = viewer.control.caret_handler.copy()
 
 
 class JumpmanBlob(ClipboardBlob):
