@@ -56,7 +56,7 @@ class KeyBindingDescription:
                     continue
                 a = wx.AcceleratorEntry()
                 a.FromString(text)
-                print(f"{a.ToString()}: {action_key} flags={a.GetFlags()} keycode={a.GetKeyCode()}")
+                # print(f"{a.ToString()}: {action_key} flags={a.GetFlags()} keycode={a.GetKeyCode()}")
                 if a.IsOk():
                     try:
                         action = source.calc_usable_action(action_key)
