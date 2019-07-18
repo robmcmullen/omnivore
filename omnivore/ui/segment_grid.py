@@ -225,7 +225,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
             self.move_viewport_origin(flags.viewport_origin)
         linked_base.sync_caret_event(flags=flags)
         linked_base.ensure_visible_event(flags=flags)
-        linked_base.refresh_event(flags=flags)
+        linked_base.document.refresh_event(flags=flags)
         log.debug(f"commit after: {self.caret_handler.carets} flags={flags}\n\n")
 
     def process_flags(self, flags):

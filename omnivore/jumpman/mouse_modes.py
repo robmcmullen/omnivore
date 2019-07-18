@@ -297,9 +297,7 @@ class AnticDSelectMode(JumpmanSelectMode):
             self.objects.remove(self.pending_remove)
         self.pending_remove = None
         if self.objects and not self.check_tolerance:
-            self.control.segment_viewer.save_changes()
-            self.resync_objects()
-            self.control.refresh_view()
+            self.control.segment_viewer.save_changes(keep_objects_selected=True)
         else:
             self.control.refresh_view()
         self.display_coords(evt)
@@ -540,7 +538,7 @@ class DrawCoinMode(DrawMode):
 
             # Force updating of the hex view
             e.document.change_count += 1
-            e.linked_base.refresh_event(flags=True)
+            e.document.refresh_event(flags=True)
         else:
             DrawMode.process_left_up(self, evt)
             return

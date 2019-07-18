@@ -289,14 +289,14 @@ class SegmentViewer:
         pass
 
     def set_event_handlers(self):
-        self.document.byte_values_changed_event += self.on_refresh_view_for_value_change
-        self.document.byte_style_changed_event += self.on_refresh_view_for_style_change
+        self.document.byte_values_changed_event += self.on_update_table_for_value_change
+        self.document.byte_style_changed_event += self.on_update_table_for_style_change
         self.document.structure_changed_event += self.on_recalc_data_model
         self.document.recalc_event += self.on_recalc_view
         self.linked_base.ensure_visible_event += self.on_ensure_visible
         self.linked_base.sync_caret_event += self.on_sync_caret
         self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
-        self.linked_base.refresh_event += self.on_refresh_view
+        self.document.refresh_event += self.on_refresh_view
         self.linked_base.recalc_event += self.on_recalc_view
 
     def restore_session(self, s):
@@ -452,11 +452,11 @@ class SegmentViewer:
             log.debug("refresh_event: refreshing %s" % self.control)
             self.control.refresh_view()
 
-    def on_refresh_view_for_value_change(self, evt):
-        self.refresh_view(evt.flags)
+    def on_update_table_for_value_change(self, evt):
+        pass
 
-    def on_refresh_view_for_style_change(self, evt):
-        self.refresh_view(evt.flags)
+    def on_update_table_for_style_change(self, evt):
+        pass
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view

@@ -337,18 +337,16 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         self.current_level.init_level_builder(self)
         self.antic_color_registers = self.current_level.level_colors
 
-    def on_refresh_view_for_value_change(self, evt):
-        self.recalc_view()
-        self.refresh_view(evt.flags)
+    def on_update_table_for_value_change(self, evt):
+        pass
 
     def on_jumpman_trigger_selected(self, evt):
         new_trigger_root = evt[0]
         log.debug("on_jumpman_trigger_selected: %s selected=%s" % (self, str(new_trigger_root)))
         self.set_trigger_view(new_trigger_root)
 
-    def on_refresh_view_for_style_change(self, evt):
-        self.current_level.init_level_builder(self)
-        self.antic_color_registers = self.current_level.level_colors
+    def on_update_table_for_style_change(self, evt):
+        self.on_update_table_for_value_change(evt)
 
     def recalc_view(self):
         """Rebuild the entire UI after a document formatting (or other
@@ -382,12 +380,13 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
 
     #### command processing
 
-    def save_changes(self, command_cls=None, add=False):
+    def save_changes(self, command_cls=None, add=False, keep_objects_selected=False):
         if command_cls is None:
             if add:
                 command_cls = jc.CreateObjectCommand
             else:
                 command_cls = jc.MoveObjectCommand
+        log.debug(f"save_changes: command_cls: {command_cls}")
         level = self.current_level
         builder = level.level_builder
         source, level_addr, old_harvest_addr = level.get_level_addrs()
@@ -402,9 +401,10 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
         hdata = np.empty([2], dtype=np.uint8)
         hdata.view(dtype="<u2")[0] = harvest_addr
         data = np.hstack([ropeladder_data, pdata, hdata, level_data])
-        cmd = command_cls(source, ranges, data)
+        cmd = command_cls(source, ranges, data, keep_objects_selected)
+        log.debug(f"save_changes: starting process_command: {command_cls}")
         self.editor.process_command(cmd)
-        level.cached_screen = None
+        log.debug(f"save_changes: finished process_command: {cmd}")
         log.debug("saved changes, new objects=%s" % builder.objects)
 
     def save_assembly(self, source, ranges, data):
@@ -453,6 +453,7 @@ class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
         if self.IsShown():
             drawlog.debug("refreshing %s" % self)
             self.recalc_view()
+            self.Refresh()
         else:
             drawlog.debug("skipping refresh of hidden %s" % self)
 
@@ -539,9 +540,8 @@ class TriggerPaintingViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    def on_refresh_view_for_value_change(self, evt):
-        self.recalc_view()
-        self.refresh_view(evt.flags)
+    def on_update_table_for_value_change(self, evt):
+        self.control.recalc_view()
 
     ##### Spring Tab interface
 
@@ -587,9 +587,6 @@ class LevelSummaryViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    def on_refresh_view_for_value_change(self, evt):
-        self.refresh_view(evt.flags)
-
     ##### Spring Tab interface
 
     def get_notification_count(self):
@@ -621,9 +618,8 @@ class CustomCodeViewer(JumpmanOtherViewerToolbarMixin, NonCaretInfoViewer):
     def show_caret(self, control, index, bit):
         pass
 
-    def on_refresh_view_for_value_change(self, evt):
+    def on_update_table_for_value_change(self, evt):
         self.recalc_view()
-        self.refresh_view(evt.flags)
 
     ##### Spring Tab interface
 

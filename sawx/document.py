@@ -65,6 +65,7 @@ class SawxDocument:
         self.baseline_document = None
 
         # events
+        self.refresh_event = EventHandler(self)
         self.recalc_event = EventHandler(self)
         self.structure_changed_event = EventHandler(self)
         self.byte_values_changed_event = EventHandler(self)  # and possibly style, but size of array remains unchanged

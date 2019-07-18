@@ -43,10 +43,30 @@ def trigger_dialog(event, segment_viewer, obj):
     dlg.Destroy()
     return addr
 
+
 class JumpmanBaseCommand(SetRangeValueCommand):
+    def __init__(self, segment, ranges, data, keep_objects_selected=True):
+         super().__init__(segment, ranges, data)
+         self.keep_objects_selected = keep_objects_selected
+
     def set_undo_flags(self, flags):
         # FIXME: need to add new flags to control rebuilding of objects, etc?
         flags.byte_values_changed = True
+
+    def do_change(self, editor, undo):
+        retval = super().do_change(editor, undo)
+        level = self.segment.jumpman_playfield_model
+        level.generate_display_objects(self.keep_objects_selected)
+        level.cached_screen = None
+        log.debug(f"Jumpman do command {self.ui_name}: {level}")
+        return retval
+
+    def undo_change(self, editor, undo):
+        super().undo_change(editor, undo)
+        level = self.segment.jumpman_playfield_model
+        level.generate_display_objects(self.keep_objects_selected)
+        level.cached_screen = None
+        log.debug(f"Jumpman undo command {self.ui_name}: {level}")
 
 
 class CreateObjectCommand(JumpmanBaseCommand):

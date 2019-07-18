@@ -537,15 +537,15 @@ class ByteEditor(TileManagerBase):
 
     def select_all(self):
         self.focused_viewer.select_all()
-        self.linked_base.refresh_event(flags=True)
+        self.document.refresh_event(flags=True)
 
     def select_none(self):
         self.focused_viewer.select_none()
-        self.linked_base.refresh_event(flags=True)
+        self.document.refresh_event(flags=True)
 
     def select_invert(self):
         self.focused_viewer.select_invert()
-        self.linked_base.refresh_event(flags=True)
+        self.document.refresh_event(flags=True)
 
     def check_document_change(self):
         self.document.change_count += 1
@@ -672,7 +672,7 @@ class ByteEditor(TileManagerBase):
             d.recalc_event(flags=flags)
         if flags.refresh_needed:
             event_log.debug(f"process_flags: refresh_needed")
-            d.recalc_event(flags=flags)
+            d.refresh_event(flags=flags)
 
     #### idle handler
 

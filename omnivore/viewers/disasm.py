@@ -224,10 +224,10 @@ class DisassemblyViewer(SegmentViewer):
         self.recalc_view()
         self.refresh_view(True)
 
-    def refresh_view_for_value_change(self, flags):
+    def on_update_table_for_value_change(self, evt):
         self.table.rebuild()
 
-    def refresh_view_for_style_change(self, flags):
+    def on_update_table_for_style_change(self, evt):
         self.table.rebuild()
 
     def recalc_data_model(self):
