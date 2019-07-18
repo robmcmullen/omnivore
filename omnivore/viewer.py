@@ -1,4 +1,5 @@
 import uuid
+import random
 import inspect
 import pkg_resources
 
@@ -147,6 +148,11 @@ class SegmentViewer:
     # List of toolbar items that should only be shown with this viewer
     viewer_extra_toolbar_desc = []
 
+    # Performance modifier to prevent non-essential viewers from getting
+    # updated at each frame. Viewers will not be updated frame count reaches a
+    # multiple of this value.
+    priority_refresh_frame_count = 12
+
     def __init__(self, control, linked_base):
         self.uuid = str(uuid.uuid4())
         self.control = control
@@ -154,6 +160,7 @@ class SegmentViewer:
 
         self.range_processor = ranges_to_indexes
         self.is_tracing = False
+        self.frame_count = 0
 
     ##### Properties
 
@@ -298,6 +305,17 @@ class SegmentViewer:
         self.linked_base.sync_caret_to_index_event += self.on_sync_caret_to_index
         self.document.refresh_event += self.on_refresh_view
         self.linked_base.recalc_event += self.on_recalc_view
+        try:
+            self.document.priority_level_refresh_event += self.on_priority_level_refresh
+            self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
+        except AttributeError:
+            pass
+        else:
+            # start the initial frame count on a random value so the frame
+            # refresh load can be spread around instead of each with the same
+            # frame count being refreshed at the same time.
+            self.frame_count = random.randint(0, self.priority_refresh_frame_count)
+
 
     def restore_session(self, s):
         log.debug("restore_session: %s" % str(s))
@@ -457,6 +475,32 @@ class SegmentViewer:
 
     def on_update_table_for_style_change(self, evt):
         pass
+
+    def on_priority_level_refresh(self, evt):
+        """Refresh based on frame count and priority. If the value passed
+        through this event is an integer, all viewers with priority values less
+        than the event priority value (i.e. the viewers with a higher priority)
+        will be refreshed.
+        """
+        log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        count = evt[0]
+        self.frame_count += 1
+        p = self.priority_refresh_frame_count
+        if self.frame_count > p or p < count:
+            self.do_priority_level_refresh()
+            self.frame_count = 0
+
+    def do_priority_level_refresh(self):
+        self.refresh_view(True)
+
+    def on_emulator_breakpoint(self, evt):
+        log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
+        self.do_emulator_breakpoint(evt)
+
+    def do_emulator_breakpoint(self, evt):
+        self.frame.status_message(f"{self.document.emulator.cycles_since_power_on} cycles")
+
+    #### extra save methods
 
     def get_extra_segment_savers(self, segment):
         """Hook to provide additional ways to save the data based on this view

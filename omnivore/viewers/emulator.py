@@ -1,6 +1,5 @@
 import os
 import sys
-import random
 from collections import namedtuple
 
 import numpy as np
@@ -25,11 +24,6 @@ class EmulatorViewerMixin:
 
     has_caret = False
 
-    # Performance modifier to prevent non-essential viewers from getting
-    # updated at each frame. Viewers will not be updated frame count reaches a
-    # multiple of this value.
-    priority_refresh_frame_count = 10
-
     @property
     def emulator(self):
         return self.linked_base.editor.document.emulator
@@ -41,16 +35,6 @@ class EmulatorViewerMixin:
     @property
     def linked_base_segment_identifier(self):
         return ""
-
-    def set_event_handlers(self):
-        super().set_event_handlers()
-        self.document.priority_level_refresh_event += self.on_priority_level_refresh
-        self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
-
-        # start the initial frame count on a random value so the frame refresh
-        # load can be spread around instead of each with the same frame count
-        # being refreshed at the same time.
-        self.frame_count = random.randint(0, self.priority_refresh_frame_count)
 
     def use_default_view_params(self):
         pass
@@ -75,32 +59,6 @@ class EmulatorViewerMixin:
         # blah.blah.title_bar
         self.control.GetParent().title_bar.Refresh()
 
-    #### event handlers
-
-    def on_priority_level_refresh(self, evt):
-        """Refresh based on frame count and priority. If the value passed
-        through this event is an integer, all viewers with priority values less
-        than the event priority value (i.e. the viewers with a higher priority)
-        will be refreshed.
-        """
-        log.debug("process_priority_level_refresh for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        count = evt[0]
-        self.frame_count += 1
-        p = self.priority_refresh_frame_count
-        if self.frame_count > p or p < count:
-            self.do_priority_level_refresh()
-            self.frame_count = 0
-
-    def do_priority_level_refresh(self):
-        self.refresh_view(True)
-
-    def on_emulator_breakpoint(self, evt):
-        log.debug("process_emulator_breakpoint for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
-        self.do_emulator_breakpoint(evt)
-
-    def do_emulator_breakpoint(self, evt):
-        self.frame.status_message(f"{self.document.emulator.cycles_since_power_on} cycles")
-
 
 class VideoViewer(EmulatorViewerMixin, SegmentViewer):
     name = "video"
@@ -115,7 +73,8 @@ class VideoViewer(EmulatorViewerMixin, SegmentViewer):
     # priority_refresh_frame_count = 10000000
 
     def set_event_handlers(self):
-        SegmentViewer.set_event_handlers(self)  # skip viewer mixin handlers, which skips the priority level refresh
+        # override SegmentViewer handlers, which skips the priority level
+        # refresh
         self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
         self.document.emulator_update_screen_event += self.on_emulator_update_screen
 
