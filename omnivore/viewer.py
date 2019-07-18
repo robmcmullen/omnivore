@@ -247,7 +247,6 @@ class SegmentViewer:
     def viewer_factory(cls, parent, linked_base, uuid=None, mdict={}):
         linked_base = cls.replace_linked_base(linked_base)
         control = cls.create_control(parent, linked_base, mdict.get('control',{}))
-        print("LINKEDBASE:", linked_base.__class__.__mro__)
         v = cls(control, linked_base)
         v.restore_session(mdict)
 

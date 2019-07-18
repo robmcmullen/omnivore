@@ -175,7 +175,6 @@ class CPU6502Table(sg.SegmentVirtualTable):
         return data, None
 
     def compute_col_lookup(self, dtype):
-        print(dtype)
         label_lookup = {label:i for i,label in enumerate(dtype.names)}
         col_from_cpu_state = [0] * len(self.col_labels)
         for i, d in enumerate(self.col_labels):
@@ -252,7 +251,6 @@ class DtypeTable(sg.SegmentVirtualTable):
 
     def get_data_style_view(self, linked_base):
         data = linked_base.emulator.calc_dtype_data(self.emulator_dtype_name)
-        print((data.dtype.names))
         return data, None
 
     def create_row_labels(self):
@@ -315,7 +313,7 @@ try:
 except:
     log.warning("Can't find local labels for emulator labels test")
 else:
-    print(labels1.labels)
+    pass #print(labels1.labels)
 
 class LabelTable(cg.VariableWidthHexTable):
     want_col_header = False

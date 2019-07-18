@@ -374,9 +374,9 @@ class ByteEditor(TileManagerBase):
     #### file handling
 
     def show(self, args=None):
-        log.critical(f"show: document {self.document}")
-        log.critical(f"show: collection {self.document.collection}")
-        log.critical(f"show: segments {self.document.segments}")
+        log.debug(f"show: document {self.document}")
+        log.debug(f"show: collection {self.document.collection}")
+        log.debug(f"show: segments {self.document.segments}")
         if self.has_command_line_viewer_override(args):
             self.create_layout_from_args(args)
         else:
@@ -432,10 +432,10 @@ class ByteEditor(TileManagerBase):
             linked_bases[base.uuid] = base
             log.debug("restore_linked_bases: linked_base[%s]=%s" % (base.uuid, base))
         uuid = s.get("center_base", None)
-        log.critical(f"looking for center_base: {uuid}")
+        log.debug(f"looking for center_base: {uuid}")
         try:
             self.center_base = linked_bases[uuid]
-            log.critical(f"found center_base: {self.center_base}")
+            log.debug(f"found center_base: {self.center_base}")
         except KeyError:
             # no saved session, so find the first interesting segment to display
             segment = self.document.collection.find_interesting_segment_to_edit()
@@ -447,8 +447,8 @@ class ByteEditor(TileManagerBase):
             self.center_base = LinkedBase(self, segment)
             linked_bases[self.center_base.uuid] = self.center_base
 
-        log.critical(f"linked_bases: {linked_bases}")
-        log.critical(f"center_base: {self.center_base}")
+        log.debug(f"linked_bases: {linked_bases}")
+        log.debug(f"center_base: {self.center_base}")
         self.linked_bases = linked_bases
 
     def change_initial_segment(self, ui_name):

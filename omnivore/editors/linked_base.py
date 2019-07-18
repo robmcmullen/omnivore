@@ -259,12 +259,12 @@ class LinkedBase:
         return self.current_selection is not None
 
     def set_current_selection(self, caret_handler):
-        print(f"set_current_selection: {caret_handler}")
+        log.debug(f"set_current_selection: {caret_handler}")
         self.current_selection = caret_handler
         return caret_handler.get_selected_status_message()
 
     def clear_current_selection(self):
-        print(f"clear_current_selection")
+        log.debug(f"clear_current_selection")
         self.current_selection = None
 
     def adjust_selection(self, old_segment):

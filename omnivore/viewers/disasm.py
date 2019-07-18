@@ -115,7 +115,6 @@ class DisassemblyTable(SegmentTable):
         self.current = self.linked_base.document.disassembler.parse(segment, self.max_num_entries)
         self.parsed = None
         self.init_boundaries()
-        print(f"new num_rows: {self.num_rows}, {segment}")
 
 
 class DisassemblyControl(SegmentGridControl):

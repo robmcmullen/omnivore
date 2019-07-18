@@ -132,8 +132,7 @@ class TileManagerBase(SawxEditor):
         if not viewers:
             log.debug(f"restore_layout: no template {default_name}, falling back to {self.default_viewers}")
             viewers = [{'name':name, 'uuid':name} for name in self.default_viewers.split(",")]
-
-        log.critical(viewers)
+        log.debug(f"restore_layout: viewers={viewers}")
 
         if "initial_segment_type" in s:
             self.change_initial_segment(s["initial_segment_type"])
@@ -150,7 +149,7 @@ class TileManagerBase(SawxEditor):
     def replace_layout(self, s):
         """Replace the existing layout with an entirely new layout.
         """
-        log.critical(f"replace_layout: replacing current layout")
+        log.debug(f"replace_layout: replacing current layout")
         self.control.remove_all()
         self.restore_layout(s, True)
 
