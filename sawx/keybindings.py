@@ -51,12 +51,12 @@ class KeyBindingDescription:
         except AttributeError:
             log.debug(f"No keybinding description found in {source}")
         else:
-            for action_key, text in source.keybinding_desc.items():
+            for action_key, text in desc:
                 if not text:
                     continue
                 a = wx.AcceleratorEntry()
                 a.FromString(text)
-                # print(f"{a.ToString()}: {action_key} flags={a.GetFlags()} keycode={a.GetKeyCode()}")
+                print(f"{a.ToString()}: {action_key} flags={a.GetFlags()} keycode={a.GetKeyCode()}")
                 if a.IsOk():
                     try:
                         action = source.calc_usable_action(action_key)

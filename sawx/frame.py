@@ -144,8 +144,10 @@ class SawxFrame(wx.Frame):
             self.statusbar.sync_with_editor(self.raw_statusbar)
 
     def create_keybindings(self):
-        log.debug(f"create_menubar: active editor={self.active_editor}")
-        self.keybindings = keybindings.KeyBindingDescription(self.active_editor, self.menubar.valid_id_map)
+        log.debug(f"create_keybindings: active editor={self.active_editor}")
+        # current_id_map = self.menubar.valid_id_map
+        current_id_map = None
+        self.keybindings = keybindings.KeyBindingDescription(self.active_editor, current_id_map)
 
     def set_title(self):
         app = wx.GetApp()
