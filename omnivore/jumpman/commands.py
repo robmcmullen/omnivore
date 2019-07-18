@@ -69,6 +69,19 @@ class JumpmanBaseCommand(SetRangeValueCommand):
         log.debug(f"Jumpman undo command {self.ui_name}: {level}")
 
 
+class MoveHarvestGridCommand(JumpmanBaseCommand):
+    short_name = "move_harvest_grid"
+    ui_name = "Move Harvest Grid"
+
+    def __init__(self, segment, dx, dy):
+         super().__init__(segment, [(0x46, 0x48)], None)
+         self.dx = dx
+         self.dy = dy
+
+    def get_data(self, orig):
+        return (self.dx, self.dy)
+
+
 class CreateObjectCommand(JumpmanBaseCommand):
     short_name = "create_jumpman_obj"
     ui_name = "Create Object"

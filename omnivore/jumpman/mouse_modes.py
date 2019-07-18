@@ -512,8 +512,7 @@ class DrawCoinMode(DrawMode):
             dx = (self.mouse_down[0] - x) & 0x1f
             dy = ((self.mouse_down[1] - y) & 0xf) * 2
             self.display_coords(evt)
-            values = [dx, dy]
-            cmd = ChangeByteCommand(e.segment, 0x46, 0x48, values)
+            cmd = jc.MoveHarvestGridCommand(e.segment, dx, dy)
             e.editor.process_command(cmd, self.batch)
 
     def process_left_down(self, evt):
