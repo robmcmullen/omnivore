@@ -421,7 +421,7 @@ class MultiCaretHandler:
 
 ##### Mouse modes
 
-class MouseMode(object):
+class MouseMode:
     """
     Processing of mouse events, separate from the rendering window
     
@@ -885,6 +885,7 @@ class MouseEventMixin:
         if mode is None:
             mode = self.default_mouse_mode_cls
         if not self.is_mouse_mode(mode):
+            self.mouse_mode.cleanup()
             mode_log.debug("set_mouse_mode: %s" % mode)
             self.mouse_mode = mode(self)
         else:

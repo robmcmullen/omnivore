@@ -472,7 +472,8 @@ class DrawCoinMode(DrawMode):
         self.batch = None
 
     def cleanup(self):
-        self.control.segment_viewer.screen.style[:] = 0
+        v = self.control.segment_viewer
+        v.current_level.playfield.style[:] &= (0xff ^ style_bits.comment_bit_mask)
 
     def get_caret(self):
         if self.is_bad_location:
