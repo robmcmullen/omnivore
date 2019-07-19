@@ -139,9 +139,13 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
     def restore_extra_from_dict(self, e):
         log.debug("metadata: %s" % str(e))
         if 'items_per_row' in e:
-            self.items_per_row = e['items_per_row']
+            value = e['items_per_row']
+            if value > 0:
+                self.items_per_row = value
         if 'zoom' in e:
-            self.zoom = e['zoom']
+            value = e['zoom']
+            if value > 0:
+                self.zoom = value
 
     def calc_default_table(self, linked_base):
         return self.default_table_cls(linked_base, self.items_per_row)
