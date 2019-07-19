@@ -5,8 +5,9 @@ import sys
 
 import wx
 
-from sawx.action import SawxAction, SawxNameChangeAction, SawxRadioListAction
+from sawx.action import SawxAction, SawxNameChangeAction, SawxRadioListAction, SawxRadioAction
 from sawx.frame import SawxTablessFrame
+from sawx.ui.dialogs import prompt_for_dec
 
 from ... import commands
 from ... import errors
@@ -36,6 +37,31 @@ class emu_list(SawxRadioListAction):
     def perform(self, action_key):
         item = self.get_item(action_key)
         self.editor.document.emulator_class_override = item
+
+
+class emu_boot_skip_frames(SawxAction):
+    def calc_name(self, action_key):
+        return "Skip Boot Frames..."
+
+    def show_dialog(self):
+        value = prompt_for_dec(self.editor.control, "Skip Boot Frames (decimal, use $ for hex)", "Skip Boot Frames")
+        if value is not None:
+            print(f"emu_boot_skip_frames: {value}")
+            self.editor.document.skip_frames_on_boot = value
+
+    def perform(self, action_key):
+        wx.CallAfter(self.show_dialog)
+
+
+class emu_boot_start_paused(SawxRadioAction):
+    name = "Start Paused"
+    def calc_checked(self, action_key):
+        return self.editor.document.pause_emulator_on_boot
+
+    def perform(self, action_key):
+        self.editor.document.pause_emulator_on_boot = not self.editor.document.pause_emulator_on_boot
+        print("NOW Paused?", self.editor.document.pause_emulator_on_boot)
+
 
 class emu_boot_disk_image(SawxAction):
     def calc_name(self, action_key):
@@ -73,6 +99,7 @@ class emu_boot_segment(emu_boot_disk_image):
 
     def do_boot(self, doc, source_document):
         doc.boot(self.editor.focused_viewer.segment)
+
 
 class emu_restore(SawxAction):
     def calc_name(self, action_key):

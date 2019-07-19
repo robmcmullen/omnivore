@@ -65,7 +65,7 @@ class EmulationDocument(DiskImageDocument):
         return f"EmulationDocument: mime={self.mime}, {self.uri}. {self.emulator_type} source={self.source_document}"
 
     @classmethod
-    def create_document(cls, source_document, emulator_type, skip_frames_on_boot=False, extra_metadata=None):
+    def create_document(cls, source_document, emulator_type, skip_frames_on_boot=None, extra_metadata=None):
         try:
             emu_cls = em.find_emulator(emulator_type)
         except errors.UnknownEmulatorError:
@@ -89,6 +89,10 @@ class EmulationDocument(DiskImageDocument):
         emu.configure_emulator()
         log.debug(f"emulator changed to {emu}")
         doc = cls(None, emulator_type, emu, source_document)
+        if skip_frames_on_boot is not None:
+            doc.skip_frames_on_boot = skip_frames_on_boot
+        elif source_document.skip_frames_on_boot > 0:
+            doc.skip_frames_on_boot = source_document.skip_frames_on_boot
         if extra_metadata:
             doc.restore_save_points_from_dict(extra_metadata)
         cls.emulator_document[emu_cls.ui_name] = doc
@@ -152,7 +156,7 @@ class EmulationDocument(DiskImageDocument):
 
     #####
 
-    def boot(self, segment=None, start_immediately=True):
+    def boot(self, segment=None):
         emu = self.emulator
         emu.configure_emulator([])
         if segment is None:
@@ -168,7 +172,7 @@ class EmulationDocument(DiskImageDocument):
             emu.next_frame()
         self.create_segments()
         self.create_timer()
-        if start_immediately:
+        if not self.source_document.pause_emulator_on_boot:
             self.start_timer()
 
     def load(self, segment=None):

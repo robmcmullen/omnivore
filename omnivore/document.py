@@ -44,6 +44,8 @@ class DiskImageDocument(SawxDocument):
         self._disassembler = None
         self._operating_system = "atari800"
         self._machine_labels = None
+        self.skip_frames_on_boot = 0
+        self.pause_emulator_on_boot = False
         SawxDocument.__init__(self, file_metadata)
 
         self.cpu_changed_event = EventHandler(self)
@@ -137,6 +139,8 @@ class DiskImageDocument(SawxDocument):
 
         s["serialized user segments"] = list(self.user_segments)
         s["document memory map"] = sorted([list(i) for i in list(self.document_memory_map.items())])  # save as list of pairs because json doesn't allow int keys for dict
+        s["skip_frames_on_boot"] = self.skip_frames_on_boot
+        s["pause_emulator_on_boot"] = self.pause_emulator_on_boot
 
     def restore_session(self, e):
         SawxDocument.restore_session(self, e)
@@ -151,6 +155,10 @@ class DiskImageDocument(SawxDocument):
             log.warning("found serialized user segments from Omnivore 1.0. These will not be restored.")
         if 'document memory map' in e:
             self.document_memory_map = dict(e['document memory map'])
+        if 'skip_frames_on_boot' in e:
+            self.skip_frames_on_boot = e['skip_frames_on_boot']
+        if 'pause_emulator_on_boot' in e:
+            self.pause_emulator_on_boot = e['pause_emulator_on_boot']
 
     #### convenience methods
 
