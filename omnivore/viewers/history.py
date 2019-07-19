@@ -76,6 +76,28 @@ class InstructionHistoryTable(cg.VirtualTable):
             else:
                 yield "%d" % (emu.cpu_history[line][0])
 
+    def find_previous_line(self, start, flag_type):
+        emu = self.virtual_linked_base.emulator
+        line = start
+        while line > 0:
+            line -= 1
+            h = emu.cpu_history[line]
+            t = h['disassembler_type']
+            if flag_type == t:
+                break
+        return line
+
+    def find_next_line(self, start, flag_type):
+        emu = self.virtual_linked_base.emulator
+        line = start
+        while line < self.num_rows - 1:
+            line += 1
+            h = emu.cpu_history[line]
+            t = h['disassembler_type']
+            if flag_type == t:
+                break
+        return line
+
     def calc_row_label_width(self, view_params):
         return view_params.calc_text_width("256 256")
 
@@ -124,6 +146,13 @@ class InstructionHistoryTable(cg.VirtualTable):
 class InstructionHistoryGridControl(SegmentGridControl):
     default_table_cls = InstructionHistoryTable
 
+    extra_keybinding_desc = {
+        "caret_move_frame_down": "Shift+Pagedown",
+        "caret_move_frame_up": "Shift+Pageup",
+    }
+    keybinding_desc = SegmentGridControl.keybinding_desc
+    keybinding_desc.update(extra_keybinding_desc)
+
     def calc_default_table(self, linked_base):
         table = self.default_table_cls(linked_base)
         table.rebuild()  # find number of rows so scrollbars can be set properly
@@ -134,6 +163,18 @@ class InstructionHistoryGridControl(SegmentGridControl):
 
     def move_viewport_to_bottom(self):
         self.move_viewport_origin((self.table.current_num_rows, 0))
+
+    def caret_move_frame_down(self, evt, f):
+        row = self.caret_handler.current.rc[0]
+        row = self.table.find_next_line(row, flags.DISASM_FRAME_END)
+        self.caret_handler.move_carets_to(row, 0)
+        self.caret_handler.validate_carets()
+
+    def caret_move_frame_up(self, evt, f):
+        row = self.caret_handler.current.rc[0]
+        row = self.table.find_previous_line(row, flags.DISASM_FRAME_END)
+        self.caret_handler.move_carets_to(row, 0)
+        self.caret_handler.validate_carets()
 
     def recalc_view(self):
         log.debug(f"recalc_view: {self}")
