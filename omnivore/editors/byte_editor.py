@@ -455,6 +455,34 @@ class ByteEditor(TileManagerBase):
         log.debug(f"center_base: {self.center_base}")
         self.linked_bases = linked_bases
 
+    def find_linked_base_by_name(self, segment_name):
+        """Check to see if existing linked base is using a segment with the
+        specified name
+        """
+        for linked_base in self.linked_bases.values():
+            if linked_base.segment.ui_name == segment_name:
+                log.debug(f"find_linked_base_by_name: found {linked_base}")
+                return linked_base
+        raise KeyError
+
+    def calc_linked_base_by_name(self, segment_name):
+        """Find or create a linked base that is using the segment with the
+        specified name.
+        """
+        try:
+            linked_base = self.find_linked_base_by_name(segment_name)
+        except KeyError:
+            for segment in self.document.collection.iter_segments():
+                log.debug(f"calc_linked_base_by_name: trying {segment.name}")
+                if segment.name == segment_name:
+                    log.debug(f"calc_linked_base_by_name: found {segment}")
+                    linked_base = LinkedBase(self, segment)
+                    break
+            else:
+                log.debug(f"calc_linked_base_by_name: no segment named {segment_name}")
+                raise KeyError(f"No segment with name {segment_name}")
+        return linked_base
+
     def change_initial_segment(self, ui_name):
         """Change the initial viewed segment to the first one that matches
         the ui_name

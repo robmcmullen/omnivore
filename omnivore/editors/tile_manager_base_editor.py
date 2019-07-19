@@ -271,6 +271,29 @@ class TileManagerBase(SawxEditor):
             state = v.linked_base == self.center_base
         return state
 
+    def calc_linked_base_from_viewer_metadata(self, e):
+        try:
+            linked_base = self.linked_bases[e['linked base']]
+        except KeyError:
+            try:
+                name = e['segment_name']
+            except KeyError:
+                linked_base = self.center_base
+            else:
+                try:
+                    linked_base = self.calc_linked_base_by_name(name)
+                except KeyError:
+                    linked_base = self.center_base
+                else:
+                    self.linked_bases[linked_base.uuid] = linked_base
+        log.debug(f"calc_linked_base_from_viewer_metadata: {linked_base}")
+        return linked_base
+
+    def verify_linked_base(self, linked_base):
+        """Make sure linked base is recorded in list"""
+        if linked_base.uuid not in self.linked_bases:
+            self.linked_base[linked_base.uuid] = linked_base
+
     def create_viewers(self, viewer_metadata, force=False):
         # Create a set of viewers from a list
         import pprint
@@ -298,10 +321,7 @@ class TileManagerBase(SawxEditor):
                 log.debug("identified viewer: %s" % viewer_cls)
 
                 if e:
-                    try:
-                        linked_base = self.linked_bases[e['linked base']]
-                    except KeyError:
-                        linked_base = self.center_base
+                    linked_base = self.calc_linked_base_from_viewer_metadata(e)
                     log.debug("recreating viewer %s: %s" % (viewer_type, uuid))
                 else:  # either not a uuid or an unknown uuid
                     linked_base = viewer_cls.calc_segment_specific_linked_base(self)

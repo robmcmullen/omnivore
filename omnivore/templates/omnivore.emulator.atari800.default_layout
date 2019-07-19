@@ -111,10 +111,11 @@
       },
       {
         "control": {
-          "items_per_row": -1,
+          "items_per_row": 16,
           "zoom": 1
         },
-        "name": "antic",
+        "name": "hex",
+        "segment_name": "Main Memory",
         "uuid": "eeb18605-f6b6-4eae-bcd3-184d284e106b"
       },
       {
