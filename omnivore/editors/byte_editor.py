@@ -153,6 +153,8 @@ class ByteEditor(TileManagerBase):
             ["Restore Layout",
                 "layout_restore",
             ],
+            None,
+            "show_toolbar",
         ],
         ["Bytes",
             "byte_set_to_zero",

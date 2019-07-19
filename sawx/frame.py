@@ -130,6 +130,7 @@ class SawxFrame(wx.Frame):
         except errors.RecreateDynamicMenuBar:
             self.create_toolbar()
             self.toolbar.sync_with_editor(self.raw_toolbar)
+        self.raw_toolbar.Show(self.active_editor.show_toolbar)
 
     def create_statusbar(self):
         log.debug(f"create_statusbar: active editor={self.active_editor}")

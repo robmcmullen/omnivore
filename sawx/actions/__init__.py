@@ -4,7 +4,7 @@ import wx
 import wx.lib.inspection
 
 from ..frame import SawxFrame
-from ..action import SawxAction, SawxNameChangeAction, SawxListAction
+from ..action import SawxAction, SawxNameChangeAction, SawxListAction, SawxRadioAction
 from ..persistence import iter_templates
 from ..ui.dialogs import prompt_for_dec, get_file_dialog_wildcard
 from ..ui.prefs_dialog import PreferencesDialog
@@ -278,6 +278,16 @@ class next_char(SawxAction):
 
     def perform(self, action_key):
         print("Right!")
+
+class show_toolbar(SawxRadioAction):
+    name = "Show Toolbar"
+
+    def calc_checked(self, action_key):
+        return self.editor.show_toolbar
+
+    def perform(self, action_key):
+        self.editor.show_toolbar = not self.editor.show_toolbar
+        wx.CallAfter(self.editor.frame.sync_active_tab)
 
 class raise_exception(SawxAction):
     def calc_name(self, action_key):

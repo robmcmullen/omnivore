@@ -110,6 +110,8 @@ class EmulationEditor(ByteEditor):
             ["Restore Emulator Layout",
                 "layout_restore_emu",
             ],
+            None,
+            "show_toolbar",
         ],
         ["Bytes",
             "byte_set_to_zero",
