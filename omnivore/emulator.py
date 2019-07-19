@@ -180,7 +180,7 @@ class Emulator(Debugger):
 
     ##### Initialization
 
-    def configure_emulator(self, emu_args=None, instruction_history_count=100000, *args, **kwargs):
+    def configure_emulator(self, emu_args=None, instruction_history_count=200000, *args, **kwargs):
         self.configure_labels()
         self.init_cpu_history(instruction_history_count)
         self.args = self.process_args(emu_args)
