@@ -17,6 +17,8 @@ from . import errors
 import logging
 log = logging.getLogger(__name__)
 
+KFEST_HACK = False
+
 
 # Values must correspond to values in libdebugger.h
 FRAME_START = 0
@@ -299,6 +301,8 @@ class Emulator(Debugger):
         self.process_key_state()
         if not self.is_frame_finished:
             print(f"next_frame: continuing frame from cycle {self.current_cycle_in_frame} of frame {self.current_frame_number}")
+        if KFEST_HACK:
+            self.kfest_before_history_count = len(self.cpu_history)
         bpid = self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd, self.cpu_history)
         if self.is_frame_finished:
             self.frame_count += 1
@@ -439,6 +443,13 @@ class Emulator(Debugger):
             log.debug(f"Saving history at {frame_number}")
             d = self.calc_current_state()
             self.current_restart.save_frame(frame_number, d)
+            if KFEST_HACK:
+                try:
+                    for i in range(self.kfest_before_history_count, len(self.cpu_history)):
+                        self.kfest_history_to_frame_number[i] = frame_number
+                    self.kfest_frame_number_to_history[frame_number] = (self.kfest_before_history_count, len(self.cpu_history))
+                except IndexError:
+                    raise
             # self.print_history(frame_number)
 
     def get_history(self, frame_number):
@@ -466,6 +477,65 @@ class Emulator(Debugger):
             else:
                 self.current_restart = restart
                 self.restore_state(d)
+
+    def kfest_step_history(self, frame_number, step_to):
+        from .disassembler import flags
+        from .disassembler import dtypes as dd
+        from .videolookup import videoarray
+        from .utils import apple2util as a2
+        try:
+            mem_to_screen_xy = self.mem_to_screen_xy
+        except AttributeError:
+            mem_to_screen_xy = np.zeros(8192, dtype=np.uint16)
+            # for addr, y in zip(hgr_offsets, hgr_row_order):
+            for y, addr in enumerate(a2.hgr_offsets):
+                x = y * 40
+                mem_to_screen_xy[addr:addr+40] = np.arange(x, x+40, dtype=np.uint16)
+                print(mem_to_screen_xy[addr:addr+40])
+            self.mem_to_screen_xy = mem_to_screen_xy
+        low, high = self.kfest_frame_number_to_history[frame_number]
+        print(f"kfest_step_history: {low}->{high}: {step_to}")
+        for row in range(low, step_to):
+            h = self.cpu_history[row].view(dtype=dd.HISTORY_6502_DTYPE)
+            # print(f"{row}: {h}")
+            t = h['disassembler_type']
+            if t == flags.DISASM_6502_HISTORY:
+                f = h['flag'] & flags.FLAG_RESULT_MASK
+                addr = h['target_addr']
+                if f == flags.FLAG_MEMORY_ALTER:
+                    print("ALTERING", addr, h['after1'])
+                    value = h['after1']
+                elif f == flags.FLAG_STORE_A_IN_MEMORY:
+                    print("ALTERING from A", addr, h['a'])
+                    value = h['a']
+                elif f == flags.FLAG_STORE_X_IN_MEMORY:
+                    print("ALTERING from X", addr, h['x'])
+                    value = h['x']
+                elif f == flags.FLAG_STORE_Y_IN_MEMORY:
+                    print("ALTERING from Y", addr, h['y'])
+                    value = h['y']
+                else:
+                    continue
+                self.main_memory[addr] = value
+                # self.video_array[step_to] = 1
+                if addr >=0x2000 and addr < 0x4000:
+                    try:
+                        vaddr = mem_to_screen_xy[addr - 0x2000]
+                    except IndexError:
+                        print("NOT ON SCREEN", addr)
+                    else:
+                        # bits = a2.byte_to_7_pixels[value]
+                        # print("Plotting", bits, "at", first_addr)
+                        # self.video_array[first_addr:first_addr+7] = bits
+                        self.video_array[vaddr] = value
+                    # self.video_array[addr - 0x2000] = value
+                    # try:
+                    #     dest = videoarray[addr]
+                    #     self.video_array[dest] = value
+                    #     print(addr, dest, value)
+                    # except KeyError:
+                    #     print("BAD!!!!", addr, dest)
+                self.memory_access_array[addr] = 0xff
 
     def restore_restart_plus(self, restart_number, frame_number, num_instructions):
         self.restore_restart(restart_number, frame_number)
@@ -531,6 +601,9 @@ class Emulator(Debugger):
 
     def init_cpu_history(self, num_entries):
         self.cpu_history = disasm.HistoryStorage(num_entries)
+        if KFEST_HACK:
+            self.kfest_history_to_frame_number = [0]*num_entries
+            self.kfest_frame_number_to_history = {}
 
     def cpu_history_show_range(self, from_index, details=False):
         self.cpu_history.debug_range(from_index)

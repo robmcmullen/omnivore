@@ -22,6 +22,8 @@ import logging
 log = logging.getLogger(__name__)
 
 
+KFEST_HACK = False
+
 
 class InstructionHistoryTable(cg.VirtualTable):
     column_labels = ["^Instruction", "^Result"]
@@ -161,6 +163,9 @@ class InstructionHistoryGridControl(SegmentGridControl):
     keybinding_desc = SegmentGridControl.keybinding_desc
     keybinding_desc.update(extra_keybinding_desc)
 
+    if KFEST_HACK:
+        kfest_detach_update = False
+
     def calc_default_table(self, linked_base):
         table = self.default_table_cls(linked_base)
         table.rebuild()  # find number of rows so scrollbars can be set properly
@@ -191,12 +196,34 @@ class InstructionHistoryGridControl(SegmentGridControl):
     def handle_select_start(self, evt, row, col, flags):
         doc = self.segment_viewer.document
         print("LEFT DOWN!", row, col, doc, doc.emulator_running)
-        if doc.emulator_paused:
-            emu = self.table.emulator
-            print("frame")
+        if KFEST_HACK:
+            if doc.emulator_paused:
+                try:
+                    self.kfest_detach_update = True
+                    emu = self.table.emulator
+                    h = emu.cpu_history[row]
+                    t = h['disassembler_type']
+                    frame_number = emu.kfest_history_to_frame_number[row]
+                    print(f"history: {row}: {frame_number}, {emu.kfest_frame_number_to_history[frame_number]}")
+                    print(f"history: {row}: {h}")
+                    emu.restore_restart(0, frame_number - 1)
+                    emu.kfest_step_history(frame_number, row)
+                    doc.emulator_update_screen_event(True)
+                    doc.priority_level_refresh_event(100)
+                except IndexError:
+                    pass
+                except KeyError:
+                    pass
+            else:
+                self.kfest_detach_update = False
+
         return super().handle_select_start(evt, row, col, flags)
 
     def recalc_view(self):
+        if KFEST_HACK:
+            if self.kfest_detach_update:
+                log.critical("KFEST: DETACHED")
+                return
         log.debug(f"recalc_view: {self}")
         self.table.rebuild()
         cg.CompactGrid.recalc_view(self)
