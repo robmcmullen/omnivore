@@ -9,6 +9,8 @@ omnivore/arch/antic_speedups.c
 omnivore/arch/pixel_speedups.c
 omnivore/disassembler/cputables.py
 omnivore/disassembler/valid_cpus.py
+omnivore/disassembler/libudis.c
+omnivore/disassembler/libudis.pyx
 test/tmp.*
 test/test_data
 cprof.*
@@ -24,8 +26,8 @@ out
 atari800.cfg
 /*.atr
 /*.xex
-/*omnivore
-/*omniemu
+/*.omnivore
+/*.omniemu
 /test*
 /dist-*
 /tmp
