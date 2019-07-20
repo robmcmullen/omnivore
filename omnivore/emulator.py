@@ -464,6 +464,17 @@ class Emulator(Debugger):
                 self.current_restart = restart
                 self.restore_state(d)
 
+    def restore_restart_plus(self, restart_number, frame_number, num_instructions):
+        self.restore_restart(restart_number, frame_number)
+        self.step_into(num_instructions)
+        bpid = self.low_level_interface.next_frame(self.input, self.output_raw, self.debug_cmd, self.cpu_history)
+        if self.is_frame_finished:
+            self.frame_count += 1
+            self.process_frame_events()
+            self.save_history()
+        self.forced_modifier = None
+        return self.get_breakpoint(bpid)
+
     def restore_history(self, frame_number):
         print(("restoring state from frame %d" % frame_number))
         frame_number = int(frame_number)

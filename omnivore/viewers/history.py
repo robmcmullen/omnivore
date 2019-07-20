@@ -36,6 +36,10 @@ class InstructionHistoryTable(cg.VirtualTable):
         self.visible_history_lookup_table = None
         cg.VirtualTable.__init__(self, len(self.column_labels), s.origin)
 
+    @property
+    def emulator(self):
+        return self.virtual_linked_base.emulator
+
     def calc_num_rows(self):
         return self.current_num_rows
 
@@ -47,14 +51,14 @@ class InstructionHistoryTable(cg.VirtualTable):
         if row < 0:
             return "----"
         try:
-            emu = self.virtual_linked_base.emulator
+            emu = self.emulator
             return "%04x" % (emu.cpu_history[row][0])
         except IndexError:
             return "----"
 
     def get_row_label_text(self, start_line, num_lines, step=1):
         last_line = min(start_line + num_lines, self.num_rows)
-        emu = self.virtual_linked_base.emulator
+        emu = self.emulator
         for line in range(start_line, last_line, step):
             h = emu.cpu_history[line]
             t = h['disassembler_type']
@@ -77,7 +81,7 @@ class InstructionHistoryTable(cg.VirtualTable):
                 yield "%d" % (emu.cpu_history[line][0])
 
     def find_previous_line(self, start, flag_type):
-        emu = self.virtual_linked_base.emulator
+        emu = self.emulator
         line = start
         while line > 0:
             line -= 1
@@ -88,7 +92,7 @@ class InstructionHistoryTable(cg.VirtualTable):
         return line
 
     def find_next_line(self, start, flag_type):
-        emu = self.virtual_linked_base.emulator
+        emu = self.emulator
         line = start
         while line < self.num_rows - 1:
             line += 1
@@ -96,6 +100,10 @@ class InstructionHistoryTable(cg.VirtualTable):
             t = h['disassembler_type']
             if flag_type == t:
                 break
+        return line
+
+    def find_frame_instruction(self, line):
+        line = self.find_previous_line(line, flags.DISASM_FRAME_END)
         return line
 
     def calc_row_label_width(self, view_params):
@@ -123,14 +131,13 @@ class InstructionHistoryTable(cg.VirtualTable):
         pass
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
-        emu = self.virtual_linked_base.emulator
+        emu = self.emulator
         self.visible_history_start_row = start_row
         self.parsed = emu.calc_stringified_history(start_row, visible_rows)
 
     @property
     def needs_rebuild(self):
-        v = self.virtual_linked_base
-        emu = v.emulator
+        emu = self.emulator
         return not self.current_num_rows == emu.num_cpu_history_entries
 
     def rebuild(self):
@@ -175,6 +182,14 @@ class InstructionHistoryGridControl(SegmentGridControl):
         row = self.table.find_previous_line(row, flags.DISASM_FRAME_END)
         self.caret_handler.move_carets_to(row, 0)
         self.caret_handler.validate_carets()
+
+    def handle_select_start(self, evt, row, col, flags):
+        doc = self.segment_viewer.document
+        print("LEFT DOWN!", row, col, doc, doc.emulator_running)
+        if doc.emulator_paused:
+            emu = self.table.emulator
+            print("frame")
+        return super().handle_select_start(evt, row, col, flags)
 
     def recalc_view(self):
         log.debug(f"recalc_view: {self}")

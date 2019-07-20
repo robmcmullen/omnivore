@@ -273,6 +273,8 @@ class Debugger(Serializable):
         b = Breakpoint(self, 0)
         b.step_into(number)
 
+    count_instructions = step_into
+
     def break_vbi_start(self, number=1):
         b = Breakpoint(self, 0)
         b.break_vbi_start(number)
