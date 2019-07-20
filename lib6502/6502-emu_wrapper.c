@@ -43,6 +43,7 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 
 	cycles_per_scan_line = cycles_per;
 	cycles_per_frame = (long)(scan_lines * cycles_per_scan_line);
+	// printf("lib6502_init_cpu: cycles_per_frame=%d, cycles_per_scan_line=%d\n", cycles_per_frame, cycles_per_scan_line);
 
 	liba2_init_graphics();
 
@@ -61,15 +62,17 @@ void lib6502_clear_state_arrays(void *input, output_t *output) {
 	status->current_instruction_in_frame = 0;
 	status->use_memory_access = 1;
 	status->brk_into_debugger = 1;
+}
+
+void lib6502_configure_state_arrays(void *input, output_t *output) {
+	frame_status_t *status = &output->status;
 
 	status->final_cycle_in_frame = cycles_per_frame - 1;
 
 	// Initialize frame cycle count at max so first frame cycle count will
 	// start at zero
 	status->current_cycle_in_frame = cycles_per_frame - 1;
-}
-
-void lib6502_configure_state_arrays(void *input, output_t *output) {
+	// printf("lib6502_clear_state_arrays: final_cycle_in_frame=%d, current_cycle_in_frame=%d\n", status->final_cycle_in_frame, status->current_cycle_in_frame);
 }
 
 void lib6502_get_current_state(output_t *buf) {
@@ -395,6 +398,7 @@ int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emula
 			status->cycles_user += cycles;
 			// printf("pc=%04x user cycle = %ld\n", last_pc, status->cycles_user);
 		}
+		// printf("PC: %x, current_cycle_in_frame=%d, final_cycle_in_frame=%d, bpid=%d\n", last_pc, status->current_cycle_in_frame, status->final_cycle_in_frame, bpid);
 		if (bpid >= 0) {
 			return bpid;
 		}

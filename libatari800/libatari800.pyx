@@ -22,7 +22,7 @@ cdef char ** to_cstring_array(list_str):
         ret[i] = text
     return ret
 
-def start_emulator(args):
+def init_emulator(args):
     cdef char *fake_args[10]
     cdef char **argv = fake_args
     cdef int argc

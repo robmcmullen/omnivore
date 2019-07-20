@@ -185,7 +185,7 @@ class Emulator(Debugger):
         self.init_cpu_history(instruction_history_count)
         self.args = self.process_args(emu_args)
         self.low_level_interface.clear_state_arrays(self.input, self.output_raw)
-        self.low_level_interface.start_emulator(self.args)
+        self.low_level_interface.init_emulator(self.args)
         self.configure_emulator_defaults()
         self.emulator_started = True
         self.configure_io_arrays()

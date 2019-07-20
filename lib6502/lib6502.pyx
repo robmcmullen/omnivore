@@ -11,7 +11,7 @@ cdef extern:
     void lib6502_restore_state(np.uint8_t *buf)
     void lib6502_set_a2_emulation_mode(np.uint8_t value)
 
-def start_emulator(args):
+def init_emulator(args):
     lib6502_init_cpu(262, 65)  # apple 2 speed
 
 def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):

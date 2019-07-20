@@ -6,7 +6,8 @@ import time
 
 import numpy as np
 
-import omnivore
+import omnivore.emulator
+import omnivore.errors as errors
 import omnivore.debugger.dtypes as d
 
 class Segment:
@@ -31,11 +32,11 @@ if __name__ == "__main__":
             emu_name = "6502"
             data = np.fromfile(os.path.join(os.path.dirname(__file__), "lib6502/6502-emu/test/nestest-real-6502.rom"), dtype=np.uint8)
             segment = Segment(data, 0xc000)
-        emu_cls = omnivore.find_emulator(emu_name)
-    except omnivore.UnknownEmulatorError:
+        emu_cls = omnivore.emulator.find_emulator(emu_name)
+    except errors.UnknownEmulatorError:
         print(("Unknown emulator: %s" % emu_name))
     else:
-        print(("Emulating: %s" % emu_cls.pretty_name))
+        print(("Emulating: %s" % emu_cls.ui_name))
         emu = emu_cls()
         emu.configure_emulator()
         if segment is not None:
@@ -49,11 +50,11 @@ if __name__ == "__main__":
         print(emu.main_memory[0xc000:])
         print(emu.program_counter)
         print(emu.current_cpu_status)
-        if emu_name == "atari800":
-            b = emu.create_breakpoint(0xf267)
-        else:
-            b = emu.create_breakpoint(0xf018)
-        print(b)
+        # if emu_name == "atari800":
+        #     b = emu.create_breakpoint(0xf267)
+        # else:
+        #     b = emu.create_breakpoint(0xf018)
+        # print(b)
         while emu.current_frame_number < 10:
             brk = emu.next_frame()
             print(emu.main_memory[0xc000:])
