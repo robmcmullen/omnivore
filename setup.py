@@ -416,6 +416,7 @@ setup(
             'skeleton = omnivore.viewers.skeleton',
             'disasm = omnivore.viewers.disasm',
             'history = omnivore.viewers.history',
+            'labels = omnivore.viewers.labels',
         ],
 
         "sawx.documents": [
