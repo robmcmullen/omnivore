@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 try:
     from .miniasm import MiniAssembler, processors
     from .disasm import DisassemblyConfig, ParsedDisassembly
-    from .history import HistoryStorage
+    from .history import HistoryStorage, StringifiedHistory
     from . import libudis
 except RuntimeError:
     log.warning("cputables.py not generated; disassembler and mini assembler will not be available")

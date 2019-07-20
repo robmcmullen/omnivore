@@ -737,3 +737,8 @@ cdef class HistoryStorage:
         index = (self.history.first_entry_index + index) % self.history.num_allocated_entries
         output.parse_history_entries(self.history, index, num_lines_requested)
         return output
+
+    def stringify_to(self, StringifiedHistory output, int index, int num_lines_requested):
+        index = (self.history.first_entry_index + index) % self.history.num_allocated_entries
+        output.parse_history_entries(self.history, index, num_lines_requested)
+        return output

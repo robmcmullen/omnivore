@@ -10,3 +10,4 @@ from . import libudis
 
 
 HistoryStorage = libudis.HistoryStorage
+StringifiedHistory = libudis.StringifiedHistory

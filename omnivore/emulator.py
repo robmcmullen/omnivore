@@ -51,6 +51,8 @@ class Emulator(Debugger):
         self.output_raw = np.zeros([FRAME_STATUS_DTYPE.itemsize + self.output_array_dtype.itemsize], dtype=np.uint8)
         self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
         self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
+        self.num_stringified_lines = 500
+        self.stringified_lines = disasm.StringifiedHistory(self.num_stringified_lines)
         self.bootfile = None
         self.frame_event = []
         self.init_restart_tree()
@@ -194,6 +196,7 @@ class Emulator(Debugger):
         if labels is None:
             labels = load_memory_map(self.name)
         self.labels = labels
+        self.stringified_lines = disasm.StringifiedHistory(self.num_stringified_lines, self.labels.labels)
 
     def configure_emulator_defaults(self):
         pass
@@ -544,7 +547,7 @@ class Emulator(Debugger):
         display window (which ranges from 0 -> count) to the history entry
         starting at first_entry_index + start_index for count entries.
         """
-        return self.cpu_history.stringify(start_index, count, self.labels.labels)
+        return self.cpu_history.stringify_to(self.stringified_lines, start_index, count)
 
     @property
     def num_cpu_history_entries(self):
