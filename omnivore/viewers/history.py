@@ -156,6 +156,7 @@ class InstructionHistoryGridControl(SegmentGridControl):
     extra_keybinding_desc = {
         "caret_move_frame_down": "Shift+Pagedown",
         "caret_move_frame_up": "Shift+Pageup",
+        "caret_move_frame_top": "Shift+Left",
     }
     keybinding_desc = SegmentGridControl.keybinding_desc
     keybinding_desc.update(extra_keybinding_desc)
@@ -181,6 +182,10 @@ class InstructionHistoryGridControl(SegmentGridControl):
         row = self.caret_handler.current.rc[0]
         row = self.table.find_previous_line(row, flags.DISASM_FRAME_END)
         self.caret_handler.move_carets_to(row, 0)
+        self.caret_handler.validate_carets()
+
+    def caret_move_frame_top(self, evt, f):
+        self.caret_handler.move_carets_to(0, 0)
         self.caret_handler.validate_carets()
 
     def handle_select_start(self, evt, row, col, flags):
