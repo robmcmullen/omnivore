@@ -11,7 +11,7 @@ from .debugger import Debugger
 from .debugger.dtypes import FRAME_STATUS_DTYPE
 from .utils.historyutil import RestartTree
 from . import disassembler as disasm
-from .utils.archutil import Labels, load_memory_map
+from .utils.templateutil import load_memory_map
 from . import errors
 
 import logging

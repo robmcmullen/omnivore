@@ -14,7 +14,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-from ..utils.archutil import Labels
+from ..disassembler.labels import Labels
 filename = "./omnivore/templates/atari800.labels"
 try:
     labels1 = Labels.from_file(filename)

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import os
 
-from omnivore.utils.archutil import Labels, load_memory_map
+from omnivore.disassembler.labels import Labels
+from omnivore.utils.templateutil import load_memory_map
 
-from sawx.templates import template_subdirs
-template_subdirs.append(os.path.abspath("./omnivore/templates"))
+from sawx.filesystem import template_paths
+template_paths.append(os.path.abspath("./omnivore/templates"))
 
 import logging
 log = logging.getLogger(__name__)

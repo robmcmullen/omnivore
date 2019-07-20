@@ -11,7 +11,7 @@ from sawx.utils.nputil import to_numpy
 from sawx.events import EventHandler
 
 from .disassembler import DisassemblyConfig, valid_cpu_ids, cpu_name_to_id
-from .utils.archutil import Labels, load_memory_map
+from .utils.templateutil import load_memory_map
 
 import logging
 log = logging.getLogger(__name__)
