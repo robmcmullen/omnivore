@@ -83,3 +83,21 @@ class HexEditViewer(SegmentViewer):
 
     def update_carets(self, flags):
         pass
+
+    def select_hgr(self):
+        from sawx.ui.compactgrid_mouse import Caret
+        ch = self.control.caret_handler
+        ch.carets = []
+        table = self.control.table
+        for i in range(0,8192,128):
+            start = i
+            end = i + 120
+            rc = table.index_to_row_col(start)
+            caret = Caret(*rc)
+            caret.anchor_start = caret.anchor_initial_start = rc
+            rc = table.index_to_row_col(end)
+            caret.anchor_end = caret.anchor_initial_end = rc
+            print(caret)
+            ch.carets.append(caret)
+        flags = self.control.create_mouse_event_flags()
+        self.control.commit_change(flags)

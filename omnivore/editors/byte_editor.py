@@ -104,6 +104,7 @@ class ByteEditor(TileManagerBase):
             "paste",
             None,
             "select_all",
+            "select_hgr",
             "select_none",
             "select_invert",
             ["Mark Selection As",

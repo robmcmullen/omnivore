@@ -37,3 +37,12 @@ class ViewerListAction(ViewerActionMixin, SawxListAction):
 
 class ViewerRadioListAction(ViewerActionMixin, SawxRadioListAction):
     pass
+
+
+
+class select_hgr(ViewerAction):
+    name = "Select HGR Without Screen Holes"
+
+    def perform(self, action_key):
+        self.viewer.select_hgr()
+        self.editor.document.refresh_event(flags=True)
