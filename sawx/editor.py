@@ -188,7 +188,7 @@ class SawxEditor:
         self.document = document
         self.last_loaded_uri = document.uri
         self.last_saved_uri = None
-        self.show_toolbar = True
+        self.show_toolbar = False
 
     def __str__(self):
         return f"{self.__class__.__name__}: document={self.document}, prefs={self.get_preferences()}"
