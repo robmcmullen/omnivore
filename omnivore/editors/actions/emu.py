@@ -222,6 +222,7 @@ class emu_coldstart(SawxAction):
 
     def perform(self, action_key):
         self.editor.document.emulator.coldstart()
+        self.editor.document.resume_emulator()
 
 
 class emu_warmstart(SawxAction):
