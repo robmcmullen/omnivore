@@ -97,14 +97,14 @@ class Generic6502(Emulator):
     def coldstart(self):
         """Simulate an initial power-on startup.
         """
-        lib6502.start_emulator(None)
+        lib6502.init_emulator(None)
         if self.last_boot_state is not None:
             lib6502.restore_state(self.last_boot_state)
 
     def warmstart(self):
         """Simulate a warm start; i.e. pressing the system reset button
         """
-        lib6502.start_emulator(None)
+        lib6502.init_emulator(None)
         if self.last_boot_state is not None:
             lib6502.restore_state(self.last_boot_state)
 
