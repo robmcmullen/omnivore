@@ -195,11 +195,17 @@ class SawxApp(wx.App):
             t = time.time()
             if t > self.last_clipboard_check_time + self.clipboard_check_interval:
                 log.debug("checking clipboard")
-                wx.CallAfter(self.active_frame.active_editor.idle_when_active)
-                wx.CallAfter(self.active_frame.sync_can_paste)
+                wx.CallAfter(self.on_idle_after)
                 self.last_clipboard_check_time = time.time()
                 if self.debug_show_focused:
                     self.show_focused()
+
+    def on_idle_after(self):
+        try:
+            self.active_frame.active_editor.idle_when_active()
+            self.active_frame.sync_can_paste()
+        except AttributeError as e:
+            log.warning(f"on_idle for editor {self.active_frame.active_editor} reported {e}")
 
     def activate_timer(self, start=True):
         if start:
