@@ -14,6 +14,7 @@ class MAC65(Assembler):
 
     def __init__(self, verbose=False):
         Assembler.__init__(self, verbose)
+        self.current_parser = self.null_parser
 
     def assemble(self, source):
         if isinstance(source, str):
@@ -24,9 +25,6 @@ class MAC65(Assembler):
         if errors:
             result.errors = [errors]
         self.current_parser = self.null_parser
-        result.first_addr = None
-        result.last_addr = None
-        result.current_bytes = []
         if text:
             self.parse(result, text)
         return result
@@ -36,6 +34,8 @@ class MAC65(Assembler):
 
     def source_parser(self, result, line, cleanup=False):
         if cleanup:
+            if result.first_addr is None:
+                return
             if self.verbose: print("Code block: %x-%x" % (result.first_addr, result.last_addr))
             result.segments.append((result.first_addr, result.last_addr, result.current_bytes))
             result.first_addr = None
@@ -43,7 +43,7 @@ class MAC65(Assembler):
             result.current_bytes = []
             return
 
-        lineno, addr, data, text = line[0:5], line[6:10], line[12:30], line[31:]
+        lineno, addr, data, text = line[0:5], line[6:10], line[12:30], line[30:]
         addr = int(addr, 16)
         b = [int(a,16) for a in data.split()]
         #print hex(index), b
@@ -60,6 +60,21 @@ class MAC65(Assembler):
             result.current_bytes.extend(b)
             result.last_addr += count
 
+            directive = text.strip()
+            if len(directive) == len(text):
+                # label
+                _, directive = text.split(None, 1)
+            if directive.startswith("."):
+                if directive == ".byte":
+                    code_type = "b"
+                elif directive == ".word":
+                    code_type = "w"
+            else:
+                code_type = "code"
+            for i in range(count):
+                result.addr_type[addr + i] = code_type
+            if self.verbose: print(f"line: {addr:04x}, {text}")
+
     def equates_parser(self, result, line, cleanup=False):
         if cleanup:
             return
@@ -73,7 +88,7 @@ class MAC65(Assembler):
         if cleanup:
             return
         symbol, addr = line.split(": ")
-        result.labels[symbol.lower()] = int(addr, 16)
+        result.add_label(symbol, addr)
 
     def parse(self, result, text):
         for line in text.splitlines():
@@ -92,3 +107,4 @@ class MAC65(Assembler):
                 self.current_parser = self.symbol_parser
             else:
                 self.current_parser(result, line)
+        result.generate_data_info()

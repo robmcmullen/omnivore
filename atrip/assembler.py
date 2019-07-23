@@ -5,21 +5,123 @@ import pkg_resources
 
 from . import errors
 
+from omnivore.disassembler.labels import type_codes
+
 import logging
 log = logging.getLogger(__name__)
 
 
+class DataInfo:
+    def __init__(self, label, addr, type_code, count):
+        self.label = label
+        self.addr = addr
+        self.type_code = type_code
+        self.count = count
+        self.byte_count = self.count * (type_codes[type_code] + 1)
+
+    def __str__(self):
+        return f"DataInfo: {self.label}@${self.addr:04x}, {self.count}x{self.type_code}"
+
+    def __repr__(self):
+        return f"DataInfo: {self.label}@${self.addr:04x}, {self.count}x{self.type_code}"
+
+
 class AssemblerResult:
-    def __init__(self):
+    def __init__(self, verbose=False):
+        self.verbose = verbose
         self.timestamp = time.ctime()
         self.errors = []
         self.segments = []
         self.transitory_equates = {}
         self.equates = {}
         self.labels = {}
+        self.data_info = {}
+        self.addr_to_label = {}
+        self.addr_type_code = {}
+        self.first_addr = None
+        self.last_addr = None
+        self.current_bytes = []
+        self.user_variable_labels = None
 
     def __bool__(self):
         return not bool(self.errors)
+
+    def add_label(self, label, addr):
+        label = label.lower()
+        addr = int(addr, 16)
+        self.labels[label] = addr
+        if addr not in self.addr_to_label:
+            # first label takes priority if multiple labels for same addr
+            self.addr_to_label[addr] = label
+
+    def generate_data_info(self):
+        assembled_addrs = sorted(self.addr_type_code.keys())
+        print(assembled_addrs)
+        print(self.addr_to_label)
+        if len(assembled_addrs) < 1:
+            return
+
+        index = 0
+        self.data_info = {}
+        current_info = None
+
+        def add_data(info):
+            if self.verbose: print(f"adding data info: {info}")
+            self.data_info[info.label] = info
+
+        try:
+            while True:
+                if current_info is None:
+                    # find label
+                    while True:
+                        start = assembled_addrs[index]
+                        try:
+                            label = self.addr_to_label[start]
+                            current_type_code = self.addr_type_code[start]
+                            if current_type_code == "code":
+                                raise KeyError(f"address type_code {current_type_code} is not data")
+                            current_info = DataInfo(label, start, current_type_code, 1)
+                        except KeyError as e:
+                            print(f"index={index}: start={start:x}, {e}")
+                            index += 1
+                        else:
+                            break
+
+                # when we get here, we have a label that is pointing to some
+                # data, so find next label, gap in addresses assembled, or
+                # change in data type_code
+                if self.verbose: print(f"found data info: {current_info}")
+                last = start
+                while True:
+                    index += 1
+                    print(f"trying {index:x}")
+                    end = assembled_addrs[index]
+                    print(f"found {end:x} at {index}")
+                    if end > start + current_info.count + 1:
+                        # gap in addresses, meaning the data block has ended
+                        add_data(current_info)
+                        current_info = None
+                        break
+                    elif end in self.addr_to_label or self.addr_type_code[end] != current_type_code:
+                        add_data(current_info)
+                        current_info = None
+                        break
+                    else:
+                        current_info.count += 1
+        except IndexError:
+            # no more addresses in assembled_addrs array
+            if self.verbose: print(f"finished processing assembled_addrs")
+            if current_info is not None:
+                add_data(current_info)
+        if self.verbose: print(self.data_info)
+
+    def find_next_address_with_label(self, addr):
+        for a in sorted(self.addr_to_label):
+            if a > addr:
+                break
+        else:
+            raise KeyError
+        return a
 
 
 class Assembler:
