@@ -323,7 +323,7 @@ class LineRenderer(object):
                     offset = 0
                     extra_width = width - rect.width
                     rect.width = width
-                else:
+                elif offset is None:
                     offset = (rect.width - width)/2  # center text in cell
                 if width > self.largest_label_width:
                     self.largest_label_width = width
