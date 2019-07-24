@@ -1270,7 +1270,13 @@ class AuxWindow(wx.ScrolledCanvas):
         dc = wx.MemoryDC()
         dc.SetFont(self.parent.view_params.header_font)
         _, self.char_height = self.parent.view_params.calc_cell_size_in_pixels(1)
+        skip_base = self.parent.row_skip_base
         self.row_skip = self.calc_row_skip()
+        if self.row_skip > 1:
+            d, m = divmod(self.row_skip, skip_base)
+            if m > 0:
+                import math
+                self.row_skip = skip_base ** math.ceil(math.log(self.row_skip, skip_base))
         self.SetBackgroundColour(self.parent.view_params.empty_background_color)
 
     def calc_row_skip(self):
@@ -1312,8 +1318,9 @@ class RowLabelWindow(AuxWindow):
 
     def calc_row_skip(self):
         row_height = self.parent.line_renderer.h
-        if row_height < self.char_height + self.parent.view_params.row_height_extra_padding:
-            skip = (self.char_height + row_height - 1) // row_height
+        min_height = self.char_height
+        if row_height < min_height:
+            skip = (min_height + row_height - 1) // row_height
         else:
             skip = 1
         return skip
@@ -1423,6 +1430,7 @@ class CompactGridEvent(wx.PyCommandEvent):
 
 class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
     initial_zoom = 1
+    row_skip_base = 2  # row skip must be powers of this base
 
     wxEVT_CARET_MOVED = wx.NewEventType()
     EVT_CARET_MOVED = wx.PyEventBinder(wxEVT_CARET_MOVED, 1)
