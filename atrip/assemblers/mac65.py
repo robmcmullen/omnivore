@@ -60,19 +60,27 @@ class MAC65(Assembler):
             result.current_bytes.extend(b)
             result.last_addr += count
 
-            directive = text.strip()
-            if len(directive) == len(text):
-                # label
-                _, directive = text.split(None, 1)
-            if directive.startswith("."):
-                if directive == ".byte":
-                    code_type = "b"
-                elif directive == ".word":
-                    code_type = "w"
-            else:
-                code_type = "code"
+            try:
+                code_type = self.code_type_at_line[lineno]
+            except KeyError:
+                directive = text.strip()
+                if len(directive) == len(text):
+                    # label
+                    print("LABEL!!!", lineno, text)
+                    if len(text) > 0:
+                        _, directive = text.split(None, 1)
+                    else:
+                        directive = ".byte"
+                if directive.startswith("."):
+                    if directive == ".word":
+                        code_type = "w"
+                    else:
+                        code_type = "b"
+                else:
+                    code_type = "code"
+                self.code_type_at_line[lineno] = code_type
             for i in range(count):
-                result.addr_type[addr + i] = code_type
+                result.addr_type_code[addr + i] = code_type
             if self.verbose: print(f"line: {addr:04x}, {text}")
 
     def equates_parser(self, result, line, cleanup=False):
@@ -91,6 +99,7 @@ class MAC65(Assembler):
         result.add_label(symbol, addr)
 
     def parse(self, result, text):
+        self.code_type_at_line = {}
         for line in text.splitlines():
             line = line.strip()
             if not line:
