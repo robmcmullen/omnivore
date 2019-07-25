@@ -111,11 +111,11 @@ typedef struct {
 } emulator_history_t;
 
 typedef struct {
-    uint32_t text_start_index;
-    int8_t line_length;
-    int8_t num_bytes;
-    int8_t item_count;
-    int8_t type_code;  /* xxxxxxyy; display code = x, bytes_per_item = y + 1 */
+    uint32_t text_start_index;  /* offset into label character storage */
+    int8_t line_length;  /* length of label in bytes; there is no delimiter */
+    int8_t num_bytes; /* number of bytes of data */
+    int8_t item_count; /* number of items in the data */
+    int8_t type_code;  /* xxxxxxyy; display code = x, bytes_per_item = y + 1 (1 - 4 bytes per item) */
 } label_info_t;
 
 typedef struct {
