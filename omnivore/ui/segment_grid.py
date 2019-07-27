@@ -8,7 +8,7 @@ from sawx.ui.mouse_mode import MouseMode
 from sawx.utils.command import DisplayFlags
 from sawx.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from .selection import CurrentSelection
-from ..arch.disasm import get_style_name
+# from ..arch.disasm import get_style_name
 # from sawx.framework import actions as fa
 # from ..byte_edit import actions as ba
 # from ..viewers import actions as va

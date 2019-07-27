@@ -311,7 +311,7 @@ def get_miniasm(cpu):
     return _miniassemblers[cpu]
 
 
-def process(cpu, line, pc):
+def mini_assemble(cpu, line, pc):
     miniasm = get_miniasm(cpu)
     if line.startswith("0x"):
         addr, line = line.split(" ", 1)

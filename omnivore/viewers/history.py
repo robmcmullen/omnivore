@@ -7,8 +7,7 @@ import wx
 
 from atrip import Container, Segment
 
-from ..disassembler import flags
-from ..disassembler import dtypes as dd
+from atrip.disassembler import flags, dd
 
 from sawx.ui import compactgrid as cg
 from ..editors.linked_base import VirtualTableLinkedBase

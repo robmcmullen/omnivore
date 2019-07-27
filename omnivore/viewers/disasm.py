@@ -13,7 +13,7 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..viewer import SegmentViewer
 
 from .commands import MiniAssemblerCommand
-from ..disassembler.miniasm import get_miniasm
+from atrip.disassembler import get_miniasm
 from ..utils import searchutil
 
 import logging

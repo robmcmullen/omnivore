@@ -1,4 +1,4 @@
-from omnivore.disassembler.labels import Labels
+from atrip.disassembler import Labels
 from sawx.persistence import get_template, iter_templates
 
 import logging

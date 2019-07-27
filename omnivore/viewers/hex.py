@@ -5,7 +5,7 @@ import wx
 
 from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from sawx.ui import compactgrid as cg
-from ..arch.disasm import get_style_name
+# from ..arch.disasm import get_style_name
 
 from ..viewer import SegmentViewer
 

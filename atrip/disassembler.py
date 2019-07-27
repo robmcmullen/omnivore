@@ -3,18 +3,19 @@ import functools
 
 import numpy as np
 
-from .dtypes import *
-from . import flags
+from .disassemblers import dtypes as dd
+from .disassemblers import flags
 
 import logging
 log = logging.getLogger(__name__)
 
 
 try:
-    from .miniasm import MiniAssembler, processors
-    from .disasm import DisassemblyConfig, ParsedDisassembly
-    from .history import HistoryStorage, StringifiedHistory
-    from . import libudis
+    from .disassemblers.miniasm import MiniAssembler, processors, get_miniasm, mini_assemble
+    from .disassemblers.disasm import DisassemblyConfig, ParsedDisassembly
+    from .disassemblers.history import HistoryStorage, StringifiedHistory
+    from .disassemblers.labels import Labels
+    from .disassemblers import libudis, cputables
 except RuntimeError:
     log.warning("cputables.py not generated; disassembler and mini assembler will not be available")
 except ModuleNotFoundError:
@@ -24,7 +25,7 @@ except ImportError as e:
     log.warning(f"libudis C extension not loaded (likely an undefined symbol):\n{str(e)}")
 
 try:
-    from .valid_cpus import valid_cpu_ids, cpu_id_to_name, cpu_name_to_id
+    from .disassemblers.valid_cpus import valid_cpu_ids, cpu_id_to_name, cpu_name_to_id
 except:
     valid_cpu_ids = [10]
     cpu_name_to_id = {"6502": 10}
@@ -33,8 +34,8 @@ except:
 
 
 def create_history_dtype(num_entries, history_dtype):
-    size = (num_entries + 1) * HISTORY_ENTRY_DTYPE.itemsize
-    dtype_entries = list(EMULATOR_HISTORY_HEADER_DTYPE.descr)
+    size = (num_entries + 1) * dd.HISTORY_ENTRY_DTYPE.itemsize
+    dtype_entries = list(dd.EMULATOR_HISTORY_HEADER_DTYPE.descr)
     dtype_entries.append(("entries", history_dtype, num_entries))
     print(f"new dtype: {dtype_entries}")
     return np.dtype(dtype_entries)

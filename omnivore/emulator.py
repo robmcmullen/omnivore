@@ -10,7 +10,7 @@ from atrip import find_container
 from .debugger import Debugger
 from .debugger.dtypes import FRAME_STATUS_DTYPE
 from .utils.historyutil import RestartTree
-from . import disassembler as disasm
+from atrip import disassembler as disasm
 from .utils.templateutil import load_memory_map
 from . import errors
 
@@ -44,7 +44,7 @@ class Emulator(Debugger):
 
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
-    history_entry_dtype = disasm.HISTORY_ENTRY_DTYPE
+    history_entry_dtype = disasm.dd.HISTORY_ENTRY_DTYPE
 
     def __init__(self):
         Debugger.__init__(self)
@@ -479,8 +479,7 @@ class Emulator(Debugger):
                 self.restore_state(d)
 
     def kfest_step_history(self, frame_number, step_to):
-        from .disassembler import flags
-        from .disassembler import dtypes as dd
+        from atrip.disassembler import flags, dd
         from .videolookup import videoarray
         from .utils import apple2util as a2
         try:

@@ -9,7 +9,7 @@ from sawx.ui import dialogs
 
 from . import ViewerAction, ViewerListAction, ViewerRadioListAction
 from ... import commands
-from ...disassembler.valid_cpus import cpu_id_to_name, valid_cpu_ids
+from atrip.disassembler import cpu_id_to_name, valid_cpu_ids
 
 import logging
 log = logging.getLogger(__name__)

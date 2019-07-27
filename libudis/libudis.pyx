@@ -7,7 +7,7 @@ cimport numpy as np
 
 from libudis.libudis cimport history_entry_t, emulator_history_t, parse_func_t, string_func_t, jmp_targets_t, label_info_t
 
-from omnivore.disassembler.dtypes import HISTORY_ENTRY_DTYPE
+from atrip.disassemblers.dtypes import HISTORY_ENTRY_DTYPE
 
 cdef extern:
     parse_func_t parser_map[]

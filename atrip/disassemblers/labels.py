@@ -3,7 +3,7 @@ import collections
 
 import numpy as np
 
-from ..disassembler.libudis import LabelStorage
+from .libudis import LabelStorage
 
 import logging
 log = logging.getLogger(__name__)

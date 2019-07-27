@@ -23,13 +23,12 @@ import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
 # mnemonic flags
-from omnivore.disassembler.flags import und, z80bit, lbl, pcr
+from atrip.disassembler.flags import und, z80bit, lbl, pcr
 
 import logging
 log = logging.getLogger(__name__)
 
-# from omnivore.disassembler.flags import *
-from omnivore.disassembler import cputables
+from atrip.disassembler import cputables
 
 # This is declared here so that CPUs will have consistent types for backward
 # compatibility. Do not reuse ID numbers if CPUs are removed from this list.
@@ -873,5 +872,5 @@ if __name__ == "__main__":
         gen_header(fh, generated_stringifiers)
         gen_end_guard(fh, filename)
 
-    destfile = os.path.join(destdir + "../omnivore/disassembler/valid_cpus.py")
+    destfile = os.path.join(destdir + "../atrip/disassemblers/valid_cpus.py")
     gen_py_cpu_map(destfile, generated_parsers)

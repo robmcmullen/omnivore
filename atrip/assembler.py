@@ -5,7 +5,7 @@ import pkg_resources
 
 from . import errors
 
-from omnivore.disassembler.labels import type_codes
+from atrip.disassemblers.labels import type_codes
 
 import logging
 log = logging.getLogger(__name__)

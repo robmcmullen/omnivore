@@ -3,7 +3,7 @@ import numpy as np
 from ..commands import SetSelectionCommand, SetRangeCommand, ChangeStyleCommand, SetRangeValueModifyIndexesCommand
 from sawx.utils.permute import bit_reverse_table
 
-from ..disassembler import miniasm
+from atrip.disassembler import mini_assemble
 
 import logging
 log = logging.getLogger(__name__)
@@ -293,7 +293,7 @@ class MiniAssemblerCommand(SetSelectionCommand):
                 # don't overwrite an instruction in the middle
                 continue
             pc = self.segment.origin + index
-            d = miniasm.process(self.cpu, self.data, pc)
+            d = mini_assemble(self.cpu, self.data, pc)
             count = len(d)
             new_data[total:total + count] = d
             next_valid_start = index + count

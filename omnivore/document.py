@@ -10,7 +10,7 @@ from sawx.document import SawxDocument
 from sawx.utils.nputil import to_numpy
 from sawx.events import EventHandler
 
-from .disassembler import DisassemblyConfig, valid_cpu_ids, cpu_name_to_id
+from atrip.disassembler import DisassemblyConfig, valid_cpu_ids, cpu_name_to_id
 from .utils.templateutil import load_memory_map
 
 import logging

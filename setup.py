@@ -79,7 +79,7 @@ if "clean" in sys.argv:
     # prevent extensions from being 
     ext_modules = []
 else:
-    cputables_path = "omnivore/disassembler/cputables.py"
+    cputables_path = "atrip/disassemblers/cputables.py"
     parse_gen_path = "libudis/parse_udis_cpu.c"
     if not os.path.exists(cputables_path):
         subprocess.run([sys.executable, 'libudis/cpugen.py'])
@@ -269,7 +269,7 @@ else:
             include_dirs = ["lib6502", "lib6502/6502-emu", "libdebugger", "libudis", np.get_include()],
             undef_macros = [ "NDEBUG" ],
         ),
-        Extension("omnivore.disassembler.libudis",
+        Extension("atrip.disassemblers.libudis",
             sources = [
                 "libudis/libudis.pyx",
                 "libudis/parse_udis_cpu.c",
