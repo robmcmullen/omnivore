@@ -119,6 +119,23 @@ typedef struct {
 } label_info_t;
 
 typedef struct {
+	uint8_t text_length;  /* length of label in bytes; there is no delimiter */
+	uint8_t num_bytes; /* number of bytes of data */
+	uint8_t item_count; /* number of items in the data */
+	uint8_t type_code;  /* xxxxxxyy; display code = x, bytes_per_item = y + 1 (1 - 4 bytes per item) */
+	char label[12];
+} label_description_t;
+
+typedef struct {
+	uint16_t flags;  /* xy000000 00000000; x = valid for read only, y = valid write only */
+	uint16_t first_addr;  /* first 16 bit address with label */
+	uint16_t last_addr;  /* last 16 bit address with label */
+	uint16_t num_labels;  /* number of labels (same as last_addr - first_addr + 1, precomputed for speed) */
+	uint16_t index[256*256];  /* index into 16-byte table of label descriptions, long labels may span multpile entries, zero indicates no label */
+	label_description_t labels[1024]; /* label storage */
+} label_storage_t;
+
+typedef struct {
 	uint8_t discovered[256*256];
 	char *text_storage;
 	label_info_t *labels;
