@@ -159,6 +159,39 @@ class MemoryMap:
                 log.warning("Invalid type code on line {line_num}: `'{type_code}'")
         return rw, r, w
 
+    @classmethod
+    def from_list(cls, entries, default_display_key="hex"):
+        """Parse list of tuples, each tuple in the form of:
+
+            (addr, name[, type_key [, display_key]])
+
+        The addr field must be an integer, name must be a string without a
+        slash, and the type and display keys are strings as in the field
+        descriptions of `from_text`.
+        """
+        rw = cls()
+        line_num = 0
+        for tokens in entries:
+            count = len(tokens)
+            if count < 2:
+                log.warning(f"Missing label on line {line_num}")
+                continue
+            addr = tokens[0]
+            rw_name = tokens[1]
+            try:
+                type_key = tokens[2]
+            except IndexError:
+                type_key = 'b'
+            try:
+                display_key = tokens[3]
+            except IndexError:
+                display_key = default_display_key
+            try:
+                rw.add(addr, rw_name, type_key, display_key)
+            except RuntimeError:
+                log.warning("Invalid type code on line {line_num}: `'{type_code}'")
+        return rw
+
     def __init__(self):
         self.labels_raw = np.zeros([memory_map_record_type.itemsize], dtype=np.uint8)
         self.labels = self.labels_raw.view(dtype=memory_map_record_type)
@@ -198,7 +231,7 @@ class MemoryMap:
         else:
             raise TypeError(f"index must be int or slice, not {type(index)}")
 
-    def add(self, addr, name, type_key, display_key):
+    def add(self, addr, name, type_key="b", display_key="hex"):
         # print("PROCESSING", addr, name, type_key, display_key, self.next_index)
         size_code = size_codes[type_key[-1]]
         try:
