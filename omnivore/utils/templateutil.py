@@ -10,7 +10,7 @@ machine_labels = {}
 def load_memory_map(keyword):
     global machine_labels
     try:
-        labels = machine_labels[keyword]
+        rwlabels = machine_labels[keyword]
     except KeyError:
         try:
             text = get_template(keyword)

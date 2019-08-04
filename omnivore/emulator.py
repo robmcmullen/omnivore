@@ -198,7 +198,7 @@ class Emulator(Debugger):
         if labels is None:
             labels = load_memory_map(self.name)
         self.labels = labels
-        self.stringified_lines = disasm.StringifiedHistory(self.num_stringified_lines, self.labels.labels)
+        self.stringified_lines = disasm.StringifiedHistory(self.num_stringified_lines, self.labels)
 
     def configure_emulator_defaults(self):
         pass
