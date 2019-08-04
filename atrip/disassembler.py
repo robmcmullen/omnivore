@@ -14,7 +14,6 @@ try:
     from .disassemblers.miniasm import MiniAssembler, processors, get_miniasm, mini_assemble
     from .disassemblers.disasm import DisassemblyConfig, ParsedDisassembly
     from .disassemblers.history import HistoryStorage, StringifiedHistory
-    from .disassemblers.labels import Labels
     from .disassemblers import libudis, cputables
 except RuntimeError:
     log.warning("cputables.py not generated; disassembler and mini assembler will not be available")

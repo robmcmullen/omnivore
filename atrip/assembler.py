@@ -5,7 +5,7 @@ import pkg_resources
 
 from . import errors
 
-from atrip.disassemblers.labels import type_codes
+from atrip.memory_map import size_codes
 
 import logging
 log = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class DataInfo:
         self.addr = addr
         self.type_code = type_code
         self.count = count
-        self.byte_count = self.count * (type_codes[type_code] + 1)
+        self.byte_count = self.count * (size_codes[type_code] + 1)
 
     def __str__(self):
         return f"DataInfo: {self.label}@${self.addr:04x}, {self.count}x{self.type_code}"

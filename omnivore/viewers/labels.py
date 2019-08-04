@@ -14,10 +14,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-from atrip.disassembler import Labels
+from atrip.memory_map import MemoryMap
 filename = "./omnivore/templates/atari800.labels"
 try:
-    labels1 = Labels.from_file(filename)
+    labels1 = MemoryMap.from_file(filename)
 except:
     log.warning("Can't find local labels for emulator labels test")
 else:

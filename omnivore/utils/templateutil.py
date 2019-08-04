@@ -1,4 +1,4 @@
-from atrip.disassembler import Labels
+from atrip.memory_map import MemoryMap
 from sawx.persistence import get_template, iter_templates
 
 import logging
@@ -19,10 +19,10 @@ def load_memory_map(keyword):
                 text = get_template(keyword + ".labels")
             except OSError as e:
                 log.error(f"Couldn't find memory map named '{keyword}'")
-                return Labels()
-        labels = Labels.from_text(text)
-        machine_labels[keyword] = labels
-    return labels
+                return MemoryMap()
+        rwlabels, rlabels, wlabels = MemoryMap.from_text(text)
+        machine_labels[keyword] = rwlabels  # FIXME: temporary until get sets of memory map labels
+    return rwlabels
 
 available_memory_maps = {}
 

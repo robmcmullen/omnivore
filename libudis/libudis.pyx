@@ -5,7 +5,7 @@ import cython
 import numpy as np
 cimport numpy as np
 
-from libudis.libudis cimport history_entry_t, emulator_history_t, parse_func_t, string_func_t, jmp_targets_t, label_info_t
+from libudis.libudis cimport history_entry_t, emulator_history_t, parse_func_t, string_func_t, jmp_targets_t, label_info_t, label_storage_t
 
 from atrip.disassemblers.dtypes import HISTORY_ENTRY_DTYPE
 
@@ -111,156 +111,6 @@ cdef class TextStorage:
         return long(<long>&self.text_buffer_data[0])
 
 
-cdef class LabelStorage(TextStorage):
-    def __init__(self):
-        TextStorage.__init__(self, 256*256, 256*256)
-
-    def __contains__(self, index):
-        cdef label_info_t *info
-        cdef int i = index
-
-        info = &self.label_info_data[i]
-        return info.text_start_index > 0
-
-    def __getitem__(self, index):
-        cdef label_info_t *info
-        cdef int i, start, count
-        cdef np.uint8_t num_bytes, item_count, type_code
-
-        if isinstance(index, int):
-            i = index
-            info = &self.label_info_data[i]
-            start = info.text_start_index
-            count = info.line_length
-            return (self.text_buffer[start:start + count].tostring(), info.num_bytes, info.item_count, info.type_code)
-        elif isinstance(index, slice):
-            raise TypeError(f"slicing not yet supported")
-        else:
-            raise TypeError(f"index must be int or slice, not {type(index)}")
-
-    def __iter__(self):
-        cdef int i
-        cdef label_info_t *info
-        info = &self.label_info_data[0]
-        for i in range(self.max_lines):
-            if info.text_start_index > 0:
-                yield self[i]
-            info += 1
-
-    def __setitem__(self, index, value):
-        cdef label_info_t *info
-        cdef int i, start, count
-        cdef np.uint8_t num_bytes, item_count, type_code
-
-        if isinstance(index, int):
-            i = index
-            start = self.text_index
-            try:
-                if isinstance(value, bytes):
-                    raise ValueError
-                try:
-                    value, num_bytes, item_count, type_code, desc_code = value
-                except ValueError:
-                    value, num_bytes, item_count, type_code = value
-                    desc_code = type_code
-            except ValueError:
-                num_bytes = 1
-                item_count = 1
-                type_code = 0
-                desc_code = 0
-            count = len(value)
-            if i >= self.max_lines:
-                print(f"CYTHON ERROR! Text buffer line count {self.max_lines} exceeded in LabelStorage, attempted to save {i} lines")
-            if start + count >= self.text_buffer_size:
-                print(f"CYTHON ERROR! Text buffer size {self.text_buffer_size} exceeded in LabelStorage, attempted to save {start + count} bytes")
-            info = &self.label_info_data[i]
-            info.line_length = count
-            info.text_start_index = self.text_index
-            info.num_bytes = num_bytes
-            info.item_count = item_count
-            info.type_code = (type_code & 0x03) | desc_code
-            self.text_index += count
-            self.num_lines += 1
-            # print("assigning value", value, type(value), hex(<long>info))
-            for i in range(count):
-                self.text_buffer[start] = value[i]
-                start += 1
-        elif isinstance(index, slice):
-            raise TypeError(f"setting labels via slices not yet supported")
-        else:
-            raise TypeError(f"index must be int or slice, not {type(index)}")
-
-    def __delitem__(self, index):
-        cdef label_info_t *info
-        cdef int i
-
-        if isinstance(index, int):
-            i = index
-            info = &self.label_info_data[i]
-            info.text_start_index = 0
-            self.num_lines -= 1
-        elif isinstance(index, slice):
-            raise TypeError(f"deleting labels via slices not yet supported")
-        else:
-            raise TypeError(f"index must be int or slice, not {type(index)}")
-
-    def print_all(self):
-        cdef label_info_t *info
-        cdef int i, start, count
-
-        info = &self.label_info_data[0]
-        print("print_all", self, self.label_info.data, hex(<long>info), self.label_info)
-        for i in range(min(5, self.max_lines)):
-            start = info.text_start_index
-            if start > 0:
-                count = info.line_length
-                print("entry:", i, start, count, info.num_bytes, info.item_count, info.type_code, self.text_buffer[start:start + count].tostring())
-            info += 1
-        if self.num_lines - 5 > 0:
-            print("...", self.num_lines - 5, "more")
-        print("total = ", self.num_lines)
-
-    def keys(self):
-        cdef label_info_t *info
-        cdef int i
-
-        addresses = []
-        info = &self.label_info_data[0]
-        for i in range(self.max_lines):
-            if info.text_start_index > 0:
-                addresses.append(i)
-            info += 1
-        return addresses
-
-    def update(self, other):
-        cdef label_info_t *info
-        cdef int i, start, count
-        cdef long addr
-
-        addr = other.get_label_data_addr()
-        info = <label_info_t *>addr
-        # print(other, other.label_info.data, hex(<long>info), other.label_info)
-        for i in range(self.max_lines):
-            start = info.text_start_index
-            if start > 0:
-                count = info.line_length
-                # print("found other", i, start, count, info.num_bytes, info.item_count, info.type_code, other.text_buffer[start:start + count])
-                self[i] = (other.text_buffer[start:start + count], info.num_bytes, info.item_count, info.type_code)
-            info += 1
-
-    cdef clear(self):
-        cdef label_info_t *info
-        cdef int i
-
-        info = &self.label_info_data[0]
-        for i in range(self.max_lines):
-            info.text_start_index = 0
-            info += 1
-        self.num_lines = 0
-        self.text_index = 1  # special case: no string if text_starts[x] == 0
-        self.text_ptr = self.text_buffer_data
-
-
 cdef class StringifiedDisassembly:
     cdef public int origin
     cdef public int last_pc
@@ -275,9 +125,9 @@ cdef class StringifiedDisassembly:
     cdef char *hex_case
 
     def __init__(self, start_index, max_lines, jmp_targets, labels=None, mnemonic_lower=True, hex_lower=True):
-        cdef label_info_t *info
         cdef char *text
         cdef long addr
+        cdef np.ndarray arr
 
         self.start_index = start_index
         self.disasm_text = TextStorage(max_lines)
@@ -287,16 +137,16 @@ cdef class StringifiedDisassembly:
         self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
         if labels is not None:
-            addr = labels.get_text_storage_addr()
-            text = <char *>addr
-            self.jmp_targets_data.text_storage = text
-
-            addr = labels.get_label_data_addr()
-            info = <label_info_t *>addr
-            self.jmp_targets_data.labels = info
+            # print("LABELS:", labels.labels_raw, labels.labels_raw.data)
+            # for i in range(0x70,0x100):
+            #     try:
+            #         print(f"label {i:02x} {labels[i]}")
+            #     except KeyError:
+            #         pass
+            arr = labels.labels_raw
+            self.jmp_targets_data.labels = <label_storage_t *>arr.data
         else:
-            self.jmp_targets_data.text_storage = <char *>0
-            self.jmp_targets_data.labels = <label_info_t *>0
+            self.jmp_targets_data.labels = <label_storage_t *>0
 
         self.clear()
         # for disassembler_type in range(40):
@@ -582,16 +432,9 @@ cdef class StringifiedHistory:
         self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
         if labels is not None:
-            addr = labels.get_text_storage_addr()
-            text = <char *>addr
-            self.jmp_targets_data.text_storage = text
-
-            addr = labels.get_label_data_addr()
-            info = <label_info_t *>addr
-            self.jmp_targets_data.labels = info
+            self.jmp_targets_data.labels = <label_storage_t *>labels.labels_raw.data
         else:
-            self.jmp_targets_data.text_storage = <char *>0
-            self.jmp_targets_data.labels = <label_info_t *>0
+            self.jmp_targets_data.labels = <label_storage_t *>0
 
     def __len__(self):
         return self.history_text.num_lines

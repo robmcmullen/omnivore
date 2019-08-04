@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 
 from atrip import Container, Segment
+from atrip.memory_map import MemoryMap
 from atrip.disassembler import ParsedDisassembly, DisassemblyConfig, dd
 
 
@@ -17,6 +18,7 @@ class TestNOP:
         b'nop',
         b'nop',
     ]
+    labels = None
 
     def setup(self):
         c = Container(self.data)
@@ -26,6 +28,8 @@ class TestNOP:
         segment.disasm_type[:] = self.cpu_id
         self.parsed = driver.parse(segment, 8000)
         self.entries = self.parsed.entries
+        if self.__class__.labels is not None:
+            self.labels = MemoryMap.from_list(self.labels)
         print("raw data: ", type(self.data), self.data)
         print("data", segment.data, segment.data.tobytes())
         print("style", segment.style, segment.style.tobytes())
@@ -39,7 +43,7 @@ class TestNOP:
         #     print(e[i])
         # print(p.index_to_row)
 
-        t = p.stringify(0, 100)
+        t = p.stringify(0, 100, labels=self.labels)
         # for line in t:
         #     print(line)
         for i, text in enumerate(self.expected):
@@ -56,6 +60,17 @@ class TestORA(TestNOP):
         b'ora (L00ff,x)',
         b'brk',
     ]
+
+
+class TestLabels(TestORA):
+    expected = [
+        b'ora (L0001,x)',
+        b'ora (ADDR80,x)',
+        b'ora (L0002,x)',
+        b'ora (ADDRFF,x)',
+        b'brk',
+    ]
+    labels = [(0x80, "ADDR80"), (0xff, "ADDRFF")]
 
 
 def sample():
@@ -118,6 +133,7 @@ def sample():
 
 if __name__ == "__main__":
     # t = TestNOP()
-    t = TestORA()
+    # t = TestORA()
+    t = TestLabels()
     t.setup()
     t.test_disasm()

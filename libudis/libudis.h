@@ -137,8 +137,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t discovered[256*256];
-	char *text_storage;
-	label_info_t *labels;
+	label_storage_t *labels;
 } jmp_targets_t;
 
 extern int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page);

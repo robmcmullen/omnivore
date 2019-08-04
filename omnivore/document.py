@@ -61,7 +61,7 @@ class DiskImageDocument(SawxDocument):
 
     @property
     def labels(self):
-        return self.machine_labels.labels
+        return self.machine_labels#.labels
 
     @property
     def cpu(self):

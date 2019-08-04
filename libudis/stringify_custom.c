@@ -10,20 +10,21 @@
 
 int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page) {
     char *first_t, *h;
-    label_info_t *info;
-    int index, count;
+    label_description_t *desc;
+    uint16_t index;
+    int count;
 
     first_t = t;
+    desc = NULL;
     if (jmp_targets->labels) {
-        info = &jmp_targets->labels[(addr & 0xffff)];
-        index = info->text_start_index;
+        // for (index = 0; index < 256; index++) printf("%d=%d,", index, jmp_targets->labels->index[index]);
+        index = jmp_targets->labels->index[(addr & 0xffff)];
+        // printf("\naddr=%lx index=%d\n", addr & 0xffff, index);
+        if (index > 0) desc = &jmp_targets->labels->labels[index];
     }
-    else {
-        index = 0;
-    }
-    if (index) {
-        count = info->line_length;
-        h = &jmp_targets->text_storage[index];
+    if (desc) {
+        count = desc->text_length;
+        h = &desc->label;
         while (count > 0) {
             *t++=*h++;
             count--;
