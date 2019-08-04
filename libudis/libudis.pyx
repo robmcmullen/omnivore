@@ -422,6 +422,7 @@ cdef class StringifiedHistory:
 
     def __init__(self, max_lines, labels=None, mnemonic_lower=True, hex_lower=True):
         cdef long addr
+        cdef np.ndarray arr
 
         self.history_text = TextStorage(max_lines)
         self.result_text = TextStorage(max_lines)
@@ -432,7 +433,8 @@ cdef class StringifiedHistory:
         self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
         if labels is not None:
-            self.jmp_targets_data.labels = <label_storage_t *>labels.labels_raw.data
+            arr = labels.labels_raw
+            self.jmp_targets_data.labels = <label_storage_t *>arr.data
         else:
             self.jmp_targets_data.labels = <label_storage_t *>0
 
