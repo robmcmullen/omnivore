@@ -24,7 +24,7 @@ int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hex
     }
     if (desc) {
         count = desc->text_length;
-        h = &desc->label;
+        h = &desc->label[0];
         while (count > 0) {
             *t++=*h++;
             count--;
@@ -45,10 +45,10 @@ int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hex
 
 
 static inline char *STRING(char *t, int lc, char *str) {
-    char *c;
+    char c;
 
-    while (c=*str++) {
-        *t++=c;
+    while ((c = *str++)) {
+        *t++ = c;
     }
     return t;
 }
@@ -89,10 +89,8 @@ int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int l
 
 int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     unsigned char opcode;
-    int i;
     char *first_t, *h;
     unsigned char *data;
-    unsigned short addr;
 
     first_t = t;
     data = entry->instruction;
@@ -278,7 +276,7 @@ int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, 
 int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     int val;
     char *first_t, *h;
-    history_6502_t *entry = (history_frame_t *)h_entry;
+    history_6502_t *entry = (history_6502_t *)h_entry;
 
     first_t = t;
     h = &hexdigits[(entry->a & 0xff)*2], *t++=*h++, *t++=*h++;
@@ -303,7 +301,7 @@ int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *
 
 int stringify_entry_6502_opcode(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
-    history_6502_t *entry = (history_frame_t *)h_entry;
+    history_6502_t *entry = (history_6502_t *)h_entry;
 
     first_t = t;
     h = &hexdigits[entry->instruction[0]*2], *t++=*h++, *t++=*h++;
@@ -339,7 +337,7 @@ int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigit
 
 int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
-    history_atari800_t *entry = (history_frame_t *)h_entry;
+    history_atari800_t *entry = (history_atari800_t *)h_entry;
 
     first_t = t;
     t += stringify_entry_6502_cpu_registers(h_entry, t, hexdigits, lc, jmp_targets);
@@ -361,7 +359,7 @@ int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *he
 int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     int val, changed, masked_flag;
     char *first_t, *h;
-    history_6502_t *entry = (history_frame_t *)h_entry;
+    history_6502_t *entry = (history_6502_t *)h_entry;
 
     masked_flag = entry->flag & FLAG_RESULT_MASK;
     first_t = t;
@@ -450,7 +448,6 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
 
 int stringify_entry_atari800_vbi_start(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
-    history_frame_t *frame = (history_frame_t *)entry;
 
     first_t = t;
     *t++='-', *t++='-', *t++='V', *t++='B', *t++='I';
@@ -459,7 +456,6 @@ int stringify_entry_atari800_vbi_start(history_entry_t *entry, char *t, char *he
 
 int stringify_entry_atari800_vbi_end(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
-    history_frame_t *frame = (history_frame_t *)entry;
 
     first_t = t;
     *t++='-', *t++='-', *t++='V', *t++='B', *t++='I', *t++=' ', *t++='E', *t++='n', *t++='d';
@@ -468,7 +464,6 @@ int stringify_entry_atari800_vbi_end(history_entry_t *entry, char *t, char *hexd
 
 int stringify_entry_atari800_dli_start(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
-    history_frame_t *frame = (history_frame_t *)entry;
 
     first_t = t;
     *t++='-', *t++='-', *t++='D', *t++='L', *t++='I';
@@ -477,7 +472,6 @@ int stringify_entry_atari800_dli_start(history_entry_t *entry, char *t, char *he
 
 int stringify_entry_atari800_dli_end(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
-    history_frame_t *frame = (history_frame_t *)entry;
 
     first_t = t;
     *t++='-', *t++='-', *t++='D', *t++='L', *t++='I', *t++=' ', *t++='E', *t++='n', *t++='d';
@@ -485,8 +479,8 @@ int stringify_entry_atari800_dli_end(history_entry_t *entry, char *t, char *hexd
 }
 
 int stringify_entry_breakpoint(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
-    char *first_t, *h;
-    history_breakpoint_t *entry = (history_frame_t *)h_entry;
+    char *first_t;
+    history_breakpoint_t *entry = (history_breakpoint_t *)h_entry;
 
     first_t = t;
     if (entry->breakpoint_type == BREAKPOINT_PAUSE_AT_FRAME_START) {
@@ -527,15 +521,13 @@ int stringify_entry_blank(history_entry_t *entry, char *t, char *hexdigits, int 
 extern string_func_t stringifier_map[];
 
 int stringify_entry_next_instruction(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
-    char *first_t, *h;
-    history_breakpoint_t *entry = (history_frame_t *)h_entry;
+    history_breakpoint_t *entry = (history_breakpoint_t *)h_entry;
     string_func_t stringifier = stringifier_map[entry->disassembler_type_cpu];
 
-    return stringifier(entry, t, hexdigits, lc, jmp_targets);
+    return stringifier(h_entry, t, hexdigits, lc, jmp_targets);
 }
 
 int stringify_entry_next_instruction_result(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
-    char *first_t, *h;
 
     return stringify_entry_breakpoint(entry, t, hexdigits, lc, jmp_targets);
 }
