@@ -33,7 +33,7 @@ class TestMemoryMap:
             [[(0, "LNFLG"), (1, "NGFLAG"), (2, "CASINI", "w"), (4, "RAMLO", "w"), (0x12, "RTCLOK", "3b")], [(0, "LNFLG", 1), (1, "NGFLAG", 1), (2, "CASINI", 2), (4, "RAMLO", 2), (0x0012, "RTCLOK", 3)]],
         ])
     def test_parse_from_list(self, entries, truth):
-        labels = MemoryMap.from_list(entries)
+        labels = MemoryMap.from_list("Test", entries)
         verify_map(labels, truth)
 
 

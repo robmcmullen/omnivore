@@ -1,4 +1,4 @@
-import re
+import os
 
 import numpy as np
 
@@ -72,10 +72,10 @@ class MemoryMap:
     @classmethod
     def from_file(cls, filename):
         text = open(filename).read()
-        return cls.from_text(text)
+        return cls.from_text(os.path.basename(filename), text)
 
     @classmethod
-    def from_text(cls, text, default_display_key="hex"):
+    def from_text(cls, name, text, default_display_key="hex"):
         """Parse lines of text in the format:
 
             0011 BRKKEY
@@ -108,9 +108,9 @@ class MemoryMap:
         abbreviations of those keywords. If missing, the data will be displayed
         in the default type.
         """
-        rw = cls()
-        r = cls()
-        w = cls()
+        rw = cls(name)
+        r = cls(name + " (R)")
+        w = cls(name + " (W)")
         try:
             text = text.decode('utf-8')
         except AttributeError as e:
@@ -160,7 +160,7 @@ class MemoryMap:
         return rw, r, w
 
     @classmethod
-    def from_list(cls, entries, default_display_key="hex"):
+    def from_list(cls, name, entries, default_display_key="hex"):
         """Parse list of tuples, each tuple in the form of:
 
             (addr, name[, type_key [, display_key]])
@@ -169,7 +169,7 @@ class MemoryMap:
         slash, and the type and display keys are strings as in the field
         descriptions of `from_text`.
         """
-        rw = cls()
+        rw = cls(name)
         line_num = 0
         for tokens in entries:
             count = len(tokens)
@@ -192,7 +192,8 @@ class MemoryMap:
                 log.warning("Invalid type code on line {line_num}: `'{type_code}'")
         return rw
 
-    def __init__(self):
+    def __init__(self, name):
+        self.ui_name = name
         self.labels_raw = np.zeros([memory_map_record_type.itemsize], dtype=np.uint8)
         self.labels = self.labels_raw.view(dtype=memory_map_record_type)
         self.next_index = 1  # index 0 is unused, indicates unused address

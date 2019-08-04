@@ -29,7 +29,7 @@ class TestNOP:
         self.parsed = driver.parse(segment, 8000)
         self.entries = self.parsed.entries
         if self.__class__.labels is not None:
-            self.labels = MemoryMap.from_list(self.labels)
+            self.labels = MemoryMap.from_list("test labels", self.labels)
         print("raw data: ", type(self.data), self.data)
         print("data", segment.data, segment.data.tobytes())
         print("style", segment.style, segment.style.tobytes())
