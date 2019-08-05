@@ -31,9 +31,10 @@ class TestAtariDos2:
         # else:
         #     assert container.media.__class__ == Media
         if ".tar" in pathname or ".zip" in pathname:
-            pytest.skip(f"skipping collections for this test: {pathname}")
-        print(f"checking {pathname}")
+            pytest.skip(f"skipping archive collections for this test: {pathname}")
         sample_data = np.fromfile(pathname, dtype=np.uint8)
+        if len(sample_data) == 0:
+            pytest.skip(f"skipping zero-length files for this test: {pathname}")
         container = guess_container(sample_data)
         container.guess_media_type()
         is_expected_media(container, pathname)

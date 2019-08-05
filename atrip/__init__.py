@@ -102,7 +102,10 @@ def find_container(filename, verbose=False):
 
 def find_collection(filename, verbose=False):
     sample_data = np.fromfile(filename, dtype=np.uint8)
-    log.info(f"loaded {len(sample_data)} bytes from {filename}")
+    if len(sample_data) > 0:
+        log.info(f"loaded {len(sample_data)} bytes from {filename}")
+    else:
+        raise IOError("No data")
     return Collection(filename, sample_data)
 
 

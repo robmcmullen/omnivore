@@ -521,6 +521,8 @@ class Container:
             raise errors.InvalidSegment(f"No segment with uuid={uuid}")
 
 def guess_container(data):
+    if len(data) == 0:
+        raise IOError("No data")
     data, compressors = guess_compressor_list(data)
     container = Container(data, compressors)
     return container
