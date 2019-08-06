@@ -7,10 +7,8 @@ libudis/stringify_udis_cpu.c
 libudis/stringify_udis_cpu.h
 omnivore/arch/antic_speedups.c
 omnivore/arch/pixel_speedups.c
-omnivore/disassembler/cputables.py
-omnivore/disassembler/valid_cpus.py
-omnivore/disassembler/libudis.c
-omnivore/disassembler/libudis.pyx
+atrip/disassemblers/cputables.py
+atrip/disassemblers/valid_cpus.py
 test/tmp.*
 test/test_data
 cprof.*
@@ -28,7 +26,7 @@ atari800.cfg
 /*.xex
 /*.omnivore
 /*.omniemu
-/test*
+/test*py
 /dist-*
 /tmp
 /samples/*
