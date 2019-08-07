@@ -455,7 +455,13 @@ class TileManagerBase(SawxEditor):
 
             self.viewers.remove(v)
             v.prepare_for_destroy()
-            self.set_focused_viewer(evt.replacement_child.segment_viewer)
+            try:
+                new_viewer = evt.replacement_child.segment_viewer
+            except AttributeError:
+                # New viewer is empty window
+                pass
+            else:
+                self.set_focused_viewer(new_viewer)
             del v
 
     def on_viewer_link(self, evt):

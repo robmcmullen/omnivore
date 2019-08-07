@@ -1825,6 +1825,10 @@ class TileClient(wx.Window):
     def split_side(self, new_side, view=None):
         return self.leaf.split_side(new_side, view)
 
+    def clear_child(self):
+        new_child = self.tile_mgr._defChild(self)
+        self.replace(new_child)
+
 
 ########## Title Bar ##########
 

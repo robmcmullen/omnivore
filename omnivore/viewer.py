@@ -134,6 +134,21 @@ class SegmentViewer:
         "segment_remove_comment",
         "segment_add_label",
         "segment_remove_label",
+        None,
+        ["Tile Layout",
+            "layout_add_viewer_above",
+            "layout_add_viewer_below",
+            "layout_add_viewer_left",
+            "layout_add_viewer_right",
+            None,
+            "layout_move_to_top_sidebar",
+            "layout_move_to_bottom_sidebar",
+            "layout_move_to_left_sidebar",
+            "layout_move_to_right_sidebar",
+            None,
+            "layout_remove_viewer_and_keep_tile",
+            "layout_remove_viewer_and_close_tile",
+        ],
     ]
 
     searchers = [  # BaseSearcher classes that are applicable to this viewer
