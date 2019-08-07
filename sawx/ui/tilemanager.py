@@ -421,6 +421,8 @@ class TileManager(wx.Window):
         self.dock_target_mode = "swap"  # or "split" to split target window on drop
 
     def set_defaults(self):
+        self.allow_docking_to_empty_sidebar = False
+
         self.child_window_x = 2
         self.child_window_y = 2
 
@@ -1024,9 +1026,10 @@ class TileManager(wx.Window):
             sidebar.calc_dock_targets(targets)
             missing_sidebars.remove(sidebar.side)
         log.debug(f"dock targets from sidebars: {str(targets)}")
-        for side in missing_sidebars:
-            targets.append(MissingSidebarDock(self, side))
-            log.debug(f"dock targets for missing sidebar: {str(MissingSidebarDock)}")
+        if self.allow_docking_to_empty_sidebar:
+            for side in missing_sidebars:
+                targets.append(MissingSidebarDock(self, side))
+                log.debug(f"dock targets for missing sidebar: {str(MissingSidebarDock)}")
         self.child.calc_dock_targets(targets)
         log.debug(f"dock targets: {str(targets)}")
         return targets
