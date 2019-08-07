@@ -81,7 +81,7 @@ class MenuDescription:
                 else:
                     submenu_desc = action_key
                     submenu_name = submenu_desc[0]
-                    submenu = MenuDescription(submenu_name, submenu_desc[1:], editor, valid_id_map, keybinding_desc)
+                    submenu = MenuDescription(submenu_name, submenu_desc[1:], editor, valid_id_map, keybinding_desc, popup_data)
                     if submenu.count > 0:
                         self.menu.AppendSubMenu(submenu.menu, submenu.name)
                         allow_separator = True
