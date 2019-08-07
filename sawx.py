@@ -72,11 +72,6 @@ def main(argv):
     from sawx.application import SawxApp
     from sawx._version import __version__
     SawxApp.app_version = __version__
-    SawxApp.app_blank_page = f"""<h2>{SawxApp.app_name} {SawxApp.app_version}</h2>
-
-<h3>{SawxApp.app_description}</h3>
-
-<p><img src="icon://omnivore256.png">"""
 
     run(SawxApp)
 
