@@ -1277,9 +1277,9 @@ class ViewContainer(object):
         self.detach_leaf(view)
         view.remove()
 
-    def minimize_leaf(self, view):
+    def minimize_leaf(self, view, side=wx.DEFAULT):
         self.detach_leaf(view)
-        sidebar = self.tile_mgr.use_sidebar(wx.DEFAULT)
+        sidebar = self.tile_mgr.use_sidebar(side)
         client = view.detach_client()
         sidebar.add_client(client)
 
@@ -1610,8 +1610,8 @@ class TileViewLeaf(TileWindowBase, DockTarget):
     def destroy_leaf(self):
         return self.GetParent().destroy_leaf(self)
 
-    def minimize_leaf(self):
-        return self.GetParent().minimize_leaf(self)
+    def minimize_leaf(self, side=wx.DEFAULT):
+        return self.GetParent().minimize_leaf(self, side)
 
     def do_layout(self):
         self.client.do_size_from_parent()
@@ -1816,8 +1816,8 @@ class TileClient(wx.Window):
     def destroy_thyself(self):
         wx.CallAfter(self.leaf.destroy_leaf)
 
-    def minimize(self):
-        wx.CallAfter(self.leaf.minimize_leaf)
+    def minimize(self, side=wx.DEFAULT):
+        wx.CallAfter(self.leaf.minimize_leaf, side)
 
     def maximize(self):
         wx.CallAfter(self.leaf.maximize_leaf)
