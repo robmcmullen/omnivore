@@ -19,7 +19,7 @@ def load_memory_map(keyword):
                 text = get_template(keyword + ".labels")
             except OSError as e:
                 log.error(f"Couldn't find memory map named '{keyword}'")
-                return MemoryMap()
+                return MemoryMap(keyword)
         rwlabels, rlabels, wlabels = MemoryMap.from_text(keyword, text)
         machine_labels[keyword] = rwlabels  # FIXME: temporary until get sets of memory map labels
     return rwlabels
