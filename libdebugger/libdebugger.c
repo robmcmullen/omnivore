@@ -115,12 +115,17 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 
 	current_pc = get_emulator_value(REG_PC, 0);
 	// printf("in libdebugger_check_breakpoints: PC=%04x breakpoint->last_pc=%04x\n", current_pc, breakpoints->last_pc);
+#ifdef DEBUG_DETECT_INFINTE_LOOP
+	/* infinite loop detection when same instruction calls itself. This is only
+	useful if the machine has no interrupts, because during an interrupt, self-
+	modifying code could be used to defeat this detection.
+	*/
 	if ((breakpoints->last_pc == current_pc) && is_unconditional_jmp) {
-		/* found infinite loop when same instruction calls itself */
 		breakpoints->breakpoint_status[0] = BREAKPOINT_ENABLED;
 		breakpoints->breakpoint_type[0] = BREAKPOINT_INFINITE_LOOP;
 		return 0;
 	}
+#endif
 
 	num_entries = breakpoints->num_breakpoints;
 
