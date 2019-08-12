@@ -24,7 +24,6 @@ class Generic6502(Emulator):
 
     serializable_attributes = []
 
-    input_array_dtype = d.INPUT_DTYPE
     output_array_dtype = d.OUTPUT_DTYPE
     width = d.VIDEO_WIDTH
     height = d.VIDEO_HEIGHT

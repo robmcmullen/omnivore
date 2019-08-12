@@ -77,7 +77,6 @@ class Atari800Mixin:
     name = "atari800"
     ui_name = "Atari 800"
 
-    input_array_dtype = d.INPUT_DTYPE
     output_array_dtype = d.OUTPUT_DTYPE
     width = d.VIDEO_WIDTH
     height = d.VIDEO_HEIGHT
@@ -278,18 +277,18 @@ class Atari800Mixin:
     def send_special_key(self, key_id):
         self.input['keychar'] = 0
         self.input['keycode'] = 0
-        self.input['special'] = key_id
+        self.input['special_key'] = key_id
         if key_id in [2, 3]:
             self.frame_event.append((self.frame_count + 2, self.clear_keys))
 
     def set_option(self, state):
-        self.input['option'] = state
+        self.input['flags'] |= akey.OPTION_FLAG
 
     def set_select(self, state):
-        self.input['select'] = state
+        self.input['flags'] |= akey.SELECT_FLAG
 
     def set_start(self, state):
-        self.input['start'] = state
+        self.input['flags'] |= akey.START_FLAG
 
 
 class Atari800XLMixin(Atari800Mixin):
@@ -450,6 +449,22 @@ try:
             else:
                 self.send_keycode(akey)
 
+        def process_key_up(self, evt, keycode):
+            log.debug("key up! key=%s mod=%s" % (evt.GetKeyCode(), evt.GetModifiers()))
+            key = evt.GetKeyCode()
+            mod = evt.GetModifiers()
+            if mod == wx.MOD_CONTROL:
+                akey = self.wx_to_akey_ctrl.get(key, None)
+            elif mod == wx.MOD_SHIFT:
+                akey = self.wx_to_akey_shift.get(key, None)
+            else:
+                akey = self.wx_to_akey.get(key, None)
+
+            if akey is None:
+                evt.Skip()
+            else:
+                self.send_keycode(0)
+
         def process_key_state(self):
             try:
                 up = 0b0001 if wx.GetKeyState(wx.WXK_UP) else 0
@@ -458,16 +473,24 @@ try:
             down = 0b0010 if wx.GetKeyState(wx.WXK_DOWN) else 0
             left = 0b0100 if wx.GetKeyState(wx.WXK_LEFT) else 0
             right = 0b1000 if wx.GetKeyState(wx.WXK_RIGHT) else 0
-            self.input['joy0'] = up | down | left | right
-            trig = 1 if wx.GetKeyState(wx.WXK_TAB) else 0
-            self.input['trig0'] = trig
+            self.input['joysticks'][0] = up | down | left | right
+
+            trig = 0
+            if wx.GetKeyState(wx.WXK_TAB):
+                trig |= 1
+            self.input['joystick_triggers'] = trig
             # print("joy", self.input['joy0'], "trig", self.input['trig0'])
 
-            # console keys will reflect being pressed if at any time between frames
-            # the key has been pressed
-            self.input['option'] = 1 if wx.GetKeyState(wx.WXK_F2) or self.forced_modifier=='option' else 0
-            self.input['select'] = 1 if wx.GetKeyState(wx.WXK_F3) or self.forced_modifier=='select' else 0
-            self.input['start'] = 1 if wx.GetKeyState(wx.WXK_F4) or self.forced_modifier=='start' else 0
+            # console keys will reflect being pressed if at any time between
+            # frames the key has been pressed
+            mod = 0
+            if wx.GetKeyState(wx.WXK_F2) or self.forced_modifier=='option':
+                mod |= akey.OPTION_FLAG
+            if wx.GetKeyState(wx.WXK_F3) or self.forced_modifier=='select':
+                mod |= akey.SELECT_FLAG
+            if wx.GetKeyState(wx.WXK_F4) or self.forced_modifier=='start':
+                mod |= akey.START_FLAG
+            self.input['flags'] = mod
 
 except ImportError:
     class wxMixin:

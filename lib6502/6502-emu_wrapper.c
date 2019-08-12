@@ -425,12 +425,15 @@ void lib6502_show_next_instruction(emulator_history_t *history)
 	}
 }
 
-int lib6502_next_frame(input_t *input, output_t *output, breakpoints_t *breakpoints, emulator_history_t *history)
+int lib6502_next_frame(history_input_t *input, output_t *output, breakpoints_t *breakpoints, emulator_history_t *history)
 {
 	int bpid;
 	frame_status_t *status = &output->status;
 
 	if (apple2_mode) {
+		if (input->keychar > 0) {
+			printf("lib6502_next_frame: apple2_mode key = %x\n", input->keychar);
+		}
 		memory[0xc000] = input->keychar;
 	}
 

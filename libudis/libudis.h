@@ -102,6 +102,21 @@ typedef struct {
 } history_breakpoint_t; /* 24 bytes */
 
 typedef struct {
+	uint8_t keychar;  /* ascii key value, 0 = no key press */
+	uint8_t keycode;  /* keyboard code, 0 = no key press */
+	uint8_t special_key;  /* non-standard key (option, select, etc.), */
+	uint8_t flags;  /* platform dependent */
+	uint8_t joystick_triggers;  /* bit 0 = trig 0, bit 1 = trig 1, etc. */
+	uint8_t joysticks[2];  /* byte 0, bit 0-3 = joystick 0, bit 4-7 = joystick 1, byte 1, bit 0-3 = joystick 2, bit 4-7 = joystick 3 */
+	uint8_t paddle_triggers;  /* same as joystick triggers */
+	uint8_t paddles[8];  /* one byte each, paddles 0 - 7 */
+	uint8_t mouse_x;
+	uint8_t mouse_y;
+	uint8_t mouse_buttons;
+	uint8_t unused[5];
+} history_input_t; /* 24 bytes */
+
+typedef struct {
 	int32_t num_allocated_entries;
 	int32_t num_entries;
 	int32_t first_entry_index;

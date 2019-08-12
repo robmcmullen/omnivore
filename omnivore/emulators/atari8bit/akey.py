@@ -1,3 +1,10 @@
+START_FLAG = 0x1
+SELECT_FLAG = 0x2
+OPTION_FLAG = 0x4
+SHIFT_FLAG = 0x10
+CTRL_FLAG = 0x20
+MOUSE_DELTA_FLAG = 0x80  # if not set, direct mouse mode is used where values are sent directly to POKEY potentiometer input; otherwise mouse movements are sent as deltas
+
 # Atari key codes from akey.h
 
 # All key codes are identical to the values in akey.h except for the

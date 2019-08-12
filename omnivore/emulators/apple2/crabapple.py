@@ -4,6 +4,11 @@ import time
 import numpy as np
 np.set_printoptions(formatter={'int':hex})
 
+try:
+    import wx
+except ImportError:
+    wx = None
+
 from ...utils import apple2util as a2
 
 from ..generic6502 import lib6502, Generic6502
@@ -82,3 +87,20 @@ class Crabapple(Generic6502):
         self.screen_rgb[:,:,1] = self.gmap[raw]
         self.screen_rgb[:,:,2] = self.bmap[raw]
         return self.screen_rgb
+
+    if wx is not None:
+        def process_key_down(self, evt, keycode):
+            log.debug("key down! key=%s mod=%s" % (evt.GetKeyCode(), evt.GetModifiers()))
+            key = evt.GetKeyCode()
+            if key > 96 and key < 123:
+                key -= 32
+            elif key == wx.WXK_UP:
+                key = 0x8b
+            elif key == wx.WXK_DOWN:
+                key = 0x8a
+            elif key == wx.WXK_LEFT:
+                key = 0x88
+            elif key == wx.WXK_RIGHT:
+                key = 0x95
+            key |= 0x80
+            self.send_char(key)

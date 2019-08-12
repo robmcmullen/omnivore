@@ -14,6 +14,22 @@ from atrip import disassembler as disasm
 from .utils.templateutil import load_memory_map
 from . import errors
 
+# INPUT_DTYPE must match history_input_t from libudis.h and input_template_t from libatari800.h
+INPUT_DTYPE = np.dtype([
+    ("keychar", np.uint8),
+    ("keycode", np.uint8),
+    ("special_key", np.uint8),
+    ("flags", np.uint8),
+    ("joystick_triggers", np.uint8),
+    ("joysticks", np.uint8, 2),
+    ("paddle_triggers", np.uint8),
+    ("paddles", np.uint8, 8),
+    ("mouse_x", np.uint8),
+    ("mouse_y", np.uint8),
+    ("mouse_buttons", np.uint8),
+    ("unused", np.uint8, 5),
+])
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -37,7 +53,7 @@ class Emulator(Debugger):
     serializable_attributes = ['input_raw', 'output_raw', 'frame_count']
     serializable_computed = {'input_raw', 'output_raw'}
 
-    input_array_dtype = None
+    input_array_dtype = INPUT_DTYPE
     output_array_dtype = None
     width = 320
     height = 192
@@ -388,22 +404,22 @@ class Emulator(Debugger):
         print(f"sending char: {key_char}")
         self.input['keychar'] = key_char
         self.input['keycode'] = 0
-        self.input['special'] = 0
+        self.input['special_key'] = 0
 
     def send_keycode(self, keycode):
         self.input['keychar'] = 0
         self.input['keycode'] = keycode
-        self.input['special'] = 0
+        self.input['special_key'] = 0
 
     def send_special_key(self, key_id):
         self.input['keychar'] = 0
         self.input['keycode'] = 0
-        self.input['special'] = key_id
+        self.input['special_key'] = key_id
 
     def clear_keys(self):
         self.input['keychar'] = 0
         self.input['keycode'] = 0
-        self.input['special'] = 0
+        self.input['special_key'] = 0
 
     # Utility functions
 
