@@ -229,6 +229,9 @@ class jumpman_select_mode(JumpmanMouseModeTool):
 class jumpman_draw_girder_mode(JumpmanMouseModeTool):
     mouse_mode_cls = mm.DrawGirderMode
 
+class jumpman_draw_double_girder_mode(JumpmanMouseModeTool):
+    mouse_mode_cls = mm.DrawDoubleGirderMode
+
 class jumpman_draw_ladder_mode(JumpmanMouseModeTool):
     mouse_mode_cls = mm.DrawLadderMode
 

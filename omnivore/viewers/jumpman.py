@@ -224,7 +224,19 @@ class JumpmanViewerToolbarMixin:
 
     default_mouse_mode_cls = jm.AnticDSelectMode
 
-    viewer_extra_toolbar_desc = ["jumpman_select_mode", "jumpman_draw_girder_mode", "jumpman_draw_ladder_mode", "jumpman_draw_up_rope_mode", "jumpman_draw_down_rope_mode", "jumpman_erase_girder_mode", "jumpman_erase_ladder_mode", "jumpman_erase_rope_mode", "jumpman_draw_coin_mode", "jumpman_respawn_mode"]
+    viewer_extra_toolbar_desc = [
+        "jumpman_select_mode",
+        "jumpman_draw_girder_mode",
+        "jumpman_draw_double_girder_mode",
+        "jumpman_draw_ladder_mode",
+        "jumpman_draw_up_rope_mode",
+        "jumpman_draw_down_rope_mode",
+        "jumpman_erase_girder_mode",
+        "jumpman_erase_ladder_mode",
+        "jumpman_erase_rope_mode",
+        "jumpman_draw_coin_mode",
+        "jumpman_respawn_mode",
+    ]
 
 
 class JumpmanOtherViewerToolbarMixin(JumpmanViewerToolbarMixin):

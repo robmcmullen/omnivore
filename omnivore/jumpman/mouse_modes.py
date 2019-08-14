@@ -415,6 +415,13 @@ class DrawGirderMode(DrawMode):
     drawing_object = jp.Girder
 
 
+class DrawDoubleGirderMode(DrawMode):
+    icon = "jumpman_double_girder"
+    menu_item_name = "Draw Double Girder"
+    menu_item_tooltip = "Draw double-wide girders"
+    drawing_object = jp.DoubleWideGirder
+
+
 class DrawLadderMode(DrawMode):
     icon = "jumpman_ladder"
     menu_item_name = "Draw Ladder"

@@ -443,6 +443,21 @@ class Girder(JumpmanDrawObject):
     drawing_codes = np.fromstring("\x04\x00\x00\x01\x01\x01\x01\x04\x00\x01\x01\x00\x01\x00\x04\x00\x02\x01\x01\x01\x01\xff", dtype=np.uint8)
 
 
+class DoubleWideGirder(JumpmanDrawObject):
+    name = "doublegirder"
+    default_addr = 0x43bc  # think this space is unused in Jumpman; may have to change in the future if I discover this is incorrect!
+    default_dx = 8
+    default_dy = 3
+    sort_order = 0
+    valid_x_mask = 0xfe  # Even pixels only
+    drawing_codes = np.asarray([
+        8, 0, 0,  1, 1, 1, 1, 1, 1, 1, 1,
+        8, 0, 1,  1, 0, 1, 0, 1, 0, 1, 0,
+        8, 0, 2,  1, 1, 1, 1, 1, 1, 1, 1,
+        0xff
+    ], dtype=np.uint8)
+
+
 class Ladder(JumpmanDrawObject):
     name = "ladder"
     default_addr = 0x402c
