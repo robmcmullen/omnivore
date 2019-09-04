@@ -403,7 +403,10 @@ class SawxFrame(wx.Frame):
         evt.Skip()
 
     def on_activate(self, evt):
-        wx.CallAfter(self.find_active_editor)
+        is_active = evt.GetActive()
+        log.debug(f"on_activate: {is_active}")
+        if is_active:
+            wx.CallAfter(self.find_active_editor)
         evt.Skip()
 
     def on_close(self, evt):
