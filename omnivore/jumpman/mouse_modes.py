@@ -170,7 +170,7 @@ class JumpmanSelectMode(NormalSelectMode):
             clearable = False
         # clear_trigger = jc.ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
         # trigger_action = jc.SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
-        actions = ["clear_trigger", "trigger_action", None, "cut", "copy", "paste", None, "select_all", "select_none", "select_invert"]
+        actions = ["clear_trigger", "set_trigger", None, "cut", "copy", "paste", None, "select_all", "select_none", "select_invert"]
         return actions
 
 

@@ -1,5 +1,9 @@
+import wx
+
 from atrip.machines.atari8bit.jumpman.parser import is_valid_level_segment
 
+from sawx.ui.dialogs import ChooseOnePlusCustomDialog
+from sawx.utils.textutil import text_to_int
 
 from ...viewers.actions import ViewerAction, ViewerActionMixin, ViewerListAction, ViewerRadioAction
 from ...editors.actions.segment import segment_select
@@ -42,10 +46,35 @@ class clear_trigger(ViewerAction):
             addr = self.get_addr(event, objects)
             for o in objects:
                 self.permute_object(o, addr)
-            self.viewer.linked_base.jumpman_playfield_model.save_changes(self.command)
+            self.viewer.save_changes(self.command)
             self.viewer.control.mouse_mode.resync_objects()
         except ValueError:
             pass
+
+
+def trigger_dialog(segment_viewer, obj):
+    model = segment_viewer.segment.jumpman_playfield_model
+    possible_labels = model.get_triggers()
+    label = model.get_trigger_label(obj.trigger_function)
+    if label is None and obj.trigger_function:
+        custom_value = "%04x" % obj.trigger_function
+    else:
+        custom_value = ""
+    dlg = ChooseOnePlusCustomDialog(segment_viewer.control, list(possible_labels.keys()), label, custom_value, "Choose Trigger Function", "Select one trigger function or enter custom address", "Trigger Addr (hex)")
+    if dlg.ShowModal() == wx.ID_OK:
+        label, addr = dlg.get_selected()
+        if label is not None:
+            addr = possible_labels[label]
+        else:
+            try:
+                addr = text_to_int(addr, "hex")
+            except ValueError:
+                segment_viewer.frame.error("Invalid address %s" % addr)
+                addr = None
+    else:
+        addr = None
+    dlg.Destroy()
+    return addr
 
 
 class set_trigger(clear_trigger):
@@ -61,7 +90,7 @@ class set_trigger(clear_trigger):
     command = jc.SetTriggerCommand
 
     def get_addr(self, event, objects):
-        addr = trigger_dialog(event, self.viewer, objects[0])
+        addr = trigger_dialog(self.viewer, objects[0])
         if addr is not None:
             return addr
         raise ValueError("Cancelled!")

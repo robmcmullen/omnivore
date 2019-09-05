@@ -284,6 +284,13 @@ class JumpmanViewer(JumpmanViewerToolbarMixin, BitmapViewer):
 
     has_caret = False
 
+    popup_menu_desc = [
+        "set_trigger",
+        "clear_trigger",
+        None,
+        ]
+    popup_menu_desc.extend(BitmapViewer.popup_menu_desc)
+
     def __init__(self, *args, **kwargs):
         BitmapViewer.__init__(self, *args, **kwargs)
 
