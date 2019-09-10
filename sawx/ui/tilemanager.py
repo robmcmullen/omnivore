@@ -176,6 +176,7 @@ class DockTarget(object):
         def create_docking_rectangles(self):
             rects = []
             for leaf in self.event_window.calc_dock_targets():
+                log.debug(f"create_docking_rectangles: leaf={leaf}")
                 rects.extend(leaf.calc_docking_rectangles(self.event_window, self.source_leaf))
             self.docking_rectangles = rects
 
@@ -319,9 +320,13 @@ class DockTarget(object):
             rects.append((self, wx.TOP, wx.Rect(r.x, r.y, r.width, h)))
             rects.append((self, wx.RIGHT, wx.Rect(rx, r.y, w, r.height)))
             rects.append((self, wx.BOTTOM, wx.Rect(r.x, ty, r.width, h)))
-        else:
+        elif self.is_usable_dock_target():
+            log.debug(f"calc_docking_rectangles: {self}: rect={r}")
             rects.append((self, None, r))
         return rects
+
+    def is_usable_dock_target(self):
+        return True
 
     def process_dock_target(self, leaf, side):
         log.debug(f"inserting leaf={leaf}, splitting leaf={self} on side={side}")
@@ -1615,6 +1620,9 @@ class TileViewLeaf(TileWindowBase, DockTarget):
 
     def do_layout(self):
         self.client.do_size_from_parent()
+
+    def is_usable_dock_target(self):
+        return self.client and self.client.show_title
 
 
 class TileClient(wx.Window):
