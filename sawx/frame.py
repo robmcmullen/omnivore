@@ -326,6 +326,15 @@ class SawxFrame(wx.Frame):
         return self.find_editor_from_control(control)
 
     def find_active_editor(self):
+        # sidebar menu activation from TileManager can cause an activate event,
+        # so only process one if the main window is getting activated.
+        current_active = wx.GetActiveWindow()
+        if current_active is None:
+            # MacOS apparently doesn't return valid value, so we have to
+            # process it.
+            pass
+        elif not hasattr(current_active, "make_active"):
+            return
         control = self.notebook.GetCurrentPage()
         editor = self.find_editor_from_control(control)
         self.make_active(editor, True)
