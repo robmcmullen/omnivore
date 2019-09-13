@@ -87,6 +87,11 @@ class SawxFrame(wx.Frame):
 
     def create_notebook(self):
         notebook = aui.AuiNotebook(self, -1)
+
+        # Use flat style for tabs
+        art = aui.AuiSimpleTabArt()
+        notebook.SetArtProvider(art)
+
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.on_page_changed)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_closing)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.on_page_closed)
