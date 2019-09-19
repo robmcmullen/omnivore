@@ -22,16 +22,19 @@ class jumpman_clear_trigger(ViewerAction):
     enabled_name = 'can_copy'
     command = jc.ClearTriggerCommand
 
-    def __init__(self, *args, **kwargs):
-        ViewerAction.__init__(self, *args, **kwargs)
-        self.picked = None
-
     def calc_enabled(self, action_key):
-        return self.viewer.control.mouse_mode.all_objects_are_coins()
+        obj = self.popup_data.get('jumpman_obj', None)
+        if obj is not None:
+            clearable = any(o.trigger_function is not None for o in obj)
+        else:
+            clearable = False
+        return clearable
 
     def get_objects(self):
-        if self.picked is not None:
-            return self.picked
+        obj = self.popup_data.get('jumpman_obj', None)
+        if obj is not None:
+            coins = [o for o in obj if o.single]
+            return coins
         return self.viewer.control.mouse_mode.objects
 
     def get_addr(self, event, objects):
@@ -88,6 +91,16 @@ class jumpman_set_trigger(jumpman_clear_trigger):
     """
     name = "Set Trigger Function..."
     command = jc.SetTriggerCommand
+
+    def calc_enabled(self, action_key):
+        obj = self.popup_data.get('jumpman_obj', None)
+        # As long as there is any coin in the selection list, make it possible
+        # to set a trigger on the coins in the selection
+        if obj is not None:
+            settable = any(o.single for o in obj)
+        else:
+            settable = False
+        return settable
 
     def get_addr(self, event, objects):
         addr = trigger_dialog(self.viewer, objects[0])

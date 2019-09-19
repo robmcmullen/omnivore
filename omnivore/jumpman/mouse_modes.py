@@ -162,17 +162,6 @@ class JumpmanSelectMode(NormalSelectMode):
             }
         return popup_data
 
-    def calc_popup_actions(self, evt, data):
-        obj = data['jumpman_obj']
-        if obj is not None:
-            clearable = any(o.trigger_function is not None for o in obj)
-        else:
-            clearable = False
-        # clear_trigger = jc.ClearTriggerAction(enabled=obj is not None and clearable, picked=obj, task=self.control.segment_viewer.linked_base.task)
-        # trigger_action = jc.SetTriggerAction(enabled=obj is not None, picked=obj, task=self.control.segment_viewer.linked_base.task)
-        actions = ["clear_trigger", "set_trigger", None, "cut", "copy", "paste", None, "select_all", "select_none", "select_invert"]
-        return actions
-
 
 class AnticDSelectMode(JumpmanSelectMode):
     icon = "cursor"
