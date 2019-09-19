@@ -8,11 +8,11 @@ import wx
 from atrip import Container, Collection
 from atrip.compressor import find_compressor_by_name
 
-from . import ViewerSubAction
-from ...document import DiskImageDocument
+from ..action import ViewerSubAction
+from ..document import DiskImageDocument
 
-from ... import commands
-from ... import errors
+from .. import commands
+from .. import errors
 
 import logging
 log = logging.getLogger(__name__)

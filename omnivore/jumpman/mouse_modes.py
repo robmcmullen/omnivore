@@ -10,7 +10,7 @@ from atrip.machines.atari8bit.jumpman import parser as jp
 # Local imports.
 from sawx.utils.command import Overlay
 
-from . import commands as jc
+from ..commands import jumpman as jc
 from ..commands import ChangeByteCommand
 from ..viewers.mouse_modes import NormalSelectMode
 

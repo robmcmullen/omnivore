@@ -7,8 +7,8 @@ import wx
 
 from sawx.ui import dialogs
 
-from . import ViewerAction, ViewerListAction, ViewerRadioListAction
-from ... import commands
+from ..action import ViewerAction, ViewerListAction, ViewerRadioListAction
+from ..commands import disasm as dc
 from atrip.disassembler import cpu_id_to_name, valid_cpu_ids
 
 import logging
@@ -34,5 +34,5 @@ class disasm_type(ViewerListAction):
         disasm_type = item[0]
         e = self.editor
         ranges = self.viewer.control.get_selected_ranges()
-        cmd = commands.SetDisasmCommand(e.segment, ranges, disasm_type)
+        cmd = dc.SetDisasmCommand(e.segment, ranges, disasm_type)
         e.process_command(cmd)

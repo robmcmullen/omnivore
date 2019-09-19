@@ -193,11 +193,11 @@ class ByteEditor(TileManagerBase):
                 "jumpman_level_list",
             ],
             None,
-            "set_trigger",
-            "clear_trigger",
+            "jumpman_set_trigger",
+            "jumpman_clear_trigger",
             None,
-            "add_assembly_source",
-            "compile_assembly_source",
+            "jumpman_add_assembly_source",
+            "jumpman_compile_assembly_source",
         ],
         ["Generate",
             ["Compression",
@@ -307,7 +307,7 @@ class ByteEditor(TileManagerBase):
         "find_to_selection": "Ctrl+T",  # TEST binding
     }
 
-    module_search_order = ["omnivore.viewers.actions", "omnivore.editors.actions", "sawx.actions", "omnivore.jumpman.actions"]
+    module_search_order = ["omnivore.actions", "sawx.actions"]
 
     # Convenience functions
 

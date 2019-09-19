@@ -7,10 +7,10 @@ import wx
 
 from sawx.ui.dialogs import prompt_for_string
 
-from . import ViewerAction
+from ..action import ViewerAction
 
 from .. import commands
-from ... import errors
+from .. import errors
 
 import logging
 log = logging.getLogger(__name__)

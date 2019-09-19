@@ -9,11 +9,11 @@ from sawx.action import SawxAction, SawxNameChangeAction, SawxRadioListAction, S
 from sawx.frame import SawxTablessFrame
 from sawx.ui.dialogs import prompt_for_dec
 
-from ... import commands
-from ... import errors
-from ...emulator import find_emulators
-from ...documents.emulation_document import EmulationDocument
-from ...editors.emulation_editor import EmulationEditor
+from .. import commands
+from .. import errors
+from ..emulator import find_emulators
+from ..documents.emulation_document import EmulationDocument
+from ..editors.emulation_editor import EmulationEditor
 
 import logging
 log = logging.getLogger(__name__)

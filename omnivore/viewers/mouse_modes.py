@@ -10,10 +10,9 @@ import numpy as np
 # Local imports.
 from sawx.utils.command import Overlay
 from ..utils.drawutil import get_bounds
-from ..clipboard_commands import PasteCommand, PasteRectCommand
 from sawx.ui.compactgrid import MouseMode, NormalSelectMode, RectangularSelectMode
 
-from .map_commands import *
+from ..commands import map as mc
 
 import logging
 log = logging.getLogger(__name__)
@@ -58,7 +57,7 @@ class DrawMode(RectangularSelectMode):
         pattern = cg.segment_viewer.draw_pattern
         print(("drawing with!", pattern, type(pattern)))
         if start:
-            self.batch = DrawBatchCommand()
+            self.batch = mc.DrawBatchCommand()
         row, col, _ = cg.get_row_col_from_event(evt)
         if cg.main.is_inside(row, col):
             index, _ = cg.table.get_index_range(row, col)
@@ -130,18 +129,18 @@ class LineMode(OverlayMode):
     icon = "shape_line.png"
     menu_item_name = "Line"
     menu_item_tooltip = "Draw line with current tile"
-    command = LineCommand
+    command = mc.LineCommand
 
 
 class SquareMode(OverlayMode):
     icon = "shape_hollow_square.png"
     menu_item_name = "Square"
     menu_item_tooltip = "Draw square with current tile"
-    command = SquareCommand
+    command = mc.SquareCommand
 
 
 class FilledSquareMode(OverlayMode):
     icon = "shape_filled_square.png"
     menu_item_name = "Filled Square"
     menu_item_tooltip = "Draw filled square with current tile"
-    command = FilledSquareCommand
+    command = mc.FilledSquareCommand

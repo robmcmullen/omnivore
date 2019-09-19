@@ -206,8 +206,6 @@ class EmulationEditor(ByteEditor):
 
     }
 
-    module_search_order = ["omnivore.viewers.actions", "omnivore.editors.actions", "sawx.actions"]
-
     # Convenience functions
 
     @property

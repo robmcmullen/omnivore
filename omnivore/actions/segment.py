@@ -7,8 +7,8 @@ import wx
 
 from sawx.action import SawxAction, SawxRadioListAction
 
-from ... import commands
-from ... import errors
+from .. import commands
+from .. import errors
 
 import logging
 log = logging.getLogger(__name__)

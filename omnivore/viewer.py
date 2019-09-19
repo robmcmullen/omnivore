@@ -14,7 +14,7 @@ from sawx.utils.sortutil import ranges_to_indexes, collapse_overlapping_ranges
 from .utils import searchutil
 from .ui.segment_grid import SegmentGridControl
 from .viewers.mouse_modes import NormalSelectMode
-from . import clipboard_commands
+from .commands import clipboard as clipboard_commands
 
 import logging
 log = logging.getLogger(__name__)

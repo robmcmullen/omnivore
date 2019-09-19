@@ -20,9 +20,8 @@ from ..jumpman import savers as js
 from .. import clipboard_helpers
 
 from ..viewer import SegmentViewer
-from . import actions as va
 from ..jumpman import mouse_modes as jm
-from ..jumpman import commands as jc
+from ..commands import jumpman as jc
 from .bitmap import BitmapGridControl, BitmapViewer, BitmapLineRenderer
 from .info import NonCaretInfoViewer
 

@@ -7,10 +7,10 @@ import wx
 
 from sawx.action import SawxAction, SawxRadioListAction
 
-from ... import commands
-from ... import errors
+from .. import commands
+from .. import errors
 from atrip.disassembler import valid_cpu_ids, cpu_id_to_name, processors
-from ...utils.templateutil import calc_available_memory_maps, available_memory_maps
+from ..utils.templateutil import calc_available_memory_maps, available_memory_maps
 
 import logging
 log = logging.getLogger(__name__)

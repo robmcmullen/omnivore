@@ -1,7 +1,7 @@
 import numpy as np
 
 from sawx.utils.command import Command, UndoInfo
-from .commands import SegmentCommand
+from . import SegmentCommand
 from sawx.utils.sortutil import ranges_to_indexes, indexes_to_ranges, collapse_overlapping_ranges
 
 import logging

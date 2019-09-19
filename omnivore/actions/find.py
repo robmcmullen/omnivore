@@ -9,7 +9,7 @@ from sawx.action import SawxAction
 from sawx.ui.minibuffer import NextPrevTextMinibuffer
 
 from .. import commands
-from ... import errors
+from .. import errors
 
 import logging
 log = logging.getLogger(__name__)

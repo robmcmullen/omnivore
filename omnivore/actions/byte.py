@@ -7,8 +7,8 @@ import wx
 
 from sawx.ui.dialogs import prompt_for_hex, prompt_for_slice
 
-from . import ViewerAction
-from .. import commands
+from ..action import ViewerAction
+from ..commands import byte_editor as commands
 
 import logging
 log = logging.getLogger(__name__)

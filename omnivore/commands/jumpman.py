@@ -11,7 +11,6 @@ from sawx.utils.textutil import text_to_int
 
 from .. import errors
 from ..commands import SetRangeValueCommand
-from ..viewers.actions import ViewerAction
 
 
 import logging

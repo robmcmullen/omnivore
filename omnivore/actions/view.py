@@ -9,13 +9,13 @@ from sawx.ui import dialogs
 from atrip.char_mapping import font_mapping_list
 from atrip.machines import atari8bit
 
-from . import ViewerAction, ViewerListAction, ViewerRadioListAction
+from ..action import ViewerAction, ViewerListAction, ViewerRadioListAction
 from .. import commands
-from ...arch.bitmap_renderers import bitmap_renderer_list
-from ...arch.fonts import font_list, font_groups, prompt_for_font_from_group
-from ...arch.font_renderers import font_renderer_list
-from ...arch.ui.antic_colors import AnticColorDialog
-from ...viewer import find_viewer_class_by_name, get_viewers
+from ..arch.bitmap_renderers import bitmap_renderer_list
+from ..arch.fonts import font_list, font_groups, prompt_for_font_from_group
+from ..arch.font_renderers import font_renderer_list
+from ..arch.ui.antic_colors import AnticColorDialog
+from ..viewer import find_viewer_class_by_name, get_viewers
 
 import logging
 log = logging.getLogger(__name__)

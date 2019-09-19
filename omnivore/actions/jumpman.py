@@ -5,16 +5,16 @@ from atrip.machines.atari8bit.jumpman.parser import is_valid_level_segment
 from sawx.ui.dialogs import ChooseOnePlusCustomDialog
 from sawx.utils.textutil import text_to_int
 
-from ...viewers.actions import ViewerAction, ViewerActionMixin, ViewerListAction, ViewerRadioAction
-from ...editors.actions.segment import segment_select
-from .. import commands as jc
-from .. import mouse_modes as mm
+from ..action import ViewerAction, ViewerActionMixin, ViewerListAction, ViewerRadioAction
+from .segment import segment_select
+from ..commands import jumpman as jc
+from ..jumpman import mouse_modes as jm
 
 import logging
 log = logging.getLogger(__name__)
 
 
-class clear_trigger(ViewerAction):
+class jumpman_clear_trigger(ViewerAction):
     """Remove any trigger function from the selected coin(s).
     
     """
@@ -77,7 +77,7 @@ def trigger_dialog(segment_viewer, obj):
     return addr
 
 
-class set_trigger(clear_trigger):
+class jumpman_set_trigger(jumpman_clear_trigger):
     """Set a trigger function for the selected coin(s).
 
     If you have used the custom code option, have compiled your code using the
@@ -172,7 +172,7 @@ class flip_horizontal(flip_vertical):
         obj.flip_horizontal(bounds)
 
 
-class add_assembly_source(ViewerAction):
+class jumpman_add_assembly_source(ViewerAction):
     """Add an assembly source file to this level (and compile it)
 
     This is used to provide custom actions or even game loops, beyond what is
@@ -204,7 +204,7 @@ class add_assembly_source(ViewerAction):
             linked_base.segment.set_assembly_source(path)
 
 
-class compile_assembly_source(ViewerAction):
+class jumpman_compile_assembly_source(ViewerAction):
     """Recompile the assembly source code.
 
     This is a manual action, currently the program doesn't know when the file
@@ -253,34 +253,34 @@ class EraseModeMixin:
         return self.viewer.current_level.is_editing_trigger
 
 class jumpman_select_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.AnticDSelectMode
+    mouse_mode_cls = jm.AnticDSelectMode
 
 class jumpman_draw_girder_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.DrawGirderMode
+    mouse_mode_cls = jm.DrawGirderMode
 
 class jumpman_draw_double_girder_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.DrawDoubleGirderMode
+    mouse_mode_cls = jm.DrawDoubleGirderMode
 
 class jumpman_draw_ladder_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.DrawLadderMode
+    mouse_mode_cls = jm.DrawLadderMode
 
 class jumpman_draw_up_rope_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.DrawUpRopeMode
+    mouse_mode_cls = jm.DrawUpRopeMode
 
 class jumpman_draw_down_rope_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.DrawDownRopeMode
+    mouse_mode_cls = jm.DrawDownRopeMode
 
 class jumpman_erase_girder_mode(EraseModeMixin, JumpmanMouseModeTool):
-    mouse_mode_cls = mm.EraseGirderMode
+    mouse_mode_cls = jm.EraseGirderMode
 
 class jumpman_erase_ladder_mode(EraseModeMixin, JumpmanMouseModeTool):
-    mouse_mode_cls = mm.EraseLadderMode
+    mouse_mode_cls = jm.EraseLadderMode
 
 class jumpman_erase_rope_mode(EraseModeMixin, JumpmanMouseModeTool):
-    mouse_mode_cls = mm.EraseRopeMode
+    mouse_mode_cls = jm.EraseRopeMode
 
 class jumpman_draw_coin_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.DrawCoinMode
+    mouse_mode_cls = jm.DrawCoinMode
 
 class jumpman_respawn_mode(JumpmanMouseModeTool):
-    mouse_mode_cls = mm.JumpmanRespawnMode
+    mouse_mode_cls = jm.JumpmanRespawnMode
