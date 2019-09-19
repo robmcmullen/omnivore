@@ -28,7 +28,7 @@ try:
 except:
     valid_cpu_ids = [10]
     cpu_name_to_id = {"6502": 10}
-    cpu_name_to_id = {10: "6502"}
+    cpu_id_to_name = {10: "6502"}
 
 
 
