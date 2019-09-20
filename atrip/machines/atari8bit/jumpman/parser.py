@@ -1213,7 +1213,7 @@ Game loop: {"Custom" if self.custom_gameloop else "Standard"}
             self.add_vector(vector, default)
 
         # check for a gameloop, otherwise add the standard gameloop
-        if "gameloop" not in self.labels_used:
+        if "gameloop" not in self.vector_labels_used:
             vector = self.vector_storage["gameloop"]
             first = 0x2860
             self.add_vector(vector, first)
