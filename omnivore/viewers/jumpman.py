@@ -477,7 +477,10 @@ class TriggerList(JumpmanControlMouseModeMixin, wx.ListBox):
 
     def parse_coins(self, coins, items, triggers, indent=""):
         for coin in coins:
-            items.append(indent + coin.trigger_str)
+            label = indent + coin.trigger_str
+            if coin.trigger_function:
+                label += f", trigger function=${coin.trigger_function:x}"
+            items.append(label)
             triggers.append(coin)
             children = []
             for p in coin.trigger_painting:
