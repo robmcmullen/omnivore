@@ -341,8 +341,12 @@ class SawxFrame(wx.Frame):
         elif not hasattr(current_active, "make_active"):
             return
         control = self.notebook.GetCurrentPage()
-        editor = self.find_editor_from_control(control)
-        self.make_active(editor, True)
+        try:
+            editor = self.find_editor_from_control(control)
+        except errors.SawxError:
+            pass
+        else:
+            self.make_active(editor, True)
 
     #### Event callbacks
 

@@ -252,7 +252,7 @@ class SawxApp(wx.App):
             try:
                 frame.close_all_tabs()
             except AttributeError as e:
-                log.error(f"error {e} closing {frame}")
+                log.debug(f"error {e}; closing {frame}")
         self.ExitMainLoop()
 
     #### Application information
