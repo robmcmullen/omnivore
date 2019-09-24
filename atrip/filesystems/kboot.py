@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from .. import errors
@@ -12,9 +14,11 @@ class KBootDirent(Dirent):
 
     def parse_raw_dirent(self):
         self.starting_sector = 4
-        self.basename = self.container.basename
+        self.basename = self.container.basename.encode('latin1')
         if not self.basename:
             self.basename = b"KBOOT"
+        elif b"." in self.basename:
+            self.basename = self.basename.split(b".", 1)[0]
         if self.basename == self.basename.upper():
             self.ext = b"XEX"
         else:
