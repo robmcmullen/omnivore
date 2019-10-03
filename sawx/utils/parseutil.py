@@ -4,7 +4,7 @@
 # http://pyparsing.wikispaces.com/file/view/arith.py/241810293/arith.py
 import numpy as np
 
-from pyparsing import Word, nums, hexnums, alphas, Combine, oneOf, Optional, \
+from pyparsing import Word, nums, hexnums, alphas, alphanums, Combine, oneOf, Optional, \
     opAssoc, operatorPrecedence, ParseException, ParserElement, Literal, Regex, pyparsing_common
 
 ParserElement.enablePackrat()
@@ -238,7 +238,7 @@ class EvalFloatConstant():
 
 
 class NumpyFloatExpression():
-    variable = Word(alphas)
+    variable = Word(alphas+"_", alphanums+"_")
     leading_dot_float = Regex(r'\.\d+')
     operand = leading_dot_float | pyparsing_common.number | variable
 
