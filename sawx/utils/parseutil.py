@@ -161,7 +161,8 @@ class EvalComparisonOp():
 
     def eval(self, vars_ ):
         val1 = self.value[0].eval(vars_)
-        if type(val1) is np.ndarray:
+        # don't use "type(val1) is np.ndarray" because subclasses will fail!
+        if isinstance(val1, np.ndarray):
             for op,val in operatorOperands(self.value[1:]):
                 fn = self.opMap[op]
                 val2 = val.eval(vars_)
