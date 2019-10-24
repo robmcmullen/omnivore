@@ -413,6 +413,8 @@ void CPU_VBI(void) {
 	if (entry) {
 		last_nmi_type = DISASM_ATARI800_VBI_END;
 		entry->pc = CPU_regPC;
+		entry->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+		entry->tv_line = ANTIC_ypos;
 	}
 	CPU_NMI();
 }
@@ -424,6 +426,8 @@ void CPU_DLI(void) {
 	if (entry) {
 		last_nmi_type = DISASM_ATARI800_DLI_END;
 		entry->pc = CPU_regPC;
+		entry->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+		entry->tv_line = ANTIC_ypos;
 	}
 	CPU_NMI();
 }
@@ -1376,6 +1380,8 @@ recreate_history_entry:
 			e = libudis_get_next_entry(LIBATARI800_History, last_nmi_type);
 			if (e) {
 				e->pc = CPU_regPC;
+				e->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+				e->tv_line = ANTIC_ypos;
 			}
 			last_nmi_type = 0;
 		}

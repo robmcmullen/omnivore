@@ -87,7 +87,9 @@ typedef struct {
 	uint8_t disassembler_type;
 	uint8_t flag;
 	uint8_t cycles;
-	uint8_t instruction[16];
+	uint8_t instruction[14];
+	uint8_t tv_cycle;
+	uint8_t tv_line;
 } history_interrupt_t; /* 24 bytes */
 
 typedef struct {

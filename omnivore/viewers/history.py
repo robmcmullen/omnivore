@@ -66,7 +66,7 @@ class InstructionHistoryTable(cg.VirtualTable):
             if t == flags.DISASM_NEXT_INSTRUCTION:
                 h = h.view(dtype=dd.HISTORY_BREAKPOINT_DTYPE)
                 t = h['disassembler_type_cpu']
-            if t == flags.DISASM_ATARI800_HISTORY or t == flags.DISASM_6502_HISTORY:
+            if t == flags.DISASM_ATARI800_HISTORY or t == flags.DISASM_6502_HISTORY or t == flags.DISASM_ATARI800_VBI_START or t == flags.DISASM_ATARI800_VBI_END or t == flags.DISASM_ATARI800_DLI_START or t == flags.DISASM_ATARI800_DLI_END:
                 h = h.view(dtype=dd.HISTORY_ATARI800_DTYPE)
                 x = h['tv_cycle']
                 y = h['tv_line']
