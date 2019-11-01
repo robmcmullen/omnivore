@@ -177,7 +177,8 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
 
     @property
     def page_size(self):
-        return (self.main.fully_visible_rows - 1) * self.table.items_per_row
+        """Number of rows in a page, used for scroll-by-page functions"""
+        return self.main.fully_visible_rows - 1
 
     ##### Caret handling
 

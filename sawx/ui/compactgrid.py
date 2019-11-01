@@ -664,7 +664,8 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
 
     @property
     def page_size(self):
-        return self.visible_rows * self.parent.table.items_per_row
+        """Number of rows in a page, used for scroll-by-page functions"""
+        return self.fully_visible_rows - 1
 
     @property
     def fully_visible_area(self):  # r,c -> r,c
