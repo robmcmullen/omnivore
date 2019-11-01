@@ -84,6 +84,8 @@ extern emulator_history_t *LIBATARI800_History;
 extern breakpoints_t *LIBATARI800_Breakpoints;
 extern UBYTE *memory_access;
 extern UBYTE *access_type;
+extern int ANTIC_in_overscan;
+#define ANTIC_XPOS_CYCLE_COUNT (ANTIC_ypos > 255 ? (ANTIC_in_overscan ? ANTIC_xpos | 0x80: ANTIC_cpu2antic_ptr[ANTIC_xpos] | 0x80) : (ANTIC_in_overscan ? ANTIC_xpos : ANTIC_cpu2antic_ptr[ANTIC_xpos]))
 
 #undef MEMORY_dGetByte
 #undef MEMORY_dPutByte
@@ -413,7 +415,7 @@ void CPU_VBI(void) {
 	if (entry) {
 		last_nmi_type = DISASM_ATARI800_VBI_END;
 		entry->pc = CPU_regPC;
-		entry->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+		entry->tv_cycle = ANTIC_XPOS_CYCLE_COUNT;
 		entry->tv_line = ANTIC_ypos;
 	}
 	CPU_NMI();
@@ -426,7 +428,7 @@ void CPU_DLI(void) {
 	if (entry) {
 		last_nmi_type = DISASM_ATARI800_DLI_END;
 		entry->pc = CPU_regPC;
-		entry->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+		entry->tv_cycle = ANTIC_XPOS_CYCLE_COUNT;
 		entry->tv_line = ANTIC_ypos;
 	}
 	CPU_NMI();
@@ -700,7 +702,7 @@ recreate_history_entry:
 			entry->after2 = 0;
 			entry->before3 = 0;
 			entry->after3 = 0;
-			entry->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+			entry->tv_cycle = ANTIC_XPOS_CYCLE_COUNT;
 			entry->tv_line = ANTIC_ypos;
 		}
 
@@ -1380,7 +1382,7 @@ recreate_history_entry:
 			e = libudis_get_next_entry(LIBATARI800_History, last_nmi_type);
 			if (e) {
 				e->pc = CPU_regPC;
-				e->tv_cycle = ANTIC_ypos > 255 ? ANTIC_xpos | 0x80 : ANTIC_xpos;
+				e->tv_cycle = ANTIC_XPOS_CYCLE_COUNT;
 				e->tv_line = ANTIC_ypos;
 			}
 			last_nmi_type = 0;

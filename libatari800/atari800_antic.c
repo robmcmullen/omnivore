@@ -54,6 +54,7 @@ extern frame_status_t *LIBATARI800_Status;
 extern emulator_history_t *LIBATARI800_History;
 extern UBYTE *memory_access;
 extern UBYTE *access_type;
+int ANTIC_in_overscan;
 void memory_type_range(int addr, int count, int type) {
 	UBYTE *t = access_type + addr;
 	while (count > 0) {
@@ -451,7 +452,7 @@ unsigned int ANTIC_screenline_cpu_clock = 0;
 	ANTIC_ypos++; \
 	GTIA_UpdatePmplColls();
 #define GOEOL CPU_GO(ANTIC_LINE_C); ANTIC_xpos -= ANTIC_LINE_C; ANTIC_screenline_cpu_clock += ANTIC_LINE_C; UPDATE_DMACTL; ANTIC_ypos++; UPDATE_GTIA_BUG
-#define OVERSCREEN_LINE	ANTIC_xpos += ANTIC_DMAR; GOEOL
+#define OVERSCREEN_LINE	ANTIC_xpos += ANTIC_DMAR; ANTIC_in_overscan = 1; GOEOL; ANTIC_in_overscan = 0;
 
 int ANTIC_xpos = 0;
 int ANTIC_xpos_limit;
