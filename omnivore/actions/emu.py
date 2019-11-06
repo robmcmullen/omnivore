@@ -186,6 +186,19 @@ class emu_break_vbi_start(SawxAction):
         self.editor.document.debugger_break_vbi_start()
 
 
+class emu_break_vbi_end(SawxAction):
+    """Continue and break at the end of the next VBI
+    """
+    def calc_name(self, action_key):
+        return "Break at Next VBI End"
+
+    def calc_enabled(self, action_key):
+        return self.editor.document.emulator.emulator_paused
+
+    def perform(self, action_key):
+        self.editor.document.debugger_break_vbi_end()
+
+
 class emu_break_dli_start(SawxAction):
     """Continue and break at the start of the next DLI
     """
@@ -197,6 +210,19 @@ class emu_break_dli_start(SawxAction):
 
     def perform(self, action_key):
         self.editor.document.debugger_break_dli_start()
+
+
+class emu_break_dli_end(SawxAction):
+    """Continue and break at the end of the next DLI
+    """
+    def calc_name(self, action_key):
+        return "Break at Next DLI End"
+
+    def calc_enabled(self, action_key):
+        return self.editor.document.emulator.emulator_paused
+
+    def perform(self, action_key):
+        self.editor.document.debugger_break_dli_end()
 
 
 class emu_break_frame(emu_step):

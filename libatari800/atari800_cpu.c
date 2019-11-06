@@ -801,6 +801,7 @@ recreate_history_entry:
 				}
 				else if (nmi_changing == INTERRUPT_END) {
 					nmi_changing = INTERRUPT_NONE;
+					last_nmi_type = 0;
 				}
 				goto recreate_history_entry;
 			}
@@ -813,6 +814,7 @@ recreate_history_entry:
 		}
 		else if (nmi_changing == INTERRUPT_END) {
 			nmi_changing = INTERRUPT_NONE;
+			last_nmi_type = 0;
 		}
 
 #ifdef MONITOR_BREAKPOINTS
@@ -1394,7 +1396,6 @@ recreate_history_entry:
 				e->tv_cycle = ANTIC_XPOS_CYCLE_COUNT;
 				e->tv_line = ANTIC_ypos;
 			}
-			last_nmi_type = 0;
 		}
 		nmi_changing = INTERRUPT_END;
 		DONE

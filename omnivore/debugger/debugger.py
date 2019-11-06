@@ -197,6 +197,15 @@ class Breakpoint:
         self.terms = (dd.EMU_VBI_START, dd.END_OF_LIST)
         self.enable()
 
+    def break_vbi_end(self, count):
+        # shortcut to create a break at the next vertical blank interrupt
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['tokens'][self.index] = count
+        self.terms = (dd.EMU_VBI_END, dd.END_OF_LIST)
+        self.enable()
+
     def break_dli_start(self, count):
         # shortcut to create a break at the next display list interrupt
         c = self.debugger.debug_cmd[0]
@@ -204,6 +213,15 @@ class Breakpoint:
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
         c['tokens'][self.index] = count
         self.terms = (dd.EMU_DLI_START, dd.END_OF_LIST)
+        self.enable()
+
+    def break_dli_end(self, count):
+        # shortcut to create a break at the next display list interrupt
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['tokens'][self.index] = count
+        self.terms = (dd.EMU_DLI_END, dd.END_OF_LIST)
         self.enable()
 
     def count_cycles(self, count):
@@ -301,9 +319,17 @@ class Debugger(Serializable):
         b = Breakpoint(self, 0)
         b.break_vbi_start(number)
 
+    def break_vbi_end(self, number=1):
+        b = Breakpoint(self, 0)
+        b.break_vbi_end(number)
+
     def break_dli_start(self, number=1):
         b = Breakpoint(self, 0)
         b.break_dli_start(number)
+
+    def break_dli_end(self, number=1):
+        b = Breakpoint(self, 0)
+        b.break_dli_end(number)
 
     def count_frames(self, number=1):
         b = Breakpoint(self, 0)

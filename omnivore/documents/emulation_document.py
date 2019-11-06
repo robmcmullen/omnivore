@@ -276,9 +276,19 @@ class EmulationDocument(DiskImageDocument):
         self.emulator.break_vbi_start(count)
         self.start_timer()
 
+    def debugger_break_vbi_end(self, count=1):
+        print("stepping to end of VBI")
+        self.emulator.break_vbi_end(count)
+        self.start_timer()
+
     def debugger_break_dli_start(self, count=1):
         print("stepping to DLI")
         self.emulator.break_dli_start(count)
+        self.start_timer()
+
+    def debugger_break_dli_end(self, count=1):
+        print("stepping to end of DLI")
+        self.emulator.break_dli_end(count)
         self.start_timer()
 
     def debugger_break_next_scan_line(self, count=1):
