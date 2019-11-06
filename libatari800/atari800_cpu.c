@@ -1442,6 +1442,7 @@ recreate_history_entry:
 		DONE
 
 	OPCODE(48)				/* PHA */
+		if (entry) entry->target_addr = 0x100 + S;
 		PH(A);
 		DONE
 
@@ -1620,6 +1621,10 @@ recreate_history_entry:
 
 	OPCODE(68)				/* PLA */
 		Z = N = A = PL;
+		if (entry) {
+			entry->target_addr = 0x100 + S;
+			entry->after1 = A;
+		}
 		DONE
 
 	OPCODE(69)				/* ADC #ab */
