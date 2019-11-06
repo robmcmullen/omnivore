@@ -179,11 +179,24 @@ class emu_break_vbi_start(SawxAction):
     def calc_name(self, action_key):
         return "Break at Next VBI Start"
 
+    def calc_enabled(self, action_key):
+        return self.editor.document.emulator.emulator_paused
+
     def perform(self, action_key):
         self.editor.document.debugger_break_vbi_start()
 
-    def _update_enabled(self, ui_state):
-        self.enabled = self.editor.document.emulator_paused
+
+class emu_break_dli_start(SawxAction):
+    """Continue and break at the start of the next DLI
+    """
+    def calc_name(self, action_key):
+        return "Break at Next DLI Start"
+
+    def calc_enabled(self, action_key):
+        return self.editor.document.emulator.emulator_paused
+
+    def perform(self, action_key):
+        self.editor.document.debugger_break_dli_start()
 
 
 class emu_break_frame(emu_step):

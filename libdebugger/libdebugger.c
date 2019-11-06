@@ -4,7 +4,6 @@
 
 #include "libdebugger.h"
 
-
 int access_color_step = 5;
 
 
@@ -110,7 +109,7 @@ int libdebugger_brk_instruction(breakpoints_t *breakpoints) {
 int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *run, cpu_state_callback_ptr get_emulator_value, int is_unconditional_jmp) {
 	uint16_t token, op, addr, value;
 	int64_t ref_val;
-	int i, num_entries, index, status, btype, final_value, count, current_pc, current_scan_line;
+	int i, num_entries, index, status, btype, final_value, count, current_pc, current_scan_line, start_checking_breakpoints_at;
 	postfix_stack_t stack;
 
 	current_pc = get_emulator_value(REG_PC, 0);
@@ -134,6 +133,7 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 	}
 
 	num_entries = breakpoints->num_breakpoints;
+	start_checking_breakpoints_at = 1;
 
 	/* Special case for zeroth breakpoint: step conditions & user control */
 	if (breakpoints->breakpoint_status[0] == BREAKPOINT_ENABLED) {
@@ -156,10 +156,14 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 			/* only checked at the end of the frame */
 			;
 		}
+		else if (btype == BREAKPOINT_CONDITIONAL) {
+			/* use regular breakpoint rules for conditional types */
+			start_checking_breakpoints_at = 0;
+		}
 	}
 
 	/* process normal breakpoints */
-	for (i=1; i < num_entries; i++) {
+	for (i=start_checking_breakpoints_at; i < num_entries; i++) {
 		status = breakpoints->breakpoint_status[i];
 		if (status == BREAKPOINT_ENABLED) {
 			btype = breakpoints->breakpoint_type[i];

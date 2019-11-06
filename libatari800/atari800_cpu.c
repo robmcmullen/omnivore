@@ -796,13 +796,22 @@ recreate_history_entry:
 					check_breakpoints = 0;
 				}
 				PC = last_pc;
+				if (nmi_changing == INTERRUPT_START) {
+					nmi_changing = INTERRUPT_PROCESSING;
+				}
+				else if (nmi_changing == INTERRUPT_END) {
+					nmi_changing = INTERRUPT_NONE;
+				}
 				goto recreate_history_entry;
 			}
 		}
 		if (LIBATARI800_Breakpoints) {
 			LIBATARI800_Breakpoints->last_pc = last_pc;
 		}
-		if (nmi_changing == INTERRUPT_END) {
+		if (nmi_changing == INTERRUPT_START) {
+			nmi_changing = INTERRUPT_PROCESSING;
+		}
+		else if (nmi_changing == INTERRUPT_END) {
 			nmi_changing = INTERRUPT_NONE;
 		}
 
@@ -2584,9 +2593,6 @@ recreate_history_entry:
 		LIBATARI800_Status->current_cycle_in_frame += cyc;
 		LIBATARI800_Status->cycles_since_power_on += cyc;
 		UPDATE_GLOBAL_REGS;
-		if (nmi_changing == INTERRUPT_START) {
-			nmi_changing = INTERRUPT_PROCESSING;
-		}
 
 #ifdef MONITOR_PROFILE
 		{

@@ -164,6 +164,7 @@ class EmulationEditor(ByteEditor):
             "emu_break_next_scan_line",
             "emu_break_frame",
             "emu_break_vbi_start",
+            "emu_break_dli_start",
             None,
             "emu_generate_emulator_specific_key_actions()",
             None,

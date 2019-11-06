@@ -177,7 +177,7 @@ int a8bridge_register_callback(uint16_t token, uint16_t addr) {
 		break;
 
 		case EMU_IN_VBI:
-		value = last_nmi_type == DISASM_ATARI800_VBI_END && nmi_changing == INTERRUPT_PROCESSING;
+		value = last_nmi_type == DISASM_ATARI800_VBI_END;
 		break;
 
 		case EMU_VBI_END:
@@ -189,7 +189,7 @@ int a8bridge_register_callback(uint16_t token, uint16_t addr) {
 		break;
 
 		case EMU_IN_DLI:
-		value = last_nmi_type == DISASM_ATARI800_DLI_END && nmi_changing == INTERRUPT_PROCESSING;
+		value = last_nmi_type == DISASM_ATARI800_DLI_END;
 		break;
 
 		case EMU_DLI_END:
