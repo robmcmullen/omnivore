@@ -444,6 +444,15 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
         h = &hexdigits[entry->after1*2], *t++=*h++, *t++=*h++;
         *t++=' ';
     }
+    else if (masked_flag == FLAG_JMP_INDIRECT) {
+        *t++='('; *t++='$';
+        h = &hexdigits[(entry->target_addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2], *t++=*h++, *t++=*h++;
+        *t++=')'; *t++='='; *t++='$';
+        h = &hexdigits[entry->before1*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[entry->before2*2], *t++=*h++, *t++=*h++;
+        *t++=' ';
+    }
     if (entry->flag & FLAG_REG_SR) {
         changed = entry->sr ^ entry->after3;
         val = entry->after3;

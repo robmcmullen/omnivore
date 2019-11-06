@@ -1676,10 +1676,16 @@ recreate_history_entry:
 		SET_PC(MEMORY_dGetWord(addr));
 #else
 		/* original 6502 had a bug in JMP (addr) when addr crossed page boundary */
+		UWORD ind_addr;
 		if ((UBYTE) addr == 0xff)
-			SET_PC((MEMORY_dGetByte(addr - 0xff) << 8) + MEMORY_dGetByte(addr));
+			ind_addr = (MEMORY_dGetByte(addr - 0xff) << 8) + MEMORY_dGetByte(addr);
 		else
-			SET_PC(MEMORY_dGetWord(addr));
+			ind_addr = MEMORY_dGetWord(addr);
+		if (entry) {
+			entry->before1 = ind_addr >> 8;
+			entry->before2 = ind_addr & 0xff;
+		}
+		SET_PC(ind_addr);
 #endif
 		DONE
 

@@ -114,7 +114,7 @@ char opcode_history_flags_6502[256] = {
     0, /* ADC # */
     0, /* ROR A */
     0, /* ??? */
-    0, /* JMP ind */
+    FLAG_JMP_INDIRECT, /* JMP ind */
     FLAG_MEMORY_READ_ALTER_A, /* ADC abs */
     FLAG_MEMORY_ALTER, /* ROR abs */
     0, /* ??? */
