@@ -2572,7 +2572,7 @@ recreate_history_entry:
 				if (entry->flag == 0) entry->flag = FLAG_REG_Y;
 				entry->after1 = Y;
 			}
-			else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY) {
+			else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY || entry->flag == FLAG_MEMORY_READ_ALTER_A) {
 				entry->before1 = save_byte_at_target_addr;
 			}
 			else if (entry->flag == FLAG_MEMORY_ALTER) {

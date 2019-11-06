@@ -409,6 +409,17 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
         h = &hexdigits[entry->before1*2], *t++=*h++, *t++=*h++;
         *t++=')';
     }
+    else if (masked_flag == FLAG_MEMORY_READ_ALTER_A) {
+        *t++='$';
+        h = &hexdigits[(entry->target_addr >> 8)*2], *t++=*h++, *t++=*h++;
+        h = &hexdigits[(entry->target_addr & 0xff)*2], *t++=*h++, *t++=*h++;
+        *t++='=';
+        h = &hexdigits[entry->before1*2], *t++=*h++, *t++=*h++;
+        *t++=' ';
+        *t++='A', *t++='=';
+        h = &hexdigits[entry->a*2], *t++=*h++, *t++=*h++;
+        *t++=' ';
+    }
     else if (masked_flag == FLAG_PEEK_MEMORY) {
         *t++='$';
         h = &hexdigits[(entry->target_addr >> 8)*2], *t++=*h++, *t++=*h++;
