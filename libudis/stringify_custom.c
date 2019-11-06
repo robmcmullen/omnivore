@@ -408,6 +408,7 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
         *t++='(', *t++='w', *t++='a', *t++='s', *t++=' ';
         h = &hexdigits[entry->before1*2], *t++=*h++, *t++=*h++;
         *t++=')';
+        *t++=' ';
     }
     else if (masked_flag == FLAG_MEMORY_READ_ALTER_A) {
         *t++='$';
