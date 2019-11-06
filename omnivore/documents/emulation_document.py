@@ -272,8 +272,13 @@ class EmulationDocument(DiskImageDocument):
         self.start_timer()
 
     def debugger_break_vbi_start(self, count=1):
-        print("stepping")
+        print("stepping to VBI")
         self.emulator.break_vbi_start(count)
+        self.start_timer()
+
+    def debugger_break_next_scan_line(self, count=1):
+        print("stepping to next scan line")
+        self.emulator.break_scan_line(count)
         self.start_timer()
 
     def debugger_count_frames(self, number=1):

@@ -160,6 +160,19 @@ class emu_step_out(emu_step):
         print("resume!")
 
 
+class emu_break_next_scan_line(SawxAction):
+    """Continue to next scan line
+    """
+    def calc_name(self, action_key):
+        return "Break at Next Scan Line"
+
+    def calc_enabled(self, action_key):
+        return self.editor.document.emulator.emulator_paused
+
+    def perform(self, action_key):
+        self.editor.document.debugger_break_next_scan_line()
+
+
 class emu_break_vbi_start(SawxAction):
     """Continue and break at the start of the next VBI
     """

@@ -179,8 +179,17 @@ class Breakpoint:
         c['tokens'][self.index] = count
         self.enable()
 
+    def break_scan_line(self, count):
+        # shortcut to create a break at the next (or a subsequent) scan line
+        c = self.debugger.debug_cmd[0]
+        c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_LINES
+        c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
+        c['reference_value'][self.id] = self.debugger.scan_lines_since_power_on
+        c['tokens'][self.index] = count
+        self.enable()
+
     def break_vbi_start(self, count):
-        # shortcut to create a break after `count` instructions
+        # shortcut to create a break at the next vertical blank interrupt
         c = self.debugger.debug_cmd[0]
         c['breakpoint_type'][self.id] = dd.BREAKPOINT_CONDITIONAL
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
@@ -189,7 +198,7 @@ class Breakpoint:
         self.enable()
 
     def count_cycles(self, count):
-        # shortcut to create a break after `count` instructions
+        # shortcut to create a break after `count` machine cycles
         c = self.debugger.debug_cmd[0]
         c['breakpoint_type'][self.id] = dd.BREAKPOINT_COUNT_CYCLES
         c['breakpoint_status'][self.id] = dd.BREAKPOINT_ENABLED
@@ -274,6 +283,10 @@ class Debugger(Serializable):
         b.step_into(number)
 
     count_instructions = step_into
+
+    def break_scan_line(self, number=1):
+        b = Breakpoint(self, 0)
+        b.break_scan_line(number)
 
     def break_vbi_start(self, number=1):
         b = Breakpoint(self, 0)

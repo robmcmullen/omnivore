@@ -12,16 +12,19 @@ FRAME_STATUS_DTYPE = np.dtype([
     ("current_cycle_in_frame", np.uint32),
     ("final_cycle_in_frame", np.uint32),
     ("current_instruction_in_frame", np.uint32),
+    ("scan_lines_since_power_on", np.uint32),
+    ("unused0", np.uint32, 3),
 
     ("breakpoint_id", np.int16),
-    ("unused1", np.uint16, 3),
+    ("current_scan_line_in_frame", np.int16),
+    ("unused1", np.uint16, 2),
 
     ("frame_status", np.uint8),
     ("use_memory_access", np.uint8),
     ("brk_into_debugger", np.uint8),
     ("unused2", np.uint8, 5),
 
-    ("unused3", np.uint64, 8), # fill header to 128 bytes
+    ("unused3", np.uint64, 6), # fill header to 128 bytes
 
     ("memory_access", np.uint8, MAIN_MEMORY_SIZE),
     ("access_type", np.uint8, MAIN_MEMORY_SIZE),
@@ -95,6 +98,9 @@ BREAKPOINT_COUNT_CYCLES = 0x2
 BREAKPOINT_AT_RETURN = 0x3
 BREAKPOINT_COUNT_FRAMES = 0x4
 BREAKPOINT_INFINITE_LOOP = 0x5
+BREAKPOINT_BRK_INSTRUCTION = 0x6
+BREAKPOINT_PAUSE_AT_FRAME_START = 0x7
+BREAKPOINT_COUNT_LINES = 0x8
 
 
 # contitional breakpoint definitions

@@ -16,9 +16,12 @@ typedef struct {
         int32_t current_cycle_in_frame;
         int32_t final_cycle_in_frame;
         int32_t current_instruction_in_frame;
+        int32_t scan_lines_since_power_on;
+        int32_t unused0[3];
 
         int16_t breakpoint_id;
-        int16_t unused1[3];
+        int16_t current_scan_line_in_frame;
+        int16_t unused1[2];
 
         /* flags */
         uint8_t frame_status;
@@ -26,7 +29,7 @@ typedef struct {
         uint8_t brk_into_debugger; /* enter debugger on BRK */
         uint8_t unused2[5];
 
-        int64_t unused3[8]; /* 16 x uint64 in header (16*8 bytes) */
+        int64_t unused3[6]; /* 16 x uint64 in header (16*8 bytes) */
 
         uint8_t memory_access[MAIN_MEMORY_SIZE];
         uint8_t access_type[MAIN_MEMORY_SIZE];
@@ -72,6 +75,7 @@ typedef struct {
 #define BREAKPOINT_INFINITE_LOOP 0x5
 #define BREAKPOINT_BRK_INSTRUCTION 0x6
 #define BREAKPOINT_PAUSE_AT_FRAME_START 0x7
+#define BREAKPOINT_COUNT_LINES 0x8
 
 /* status values returned */
 #define NO_BREAKPOINT_FOUND -1

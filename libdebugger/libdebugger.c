@@ -110,7 +110,7 @@ int libdebugger_brk_instruction(breakpoints_t *breakpoints) {
 int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *run, cpu_state_callback_ptr get_emulator_value, int is_unconditional_jmp) {
 	uint16_t token, op, addr, value;
 	int64_t ref_val;
-	int i, num_entries, index, status, btype, final_value, count, current_pc;
+	int i, num_entries, index, status, btype, final_value, count, current_pc, current_scan_line;
 	postfix_stack_t stack;
 
 	current_pc = get_emulator_value(REG_PC, 0);
@@ -127,6 +127,12 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 	}
 #endif
 
+	current_scan_line = get_emulator_value(EMU_SCANLINE, 0);
+	if (current_scan_line != run->current_scan_line_in_frame) {
+		run->current_scan_line_in_frame = current_scan_line;
+		run->scan_lines_since_power_on++;
+	}
+
 	num_entries = breakpoints->num_breakpoints;
 
 	/* Special case for zeroth breakpoint: step conditions & user control */
@@ -142,6 +148,9 @@ int libdebugger_check_breakpoints(breakpoints_t *breakpoints, frame_status_t *ru
 		}
 		else if (btype == BREAKPOINT_COUNT_INSTRUCTIONS) {
 			if (count + ref_val <= run->instructions_since_power_on) return 0;
+		}
+		else if (btype == BREAKPOINT_COUNT_LINES) {
+			if (count + ref_val <= run->scan_lines_since_power_on) return 0;
 		}
 		else if (btype == BREAKPOINT_COUNT_FRAMES) {
 			/* only checked at the end of the frame */
@@ -272,6 +281,7 @@ int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_s
 		default:
 		output->frame_number += 1;
 		output->current_instruction_in_frame = 0;
+		output->current_scan_line_in_frame = -1;
 		libdebugger_memory_access_start_frame(memory, output);
 	}
 	output->frame_status = FRAME_INCOMPLETE;

@@ -121,6 +121,7 @@ void a8bridge_clear_state_arrays(input_template_t *input, output_template_t *out
 	output->status.frame_status = 0;
 	output->status.cycles_since_power_on = 0;
 	output->status.instructions_since_power_on = 0;
+	output->status.scan_lines_since_power_on = 0;
 }
 
 void a8bridge_configure_state_arrays(input_template_t *input, output_template_t *output)

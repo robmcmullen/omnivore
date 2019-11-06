@@ -140,6 +140,14 @@ class Emulator(Debugger):
         return self.status['instructions_since_power_on'][0]
 
     @property
+    def scan_lines_since_power_on(self):
+        return self.status['scan_lines_since_power_on'][0]
+
+    @property
+    def current_scan_line_in_frame(self):
+        return self.status['current_scan_line_in_frame'][0]
+
+    @property
     def stack_pointer(self):
         raise NotImplementedError("define stack_pointer property in subclass")
 

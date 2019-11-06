@@ -161,6 +161,7 @@ class EmulationEditor(ByteEditor):
             "emu_step",
             "emu_step_into",
             "emu_step_over",
+            "emu_break_next_scan_line",
             "emu_break_frame",
             "emu_break_vbi_start",
             None,
