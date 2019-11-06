@@ -82,7 +82,7 @@ char opcode_history_flags_6502[256] = {
     0, /* EOR # */
     0, /* LSR A */
     0, /* ??? */
-    0, /* JMP abs */
+    FLAG_JMP, /* JMP abs */
     FLAG_MEMORY_READ_ALTER_A, /* EOR abs */
     FLAG_MEMORY_ALTER, /* LSR abs */
     0, /* ??? */

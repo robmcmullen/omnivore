@@ -1383,6 +1383,7 @@ recreate_history_entry:
 		PLP;
 		data = PL;
 		SET_PC((PL << 8) + data);
+		if (entry) entry->target_addr = PC;
 		CPUCHECKIRQ;
 #ifdef MONITOR_BREAK
 		if (MONITOR_break_ret && --MONITOR_ret_nesting <= 0)
@@ -1467,6 +1468,7 @@ recreate_history_entry:
 		CPU_remember_jmp_curpos = (CPU_remember_jmp_curpos + 1) % CPU_REMEMBER_JMP_STEPS;
 #endif
 		SET_PC(OP_WORD);
+		if (entry) entry->target_addr = PC;
 		DONE
 
 	OPCODE(4d)				/* EOR abcd */
@@ -1559,6 +1561,7 @@ recreate_history_entry:
 	OPCODE(60)				/* RTS */
 		data = PL;
 		SET_PC((PL << 8) + data + 1);
+		if (entry) entry->target_addr = PC;
 #ifdef MONITOR_BREAK
 		if (MONITOR_break_ret && --MONITOR_ret_nesting <= 0)
 			MONITOR_break_step = TRUE;
