@@ -36,6 +36,7 @@ class InstructionHistoryTable(cg.VirtualTable):
         self.visible_history_start_row = 0
         self.visible_history_lookup_table = None
         cg.VirtualTable.__init__(self, len(self.column_labels), s.origin)
+        self.selected_rows = set()
 
     @property
     def emulator(self):
@@ -119,17 +120,23 @@ class InstructionHistoryTable(cg.VirtualTable):
         except IndexError:
             print(f"tried row {row} out of {self.visible_history_lookup_table}")
             text = f"row {row} out of bounds"
-        # style = s.style[index]
-        style = 0
+        if row in self.selected_rows:
+            style = cg.selected_bit_mask
+        else:
+            style = 0
         return text, style
 
     def clear_selected_style(self):
         # self.style[:] &= (0xff ^ selected_bit_mask)
-        pass
+        self.selected_rows = set()
 
     def set_selected_index_range(self, index1, index2):
         # self.style[index1:index2] |= selected_bit_mask
-        pass
+        row1 = index1 // self.items_per_row
+        row2 = index2 // self.items_per_row
+        for r in range(row1, row2 + 1):
+            self.selected_rows.add(r)
+            print(f"adding {r} to selected_rows")
 
     def prepare_for_drawing(self, start_row, visible_rows, start_cell, visible_cells):
         emu = self.emulator
@@ -149,6 +156,11 @@ class InstructionHistoryTable(cg.VirtualTable):
         v.segment = Segment(c, 0)
         # print("CPU HISTORY ENTRIES", self.current_num_rows)
         self.init_boundaries()
+
+        # for now, clear selection when anything changes so we don't have to
+        # track the line numbers as they should get moved up the screen as more
+        # instructions get added to the bottom
+        self.clear_selected_style()
 
 
 class InstructionHistoryGridControl(SegmentGridControl):
