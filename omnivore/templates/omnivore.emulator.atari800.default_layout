@@ -6,22 +6,10 @@
         "ratio_in_parent": 1,
         "views": [
           {
-            "direction": 8,
+            "child_uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d",
             "ratio_in_parent": 0.48876043673731534,
-            "views": [
-              {
-                "child_uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9",
-                "ratio_in_parent": 0.09843937575030012,
-                "show_title": true,
-                "use_close_button": true
-              },
-              {
-                "child_uuid": "a1ca26bc-9228-41a1-997d-3e8ad182873d",
-                "ratio_in_parent": 0.9015606242496998,
-                "show_title": true,
-                "use_close_button": true
-              }
-            ]
+            "show_title": true,
+            "use_close_button": true
           },
           {
             "direction": 8,
@@ -82,14 +70,6 @@
       },
       {
         "control": {
-          "items_per_row": 13,
-          "zoom": 1
-        },
-        "name": "cpu6502",
-        "uuid": "3fc1c976-dde9-408c-b102-0e226e8df9e9"
-      },
-      {
-        "control": {
           "items_per_row": 99,
           "zoom": 1
         },
@@ -115,12 +95,11 @@
           "zoom": 1
         },
         "name": "hex",
-        "segment_name": "Main Memory",
         "uuid": "eeb18605-f6b6-4eae-bcd3-184d284e106b"
       },
       {
         "control": {
-          "items_per_row": -1,
+          "items_per_row": 3,
           "zoom": 1
         },
         "name": "gtia",
