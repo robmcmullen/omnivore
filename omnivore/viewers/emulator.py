@@ -119,7 +119,8 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
         SegmentViewer.set_event_handlers(self)  # skip viewer mixin handlers, which skips the priority level refresh
         self.document.emulator_breakpoint_event += self.on_emulator_breakpoint
         self.document.emulator_update_screen_event += self.on_emulator_update_screen
-        self.control.Bind(ct.EVT_CHECKPOINT_HOVER, self.on_over_line)
+        self.control.Bind(ct.EVT_CHECKPOINT_SELECTED, self.on_selected)
+        self.control.Bind(ct.EVT_CHECKPOINT_RANGE_SELECTED, self.on_range_selected)
 
     @classmethod
     def create_control(cls, parent, linked_base, mdict):
@@ -137,11 +138,17 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
 
     #### event handlers
 
-    def on_over_line(self, evt):
-        print("OVER LINE!", evt.GetRestartNumber(), evt.GetFrameNumber(), evt.GetLine())
+    def on_selected(self, evt):
+        print("RESTART SELECTED!", evt.GetRestartNumber(), evt.GetFrameNumber(), evt.GetLine())
         doc = self.document
         doc.pause_emulator()
         doc.checkpoint_restore(evt.GetRestartNumber(), evt.GetFrameNumber())
+
+    def on_range_selected(self, evt):
+        print(f"RANGE SELECTED! {evt.start.frame_number}@{evt.start.restart_number} -> {evt.end.frame_number}@{evt.end.restart_number}")
+        doc = self.document
+        doc.pause_emulator()
+        doc.checkpoint_restore(evt.end.restart_number, evt.end.frame_number)
 
     def on_emulator_update_screen(self, evt):
         log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))
