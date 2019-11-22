@@ -25,9 +25,7 @@ class new_window(SawxAction):
 
 class new_blank_file(SawxAction):
     prefix = "new_blank_file"
-
-    def calc_name(self, action_key):
-        return "Blank File"
+    name = "Blank File"
 
     def perform(self, event=None):
         frame = self.editor.frame
@@ -65,9 +63,7 @@ class new_file_from_template(SawxListAction):
 
 class open_file(SawxAction):
     icon = "file"
-
-    def calc_name(self, action_key):
-        return "Open"
+    name = "Open"
 
     def perform(self, action_key):
         frame = self.editor.frame
@@ -78,9 +74,7 @@ class open_file(SawxAction):
 class save_file(SawxAction):
     icon = "save"
     ext_list = [("All Documents", ".*")]
-
-    def calc_name(self, action_key):
-        return "Save"
+    name = "Save"
 
     def calc_enabled(self, action_key):
         return self.editor.is_dirty
@@ -99,8 +93,7 @@ class save_file(SawxAction):
             e.save_to_uri(path)
 
 class save_as(save_file):
-    def calc_name(self, action_key):
-        return "Save As"
+    name = "Save As"
 
     def calc_enabled(self, action_key):
         return True
@@ -109,9 +102,7 @@ class save_as(save_file):
 
 class save_as_image(save_as):
     ext_list = [("PNG Images", ".png"), ("JPEG Images", ".jpg")]
-
-    def calc_name(self, action_key):
-        return "Save As Image"
+    name = "Save As Image"
 
     def calc_enabled(self, action_key):
         return self.editor.numpy_image_available
@@ -128,8 +119,7 @@ class save_as_image(save_as):
             e.save_as_image(path, raw_data)
 
 class quit(SawxAction):
-    def calc_name(self, action_key):
-        return "Quit"
+    name = "Quit"
 
     def perform(self, action_key):
         wx.GetApp().quit()
@@ -167,8 +157,7 @@ class redo(SawxNameChangeAction):
         self.editor.redo()
 
 class cut(SawxAction):
-    def calc_name(self, action_key):
-        return "Cut"
+    name = "Cut"
 
     def calc_enabled(self, action_key):
         return self.editor.can_cut
@@ -178,15 +167,13 @@ class cut(SawxAction):
         self.editor.delete_selection()
 
 class copy(cut):
-    def calc_name(self, action_key):
-        return "Copy"
+    name = "Copy"
 
     def perform(self, action_key):
         self.editor.copy_selection_to_clipboard()
 
 class paste(SawxAction):
-    def calc_name(self, action_key):
-        return "Paste"
+    name = "Paste"
 
     def calc_enabled(self, action_key):
         return self.editor.can_paste
@@ -195,8 +182,7 @@ class paste(SawxAction):
         self.editor.paste_clipboard()
 
 class delete_selection(SawxAction):
-    def calc_name(self, action_key):
-        return "Delete Selection"
+    name = "Delete Selection"
 
     def calc_enabled(self, action_key):
         return self.editor.can_cut
@@ -211,8 +197,7 @@ class delete_selection(SawxAction):
         self.editor.delete_selection()
 
 class select_all(SawxAction):
-    def calc_name(self, action_key):
-        return "Select All"
+    name = "Select All"
 
     def calc_enabled(self, action_key):
         return True
@@ -221,8 +206,7 @@ class select_all(SawxAction):
         self.editor.select_all()
 
 class select_none(SawxAction):
-    def calc_name(self, action_key):
-        return "Select None"
+    name = "Select None"
 
     def calc_enabled(self, action_key):
         return True
@@ -231,8 +215,7 @@ class select_none(SawxAction):
         self.editor.select_none()
 
 class select_invert(SawxAction):
-    def calc_name(self, action_key):
-        return "Invert Selection"
+    name = "Invert Selection"
 
     def calc_enabled(self, action_key):
         return True
@@ -241,43 +224,37 @@ class select_invert(SawxAction):
         self.editor.select_invert()
 
 class prefs(SawxAction):
-    def calc_name(self, action_key):
-        return "Preferences"
+    name = "Preferences"
 
     def perform(self, action_key):
         wx.GetApp().show_preferences_dialog(self.editor.frame, self.editor.ui_name)
 
 class about(SawxAction):
-    def calc_name(self, action_key):
-        return "About"
+    name = "About"
 
     def perform(self, action_key):
         wx.GetApp().show_about_dialog()
 
 class prev_line(SawxAction):
-    def calc_name(self, action_key):
-        return "Previous Line"
+    name = "Previous Line"
 
     def perform(self, action_key):
         print("Up!")
 
 class next_line(SawxAction):
-    def calc_name(self, action_key):
-        return "Next Line"
+    name = "Next Line"
 
     def perform(self, action_key):
         print("Down!")
 
 class prev_char(SawxAction):
-    def calc_name(self, action_key):
-        return "Previous Char"
+    name = "Previous Char"
 
     def perform(self, action_key):
         print("Left!")
 
 class next_char(SawxAction):
-    def calc_name(self, action_key):
-        return "Next Char"
+    name = "Next Char"
 
     def perform(self, action_key):
         print("Right!")
@@ -293,15 +270,13 @@ class show_toolbar(SawxRadioAction):
         wx.CallAfter(self.editor.frame.sync_active_tab)
 
 class raise_exception(SawxAction):
-    def calc_name(self, action_key):
-        return "Raise Exception"
+    name = "Raise Exception"
 
     def perform(self, action_key):
         val = int("this will raise a ValueError")
 
 class test_progress(SawxAction):
-    def calc_name(self, action_key):
-        return "Test Progress Dialog"
+    name = "Test Progress Dialog"
 
     def perform(self, action_key):
         progress_log = logging.getLogger("progress")
@@ -325,22 +300,19 @@ class test_progress(SawxAction):
             progress_log.info("END")
 
 class show_debug_log(SawxAction):
-    def calc_name(self, action_key):
-        return "View Error Log"
+    name = "View Error Log"
 
     def perform(self, action_key):
         show_logging_frame()
 
 class widget_inspector(SawxAction):
-    def calc_name(self, action_key):
-        return "View Widget Inspector"
+    name = "View Widget Inspector"
 
     def perform(self, action_key):
         wx.lib.inspection.InspectionTool().Show()
 
 class show_focus(SawxAction):
-    def calc_name(self, action_key):
-        return "Show Control With Focus"
+    name = "Show Control With Focus"
 
     def perform(self, action_key):
         focused = wx.Window.FindFocus()
