@@ -20,6 +20,12 @@ log = logging.getLogger(__name__)
 
 class EmulationEditor(ByteEditor):
     """Editor that holds an emulator instance and the associated viewers.
+
+    Omnivore can theoretically support multiple views of the same emulator
+    where each view could show a different restart number/frame number of the
+    emulator. But only one should be in control of the operation at any one
+    time. So the state of the emulation document would have to be shared, but
+    the current frame number would have to reside here in the editor.
     """
 
     editor_id = "omnivore.emulator"
@@ -48,6 +54,7 @@ class EmulationEditor(ByteEditor):
             "save_as",
             None,
             "save_as_image",
+            "save_animation",
             None,
             "quit",
         ],
@@ -220,6 +227,7 @@ class EmulationEditor(ByteEditor):
         return self.document.emulator
 
     def __init__(self, document, *args, **kwargs):
+        self.selected_checkpoint_range = None
         if document.__class__ != EmulationDocument:
             document = self.preprocess_document(document, *args, **kwargs)
         ByteEditor.__init__(self, document)
@@ -255,10 +263,35 @@ class EmulationEditor(ByteEditor):
         doc.boot()
         return doc
 
-    #### sawx.editor interface
+    #### images (sawx.editor interface)
 
     def get_numpy_image(self):
         return self.document.emulator.get_frame_rgb()
+
+    #### animation (sawx.editor interface)
+
+    @property
+    def numpy_animation_available(self):
+        return self.selected_checkpoint_range is not None
+
+    def get_numpy_animation(self):
+        print("ANIMATION RANGE:", self.selected_checkpoint_range)
+        start, end = self.selected_checkpoint_range
+        if start.frame_number > end.frame_number:
+            start, end = end, start
+        doc = self.document
+        emu = doc.emulator
+        frames = []
+        save = (emu.current_frame_number, emu.current_restart.restart_number)
+        restart_number = end.restart_number
+        frame_number = end.frame_number
+        while frame_number >= start.frame_number:
+            emu.restore_restart(restart_number, frame_number)
+            frames.append(emu.get_frame_rgb(frame_number))
+            frame_number -= 1
+        frames.reverse()
+        emu.restore_restart(*save)
+        return (self.document.framerate, frames)
 
     #### template
 

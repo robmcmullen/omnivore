@@ -143,12 +143,14 @@ class CheckpointViewer(EmulatorViewerMixin, SegmentViewer):
         doc = self.document
         doc.pause_emulator()
         doc.checkpoint_restore(evt.GetRestartNumber(), evt.GetFrameNumber())
+        self.editor.selected_checkpoint_range = None
 
     def on_range_selected(self, evt):
         print(f"RANGE SELECTED! {evt.start.frame_number}@{evt.start.restart_number} -> {evt.end.frame_number}@{evt.end.restart_number}")
         doc = self.document
         doc.pause_emulator()
         doc.checkpoint_restore(evt.end.restart_number, evt.end.frame_number)
+        self.editor.selected_checkpoint_range = (evt.start, evt.end)
 
     def on_emulator_update_screen(self, evt):
         log.debug("process_emulator_update_screen for %s using %s; flags=%s" % (self.control, self.linked_base, str(evt)))

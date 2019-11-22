@@ -107,16 +107,35 @@ class save_as_image(save_as):
     def calc_enabled(self, action_key):
         return self.editor.numpy_image_available
 
+    def calc_raw_data(self):
+        return e.get_numpy_image_before_prompt()
+
+    def save_raw_data(self, uri, raw_data):
+        self.editor.save_as_image(uri, raw_data)
+
     def perform(self, action_key):
         e = self.editor
         try:
-            raw_data = e.get_numpy_image_before_prompt()
+            raw_data = self.calc_raw_data()
         except RuntimeError:
             # cancelled
             return
-        path = e.frame.prompt_local_file_dialog("Save As Image", save=True, default_filename=e.document.root_name, wildcard=get_file_dialog_wildcard(self.ext_list))
+        path = e.frame.prompt_local_file_dialog(self.name, save=True, default_filename=e.document.root_name, wildcard=get_file_dialog_wildcard(self.ext_list))
         if path is not None:
-            e.save_as_image(path, raw_data)
+            self.save_raw_data(path, raw_data)
+
+class save_animation(save_as_image):
+    ext_list = [("PNG Images", ".png"), ("GIF Images", ".gif")]
+    name = "Save As Animation"
+
+    def calc_enabled(self, action_key):
+        return self.editor.numpy_animation_available
+
+    def calc_raw_data(self):
+        return self.editor.get_numpy_animation()
+
+    def save_raw_data(self, uri, raw_data):
+        self.editor.save_as_animation(uri, raw_data)
 
 class quit(SawxAction):
     name = "Quit"

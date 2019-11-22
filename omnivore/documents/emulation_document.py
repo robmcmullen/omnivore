@@ -28,6 +28,13 @@ class EmulationTimer(wx.Timer):
 
 
 class EmulationDocument(DiskImageDocument):
+    """A wrapper around the low-level `Emulator` instance that manages
+    the timing when running the emulator.
+
+    Only one instance of a particular emulator type is allowed at any one time.
+    The low level C code used in most emulators can't run multiple instances of
+    themselves, e.g. atari800 uses global variables for most of its state.
+    """
 
     # Class attributes
 
@@ -35,10 +42,9 @@ class EmulationDocument(DiskImageDocument):
 
     metadata_extension = ".omniemu"
 
-    # Only one instance of a particular emulator type is allowed at one time
-    # for now. I think that's a livable restriction for now. Besides, most
-    # emulators can't run multiple instances of themselves, e.g. atari800 uses
-    # global variables for most of its state.
+    # Lookup mapping of emulator ui_name to actual emulator instance to make
+    # sure only one emulator of a particular type is used at any one time. I
+    # think that's a livable restriction for now.
     emulator_document = {}
 
     def __init__(self, file_metadata, emulator_type, emulator, source_document=None):

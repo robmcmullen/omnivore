@@ -8,6 +8,7 @@ from . import action
 from . import errors
 from . import clipboard
 from .preferences import find_editor_preferences
+from .utils import apng
 from .utils import jsonutil
 from .utils.command import DisplayFlags
 from .utils.pyutil import get_plugins
@@ -372,7 +373,7 @@ class SawxEditor:
             }
         _, ext = os.path.splitext(uri)
         if ext not in valid:
-            path += ".png"
+            uri += ".png"
             t = wx.BITMAP_TYPE_PNG
         else:
             t = valid[ext]
@@ -388,6 +389,49 @@ class SawxEditor:
         return self.get_numpy_image()
 
     def get_numpy_image(self):
+        raise NotImplementedError
+
+    #### animation
+
+    @property
+    def numpy_animation_available(self):
+        return False
+
+    def save_as_animation(self, uri, raw_data=None):
+        """Saves the animation in the specified file.
+
+        Filename extension determines type of image saved.
+        """
+        valid = {
+            '.png': wx.BITMAP_TYPE_PNG,
+            '.gif': wx.BITMAP_TYPE_GIF,
+            }
+        _, ext = os.path.splitext(uri)
+        if ext not in valid:
+            uri += ".png"
+            t = wx.BITMAP_TYPE_PNG
+        else:
+            t = valid[ext]
+
+        if raw_data is None:
+            raw_data = self.get_numpy_animation()
+        if raw_data is not None:
+            delay, frames = raw_data
+            print(f"Found {len(frames)} frames, delay={delay}")
+            if len(frames) < 1:
+                raise RuntimeError("No frames to save to animation!")
+            h, w, depth = frames[0].shape
+            movie = apng.APNG()
+            for i, frame in enumerate(frames):
+                print("saving frame", i, frame.shape)
+                movie.append(frame, delay=int(delay * 1000))
+            print("final movie:", movie)
+            movie.save(uri)
+
+    def get_numpy_animation(self):
+        """Return a 2-tuple containing the delay (floating point, in seconds)
+        between frames and the list of numpy images that make up the frames.
+        """
         raise NotImplementedError
 
     #### search
