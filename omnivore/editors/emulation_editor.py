@@ -47,6 +47,8 @@ class EmulationEditor(ByteEditor):
             "save_file",
             "save_as",
             None,
+            "save_as_image",
+            None,
             "quit",
         ],
         ["Edit",
@@ -252,6 +254,11 @@ class EmulationEditor(ByteEditor):
         log.debug(f"Using emulator {doc.emulator_type}")
         doc.boot()
         return doc
+
+    #### sawx.editor interface
+
+    def get_numpy_image(self):
+        return self.document.emulator.get_frame_rgb()
 
     #### template
 

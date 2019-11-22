@@ -113,6 +113,9 @@ class save_as_image(save_as):
     def calc_name(self, action_key):
         return "Save As Image"
 
+    def calc_enabled(self, action_key):
+        return self.editor.numpy_image_available
+
     def perform(self, action_key):
         e = self.editor
         try:

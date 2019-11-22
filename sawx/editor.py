@@ -335,8 +335,33 @@ class SawxEditor:
             self.save_session()
         self.save_success()
 
+    def save_session(self):
+        s = {}
+        self.serialize_session(s)
+        self.document.save_session(self.editor_id, s)
+
+    def save_success(self, path=None):
+        if path is None:
+            path = self.document.uri
+        self.last_saved_uri = path
+        self.update_recent_path(path)
+        self.frame.status_message(f"saved {path}", True)
+
+    def update_recent_path(self, path):
+        from sawx.actions import open_recent
+        open_recent.open_recent.append(path)
+        self.frame.status_message(f"saved {path}", True)
+
+    #### images
+
+    @property
+    def numpy_image_available(self):
+        return True
+
     def save_as_image(self, uri, raw_data=None):
-        """ Saves the contents of the editor in a maproom project file
+        """Saves the image in the specified file.
+
+        Filename extension determines type of image saved.
         """
         valid = {
             '.png': wx.BITMAP_TYPE_PNG,
@@ -360,27 +385,10 @@ class SawxEditor:
             image.SaveFile(uri, t)
 
     def get_numpy_image_before_prompt(self):
-        pass
+        return self.get_numpy_image()
 
     def get_numpy_image(self):
         raise NotImplementedError
-
-    def save_session(self):
-        s = {}
-        self.serialize_session(s)
-        self.document.save_session(self.editor_id, s)
-
-    def save_success(self, path=None):
-        if path is None:
-            path = self.document.uri
-        self.last_saved_uri = path
-        self.update_recent_path(path)
-        self.frame.status_message(f"saved {path}", True)
-
-    def update_recent_path(self, path):
-        from sawx.actions import open_recent
-        open_recent.open_recent.append(path)
-        self.frame.status_message(f"saved {path}", True)
 
     #### search
 
