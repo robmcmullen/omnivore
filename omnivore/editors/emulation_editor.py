@@ -287,7 +287,9 @@ class EmulationEditor(ByteEditor):
         frame_number = end.frame_number
         while frame_number >= start.frame_number:
             emu.restore_restart(restart_number, frame_number)
-            frames.append(emu.get_frame_rgb(frame_number))
+            frame = emu.get_frame_rgb(frame_number)
+            frame = frame.copy()  # need copy rather than reference to same data storage space
+            frames.append(frame)
             frame_number -= 1
         frames.reverse()
         emu.restore_restart(*save)
