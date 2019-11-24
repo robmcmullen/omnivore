@@ -236,8 +236,15 @@ class CheckpointTree(wx.ScrolledWindow):
         # from pprint import pprint
         # pprint(order)
         lines = RestartLines(order)
-        print("restart_lines", lines)
+        # print("restart_lines", lines)
         self.set_lines(lines)
+        i = self.source.current_frame_number
+        if i is not None:
+            # print("current frame number:", i)
+            dx = self.GetScrollPos(wx.HORIZONTAL)
+            if i > dx:
+                self.Scroll(i, -1)
+
 
     def recalc_view(self):
         self.compute_lines()
