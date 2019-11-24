@@ -421,18 +421,21 @@ class JumpmanDrawObject:
 class JumpmanRespawn(JumpmanDrawObject):
     name = "jumpman"
     drawing_codes = np.asarray([
-        6, 0, 0,  4, 4, 4, 4, 4, 4,
-        6, 0, 1,  4, 0, 0, 0, 0, 4,
-        6, 0, 2,  4, 0, 0, 0, 0, 4,
-        6, 0, 3,  4, 0, 0, 0, 0, 4,
-        6, 0, 4,  4, 0, 0, 0, 0, 4,
-        6, 0, 5,  4, 4, 4, 4, 4, 4,
+        8, 0, 0,  4, 4, 4, 4, 4, 4, 4, 4,
+        8, 0, 1,  4, 0, 0, 0, 0, 0, 0, 4,
+        8, 0, 2,  4, 0, 0, 0, 0, 0, 0, 4,
+        8, 0, 3,  4, 0, 0, 0, 0, 0, 0, 4,
+        8, 0, 4,  4, 0, 0, 0, 0, 0, 0, 4,
+        8, 0, 5,  4, 4, 4, 4, 4, 4, 4, 4,
         0xff
     ], dtype=np.uint8)
     drawing_codes_relative_origin = (0, -5)
-    default_dx = 6
+    default_dx = 8
     default_dy = 0
-    valid_x_mask = 0xfe  # Even pixels only
+
+    # Even pixels only! If a jumpman is positioned on odd pixels, it won't be
+    # able to climb ladders.
+    valid_x_mask = 0xfe
 
 
 class Girder(JumpmanDrawObject):
