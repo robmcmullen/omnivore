@@ -21,8 +21,8 @@ log = logging.getLogger(__name__)
 
 
 class DisassemblyTable(SegmentTable):
-    column_labels = ["Label", "Disassembly", "Comment"]
-    column_sizes = [5, 12, 30]
+    column_labels = ["^Disassembly"]
+    column_sizes = [48]
 
     def __init__(self, linked_base):
         SegmentTable.__init__(self, linked_base, len(self.column_labels), False)
@@ -72,31 +72,28 @@ class DisassemblyTable(SegmentTable):
             s = self.linked_base.segment
             p = self.current
             e = p.entries
-            if col == 1:
-                t = self.parsed
-                if t is None:
-                    text = ""
-                else:
-                    text = t[row - t.start_index]
-            elif col == 0:
-                addr = e[row]['pc']
-                has_label = p.jmp_targets[addr]
-                if has_label:
-                    text = "L%04x" % addr
-                else:
-                    text = ""
-            elif col == 2:
-                comments = []
-                for i in range(index, index + e[row]['num_bytes']):
-                    comments.append(s.get_comment_at(i))
-                if comments:
-                    text = " ".join([str(c) for c in comments])
-                else:
-                    text = ""
-            elif col == 3:
-                text = str(e[row]['disassembler_type'])
+            addr = e[row]['pc']
+            has_label = p.jmp_targets[addr]
+            if has_label:
+                text = "L%04x " % addr
             else:
-                text = f"r{row}c{col}"
+                text = "      "
+
+            t = self.parsed
+            if t is not None:
+                text += t[row - t.start_index].decode('utf-8')
+
+            comments = []
+            for i in range(index, index + e[row]['num_bytes']):
+                c = s.get_comment_at(i)
+                if c:
+                    comments.append(c)
+            comment = " ".join([str(c) for c in comments])
+            if comment:
+                if len(text) < 20:
+                    text += " " * (20 - len(text))
+                text += " ; " + comment
+
             for i in range(index, index + e[row]['num_bytes']):
                 style |= s.style[i]
         else:
@@ -125,6 +122,10 @@ class DisassemblyControl(SegmentGridControl):
 
     def calc_line_renderer(self):
         return cg.VirtualTableLineRenderer(self, 2, widths=self.default_table_cls.column_sizes, col_labels=self.default_table_cls.column_labels)
+
+    def set_viewer_defaults(self):
+        self.want_col_header = False
+        super().set_viewer_defaults()
 
     def recalc_view(self):
         self.table.rebuild()
