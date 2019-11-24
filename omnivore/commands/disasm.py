@@ -51,7 +51,7 @@ class MiniAssemblerCommand(SetSelectionCommand):
 
     def change_data_at_indexes(self, indexes):
         new_data = np.empty(len(indexes) + 100, dtype=np.uint8)
-        new_indexes = np.empty(len(indexes) + 100, dtype=np.uint8)
+        new_indexes = np.empty(len(indexes) + 100, dtype=np.uint32)
         total = 0
         indexes.sort()  # carets may be out of order, so force increasing
         next_valid_start = 0

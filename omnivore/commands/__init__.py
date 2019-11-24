@@ -78,6 +78,7 @@ class SetSelectionCommand(ChangeByteValuesCommand):
         indexes = self.get_indexes()
         i1 = min(indexes)
         i2 = max(indexes)
+        log.debug(f"{self.short_name}: do_change: indexes={indexes}")
         undo.flags.index_range = i1, i2
         if self.advance:
             undo.flags.advance_caret_position_in_control = editor.focused_viewer.control
