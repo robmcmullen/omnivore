@@ -203,6 +203,8 @@ class CheckpointTree(wx.ScrolledWindow):
         self.highlight_over_line = False
         self.scroll_chunk = 20
         self.mouse_state = None
+        self.virtual_height = -1
+        self.virtual_width = -1
         self.compute_lines(source)
 
         self.bg_color = wx.WHITE
@@ -247,8 +249,10 @@ class CheckpointTree(wx.ScrolledWindow):
         self.restart_lines = lines
         self.max_width = lines.last_frame * self.x_scale + 2 * self.width_border
         self.max_height = self.level_height * lines.highest_level + 2 * self.height_border
-        self.virtual_width = self.max_width
-        self.virtual_height = self.max_height
+        if self.max_width > self.virtual_width:
+            self.virtual_width = self.max_width
+        if self.max_height > self.virtual_height:
+            self.virtual_height = self.max_height
         self.SetVirtualSize((self.max_width, self.max_height))
 
     def create_dc_stuff(self):
