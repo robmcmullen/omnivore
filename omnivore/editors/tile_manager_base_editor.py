@@ -48,12 +48,6 @@ class TileManagerBase(SawxEditor):
 
     default_viewers = "dummy"
 
-    def __init__(self, document, action_factory_lookup=None):
-        SawxEditor.__init__(self, document, action_factory_lookup)
-        self.focused_viewer = None
-        self.focused_viewer_changed_event = EventHandler(self)
-        self.viewers = []
-
     def prepare_destroy(self):
         self.document.halt_background_processing()
         self.focused_viewer = None
@@ -64,6 +58,11 @@ class TileManagerBase(SawxEditor):
             self.viewers.remove(v)
             v.prepare_for_destroy()
             del v
+
+    def create_event_bindings(self):
+        self.focused_viewer = None
+        self.focused_viewer_changed_event = EventHandler(self)
+        self.viewers = []
 
     def create_control(self, parent):
         """Creates the `TileManager` control that will manage all the viewers

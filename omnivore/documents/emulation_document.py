@@ -54,6 +54,7 @@ class EmulationDocument(DiskImageDocument):
         self.emulator_type = emulator_type
         self.emulator = emulator
         self.skip_frames_on_boot = 0
+        self.pause_emulator_on_boot = False
         self.emu_container = None
         self.collection = None
 
@@ -101,6 +102,7 @@ class EmulationDocument(DiskImageDocument):
             doc.skip_frames_on_boot = source_document.skip_frames_on_boot
         if extra_metadata:
             doc.restore_save_points_from_dict(extra_metadata)
+        cls.pause_emulator_on_boot = source_document.pause_emulator_on_boot
         cls.emulator_document[emu_cls.ui_name] = doc
         return doc
 
@@ -178,7 +180,7 @@ class EmulationDocument(DiskImageDocument):
             emu.next_frame()
         self.create_segments()
         self.create_timer()
-        if not self.source_document.pause_emulator_on_boot:
+        if not self.pause_emulator_on_boot:
             self.start_timer()
 
     def load(self, segment=None):

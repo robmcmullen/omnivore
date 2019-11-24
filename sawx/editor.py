@@ -181,12 +181,12 @@ class SawxEditor:
 
     #### dunder methods
 
-    def __init__(self, document, action_factory_lookup=None):
+    def __init__(self, document, editor_kwargs=None):
         self.frame = None
-        if action_factory_lookup is None:
-            action_factory_lookup = {}
-        self.action_factory_lookup = action_factory_lookup
-        self.document = document
+        self.action_factory_lookup = {}
+        self.document = self.preprocess_document(document, editor_kwargs)
+        self.process_keyword_arguments(editor_kwargs)
+        self.create_event_bindings()
         self.last_loaded_uri = document.uri
         self.last_saved_uri = None
         self.show_toolbar = True
@@ -284,6 +284,17 @@ class SawxEditor:
         self.document.prepare_destroy()
 
     #### document creation
+
+    def preprocess_document(self, source_document, kwargs):
+        """Hook during init time to modify or create a new document from
+        the source document if this editor needs special handling.
+
+        See: `EmulationEditor` for an example
+        """
+        return source_document
+
+    def process_keyword_arguments(self, kwargs):
+        pass
 
     def create_control(self, parent):
         return wx.StaticText(parent, -1, "Base class for Sawx editors")

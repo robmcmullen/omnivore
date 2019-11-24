@@ -227,10 +227,8 @@ class EmulationEditor(ByteEditor):
         return self.document.emulator
 
     def __init__(self, document, *args, **kwargs):
-        self.selected_checkpoint_range = None
-        if document.__class__ != EmulationDocument:
-            document = self.preprocess_document(document, *args, **kwargs)
-        ByteEditor.__init__(self, document)
+        ByteEditor.__init__(self, document, *args, **kwargs)
+        self.document.boot()
 
     #### ByteEditor interface
 
@@ -238,29 +236,28 @@ class EmulationEditor(ByteEditor):
         self.document.stop_timer()
         ByteEditor.prepare_destroy(self)
 
-    def preprocess_document(self, source_document, *args, **kwargs):
-        args = {}
-        skip = 0
-        log.debug(f"preprocess_document: EmulatorEditor, {source_document}")
+    def process_keyword_arguments(self, kwargs):
+        doc = self.document
+        self.selected_checkpoint_range = None
         if kwargs:
-            for arg in kwargs.split(","):
-                if "=" in arg:
-                    arg, v = arg.split("=", 1)
-                else:
-                    v = None
-                args[arg] = v
-            if "skip_frames" in args:
-                skip = int(args["skip_frames"])
+            if "skip_frames" in kwargs:
+                doc.skip_frames_on_boot = int(kwargs["skip_frames"])
+
+    def preprocess_document(self, source_document, kwargs):
+        if source_document.__class__ == EmulationDocument:
+            return source_document
+        skip = 0
+        log.debug(f"preprocess_document: EmulatorEditor, {source_document}, kwargs={kwargs}")
+        kwargs = {}
         try:
             source_document.emulator_type
         except:
             try:
-                emulator_type = args['machine']
+                emulator_type = kwargs['machine']
             except KeyError:
                 emulator_type = guess_emulator(source_document)
-            doc = EmulationDocument.create_document(source_document=source_document, emulator_type=emulator_type, skip_frames_on_boot=skip)
+            doc = EmulationDocument.create_document(source_document=source_document, emulator_type=emulator_type)
         log.debug(f"Using emulator {doc.emulator_type}")
-        doc.boot()
         return doc
 
     #### images (sawx.editor interface)

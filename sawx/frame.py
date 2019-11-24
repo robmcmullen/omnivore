@@ -188,7 +188,7 @@ class SawxFrame(wx.Frame):
             self.sync_can_paste()
         log.debug("sync_active_tab: sync done")
 
-    def add_editor(self, editor, args=None):
+    def add_editor(self, editor):
         editor.frame = self
         control = editor.create_control(self.notebook)
         editor.control = control
@@ -199,19 +199,19 @@ class SawxFrame(wx.Frame):
             self.close_editor(self.active_editor)
         self.notebook.AddPage(control, editor.tab_name)
         self.make_active(editor)
-        editor.show(args)
+        editor.show()
 
-    def add_document(self, document, current_editor=None, args=None):
+    def add_document(self, document, current_editor=None, editor_kwargs=None):
         if current_editor.__class__ == type:
             editor_cls = current_editor
         elif current_editor is not None and current_editor.can_edit_document(document):
             editor_cls = current_editor.__class__
         else:
             editor_cls = editor_module.find_editor_class_for_document(document)
-        new_editor = editor_cls(document)
+        new_editor = editor_cls(document, editor_kwargs)
         log.debug(f"load_file: Created editor {new_editor}")
         # have to add before load so the control exists
-        self.add_editor(new_editor, args)
+        self.add_editor(new_editor)
         return new_editor
 
     def close_editor(self, editor, remove=True, quit=False):
@@ -227,8 +227,8 @@ class SawxFrame(wx.Frame):
             wx.CallAfter(self.find_active_editor)
         del editor
 
-    def load_file(self, path, current_editor=None, args=None, show_progress_bar=None, default_editor_cls=None):
-        log.debug(f"load_file: {path}, current_editor={current_editor}, args={args}")
+    def load_file(self, path, current_editor=None, editor_kwargs=None, show_progress_bar=None, default_editor_cls=None):
+        log.debug(f"load_file: {path}, current_editor={current_editor}, editor_kwargs={editor_kwargs}")
         try:
             filesystem.filesystem_path(path)
         except FileNotFoundError:
@@ -249,7 +249,7 @@ class SawxFrame(wx.Frame):
             document = identify_document(file_metadata)
             if default_editor_cls is not None:
                 current_editor = default_editor_cls
-            new_editor = self.add_document(document, current_editor, args)
+            new_editor = self.add_document(document, current_editor, editor_kwargs)
         except Exception as e:
             # force close the progress bar so the error dialog doesn't get lost
             # under the progress bar dialog

@@ -51,7 +51,7 @@ def find_viewer_class_by_name(name):
     try:
         return viewers[name]
     except KeyError:
-        raise errors.EditorNotFound(f"No viewer named {name}")
+        raise ValueError(f"No viewer named {name}")
 
 
 class SegmentViewer:

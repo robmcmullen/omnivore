@@ -341,8 +341,8 @@ class ByteEditor(TileManagerBase):
 
     #### Initialization
 
-    def __init__(self, document, action_factory_lookup=None):
-        TileManagerBase.__init__(self, document, action_factory_lookup)
+    def __init__(self, document, *args, **kwargs):
+        TileManagerBase.__init__(self, document, *args, **kwargs)
         self.center_base = None
         self.linked_bases = {}
         self.last_search_settings = {

@@ -2,6 +2,7 @@
 
 # Standard library imports.
 import sys
+import argparse
 import logging
 
 
@@ -108,8 +109,17 @@ def main(argv):
 
 <p><img src="icon://omnivore256.png">"""
 
-    sys.argv[1:1] = ["-t", "omnivore.emulator"]
+    task_arg = "omnivore.emulator"
 
+    parser = argparse.ArgumentParser(description="Omnivore Emulator")
+    parser.add_argument("-s", "--skip_frames", "--skip-frames", action="store", type=int, default=0, help="Skip display of frames at boot")
+    options, extra_args = parser.parse_known_args(sys.argv[1:])
+
+    if options.skip_frames:
+        task_arg += f":skip_frames={options.skip_frames}"
+
+    sys.argv[1:] = ["-t", task_arg]
+    sys.argv.extend(extra_args)
     run(OmnivoreApp, image_paths, template_paths)
 
     logging.shutdown()
