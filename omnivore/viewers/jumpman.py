@@ -133,6 +133,11 @@ class JumpmanSegmentTable(cg.HexTable):
 class JumpmanGridControl(BitmapGridControl):
     default_table_cls = JumpmanSegmentTable
 
+    keybinding_desc = {
+        "handle_char_move_backspace": "Back",
+        "handle_char_move_delete": "Delete",
+    }
+
     @property
     def model(self):
         return self.table.model
@@ -152,6 +157,9 @@ class JumpmanGridControl(BitmapGridControl):
         drawlog.debug("refresh_view")
         self.model.draw_playfield(True)
         BitmapGridControl.refresh_view(self, *args, **kwargs)
+
+    def keep_current_caret_on_screen(self, flags):
+        pass
 
     def draw_carets(self, *args, **kwargs):
         pass
