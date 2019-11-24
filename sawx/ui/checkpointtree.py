@@ -66,6 +66,9 @@ class RestartLine:
     def __repr__(self):
         return f"{self.restart_number}: {self.start_frame}->{self.end_frame} @ {self.level}"
 
+    def is_frame_in_line(self, frame):
+        return frame >= self.start_frame and frame <= self.end_frame
+
 
 class RestartLines:
     def __init__(self, processing_order):
@@ -102,6 +105,9 @@ class RestartLines:
             if frame_number >= line.start_frame and frame_number <= line.end_frame and level == line.level:
                 return line
         return None
+
+    def find_parent(self, child_line):
+        return self.lines[child_line.parent]
 
 
 wxEVT_CHECKPOINT_RESTORE = wx.NewEventType()
@@ -202,7 +208,9 @@ class CheckpointTree(wx.ScrolledWindow):
         self.over_line = None
         self.highlight_over_line = False
         self.scroll_chunk = 20
-        self.mouse_state = None
+        self.mouse_mode = None
+        self.initial_mouse_state = None
+        self.current_mouse_state = None
         self.virtual_height = -1
         self.virtual_width = -1
         self.compute_lines(source)
@@ -244,7 +252,6 @@ class CheckpointTree(wx.ScrolledWindow):
             dx = self.GetScrollPos(wx.HORIZONTAL)
             if i > dx:
                 self.Scroll(i, -1)
-
 
     def recalc_view(self):
         self.compute_lines()
@@ -305,6 +312,28 @@ class CheckpointTree(wx.ScrolledWindow):
             dc.SetPen(self.pen)
             dc.DrawLine(x1, y, x1, parent_y)
 
+        # highlighting of selected lines
+        if self.current_mouse_state is not None:
+            dc.SetPen(self.hover_pen)
+            start, end = self.initial_mouse_state, self.current_mouse_state
+            if start.frame_number > end.frame_number:
+                start, end = end, start
+            current_frame = end.frame_number
+            leftmost_frame = start.frame_number
+            line = end.nearest_line
+            while current_frame > leftmost_frame:
+                if line.is_frame_in_line(leftmost_frame):
+                    left_frame = leftmost_frame
+                else:
+                    left_frame = line.start_frame
+                x1 = self.frame_to_x(left_frame)
+                x2 = self.frame_to_x(current_frame)
+                y = self.level_to_y(line.level)
+                dc.DrawLine(x1, y, x2, y)
+                current_frame = left_frame
+                if current_frame > leftmost_frame:
+                    line = self.restart_lines.find_parent(line)
+
         # current frame & restart number
         i = self.source.current_frame_number
         if i is not None:
@@ -327,13 +356,16 @@ class CheckpointTree(wx.ScrolledWindow):
         if mouse.is_near:
             evt = CheckpointTreeEvent(wxEVT_CHECKPOINT_SELECTED, self, mouse)
             self.GetEventHandler().ProcessEvent(evt)
-            self.mouse_state = mouse
+            self.initial_mouse_state = mouse
+            self.current_mouse_state = None
+            self.mouse_mode = "range"
 
     def on_motion(self, evt):
         mouse = CheckpointTreeMouseInfo(self, evt)
         if mouse.is_near:
-            if self.mouse_state is not None:
-                evt = CheckpointTreeRangeEvent(wxEVT_CHECKPOINT_RANGE_SELECTED, self, self.mouse_state, mouse)
+            if self.mouse_mode == "range":
+                self.current_mouse_state = mouse
+                evt = CheckpointTreeRangeEvent(wxEVT_CHECKPOINT_RANGE_SELECTED, self, self.initial_mouse_state, mouse)
                 self.GetEventHandler().ProcessEvent(evt)
             else:
                 evt = CheckpointTreeEvent(wxEVT_CHECKPOINT_HOVER, self, mouse)
@@ -344,7 +376,7 @@ class CheckpointTree(wx.ScrolledWindow):
                     wx.CallAfter(self.Refresh)
 
     def on_left_up(self, evt):
-        self.mouse_state = None
+        self.mouse_mode = None
         evt.Skip()
 
 
