@@ -108,7 +108,7 @@ class save_as_image(save_as):
         return self.editor.numpy_image_available
 
     def calc_raw_data(self):
-        return e.get_numpy_image_before_prompt()
+        return self.editor.get_numpy_image_before_prompt()
 
     def save_raw_data(self, uri, raw_data):
         self.editor.save_as_image(uri, raw_data)
