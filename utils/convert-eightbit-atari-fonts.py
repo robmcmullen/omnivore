@@ -36,30 +36,43 @@ def bits_from_image(image):
 
 
 if __name__ == "__main__":
+    import sys
+
     source_dir = "../../Eightbit-Atari-Fonts/Original Bitmaps"
     template_dir = "../omnivore/templates"
-    for filename in sorted(glob.glob(source_dir + "/*")):
-        name, _ = os.path.splitext(os.path.basename(filename))
 
-        im = Image.open(filename)
-        # print(im)
+    if len(sys.argv) > 1:
+        # print out data for a particular font
+        for font in sys.argv[1:]:
+            filename = os.path.join(source_dir, font + ".png")
+            im = Image.open(filename)
+            data = bits_from_image(im)
+            for i in range(128):
+                row = data[i]
+                print("        .byte " + ",".join([f"${a:02x}" for a in row]))
+    else:
+        for filename in sorted(glob.glob(source_dir + "/*")):
+            name, _ = os.path.splitext(os.path.basename(filename))
 
-        data_bytes = bits_from_image(im)
-        md5 = hashlib.md5(data_bytes).digest()
-        new_uuid = str(uuid.UUID(bytes=md5))
-        # print("md5", new_uuid)
-        inf = {
-            'uuid': new_uuid,
-            'name': f"8x8 Atari 8-bit Font: {name}",
-            'char_w': 8,
-            'char_h': 8,
-            'font_group': "Steve Boswell's Eightbit-Atari-Fonts",
-        }
+            im = Image.open(filename)
+            # print(im)
 
-        basename = os.path.join(template_dir, str(new_uuid) + ".font")
-        print(f"{name}: writing {basename}")
-        with open(basename, 'wb') as fh:
-            fh.write(data_bytes)
-        with open(basename + ".inf", 'w') as fh:
-            text = json.dumps(inf, indent=4, sort_keys=True) + "\n"
-            fh.write(text)
+            data_bytes = bits_from_image(im)
+            md5 = hashlib.md5(data_bytes).digest()
+            new_uuid = str(uuid.UUID(bytes=md5))
+            # print("md5", new_uuid)
+            inf = {
+                'uuid': new_uuid,
+                'name': f"8x8 Atari 8-bit Font: {name}",
+                'char_w': 8,
+                'char_h': 8,
+                'font_group': "Steve Boswell's Eightbit-Atari-Fonts",
+            }
+
+            basename = os.path.join(template_dir, str(new_uuid) + ".font")
+            print(f"{name}: writing {basename}")
+            with open(basename, 'wb') as fh:
+                fh.write(data_bytes)
+            with open(basename + ".inf", 'w') as fh:
+                text = json.dumps(inf, indent=4, sort_keys=True) + "\n"
+                fh.write(text)
