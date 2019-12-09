@@ -14,11 +14,6 @@ def _find_signatures():
         mod = entry_point.load()
         log.debug(f"find_signatures: Found module {entry_point.name}={mod.__name__}")
         if hasattr(mod, "sha1_signatures"):
-            if hasattr(mod, "mime"):
-                log.debug(f"find_signatures:  found signature class {mod.__name__} for {mod.mime}")
-            else:
-                log.warning(f"find_signatures:  unspecified MIME type for signature class {mod.__name__}")
-                mod.mime = "application/octet-stream"
             signatures.append(mod)
     return signatures
 
@@ -39,25 +34,21 @@ class Signature:
         return f"{self.mime}: {self.name}"
 
 
-def guess_signature_by_size(container, verbose=False):
+def guess_signature_from_container(container, verbose=False):
     found = None
-    size = len(container)
     sha_hash = container.sha1
     log.debug(f"container: {container}; sha1={sha_hash}")
     for mod in find_signatures():
-        if size in mod.sha1_signatures:
-            log.debug(f"size {size} in signature database {mod.__name__}")
+        for mime, sigs in mod.sha1_signatures.items():
             try:
-                name = mod.sha1_signatures[size][sha_hash]
+                name = sigs[sha_hash]
             except KeyError:
                 continue
             else:
                 log.debug(f"found match: {name}")
-                return Signature(mod.mime, name)
-        else:
-            log.debug(f"size {size} not in signature database {mod.__name__}; skipping")
+                return Signature(mime, name)
     else:
-        log.debug(f"{size} not found in signature database; skipping sha1 matching")
+        log.debug(f"no match found in sha1 signature database")
     return None
 
 

@@ -10,7 +10,7 @@ from .segment import Segment
 from .utils import to_numpy, to_numpy_list, uuid
 from . import filesystem
 from .file_type import guess_file_type
-from .signature import guess_signature_by_size
+from .signature import guess_signature_from_container
 
 import logging
 log = logging.getLogger(__name__)
@@ -222,7 +222,7 @@ def find_media_types():
     return _media_types
 
 def guess_media_type(container):
-    signature = guess_signature_by_size(container)
+    signature = guess_signature_from_container(container)
     if signature:
         log.info(f"found signature {signature}")
     for m in find_media_types():

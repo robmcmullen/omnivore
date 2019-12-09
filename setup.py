@@ -393,6 +393,7 @@ setup(
             'atari2600_cart = atrip.signatures.atari2600_cart',
             'atari2600_starpath = atrip.signatures.atari2600_starpath',
             'atari5200_cart = atrip.signatures.atari5200_cart',
+            'atari800_cart = atrip.signatures.atari800_cart',
             'vectrex = atrip.signatures.vectrex',
         ],
 
