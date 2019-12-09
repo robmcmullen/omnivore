@@ -100,6 +100,15 @@ def get_known_carts():
     return grouped
 
 
+def get_known_carts_of_size(kb):
+    matches = []
+    for c in known_cart_types[1:]:
+        size = c[2]
+        if size == kb:
+            matches.append(c)
+    return matches
+
+
 def get_cart(cart_type):
     try:
         return known_cart_types[known_cart_type_map[cart_type]]
@@ -155,6 +164,7 @@ class A8CartHeader:
 
 class Atari8bitCart(CartImage):
     ui_name = "Atari 8bit Cart"
+    platform = "atari800"
 
     def calc_header(self, container):
         header_data = container[0:16]
@@ -168,3 +178,22 @@ class Atari8bitCart(CartImage):
         except errors.InvalidHeader:
             header = None
         return header
+
+    def check_magic(self):
+        s = self.signature
+        if s is not None:
+            if ".type" in s.mime:
+                _, num = s.mime.split(".type")
+                self.cart_type = int(num)
+            if "atari800" in s.mime:
+                self.platform = "atari800"
+            elif "atari5200" in s.mime:
+                self.platform = "atari5200"
+        else:
+            c = get_known_carts_of_size(self.kb)
+            guess = c[0]
+            self.cart_type = guess[0]
+            if "5200" in guess[1]:
+                self.platform = "atari5200"
+            else:
+                self.platform = "atari800"

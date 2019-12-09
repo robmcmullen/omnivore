@@ -29,13 +29,18 @@ class Media(Segment):
 
     extra_serializable_attributes = []
 
-    def __init__(self, container):
+    def __init__(self, container, signature=None, force=False):
         container.header = self.calc_header(container)
         size = len(container) - container.header_length
         Segment.__init__(self, container, container.header_length, name=self.ui_name, length=size)
+        self.signature = signature
         if container.header is not None:
             self.check_header(container.header)
-        self.check_media_size()
+        try:
+            self.check_media_size()
+        except errors.PossibleCandidateMedia:
+            if not force:
+                raise
         self.check_magic()
 
     def __str__(self):
@@ -183,18 +188,25 @@ class DiskImage(Media):
 
 class CartImage(Media):
     ui_name = "Cart Image"
+    platform = "emulator_name"
+    cart_type = 0
     expected_size = 0
 
-    # def __str__(self):
-    #     return f"{len(self) // 1024}K {self.ui_name}"
+    extra_serializable_attributes = ['cart_type']
+
+    def __str__(self):
+        desc = f"{self.ui_name}, size={self.kb}K, {self.platform}, cart_type={self.cart_type}"
+        if self.filesystem is not None:
+            desc += f", filesystem={self.filesystem.ui_name}"
+        return desc
 
     def check_media_size(self):
         size = len(self)
-        k, rem = divmod(size, 1024)
+        self.kb, rem = divmod(size, 1024)
         if rem > 0:
             raise errors.InvalidMediaSize("Cart not multiple of 1K")
         if self.expected_size == 0:
-            raise errors.InvalidMediaSize(f"Possible cart image, but unable to identify specifically")
+            raise errors.PossibleCandidateMedia(f"Possible cart image, but unable to identify specifically")
         if size != self.expected_size:
             raise errors.InvalidMediaSize(f"{self.ui_name} expects size {self.expected_size}; found {size}")
 
@@ -225,15 +237,24 @@ def guess_media_type(container):
     signature = guess_signature_from_container(container)
     if signature:
         log.info(f"found signature {signature}")
+    possibilities = []
     for m in find_media_types():
         log.debug(f"trying media_type {m.ui_name}")
         try:
-            found = m(container)
+            found = m(container, signature)
+        except errors.PossibleCandidateMedia as e:
+            log.info(f"might be media_type: {m}")
+            possibilities.append(m)
         except errors.MediaError as e:
             log.debug(f"found error: {e}")
             continue
         else:
             log.info(f"found media_type {m.ui_name}")
             return found
-    log.info(f"No recognized media type.")
-    return Media(container)
+    if not possibilities:
+        log.info(f"No recognized media type.")
+        m = Media
+    else:
+        m = possibilities[0]
+        log.info(f"{len(possibilities)} possible media types, choosing {m.ui_name}.")
+    return m(container, signature, True)

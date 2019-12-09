@@ -2,6 +2,10 @@ class AtrError(RuntimeError):
     pass
 
 
+class AtrWarning(RuntimeWarning):
+    pass
+
+
 class InvalidSegmentLength(AtrError):
     pass
 
@@ -75,6 +79,17 @@ class InvalidSectorNumber(MediaError):
 
 
 class UnsupportedSectorType(MediaError):
+    pass
+
+
+# Warnings when trying to determine media type, mostly used to identify
+# possible media types that can't be fully specified
+
+class MediaWarning(AtrWarning):
+    pass
+
+
+class PossibleCandidateMedia(MediaWarning):
     pass
 
 
