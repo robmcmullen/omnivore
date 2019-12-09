@@ -127,7 +127,7 @@ class DiskImage(Media):
 
     #### sector operations
 
-    def label(self, index, lower_case=True):
+    def get_ui_name_at_index(self, index, lower_case=True):
         sector, byte = divmod(index, self.sector_size)
         if lower_case:
             return "s%03d:%02x" % (sector + self.first_sector, byte)

@@ -252,7 +252,7 @@ class CommentsPanel(wx.VListBox):
             index = segment.reverse_offset[item[0]]
             if index < 0:
                 raise IndexError
-            label = segment.address(index)
+            label = segment.get_ui_name_at_index(index)
             font = self.normal_font
             segment_font = self.bold_font
         except IndexError:
@@ -261,7 +261,7 @@ class CommentsPanel(wx.VListBox):
             # segment, index = v.editor.find_in_user_segment(item[0])
             segment = None
             if segment is not None:
-                label = segment.address(index)
+                label = segment.get_ui_name_at_index(index)
             else:
                 index = item[0]
                 label = "%04x" % index

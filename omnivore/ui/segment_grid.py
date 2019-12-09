@@ -43,7 +43,7 @@ class SegmentTable(cg.HexTable):
     def get_label_at_index(self, index):
         # Can't just return hex value of index because some segments (like the
         # raw sector segment) use different labels
-        return self.segment.label(index, True)
+        return self.segment.get_ui_name_at_index(index, True)
 
 
 class SegmentVirtualTable(cg.HexTable):

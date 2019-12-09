@@ -652,18 +652,18 @@ class SegmentViewer:
         self.frame.status_message(msg)
 
     def get_address_at_index(self, index):
-        return self.segment.address(index)
+        return self.segment.get_ui_name_at_index(index)
 
     def get_label_of_selections(self, carets):
         labels = []
         for start, end in [c.range for c in carets]:
-            labels.append("%s-%s" % (self.get_label_at_index(start), self.get_label_at_index(end - 1)))
+            labels.append("%s-%s" % (self.control.table.get_label_at_index(start), self.get_label_at_index(end - 1)))
         return ", ".join(labels)
 
     def get_label_of_first_byte(self, ranges):
         labels = []
         for start, end in ranges:
-            labels.append(self.get_label_at_index(start))
+            labels.append(self.control.table.get_label_at_index(start))
         return ", ".join(labels)
 
     ##### Spring tab (pull out menu) interface
