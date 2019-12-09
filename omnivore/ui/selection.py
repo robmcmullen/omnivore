@@ -53,6 +53,27 @@ class SelectionMixin:
         dest_indexes = dest_segment.calc_indexes_from_other_segment(indexes[0:current], self.segment)
         return dest_indexes
 
+    def calc_ranges(self, dest_segment, use_carets_without_selections=True):
+        """Calculates a list where each entry in the list is a numpy array
+        of indexes of each selected range.
+        """
+        table = self.table
+        ranges = []
+        current = 0
+        for caret in self.carets:
+            index, _ = table.get_index_range(*caret.rc)
+            if caret.anchor_start[0] < 0:
+                if not use_carets_without_selections:
+                    continue
+                indexes = np.arange(index, index + 1, dtype=np.uint32)
+            else:
+                anchor_start, _ = table.get_index_range(*caret.anchor_start)
+                _, anchor_end = table.get_index_range(*caret.anchor_end)
+                indexes = np.arange(anchor_start, anchor_end, dtype=np.uint32)
+            dest_indexes = dest_segment.calc_indexes_from_other_segment(indexes, self.segment)
+            ranges.append(dest_indexes)
+        return ranges
+
     def convert_carets_from(self, other_char_handler):
         new_carets = []
         table = self.table

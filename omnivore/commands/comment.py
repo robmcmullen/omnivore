@@ -34,7 +34,7 @@ class SetCommentCommand(ChangeStyleCommand):
         return "%s: %s" % (self.ui_name, text)
 
     def convert_ranges(self, ranges):
-        return tuple([(start, start + 1) for start, end in ranges])
+        return tuple([(items[0], items[0] + 1) for items in ranges])
 
     def set_undo_flags(self, flags):
         flags.byte_style_changed = True

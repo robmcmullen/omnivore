@@ -9,7 +9,7 @@ from sawx.ui.dialogs import prompt_for_string
 
 from ..action import ViewerAction
 
-from .. import commands
+from ..commands import comment
 from .. import errors
 
 import logging
@@ -20,7 +20,7 @@ def prompt_for_comment(e, s, ranges, desc):
     existing = s.get_first_comment(ranges)
     text = prompt_for_string(e.control, desc, "Add Comment", existing)
     if text is not None:
-        cmd = commands.SetCommentCommand(s, ranges, text)
+        cmd = comment.SetCommentCommand(s, ranges, text)
         e.process_command(cmd)
 
 
@@ -72,5 +72,5 @@ class comment_remove(ViewerAction):
         s = e.segment
         ranges = self.viewer.control.get_selected_ranges_including_carets()
         if ranges:
-            cmd = commands.ClearCommentCommand(s, ranges)
+            cmd = comment.ClearCommentCommand(s, ranges)
             e.process_command(cmd)

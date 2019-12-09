@@ -13,6 +13,7 @@ from ..ui.segment_grid import SegmentGridControl, SegmentTable
 from ..viewer import SegmentViewer
 
 from ..commands.disasm import MiniAssemblerCommand
+from ..commands.comment import SetCommentCommand
 from atrip.disassembler import get_miniasm
 from ..utils import searchutil
 
@@ -152,13 +153,20 @@ class DisassemblyControl(SegmentGridControl):
         return ranges
 
     def calc_edit_command(self, val):
-        cmd = MiniAssemblerCommand(self.segment_viewer.segment, self.segment_viewer.document.cpu, self.caret_handler, val, advance=True)
+        if val.startswith(";"):
+            ranges = self.caret_handler.calc_ranges(self.segment_viewer.segment)
+            val = val[1:].strip()
+            cmd = SetCommentCommand(self.segment_viewer.segment, ranges, val)
+        else:
+            cmd = MiniAssemblerCommand(self.segment_viewer.segment, self.segment_viewer.document.cpu, self.caret_handler, val, advance=True)
         return cmd
 
     def advance_caret_position(self, evt, flags):
         self.caret_handler.move_carets_vertically(self.table, 1)
 
     def verify_keycode_can_start_edit(self, c):
+        if c == 59:  # semicolon
+            return True
         miniasm = get_miniasm(self.segment_viewer.document.cpu)
         return miniasm.can_start_edit(c)
 
