@@ -191,6 +191,8 @@ class Atari8bitCart(CartImage):
                 self.platform = "atari5200"
         else:
             c = get_known_carts_of_size(self.kb)
+            if not c:
+                raise errors.InvalidMediaSize(f"No known {self.ui_name} of size {self.kb}k")
             guess = c[0]
             self.cart_type = guess[0]
             if "5200" in guess[1]:

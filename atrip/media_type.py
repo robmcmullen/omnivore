@@ -251,10 +251,17 @@ def guess_media_type(container):
         else:
             log.info(f"found media_type {m.ui_name}")
             return found
-    if not possibilities:
-        log.info(f"No recognized media type.")
-        m = Media
-    else:
-        m = possibilities[0]
-        log.info(f"{len(possibilities)} possible media types, choosing {m.ui_name}.")
+    if possibilities:
+        log.info(f"{len(possibilities)} possible media types")
+    for m in possibilities:
+        try:
+            found = m(container, signature, True)
+        except errors.MediaError as e:
+            log.info(f"not choosing media type {m.ui_name}: {e}")
+            continue
+        else:
+            log.info(f"choosing media type {m.ui_name}.")
+            return found
+    log.info(f"No recognized media type.")
+    m = Media
     return m(container, signature, True)
