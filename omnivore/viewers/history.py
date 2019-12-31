@@ -162,6 +162,24 @@ class InstructionHistoryTable(cg.VirtualTable):
         # instructions get added to the bottom
         self.clear_selected_style()
 
+    def calc_text_selection(self):
+        t = self.parsed
+        if t is None:
+            return ""
+        rows = sorted(self.selected_rows)
+        lines = []
+        for r in rows:
+            try:
+                inst = t[r - self.visible_history_start_row][0]
+                result = t[r - self.visible_history_start_row][1]
+                header = list(self.get_row_label_text(r, 1))[0]
+                # text = f"{header:%8s}|{inst:%42s} {result}"  # how do I format f-strings for text width & justify?
+                text = "%-8s| %-50s %s" % (header, inst.decode('utf-8'), result.decode('utf-8'))
+            except IndexError:
+                continue
+            lines.append(text)
+        return "\n".join(lines)
+
 
 class InstructionHistoryGridControl(SegmentGridControl):
     default_table_cls = InstructionHistoryTable
@@ -250,6 +268,15 @@ class InstructionHistoryGridControl(SegmentGridControl):
         else:
             log.debug("skipping refresh of hidden %s" % self)
 
+    ##### Copy/paste
+
+    def calc_clipboard_data_objs(self, focused_control):
+        text = self.table.calc_text_selection()
+        text_obj = wx.TextDataObject()
+        text_obj.SetText(text)
+        data_objs = [text_obj]
+        return data_objs
+
 
 class InstructionHistoryViewer(EmulatorViewerMixin, SegmentViewer):
     name = "cpuhistory"
@@ -279,6 +306,18 @@ class InstructionHistoryViewer(EmulatorViewerMixin, SegmentViewer):
     @property
     def table(self):
         return self.control.table
+
+    @property
+    def can_copy(self):
+        return bool(self.table.selected_rows)
+
+    @property
+    def can_cut(self):
+        return False
+
+    @property
+    def can_paste(self):
+        return False
 
     # @on_trait_change('linked_base.editor.document.byte_values_changed')
     def byte_values_changed(self, index_range):

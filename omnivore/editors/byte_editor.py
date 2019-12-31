@@ -336,6 +336,14 @@ class ByteEditor(TileManagerBase):
         return self.focused_viewer.can_copy
 
     @property
+    def can_cut(self):
+        return self.focused_viewer.can_cut
+
+    @property
+    def can_paste(self):
+        return self.focused_viewer.can_paste
+
+    @property
     def current_selection(self):
         return self.focused_viewer.linked_base.current_selection
 

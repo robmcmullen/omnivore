@@ -729,7 +729,12 @@ class NormalSelectMode(MouseMode):
         row, col, inside = cg.get_row_col_from_event(evt)
         if inside:
             index, _ = cg.table.get_index_range(row, col)
-            style = cg.table.segment.style[index]
+            try:
+                style = cg.table.segment.style[index]
+            except AttributeError:
+                # virtual table or control that doesn't have an actual segment,
+                # so just assume every click is in a selection
+                style = 0x80
         else:
             style = 0
         popup_data = {

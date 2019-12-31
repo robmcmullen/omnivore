@@ -188,6 +188,9 @@ class cut(SawxAction):
 class copy(cut):
     name = "Copy"
 
+    def calc_enabled(self, action_key):
+        return self.editor.can_copy
+
     def perform(self, action_key):
         self.editor.copy_selection_to_clipboard()
 
