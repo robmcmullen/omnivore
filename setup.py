@@ -329,10 +329,11 @@ setup(
         Operating System :: OS Independent
         Operating System :: POSIX
         Operating System :: Unix
-        Programming Language :: Python
+        Programming Language :: Python :: 3 :: Only
         Topic :: Utilities
         Topic :: Software Development :: Assemblers
     """.splitlines() if len(c.strip()) > 0],
+    python_requires = ">=3.6",
     description = "Unified front-end providing common interface to control several 8 bit emulators",
     long_description = open('README.rst').read(),
     ext_modules = ext_modules,

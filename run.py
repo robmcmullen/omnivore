@@ -100,7 +100,7 @@ def main(argv):
 </ul>
 """
     OmnivoreApp.app_blank_page = f"""<html>
-<h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version}</h2>
+<h2>{OmnivoreApp.app_name} {OmnivoreApp.app_version} (Omnivore 2.0 preview release)</h2>
 
 <h3>{OmnivoreApp.app_tagline}</h3>
 
