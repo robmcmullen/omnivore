@@ -288,8 +288,6 @@ int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *
     val = entry->sr;
     if (val & 0x80) *t++='N'; else *t++='-';
     if (val & 0x40) *t++='V'; else *t++='-';
-    *t++='-';
-    if (val & 0x10) *t++='B'; else *t++='-';
     if (val & 0x8) *t++='D'; else *t++='-';
     if (val & 0x4) *t++='I'; else *t++='-';
     if (val & 0x2) *t++='Z'; else *t++='-';
