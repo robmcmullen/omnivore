@@ -209,8 +209,7 @@ The types are:
    04, one byte value read from address
    05, computed indirect address used in opcode
    06, program counter (PC)
-   10, instruction PC, size
-   20, instruction data
+   10, instruction PC, size, & additional opcode records
    28, frame start
    29, frame end
    2E, NMI start (e.g. DLI, VBI)
@@ -348,7 +347,7 @@ where Taken? is 01 if the branch was taken or 00 if not.
 
 .. _type10:
 
-10: Instruction PC, Size
+10: Instruction PC, Size & Additional Opcode Records
 ----------------------------------------------------------------------
 
 This entry type marks the start of a CPU instruction. This records the PC of
@@ -360,18 +359,25 @@ the instruction and the number of bytes making up the opcode.
    | 10 | Lo | Hi | opcode length in bytes |
    +----+----+----+------------------------+
 
-20: Instruction Data
-----------------------------------------------------------------------
+This record also includes the opcode and operands in some additional 4-byte
+records immediately following this entry. A pseudo-instruction will have an
+opcode length of zero bytes, meaning that no additional records will be
+included.
 
-Up to 3 bytes of opcode data can be stored. The actual opcode length is stored
-in a Type 10 entry. If the opcode contains more than 3 bytes, multiple Type 20
-records will appear consecutively.
+If the opcode length is greater than zero, the number of additional entries is
+``(opcode length + 3 / 4)``, so one record if the opcode length is between 1
+and 4 bytes, two records for opcode sizes between 5 and 8 bytes, etc. For
+example, for a 5 byte opcode, the 2 extra records would be encoded as:
 
-   +----+--------+-----------+-----------+
-   | 0  | 1      | 2         | 3         |
-   +----+--------+-----------+-----------+
-   | 20 | Opcode | Operand 1 | Operand 2 |
-   +----+--------+-----------+-----------+
+   +-----------+-----------+-----------+-----------+
+   | 0         | 1         | 2         | 3         |
+   +-----------+-----------+-----------+-----------+
+   | Opcode    | Operand 1 | Operand 2 | Operand 2 |
+   +-----------+-----------+-----------+-----------+
+   | Operand 4 | unused    | unused    | unused    |
+   +-----------+-----------+-----------+-----------+
+
+
 
 28: Frame Start
 ---------------------------------
@@ -597,38 +603,38 @@ An instruction history might look like this:
    0, 10,00,80,00,PC = $8000, 0 bytes in the instruction: UI line #0
    1, 21,01,00,00,Frame #1 start
    2, 10,00,80,03,PC = $8000, 3 bytes in the instruction: UI line #1
-   3, 20,20,00,60,INSTRUCTION: JSR $6000
+   3, 20,00,60,00,INSTRUCTION: JSR $6000
    4, 03,02,ff,01,store low byte of return addr on stack
    5, 03,80,fe,01,store high byte of return addr on stack
    6, 01,04,fd,00,move stack pointer down by 2
    7, 06,00,60,00,PC changed to $6000
    8, 10,00,60,02,PC = $6000, 2 bytes in the instruction: UI line #2
-   9, 20,a9,00,00,INSTRUCTION: LDA #$00
+   9, a9,00,00,00,INSTRUCTION: LDA #$00
    10, 01,01,00,00,register A = 0
    11, 01,05,02,00,status register = $02 (Z = 1)
    12, 10,02,60,02,PC = $6002, 2 bytes in the instruction: UI line #3
-   13, 20,85,08,00,INSTRUCTION: STA $08
+   13, 85,08,00,00,INSTRUCTION: STA $08
    14, 03,00,08,00,$0 stored in address $0008
    15, 10,04,60,01,PC = $6004, 1 bytes in the instruction: UI line #4
-   16, 20,85,09,00,INSTRUCTION: STA $09
+   16, 85,09,00,00,INSTRUCTION: STA $09
    17, 03,00,09,00,$0 stored in address $0009
    18, 10,04,60,01,PC = $6006, 1 bytes in the instruction: UI line #5
-   19, 20,60,00,60,INSTRUCTION: RTS
+   19, 60,00,60,00,INSTRUCTION: RTS
    20, 01,04,ff,00,move stack pointer up by 2
    21, 06,03,80,00,PC Changed to $8004
    22, 10,00,80,02,PC = $8003, 2 bytes in the instruction: UI line #6
-   23, 20,a2,08,00,INSTRUCTION: LDX #$08
+   23, a2,08,00,00,INSTRUCTION: LDX #$08
    24, 01,02,08,00,register X = 8
    25, 01,05,00,00,status register = $00 (Z = 0)
    26, 10,00,80,02,PC = $8005, 2 bytes in the instruction: UI line #7
-   27, 20,a2,08,00,INSTRUCTION: LDA $00,X
+   27, a2,08,00,00,INSTRUCTION: LDA $00,X
    28, 30,00,00,00,opcode references address $0000
    29, 05,08,00,00,computed address = $8 ($00 + X, X=8)
    30, 04,08,00,00,read value 0 from $08
    31, 01,02,08,00,register A = 8
    32, 01,05,02,00,status register = $02 (Z=1)
    33, 10,00,80,02,PC = $8007, 2 bytes in the instruction: UI line #8
-   34, 20,95,08,00,INSTRUCTION: STA ($08),X
+   34, 95,08,00,00,INSTRUCTION: STA ($08),X
    35, 30,02,00,00,opcode references address $0008
    36, 05,08,00,00,computed address = $8 ($08=0, $09=0, ($08)=0, 0 + X, X=8)
    37, 03,08,00,00,write value 8 to $08
@@ -641,22 +647,22 @@ An instruction history might look like this:
    44, 01,05,06,00,status register = $06 (I=1, Z=1)
    45, 06,00,c0,00,PC changed to $c000
    46, 10,00,c0,03,PC = $c000, 3 bytes in instruction: UI line #10
-   47, 20,2c,0f,d4,INSTRUCTION: BIT $d40f (NMIRES)
+   47, 2c,0f,d4,00,INSTRUCTION: BIT $d40f (NMIRES)
    48, 30,0f,d4,00,opcode references $d40f
    49, 01,04,84,00,status register = $80 (DLI bit set: N=1, I=1, Z=0)
    50, 10,03,c0,02,PC = $c003, 2 bytes in instruction: UI line #11
-   51, 20,30,1a,00,INSTRUCTION: BMI $c01f
+   51, 30,1a,00,00,INSTRUCTION: BMI $c01f
    52, 30,1f,c0,00,opcode references $c01f
    53, 07,01,00,00,branch taken
    54, 06,1f,c0,00,PC Changed to $c01f
    55, 10,1f,c0,02,PC = $c01f, 1 bytes in instruction: UI line #12
-   56, 20,40,00,00,INSTRUCTION: RTI
+   56, 40,00,00,00,INSTRUCTION: RTI
    57, 01,05,02,00,status register = $02
    58, 06,09,80,00,PC Changed to $8009
    59, 10,09,80,00,PC = $8009, 0 bytes in the instruction: UI line #13
    60, 2f,02,00,00,NMI end: DLI
    61, 10,09,80,01,PC = $8009, 1 bytes in the instruction: UI line #13
-   62, 20,38,00,00,INSTRUCTION: SEC
+   62, 38,00,00,00,INSTRUCTION: SEC
    63, 01,05,03,00,status register = $03 (Z=1, C=1)
    64, 10,09,80,00,PC = $800a, 0 bytes in the instruction: UI line #14
    65, 29,00,00,00,Frame end
@@ -757,7 +763,7 @@ This state also becomes the input for the next instruction. Index 1 of the
    :widths: 10,10,10,10,10,40
 
    2, 10,00,80,03,PC = $8000, 3 bytes in the instruction: UI line #1
-   3, 20,20,00,60,INSTRUCTION: JSR $6000
+   3, 20,00,60,00,INSTRUCTION: JSR $6000
    4, 03,02,ff,01,store low byte of return addr on stack
    5, 03,80,fe,01,store high byte of return addr on stack
    6, 01,04,fd,00,move stack pointer down by 2
