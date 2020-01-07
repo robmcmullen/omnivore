@@ -246,12 +246,12 @@ Registers are defined:
    :widths: 10,90
 
    ID (hex), Register
+   00, CC (color clock at start of instruction, ANTIC xpos in atari800)
    01, A
    02, X
    03, Y
    04, SP (stack pointer)
    05, SR (status register, aka flags)
-   06, CC (color clock at start of instruction, ANTIC xpos in atari800)
 
 02: Two Byte Register Value
 ---------------------------------
@@ -272,7 +272,7 @@ Registers are defined:
    :widths: 10,90
 
    ID (hex), Register
-   01, SL (scan line, ANTIC ypos in atari800)
+   00, SL (scan line, ANTIC ypos in atari800)
 
 
 03: One Byte Value Written to Address
@@ -333,16 +333,18 @@ would be JMP, JSR, Branch taken, NMI, etc.
    | 06 | Lo | Hi | unused |
    +----+----+----+--------+
 
-07: Branch Taken
+07: Branch Status
 ----------------------------------------------------------------------
 
-Flag to indicate that a branch instruction tested true and the branch was taken
+Flag to indicate that a branch instruction occurred and if the branch was taken
 
-   +----+----+----+--------+
-   | 0  | 1  | 2  | 3      |
-   +----+----+----+--------+
-   | 07 |      unused      |
-   +----+----+----+--------+
+   +----+--------+----+----+
+   | 0  | 1      | 2  | 3  |
+   +----+--------+----+----+
+   | 07 | Taken? |  unused |
+   +----+--------+----+----+
+
+where Taken? is 01 if the branch was taken or 00 if not.
 
 .. _type10:
 
@@ -552,12 +554,21 @@ in the instruction history. An example of this structure is defined as follows:
 
 .. code-block::
 
-   uint8_t reg1[256]; /* single byte registers */
-   uint16_t reg2[256]; /* two-byte registers */
-   uint16_t pc; /* special two-byte register for the PC */
-   uint8_t instruction_length; /* number of bytes in current instruction */
-   uint8_t instruction[16]; /* current instruction */
-   uint8_t ram[256*256]; /* complete 64K of RAM */
+   typedef struct {
+      uint32_t frame_number;
+
+        /* instruction */
+      uint16_t pc; /* special two-byte register for the PC */
+      uint16_t opcode_ref_addr; /* address referenced in opcode */
+      uint8_t instruction_length; /* number of bytes in current instruction */
+      uint8_t instruction[255]; /* current instruction */
+
+        /* result of instruction */
+      uint8_t reg1[256]; /* single byte registers */
+      uint16_t reg2[256]; /* two-byte registers */
+      uint16_t computed_addr; /* computed address after indirection, indexing, etc. */
+      uint8_t ram[256*256]; /* complete 64K of RAM */
+   } current_state_t;
 
 Because the instruction history will have variable numbers of records for each
 instruction, a lookup table is generated as a post-processing step by
@@ -585,82 +596,196 @@ An instruction history might look like this:
    Entry, Record Type, B1, B2, B3, Description
    0, 10,00,80,00,PC = $8000, 0 bytes in the instruction: UI line #0
    1, 21,01,00,00,Frame #1 start
-   2, 01,01,00,00,register A value = 0
-   3, 01,02,00,00,register X value = 0
-   4, 01,03,00,00,register Y value = 0
-   5, 01,04,ff,00,stack pointer = ff
-   6, 01,05,00,00,status register = 0
-   7, 01,06,00,00,color clock = 0
-   8, 10,00,80,03,PC = $8000, 3 bytes in the instruction: UI line #1
-   9, 20,20,00,60,INSTRUCTION: JSR $6000
-   10, 03,02,ff,01,store low byte of return addr on stack
-   11, 03,80,fe,01,store high byte of return addr on stack
-   12, 01,04,fd,00,move stack pointer down by 2
-   13, 06,00,60,00,PC changed to $6000
-   14, 10,00,60,02,PC = $6000, 2 bytes in the instruction: UI line #2
-   15, 20,a9,00,00,INSTRUCTION: LDA #$00
-   16, 01,01,00,00,register A = 0
-   17, 01,05,02,00,status register = $02 (Z = 1)
-   18, 10,02,60,02,PC = $6002, 2 bytes in the instruction: UI line #3
-   19, 20,85,08,00,INSTRUCTION: STA $08
-   20, 03,00,08,00,$0 stored in address $0008
-   21, 10,04,60,01,PC = $6004, 1 bytes in the instruction: UI line #4
-   22, 20,85,09,00,INSTRUCTION: STA $09
-   23, 03,00,09,00,$0 stored in address $0009
-   24, 10,04,60,01,PC = $6006, 1 bytes in the instruction: UI line #5
-   25, 20,60,00,60,INSTRUCTION: RTS
-   26, 01,04,ff,00,move stack pointer up by 2
-   27, 06,03,80,00,PC Changed to $8004
-   28, 10,00,80,02,PC = $8003, 2 bytes in the instruction: UI line #6
-   29, 20,a2,08,00,INSTRUCTION: LDX #$08
-   30, 01,02,08,00,register X = 8
-   31, 01,05,00,00,status register = $00 (Z = 0)
-   32, 10,00,80,02,PC = $8005, 2 bytes in the instruction: UI line #7
-   33, 20,a2,08,00,INSTRUCTION: LDA $00,X
-   34, 30,00,00,00,opcode references address $0000
-   35, 05,08,00,00,computed address = $8 ($00 + X, X=8)
-   36, 04,08,00,00,read value 0 from $08
-   37, 01,02,08,00,register A = 8
-   38, 01,05,02,00,status register = $02 (Z=1)
-   39, 10,00,80,02,PC = $8007, 2 bytes in the instruction: UI line #8
-   40, 20,95,08,00,INSTRUCTION: STA ($08),X
-   41, 30,02,00,00,opcode references address $0008
-   42, 05,08,00,00,computed address = $8 ($08=0, $09=0, ($08)=0, 0 + X, X=8)
-   43, 03,08,00,00,write value 8 to $08
-   44, 10,09,80,00,PC = $8009, 0 bytes in the instruction: UI line #9
-   45, 2e,02,00,00,NMI start: DLI
-   46, 03,09,ff,01,store low byte of return addr on stack
-   47, 03,80,fe,01,store high byte of return addr on stack
-   48, 03,02,fd,01,store status register on stack
-   49, 01,04,fc,00,move stack pointer down by 3
-   50, 01,05,06,00,status register = $06 (I=1, Z=1)
-   51, 06,00,c0,00,PC changed to $c000
-   52, 10,00,c0,03,PC = $c000, 3 bytes in instruction: UI line #10
-   53, 20,2c,0f,d4,INSTRUCTION: BIT $d40f (NMIRES)
-   54, 30,0f,d4,00,opcode references $d40f
-   55, 01,04,84,00,status register = $80 (DLI bit set: N=1, I=1, Z=0)
-   56, 10,03,c0,02,PC = $c003, 2 bytes in instruction: UI line #11
-   57, 20,30,1a,00,INSTRUCTION: BMI $c01f
-   58, 30,1f,c0,00,opcode references $c01f
-   59, 07,00,00,00,branch taken
-   60, 06,1f,c0,00,PC Changed to $c01f
-   61, 10,1f,c0,02,PC = $c01f, 1 bytes in instruction: UI line #12
-   62, 20,40,00,00,INSTRUCTION: RTI
-   63, 01,05,02,00,status register = $02
-   64, 06,09,80,00,PC Changed to $8009
-   65, 10,09,80,00,PC = $8009, 0 bytes in the instruction: UI line #13
-   66, 2f,02,00,00,NMI end: DLI
-   67, 10,09,80,01,PC = $8009, 1 bytes in the instruction: UI line #13
-   68, 20,38,00,00,INSTRUCTION: SEC
-   69, 01,05,03,00,status register = $03 (Z=1, C=1)
-   70, 10,09,80,00,PC = $800a, 0 bytes in the instruction: UI line #14
-   71, 29,00,00,00,Frame end
+   2, 10,00,80,03,PC = $8000, 3 bytes in the instruction: UI line #1
+   3, 20,20,00,60,INSTRUCTION: JSR $6000
+   4, 03,02,ff,01,store low byte of return addr on stack
+   5, 03,80,fe,01,store high byte of return addr on stack
+   6, 01,04,fd,00,move stack pointer down by 2
+   7, 06,00,60,00,PC changed to $6000
+   8, 10,00,60,02,PC = $6000, 2 bytes in the instruction: UI line #2
+   9, 20,a9,00,00,INSTRUCTION: LDA #$00
+   10, 01,01,00,00,register A = 0
+   11, 01,05,02,00,status register = $02 (Z = 1)
+   12, 10,02,60,02,PC = $6002, 2 bytes in the instruction: UI line #3
+   13, 20,85,08,00,INSTRUCTION: STA $08
+   14, 03,00,08,00,$0 stored in address $0008
+   15, 10,04,60,01,PC = $6004, 1 bytes in the instruction: UI line #4
+   16, 20,85,09,00,INSTRUCTION: STA $09
+   17, 03,00,09,00,$0 stored in address $0009
+   18, 10,04,60,01,PC = $6006, 1 bytes in the instruction: UI line #5
+   19, 20,60,00,60,INSTRUCTION: RTS
+   20, 01,04,ff,00,move stack pointer up by 2
+   21, 06,03,80,00,PC Changed to $8004
+   22, 10,00,80,02,PC = $8003, 2 bytes in the instruction: UI line #6
+   23, 20,a2,08,00,INSTRUCTION: LDX #$08
+   24, 01,02,08,00,register X = 8
+   25, 01,05,00,00,status register = $00 (Z = 0)
+   26, 10,00,80,02,PC = $8005, 2 bytes in the instruction: UI line #7
+   27, 20,a2,08,00,INSTRUCTION: LDA $00,X
+   28, 30,00,00,00,opcode references address $0000
+   29, 05,08,00,00,computed address = $8 ($00 + X, X=8)
+   30, 04,08,00,00,read value 0 from $08
+   31, 01,02,08,00,register A = 8
+   32, 01,05,02,00,status register = $02 (Z=1)
+   33, 10,00,80,02,PC = $8007, 2 bytes in the instruction: UI line #8
+   34, 20,95,08,00,INSTRUCTION: STA ($08),X
+   35, 30,02,00,00,opcode references address $0008
+   36, 05,08,00,00,computed address = $8 ($08=0, $09=0, ($08)=0, 0 + X, X=8)
+   37, 03,08,00,00,write value 8 to $08
+   38, 10,09,80,00,PC = $8009, 0 bytes in the instruction: UI line #9
+   39, 2e,02,00,00,NMI start: DLI
+   40, 03,09,ff,01,store low byte of return addr on stack
+   41, 03,80,fe,01,store high byte of return addr on stack
+   42, 03,02,fd,01,store status register on stack
+   43, 01,04,fc,00,move stack pointer down by 3
+   44, 01,05,06,00,status register = $06 (I=1, Z=1)
+   45, 06,00,c0,00,PC changed to $c000
+   46, 10,00,c0,03,PC = $c000, 3 bytes in instruction: UI line #10
+   47, 20,2c,0f,d4,INSTRUCTION: BIT $d40f (NMIRES)
+   48, 30,0f,d4,00,opcode references $d40f
+   49, 01,04,84,00,status register = $80 (DLI bit set: N=1, I=1, Z=0)
+   50, 10,03,c0,02,PC = $c003, 2 bytes in instruction: UI line #11
+   51, 20,30,1a,00,INSTRUCTION: BMI $c01f
+   52, 30,1f,c0,00,opcode references $c01f
+   53, 07,01,00,00,branch taken
+   54, 06,1f,c0,00,PC Changed to $c01f
+   55, 10,1f,c0,02,PC = $c01f, 1 bytes in instruction: UI line #12
+   56, 20,40,00,00,INSTRUCTION: RTI
+   57, 01,05,02,00,status register = $02
+   58, 06,09,80,00,PC Changed to $8009
+   59, 10,09,80,00,PC = $8009, 0 bytes in the instruction: UI line #13
+   60, 2f,02,00,00,NMI end: DLI
+   61, 10,09,80,01,PC = $8009, 1 bytes in the instruction: UI line #13
+   62, 20,38,00,00,INSTRUCTION: SEC
+   63, 01,05,03,00,status register = $03 (Z=1, C=1)
+   64, 10,09,80,00,PC = $800a, 0 bytes in the instruction: UI line #14
+   65, 29,00,00,00,Frame end
 
-The ``ui_line_lookup`` array contains these values:
+For this simple 6502 emulator with 16 bytes ram, the ``current_state_t`` structure could be cast to this:
 
-   0, 8, 14, 17, 21, 24, 32, 39, 44, 52, 56, 61, 65, 67, 70
+.. code-block::
+
+   typedef struct {
+      uint32_t frame_number;
+
+        /* instruction */
+      uint16_t pc;
+      uint16_t opcode_ref_addr;
+      uint8_t instruction_length; /* number of bytes in current instruction */
+      uint8_t instruction[255]; /* current instruction */
+
+        /* result of instruction */
+      uint8_t color_clock;
+      uint8_t a;
+      uint8_t x;
+      uint8_t y;
+      uint8_t sp;
+      uint8_t sr;
+      uint8_t reg1[250]; /* filler */
+      uint16_t scan_line;
+      uint16_t reg2[255];
+      uint8_t ram[16];
+      uint8_t unassigned_ram[65520] /* remainder of 64K of RAM */
+   } current_state_t;
+
+This structure is filled at the beginning of the frame and modified by the
+instruction history deltas as instructions are processed for display in the UI. At the beginning of the frame, the emulator state is copied directly into the structure. At power-on, this data might be:
+
+.. code-block::
+
+   current_state_t c;
+   c.frame_number = 0;
+   c.pc = 0;
+   c.instruction_length = 0;
+   c.a = 0;
+   c.x = 0;
+   c.y = 0;
+   c.sp = 0xff;
+   c.sr = 0;
+   c.color_clock = 0;
+   c.scan_line = 0;
+   memcpy(c.ram, emulator_ram, 16);
+
+As instructions are processed by the UI for display, the deltas are used to
+modify this structure. Using the example above, the UI uses the
+``ui_line_lookup`` array to determine which history entry starts the definition
+for the text display. For the example above, it contains these values:
+
+   0, 2, 8, 11, 15, 18, 26, 33, 38, 46, 50, 55, 59, 61, 64
 
 which maps the line number that will hold the text representation of this
 instruction to the position in the instruction history array of the Type 10
 record (or Type 0 record in the case of the very first entry).
+
+Index 0 of this array points to the frame start entry:
+
+.. csv-table:: Instruction History, index 0 - 1
+   :widths: 10,10,10,10,10,40
+
+   0, 10,00,80,00,PC = $8000, 0 bytes in the instruction: UI line #0
+   1, 21,01,00,00,Frame #1 start
+
+so when UI line #0 gets requested by the UI, the ``current_state_t`` array is modified by the Type 10 and Type 21 records to become:
+
+.. code-block::
+
+   c.frame_number = 1;
+
+   /* instruction */
+   c.pc = 0x8000;
+   c.instruction_length = 0;
+
+   /* results */
+   c.a = 0;
+   c.x = 0;
+   c.y = 0;
+   c.sp = 0xff;
+   c.sr = 0;
+   c.color_clock = 0;
+   c.scan_line = 0;
+
+which may be cached or recomputed when needed again. Were it to be cached, it
+would be associated with UI line #0. Note that this means the
+``current_state_t`` data associated with an output text line is the instruction
+on that line with the state of the machine *after* that instruction is
+executed.
+
+This state also becomes the input for the next instruction. Index 1 of the
+``ui_line_lookup`` array points to this sequence of deltas:
+
+.. csv-table:: Instruction History, index 2 - 7
+   :widths: 10,10,10,10,10,40
+
+   2, 10,00,80,03,PC = $8000, 3 bytes in the instruction: UI line #1
+   3, 20,20,00,60,INSTRUCTION: JSR $6000
+   4, 03,02,ff,01,store low byte of return addr on stack
+   5, 03,80,fe,01,store high byte of return addr on stack
+   6, 01,04,fd,00,move stack pointer down by 2
+   7, 06,00,60,00,PC changed to $6000
+
+the ``current_state_t`` structure is modified by all the history entries through entry index 7 to become the results of executing that instruction:
+
+.. code-block::
+
+   c.frame_number = 1;
+
+   /* instruction */
+   c.pc = 0x8000;
+   c.instruction_length = 3;
+   c.instruction[0] = 0x20
+   c.instruction[1] = 0x00
+   c.instruction[2] = 0x60
+
+   /* results */
+   c.a = 0;
+   c.x = 0;
+   c.y = 0;
+   c.sp = 0xfd;
+   c.sr = 0;
+   c.color_clock = 0;
+   c.scan_line = 0;
+   c.ram[0x1ff] = 0x02;
+   c.ram[0x1fe] = 0x80;
+
+and is cached (if caching is implemented) as the emulator state for UI line #1.
 
