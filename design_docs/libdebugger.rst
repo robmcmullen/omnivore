@@ -197,6 +197,17 @@ the payload. The meaning of the payload is dependent on the type.
   | Type |    Payload      |
   +------+-----+-----+-----+
 
+In C, this is defined as a 4 byte structure:
+
+.. code-block::
+
+   typedef struct {
+      uint8_t type;
+      uint8_t payload1;
+      uint8_t payload2;
+      uint8_t payload3;
+   } instruction_delta_t;
+
 The types are:
 
 .. csv-table:: Record Types
@@ -219,6 +230,7 @@ The types are:
    82, user input: two byte register value (e.g. scan line number 0 - 262)
    83, user input: one byte value at address
    86, user input: program counter (PC)
+   E0, emulator configuration
    F0, machine state text pointer (text encoding of registers + opcode)
    F1, result text pointer (text encoding of what changed after this opcode)
    FF, disassembler type
@@ -393,7 +405,8 @@ instruction history list.
 
 The frame number is a 24 bit unsigned integer where XHi will be zero until the
 frame number becomes larger than 65535. Frame numbers start at 1, with zero
-indicating the power-off state of the machine.
+indicating the state of the machine immediately after power-on but before
+executing any instructions.
 
 29: Frame End
 ---------------------------------
@@ -455,6 +468,43 @@ the Type 30 record stores the address encoded into the opcode.
    +----+----+----+--------+
    | 30 | Lo | Hi | unused |
    +----+----+----+--------+
+
+E0: Emulator Configuration
+----------------------------------------------------------------------
+
+Type E0 record are only used in :ref:`frame 0 <frame0>` for specifying the
+intial power-on state of the emulator. They are variable-length records
+consisting of the main E0 record and some number of additional records
+described by the lengths encoded in the record:
+
+   +----+----------+-----------------------+----------------------------------+
+   | E0 | param ID | param length in bytes | text description length in bytes |
+   +----+----------+-----------------------+----------------------------------+
+
+The param length and text description length describe additional 4 byte records
+immediately following this record, in that order. Both the param payload and
+text payload will start on a record (4-byte) boundary. The lengths will be
+specified in the actual bytes, and the number of records will be calculated as
+in the :ref:`Type 10 <type10>` record: ``(length + 3) / 4``.
+
+For a param length of 5 bytes and a text description of 13 bytes, the set of records would look like:
+
+   +----+----+----+----+
+   | E0 | 55 | 05 | 0d |
+   +----+----+----+----+
+   | 41 | 54 | 41 | 52 |
+   +----+----+----+----+
+   | 49 | 00 | 00 | 00 |
+   +----+----+----+----+
+   | T  | V  |    | T  |
+   +----+----+----+----+
+   | Y  | P  | E  | :  |
+   +----+----+----+----+
+   |    | N  | T  | S  |
+   +----+----+----+----+
+   | C  | 00 | 00 | 00 |
+   +----+----+----+----+
+
 
 F0: Machine State Text Pointer
 ----------------------------------------------------------------------
@@ -795,3 +845,107 @@ the ``current_state_t`` structure is modified by all the history entries through
 
 and is cached (if caching is implemented) as the emulator state for UI line #1.
 
+
+Creating Instruction History in Emulator
+===============================================
+
+The libdebugger code includes some convenience functions to create instruction history. At the start of an emulation frame, a call to:
+
+.. code-block::
+
+   instruction_history_t *get_working_instruction_history(int max_delta, int max_ui_lines);
+
+will return data storage space for the instruction history that will be built
+as the emulation processes opcodes during the frame. The
+``instruction_history_t`` structure is defined as:
+
+.. code-block::
+
+   typedef struct {
+      uint32_t frame_number;
+      uint32_t num_allocated_delta;
+      uint32_t num_delta; /* current count of deltas */
+      uint32_t num_allocated_ui_line_lookup;
+      uint32_t num_ui_line_lookup; /* current count of ui lines */
+      uint32_t unused[3]; /* reserved, maintaining 64 bit alignment */
+      instruction_delta_t *delta; /* allocated */
+      instruction_delta_t *current_delta;
+      uint32_t *ui_line_lookup; /* allocated */
+      uint32_t *current_ui_line;
+   } instruction_history_t;
+
+The parameters ``max_delta`` and ``max_ui_lines`` is not precisely known at the
+start of any emulation frame because opcodes take different number of clock
+cycles. So, it is advisable to overestimate the number during this call. The
+code actually reuses the same data for every emulation frame, and the call
+to:
+
+.. code-block::
+
+   instruction_history_t *finalize_instruction_history();
+
+will create a copy of the working instruction history that is sized to exactly
+hold the data. It will look at the array sizes determined by ``num_delta`` and
+``num_ui_line_lookup`` and create allocated sizes for ``delta`` and
+``ui_line_lookup`` that exactly match those numbers.
+
+Internally, the code allocates one block of memory for the size of the
+``instruction_history_t`` structure *plus* the sizes of the deltas and ui line
+lookup table, and partitions that into 3 areas with the delta and ui line lookup pointers using addresses within this allocation.
+
+For example, in a 64 bit system, ``sizeof(instruction_history_t)`` is 64 bytes,
+and if there are 10,000 entries in the ``delta`` array and 2000 in the
+``ui_line_lookup`` array, the allocation would be ``64 + 10000*4 + 2000*4`` or
+48064 bytes in a single array:
+
+   +----+---------------------------------------+-------------+
+   | 64 |                 40000                 |    8000     |
+   +----+---------------------------------------+-------------+
+
+The ``delta`` pointer would then point to 64 bytes beyond the start of the
+array, and the ``ui_line_lookup`` points to 40064 bytes after the start of the
+array.
+
+The call to ``finalize_instruction_history`` uses the counts of the entries in
+both allocated arrays to allocate a new block of memory with no wasted space.
+Using the example above, if ``num_delta = 4055`` and ``num_ui_line_lookup =
+822``,  the exactly-fitted allocation would be ``64 + 4055*4 + 822*4`` or 19572
+bytes:
+
+   +----+-------------------+------+
+   | 64 |       16220       | 3288 |
+   +----+-------------------+------+
+
+
+Emulation Frame Storage
+=================================
+
+An emulation frame consists of the save state of the machine, the video and
+audio output resulting from that frame, and the exactly-fitted
+``instruction_history_t`` array as described above.
+
+All this data is from the *end* of the frame, meaning it is the state of the
+machine when the frame is complete. To re-run the frame, the machine state from
+the *previous* frame must be loaded, then the instructions making up this frame
+executed. In other words, the instructions making up the
+``instruction_history_t`` array transform the machine state from the previous
+frame's end state to the current frame's end state.
+
+.. _frame0:
+
+Frame 0: Emulator Configuration Frame
+---------------------------------------------------
+
+The emulation frame starting from power-on is a special case, since there is no
+previous frame in this case. Frame number 0 is marked as the power-off state,
+so the end of frame 0 is the power-on state. This means frame number 1 is the
+first frame that contains CPU instructions and a real machine state. Restoring
+frame 1 is essentially cold-starting the computer as the machine state will be
+reset to the same power-on conditions as defined in frame 0.
+
+Frame 0 can be thought of as the emulator configuration frame, so any data
+needed to set up the emulator can be stored in this frame's instruction
+history. This configuration data can be TV type (PAL vs NTSC), RAM size,
+Operating System Version, ROM cartridges present, and even machine type (in the
+case of an emulator that supports multiple machines like the atari800 emulator
+supporting both the Atari 8-bit computers and the Atari 5200 game system).
