@@ -1155,13 +1155,16 @@ the same user interface can be applied across emulators, simplifying
 development on multiple platforms by not being dependent on individual
 emulators with their unique debugging commands.
 
-Debugging works by examining the ``current_state_t`` structure after every
-instruction and checking to see if breakpoint conditions are true. This is how
-regular debuggers work, except instead of checking the instruction history
-after the fact, they are checking as the emulator processes the instructions.
+Debugging works by examining the ``current_state_t`` structure to see if any
+breakpoint conditions are true. Breakpoints are checked at every Type 10
+record, which checks if the previous instruction caused a change or the PC
+matches the PC in the Type 10 record. This is how regular debuggers work,
+except instead of checking the instruction history after the fact, they are
+checking as the emulator processes the instructions.
 
 For each frame, the instruction history contains the ``instruction_lookup``
-array which allows stepping by instruction. At the start of the frame,
+array which allows stepping by instruction. This array holds the locations of
+all Type 10 records in the instruction history. At the start of the frame,
 ``instruction_lookup[0]`` is zero, which is the signal to populate the current
 state from the save state from the previous frame. Any deltas are applied to
 reach the history entry just before ``instruction_lookup[1]`` and the
@@ -1182,13 +1185,12 @@ code:
 
 .. code-block::
 
-   LDA $7fff
-   STA $3fff
-   LDA $8000
-   STA $4000
+   6000  LDA $7fff
+   6003  STA $3fff
+   6006  LDA $8000
+   6009  STA $4000
 
 would occur after the ``LDA $8000`` command has executed and changed the
-machine's current state to reflect the read of the $8000 address. It does not
-occur after the ``STA $3fff`` command when the read of $8000 is *about* to take
-place.
-
+machine's current state to reflect the read of the $8000 address. The PC would
+show $6009, but that instruction (the ``STA $4000``) will not yet have
+executed.
