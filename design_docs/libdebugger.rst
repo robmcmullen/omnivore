@@ -658,7 +658,7 @@ instruction.
 
 .. code-block::
 
-   uint16_t ui_line_lookup[...]; /* allocated */
+   uint32_t instruction_lookup[...]; /* allocated */
 
 
 
@@ -786,8 +786,9 @@ instruction history deltas as instructions are processed for display in the UI. 
 
 As instructions are processed by the UI for display, the deltas are used to
 modify this structure. Using the example above, the UI uses the
-``ui_line_lookup`` array to determine which history entry starts the definition
-for the text display. For the example above, it contains these values:
+``instruction_lookup`` array to determine which history entry starts the
+definition for the text display. For the example above, it contains these
+values:
 
    0, 2, 8, 11, 15, 18, 26, 33, 38, 46, 50, 55, 59, 61, 64
 
@@ -829,7 +830,7 @@ on that line with the state of the machine *after* that instruction is
 executed.
 
 This state also becomes the input for the next instruction. Index 1 of the
-``ui_line_lookup`` array points to this sequence of deltas:
+``instruction_lookup`` array points to this sequence of deltas:
 
 .. csv-table:: Instruction History, index 2 - 7
    :widths: 10,10,10,10,10,40
@@ -892,12 +893,12 @@ as the emulation processes opcodes during the frame. The
       uint32_t frame_number;
       uint32_t num_allocated_delta;
       uint32_t num_delta; /* current count of deltas */
-      uint32_t num_allocated_ui_line_lookup;
-      uint32_t num_ui_line_lookup; /* current count of ui lines */
+      uint32_t num_allocated_instruction_lookup;
+      uint32_t num_instruction_lookup; /* current count of ui lines */
       uint32_t unused[3]; /* reserved, maintaining 64 bit alignment */
       instruction_delta_t *delta; /* allocated */
       instruction_delta_t *current_delta;
-      uint32_t *ui_line_lookup; /* allocated */
+      uint32_t *instruction_lookup; /* allocated */
       uint32_t *current_ui_line;
    } instruction_history_t;
 
@@ -913,8 +914,8 @@ to:
 
 will create a copy of the working instruction history that is sized to exactly
 hold the data. It will look at the array sizes determined by ``num_delta`` and
-``num_ui_line_lookup`` and create allocated sizes for ``delta`` and
-``ui_line_lookup`` that exactly match those numbers.
+``num_instruction_lookup`` and create allocated sizes for ``delta`` and
+``instruction_lookup`` that exactly match those numbers.
 
 Internally, the code allocates one block of memory for the size of the
 ``instruction_history_t`` structure *plus* the sizes of the deltas and ui line
@@ -922,20 +923,20 @@ lookup table, and partitions that into 3 areas with the delta and ui line lookup
 
 For example, in a 64 bit system, ``sizeof(instruction_history_t)`` is 64 bytes,
 and if there are 10,000 entries in the ``delta`` array and 2000 in the
-``ui_line_lookup`` array, the allocation would be ``64 + 10000*4 + 2000*4`` or
-48064 bytes in a single array:
+``instruction_lookup`` array, the allocation would be ``64 + 10000*4 + 2000*4``
+or 48064 bytes in a single array:
 
    +----+---------------------------------------+-------------+
    | 64 |                 40000                 |    8000     |
    +----+---------------------------------------+-------------+
 
 The ``delta`` pointer would then point to 64 bytes beyond the start of the
-array, and the ``ui_line_lookup`` points to 40064 bytes after the start of the
+array, and the ``instruction_lookup`` points to 40064 bytes after the start of the
 array.
 
 The call to ``finalize_instruction_history`` uses the counts of the entries in
 both allocated arrays to allocate a new block of memory with no wasted space.
-Using the example above, if ``num_delta = 4055`` and ``num_ui_line_lookup =
+Using the example above, if ``num_delta = 4055`` and ``num_instruction_lookup =
 822``,  the exactly-fitted allocation would be ``64 + 4055*4 + 822*4`` or 19572
 bytes:
 
@@ -1140,3 +1141,54 @@ The flags are defined in libdebugger.h:
 
 The memory access array is defined in the ``current_state_t`` structure and is
 updated during calls to ``libdebugger_calc_current_state``.
+
+The front-end can use the memory access type to create a graphical display
+showing the areas of memory used in this frame of emulation.
+
+
+Debugging with Libdebugger
+========================================
+
+Finally we get to debugging! This design allows any emulator that implements
+the libdebugger instruction history to use the same debugging code. That means
+the same user interface can be applied across emulators, simplifying
+development on multiple platforms by not being dependent on individual
+emulators with their unique debugging commands.
+
+Debugging works by examining the ``current_state_t`` structure after every
+instruction and checking to see if breakpoint conditions are true. This is how
+regular debuggers work, except instead of checking the instruction history
+after the fact, they are checking as the emulator processes the instructions.
+
+For each frame, the instruction history contains the ``instruction_lookup``
+array which allows stepping by instruction. At the start of the frame,
+``instruction_lookup[0]`` is zero, which is the signal to populate the current
+state from the save state from the previous frame. Any deltas are applied to
+reach the history entry just before ``instruction_lookup[1]`` and the
+breakpoint conditions are checked. If no breakpoint matches, the deltas
+starting at ``instruction_lookup[1]`` are applied until the entry immediately
+before ``instruction_lookup[2]`` and the breakpoint conditions are checked
+there. And so on: the deltas are applied until the entry just before the next
+Type 10 record and the breakpoint conditions are checked.
+
+If a breakpoint condition matches, control returns to the user program with the
+breakpoint ID that matched, the instruction number, and the current state of
+the machine so the UI can be updated to show the breakpoint.
+
+The breakpoint match means that the currently processed instruction has met
+some condition, so breakpoints don't occur before an instruction, they occur
+after. For example, breaking on a read of the address $8000 in the following
+code:
+
+.. code-block::
+
+   LDA $7fff
+   STA $3fff
+   LDA $8000
+   STA $4000
+
+would occur after the ``LDA $8000`` command has executed and changed the
+machine's current state to reflect the read of the $8000 address. It does not
+occur after the ``STA $3fff`` command when the read of $8000 is *about* to take
+place.
+
