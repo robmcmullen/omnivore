@@ -646,6 +646,7 @@ in the instruction history. An example of this structure is defined as follows:
       uint16_t reg2[256]; /* two-byte registers */
       uint16_t computed_addr; /* computed address after indirection, indexing, etc. */
       uint8_t ram[256*256]; /* complete 64K of RAM */
+      uint8_t access_type[256*256]; /* corresponds to RAM */
    } current_state_t;
 
 Because the instruction history will have variable numbers of records for each
@@ -664,9 +665,7 @@ instruction.
 Sample Instruction History
 -----------------------------------
 
-This example imagines a 6502 machine with 16 bytes of RAM at addresses 0 - f.
-An instruction history might look like this:
-
+This example is an instruction history for a 6502 emulator:
 
 .. csv-table:: Instruction History
    :widths: 10,10,10,10,10,40
@@ -762,8 +761,8 @@ For this simple 6502 emulator with 16 bytes ram, the ``current_state_t`` structu
       uint8_t reg1[250]; /* filler */
       uint16_t scan_line;
       uint16_t reg2[255];
-      uint8_t ram[16];
-      uint8_t unassigned_ram[65520] /* remainder of 64K of RAM */
+      uint8_t ram[65536];
+      uint8_t access_type[65536];
    } current_state_t;
 
 This structure is filled at the beginning of the frame and modified by the
@@ -782,7 +781,8 @@ instruction history deltas as instructions are processed for display in the UI. 
    c.sr = 0;
    c.color_clock = 0;
    c.scan_line = 0;
-   memcpy(c.ram, emulator_ram, 16);
+   memcpy(c.ram, emulator_ram, 65536);
+   memset(c.access_type, 0, 65536);
 
 As instructions are processed by the UI for display, the deltas are used to
 modify this structure. Using the example above, the UI uses the
@@ -863,7 +863,12 @@ the ``current_state_t`` structure is modified by all the history entries through
    c.color_clock = 0;
    c.scan_line = 0;
    c.ram[0x1ff] = 0x02;
+   c.access_type[0x1ff] = ACCESS_TYPE_WRITE;
    c.ram[0x1fe] = 0x80;
+   c.access_type[0x1fe] = ACCESS_TYPE_WRITE;
+   c.access_type[0x8000] = ACCESS_TYPE_EXECUTE;
+   c.access_type[0x8001] = ACCESS_TYPE_EXECUTE;
+   c.access_type[0x8002] = ACCESS_TYPE_EXECUTE;
 
 and is cached (if caching is implemented) as the emulator state for UI line #1.
 
@@ -1090,7 +1095,7 @@ Libdebugger has functions to help process instruction history lists and
 generate data useful for postprocessing.
 
  * calculate the current state of the machine
- * calculate the memory access
+ * calculate the memory access statistics for the frame
 
 Current State
 -------------------------------
@@ -1106,3 +1111,32 @@ will provide the state at the end of the frame. Any positive number will be
 clamped to the largest instruction number and the state returned will be the
 state of the machine *immediately before that instruction*.
 
+
+Memory Access
+-------------------------------
+
+The memory access statistics is an array that parallels the emulator's RAM,
+describing each type of memory access. For each instruction that accesses
+memory, either by reading it, writing to it, being executed, or other emulator-
+specific actions (like being used for display memory or a display list in the
+atari800 emulator), a flag is stored referencing that memory location.
+
+The flags are defined in libdebugger.h:
+
+.. code-block::
+
+   /* lower 4 bits: bit access flags */
+   #define ACCESS_TYPE_READ 1
+   #define ACCESS_TYPE_WRITE 2
+   #define ACCESS_TYPE_EXECUTE 4
+
+   /* upper 4 bits: type of access, not a bit field */
+   #define ACCESS_TYPE_VIDEO 0x10
+   #define ACCESS_TYPE_DISPLAY_LIST 0x20
+   #define ACCESS_TYPE_CHBASE 0x30
+   #define ACCESS_TYPE_PMBASE 0x40
+   #define ACCESS_TYPE_CHARACTER 0x50
+   #define ACCESS_TYPE_HARDWARE 0x60
+
+The memory access array is defined in the ``current_state_t`` structure and is
+updated during calls to ``libdebugger_calc_current_state``.
