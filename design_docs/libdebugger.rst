@@ -477,20 +477,21 @@ intial power-on state of the emulator. They are variable-length records
 consisting of the main E0 record and some number of additional records
 described by the lengths encoded in the record:
 
-   +----+----------+-----------------------+----------------------------------+
-   | E0 | param ID | param length in bytes | text description length in bytes |
-   +----+----------+-----------------------+----------------------------------+
+   +----+----------------+----------------+----------------------------------+
+   | E0 | config size Lo | config size Hi | text description length in bytes |
+   +----+----------------+----------------+----------------------------------+
 
-The param length and text description length describe additional 4 byte records
-immediately following this record, in that order. Both the param payload and
-text payload will start on a record (4-byte) boundary. The lengths will be
+The config data and text description length describe additional 4 byte records
+immediately following this record, in that order. Both the config data and text
+description will start on a record (4-byte) boundary. The lengths will be
 specified in the actual bytes, and the number of records will be calculated as
 in the :ref:`Type 10 <type10>` record: ``(length + 3) / 4``.
 
-For a param length of 5 bytes and a text description of 13 bytes, the set of records would look like:
+For config data of 5 bytes and a text description of 13 bytes, the set of
+records would look like:
 
    +----+----+----+----+
-   | E0 | 55 | 05 | 0d |
+   | E0 | 05 | 00 | 0d |
    +----+----+----+----+
    | 41 | 54 | 41 | 52 |
    +----+----+----+----+
@@ -504,6 +505,10 @@ For a param length of 5 bytes and a text description of 13 bytes, the set of rec
    +----+----+----+----+
    | C  | 00 | 00 | 00 |
    +----+----+----+----+
+
+Note that the config data is opaque to the instruction history processing, it
+is purely data for the emulator. Its size can be up to 64K in length, while the
+text description is limited to 255 bytes.
 
 
 F0: Machine State Text Pointer
