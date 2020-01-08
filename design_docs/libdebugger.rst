@@ -1105,7 +1105,7 @@ The current state of the machine at some instruction count is available with:
 
 .. code-block::
 
-   current_state_t *libdebugger_calc_current_state(instruction_history_t *h, int num);
+   void libdebugger_calc_current_state(current_state_t *buf, instruction_history_t *h, int num);
 
 An instruction count of 0 is the state at the beginning of the frame, and -1
 will provide the state at the end of the frame. Any positive number will be
@@ -1194,3 +1194,40 @@ would occur after the ``LDA $8000`` command has executed and changed the
 machine's current state to reflect the read of the $8000 address. The PC would
 show $6009, but that instruction (the ``STA $4000``) will not yet have
 executed.
+
+
+Front End Development
+=====================================
+
+The front-end driving the emulator will have to maintain the array (or tree) of
+frame save states. As the emulator generates a frame, it returns the save state
+information for that frame and any output generated (video, audio).
+
+Frame 0 is the initial condition of the emulator, including the configuration,
+before any instructions are processed. The save state at the end of frame 0 is
+used as input for frame 1, which is the first frame that processes
+instructions. (Essentially, the CPU is turned on with the first instruction of
+frame 1.) At the end of the frame, the front- end must store the save state for
+frame 1, which is then used as the input for frame 2. And so on.
+
+The data stored for a frame is the results of processing that frame, so the UI
+should be clear that save state for frame 1 is the internal state of the
+emulator at the *end* of frame 1. The front-end must also make it clear that
+restoring the emulator to frame 1 restores the emulator to the condition at the
+*end* of frame 1. Resuming emulation from there means the CPU starts from the
+end of frame 1, which is equivalent to starting from frame 2.
+
+The video and audio saved at the end of the frame are the only outputs that
+should be used from the save state to display to the user. Everything else
+displayed it the UI (all other data displays) should use the
+``current_state_t`` array as produced by the call to
+``libdebugger_calc_current_state``. Calling that function with an instruction
+count of ``-1`` will produce the current state at the end of the frame and is
+the one place after the start of the instruction history where stepping through
+the entire history is not necessary; the ``current_state_t`` will be populated
+directly from the save state.
+
+The current state array is allocated by the front end and the pointer passed to
+``libdebugger_calc_current_state`` so that a Segment can be defined and viewers
+can directly access that data as it is updated.
+
