@@ -226,10 +226,15 @@ The types are:
    2E, NMI start (e.g. DLI, VBI)
    2F, NMI end (e.g. DLI, VBI)
    30, referenced address
+   80, user input: instruction number
    81, user input: one byte register value (e.g. A, X, Y, SP, SR, etc.)
    82, user input: two byte register value (e.g. scan line number 0 - 262)
    83, user input: one byte value at address
    86, user input: program counter (PC)
+   88, user input: keypress
+   89, user input: joystick
+   8a, user input: paddle
+   8b, user input: mouse
    E0, emulator configuration
    F0, machine state text pointer (text encoding of registers + opcode)
    F1, result text pointer (text encoding of what changed after this opcode)
@@ -560,8 +565,20 @@ in effect until the next Type FF record is encountered.
 User Input Entries
 ==============================
 
-When the user is debugging and changes a value in mid-frame, this is not
-ordinarily possible.
+There are two ways to get user input to the emulator. The first is in a separate array, passed to the emulator frame method. The second is during debugging when the user changes a value of some parameter in the middle of a frame
+When the user is debugging and changes a value in mid-frame, these records will appear in the input history
+
+80: User Input: instruction number
+-------------------------------------------------
+
+Flag to indicate the instruction number for the following user input records
+
+   +------+----+----+-----+
+   |  0   | 1  | 2  |  3  |
+   +------+----+----+-----+
+   | 28   | Lo | Hi | XHi |
+   +------+----+----+-----+
+
 
 81: User Input: One Byte Register Value
 ----------------------------------------------------------------------
@@ -954,3 +971,138 @@ history. This configuration data can be TV type (PAL vs NTSC), RAM size,
 Operating System Version, ROM cartridges present, and even machine type (in the
 case of an emulator that supports multiple machines like the atari800 emulator
 supporting both the Atari 8-bit computers and the Atari 5200 game system).
+
+
+Emulator Operation
+================================
+
+With libdebugger, the emulator only processes full frames and leaves all post-
+processing (including debugging!) to the front-end UI.
+
+The interface into the emulator is therefore small. All that is required is:
+
+ * emulator cold-start boot configuration
+ * emulator export machine state to buffer
+ * emulator import machine state from buffer
+ * emulator process frame
+
+The example function below are from a sample implementation emulator called
+**lib6502**, a simple 6502 emulator with optional support for some Apple ][+
+features.
+
+Cold-Start Boot Configuration
+----------------------------------
+
+The cold start configuration function takes a list of parameters to set up the
+emulator before any instructions are executed. The ``lib6502_clear_config``
+function should be called before any calls to ``lib6502_add_config_data``. Note
+that ``lib6502_add_config_data`` may be called an arbitrary number of times
+before any frames are generated, but when the emulator is processing frame 1
+and beyond, calls are ignored and an error is returned.
+
+If the emulator is restored to frame 0 or a call to ``lib6502_reset_emulator``
+is made, calls can be made to reconfigure the emulator. A call to
+``lib6502_clear_config`` is implicit in the call to ``lib6502_reset_emulator``.
+
+.. code-block::
+
+   int lib6502_reset_emulator();
+   int lib6502_clear_config();
+   int lib6502_add_config_data(uint8_t *config_data, uint8_t *description);
+
+Export Save State
+--------------------------
+
+This function fills a buffer with the save state of the machine, such that a
+call to the restore function below will return the emulator to the same
+internal state as when it was saved.
+
+.. code-block::
+
+   int lib6502_export_state(lib6502_state_t *buf);
+
+Import Save State
+--------------------------
+
+This function restores the emulator internal state using the previously
+imported buffer exported through the function above.
+
+.. code-block::
+
+   int lib6502_import_state(lib6502_state_t *buf);
+
+Process Frame
+-------------------------------------
+
+This is the only emulation function available: process a complete emulation
+frame. It starts from the current internal state of the emulator and executes
+instructions to complete one TV frame of emulation.
+
+.. note::
+
+   The final instruction of a frame may cross the frame boundary if cycle count
+   is higher than the number of cycles remaining in the frame. If this happens,
+   the subsequent frame will not begin at cycle zero of the frame, but will
+   skip the number of extra cycles in from the previous frame.
+
+The emulator is expected to maintain an instruction_history_t buffer that is
+used during the emulation. It must be large enough to handle a frame's worth of
+instructions. When the frame is complete, this internal buffer is reallocated
+to truncate any extra space and pack it as small as possible, and the pointer
+to this reallocated structure is returned as the value of the function.
+
+.. code-block::
+
+   instruction_history_t *lib6502_next_frame(instruction_history_t *original, instruction_history_t *input);
+
+The ``original`` argument is used for debugging when the user has changed a
+value mid-frame. The instruction history can be modified by inserting some Type
+8x records before a Type 10 record. Once the first difference occurs between
+the original history list and the output history list, subsequent user input
+found in the modified original list will be ignored. The act of inserting input
+changes invalidates the remainder of the original instruction history.
+
+After inserting user input and running the frame, the output instruction
+history will have the user input records inserted into the instruction history.
+This new output history can also be used as the original history to regenerate
+this frame, and the output will be identical to itself. Additional user inputs
+may even be inserted into this new output history as well, though subject to
+the above that history is invalidated after new user input. Should the user
+input be inserted after other user input instead of before, only the portion of
+the instruction history after the insert will be invalidated, keeping the prior
+user input.
+
+The ``input`` argument can be used to supply user input before processing any
+instructions, or can be tied to an instruction number and the input will be
+delayed until that instruction count is reached. This can be used in
+combination with the ``original`` argument, and the input will be inserted
+before the specified instructions in the output instruction history list.
+Again, all instruction history after new user input will be invalidated.
+
+The arguments may be ``NULL`` in which case the frame will be processed
+normally.
+
+
+Utility Functions in libdebugger
+===================================================
+
+Libdebugger has functions to help process instruction history lists and
+generate data useful for postprocessing.
+
+ * calculate the current state of the machine
+ * calculate the memory access
+
+Current State
+-------------------------------
+
+The current state of the machine at some instruction count is available with:
+
+.. code-block::
+
+   current_state_t *libdebugger_calc_current_state(instruction_history_t *h, int num);
+
+An instruction count of 0 is the state at the beginning of the frame, and -1
+will provide the state at the end of the frame. Any positive number will be
+clamped to the largest instruction number and the state returned will be the
+state of the machine *immediately before that instruction*.
+
