@@ -34,10 +34,12 @@ emulator_state_t *create_emulator_state(int save_size, int input_size, int video
 op_history_t *create_op_history(int max_records, int max_lookup) {
 	op_history_t *buf;
 	int num;
+	int total_size;
 
 	num = OP_HISTORY_T_SIZE + max_records + max_lookup;
-	buf = (op_history_t *)calloc(num, sizeof(uint32_t));
-	buf->num_allocated = num;
+	total_size = num * 4; // 4 bytes per uint32
+	buf = (op_history_t *)malloc(total_size);
+	buf->malloc_size = total_size;
 	buf->max_records = max_records;
 	buf->max_lookup = max_lookup;
 	buf->frame_number = 0;
@@ -76,7 +78,7 @@ op_history_t *copy_op_history(op_history_t *src) {
 }
 
 void print_op_history(op_history_t *buf) {
-	printf("op_history: frame=%d allocated=%d, records:%d of %d, lookup: %d of %d\n", buf->frame_number, buf->num_allocated, buf->num_records, buf->max_records, buf->num_lookup, buf->max_lookup);
+	printf("op_history: frame=%d allocated=%d, records:%d of %d, lookup: %d of %d\n", buf->frame_number, buf->malloc_size, buf->num_records, buf->max_records, buf->num_lookup, buf->max_lookup);
 }
 
 

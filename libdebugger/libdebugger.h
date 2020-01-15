@@ -83,7 +83,7 @@ typedef struct {
 // operation history array header, used as first several elements in array of
 // uint32_t of size of OP_HISTORY_T_SIZE + max_steps + max_lookup
 typedef struct {
-    uint32_t num_allocated; /* total number of uint32 in structure, including steps and lookup */
+    uint32_t malloc_size; /* total number of bytes in structure, including steps and lookup */
     uint32_t frame_number;
     uint32_t max_records; /* maximum space available for records */
     uint32_t num_records; /* current number of records */

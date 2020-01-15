@@ -72,7 +72,7 @@ def export_op_history():
     cdef np.uint32_t *obuf
 
     obuf = lib6502_copy_op_history()
-    count = obuf[0]  # number of uint32 elements in array
+    count = obuf[0] // 4  # number of uint32 elements in array
     print(f"export_op_history: allocated={obuf[0]}, records:{obuf[2]} of {obuf[3]}, lookup: {obuf[4]} of {obuf[5]}")
     for i in range(20):
         print(f"{obuf[i]:0x}")
@@ -83,7 +83,7 @@ def export_frame():
     cdef np.uint32_t *obuf
 
     obuf = lib6502_export_frame()
-    count = obuf[0]  # number of uint8 elements in array
+    count = obuf[0] // 4  # number of uint32 elements in array
     state = array_from_ptr(obuf, count, np.NPY_UINT8)
     return state
 
