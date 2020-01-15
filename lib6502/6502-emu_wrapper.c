@@ -70,6 +70,7 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 int lib6502_cold_start(op_history_t *input)
 {
 	//load memory, configure emulator state, etc. to produce frame 0
+	frame_number = 0;
 	return 0;
 }
 
@@ -263,6 +264,9 @@ int lib6502_next_frame(op_history_t *input)
 		// memory[0xc000] = input->keychar;
 	}
 
+	frame_number++;
+	clear_op_history(current_op_history);
+
 	op_history_start_frame(current_op_history, PC, frame_number);
 	print_op_history(current_op_history);
 
@@ -274,7 +278,6 @@ int lib6502_next_frame(op_history_t *input)
 	
 	while (cycle_count < cycles_per_frame) {
 		cycles = lib6502_step_cpu();
-		print_op_history(current_op_history);
 		cycle_count += cycles;
 		tv_cycle += cycles;
 		if (tv_cycle > cycles_per_scan_line) {
@@ -284,7 +287,7 @@ int lib6502_next_frame(op_history_t *input)
 	}
 
 	op_history_end_frame(current_op_history, PC);
-	return 0;
+	return frame_number;
 }
 
 op_history_t *lib6502_copy_op_history() {

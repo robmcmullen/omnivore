@@ -40,6 +40,7 @@ op_history_t *create_op_history(int max_records, int max_lookup) {
 	buf->num_allocated = num;
 	buf->max_records = max_records;
 	buf->max_lookup = max_lookup;
+	buf->frame_number = 0;
 	clear_op_history(buf);
 	return buf;
 }
@@ -68,13 +69,14 @@ op_history_t *copy_op_history(op_history_t *src) {
 	dest_data = (uint32_t *)dest + OP_HISTORY_T_SIZE + dest->max_records;
 	memcpy(dest_data, src_data, src->num_lookup * sizeof(uint32_t));
 
+	dest->frame_number = src->frame_number;
 	printf("copy_op_history: resized to minimum size\n");
 	print_op_history(dest);
 	return dest;
 }
 
 void print_op_history(op_history_t *buf) {
-	printf("op_history: allocated=%d, records:%d of %d, lookup: %d of %d\n", buf->num_allocated, buf->num_records, buf->max_records, buf->num_lookup, buf->max_lookup);
+	printf("op_history: frame=%d allocated=%d, records:%d of %d, lookup: %d of %d\n", buf->frame_number, buf->num_allocated, buf->num_records, buf->max_records, buf->num_lookup, buf->max_lookup);
 }
 
 
@@ -103,6 +105,7 @@ static inline op_record_t *next_record(op_history_t *buf) {
 void op_history_start_frame(op_history_t *buf, uint16_t PC, int frame_number) {
 	op_record_t *op;
 
+	buf->frame_number = frame_number;
 	add_new_op_lookup(buf);
 	op = next_record(buf);
 	op->type = 0x10;
