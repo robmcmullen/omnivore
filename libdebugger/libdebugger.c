@@ -68,6 +68,8 @@ op_history_t *copy_op_history(op_history_t *src) {
 	dest_data = (uint32_t *)dest + OP_HISTORY_T_SIZE + dest->max_records;
 	memcpy(dest_data, src_data, src->num_lookup * sizeof(uint32_t));
 
+	printf("copy_op_history: resized to minimum size\n");
+	print_op_history(dest);
 	return dest;
 }
 

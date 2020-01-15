@@ -1,6 +1,38 @@
 import numpy as np
 cimport numpy as np
 
+np.import_array()  # needed to use np.PyArray_* functions
+
+from libc.stdlib cimport free
+
+# from https://stackoverflow.com/questions/23872946/force-numpy-ndarray-to-take-ownership-of-its-memory-in-cython/
+from cpython.object cimport PyObject
+from cpython.ref cimport Py_INCREF
+cdef class MemoryNanny:
+    cdef void* ptr # set to NULL by "constructor"
+    def __dealloc__(self):
+        print("freeing ptr=0x%x" % <unsigned long long>(self.ptr)) #just for debugging
+        free(self.ptr)
+
+    @staticmethod
+    cdef create(void* ptr):
+        cdef MemoryNanny result = MemoryNanny()
+        result.ptr = ptr
+        print("nanny for ptr=0x%x" % <unsigned long long>(result.ptr)) #just for debugging
+        return result
+
+cdef extern from "numpy/arrayobject.h":
+    # a little bit awkward: the reference to obj will be stolen
+    # using PyObject*  to signal that Cython cannot handle it automatically
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject *obj) except -1 # -1 means there was an error
+
+cdef array_from_ptr(void * ptr, np.npy_intp N, int np_type):
+    cdef np.ndarray arr = np.PyArray_SimpleNewFromData(1, &N, np_type, ptr)
+    nanny = MemoryNanny.create(ptr)
+    Py_INCREF(nanny) # a reference will get stolen, so prepare nanny
+    PyArray_SetBaseObject(arr, <PyObject*>nanny)
+    return arr
+
 cdef extern:
     int lib6502_init_cpu(int, int)
     int lib6502_cold_start(np.uint32_t *buf)
@@ -41,9 +73,10 @@ def export_op_history():
 
     obuf = lib6502_copy_op_history()
     count = obuf[0]  # number of uint32 elements in array
-    print(f"op history count={count}")
-    steps = np.PyArray_SimpleNewFromData(1, [count], np.NPY_UINT32, obuf)
-    np.PyArray_ENABLEFLAGS(steps, np.NPY_OWNDATA)
+    print(f"export_op_history: allocated={obuf[0]}, records:{obuf[2]} of {obuf[3]}, lookup: {obuf[4]} of {obuf[5]}")
+    for i in range(20):
+        print(f"{obuf[i]:0x}")
+    steps = array_from_ptr(obuf, count, np.NPY_UINT32)
     return steps
 
 def export_frame():
@@ -51,8 +84,7 @@ def export_frame():
 
     obuf = lib6502_export_frame()
     count = obuf[0]  # number of uint8 elements in array
-    state = np.PyArray_SimpleNewFromData(1, [count], np.NPY_UINT8, obuf)
-    np.PyArray_ENABLEFLAGS(state, np.NPY_OWNDATA)
+    state = array_from_ptr(obuf, count, np.NPY_UINT8)
     return state
 
 def import_frame(np.ndarray state not None):
