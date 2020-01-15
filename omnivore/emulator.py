@@ -8,7 +8,7 @@ import numpy as np
 from atrip import find_container
 
 from .debugger import Debugger
-from .debugger.dtypes import FRAME_STATUS_DTYPE
+from .debugger.dtypes import CURRENT_STATE_DTYPE
 from .utils.historyutil import RestartTree
 from atrip import disassembler as disasm
 from .utils.templateutil import load_memory_map
@@ -60,15 +60,14 @@ class Emulator(Debugger):
 
     low_level_interface = None  # cython module; e.g.: libatari800, lib6502
 
-    history_entry_dtype = disasm.dd.HISTORY_ENTRY_DTYPE
-
     def __init__(self):
         Debugger.__init__(self)
         self.input_raw = np.zeros([self.input_array_dtype.itemsize], dtype=np.uint8)
         self.input = self.input_raw.view(dtype=self.input_array_dtype)
-        self.output_raw = np.zeros([FRAME_STATUS_DTYPE.itemsize + self.output_array_dtype.itemsize], dtype=np.uint8)
-        self.status = self.output_raw[0:FRAME_STATUS_DTYPE.itemsize].view(dtype=FRAME_STATUS_DTYPE)
-        self.output = self.output_raw[FRAME_STATUS_DTYPE.itemsize:].view(dtype=self.output_array_dtype)
+        self.output_raw = np.zeros([self.output_array_dtype.itemsize], dtype=np.uint8)
+        self.output = self.output_raw.view(dtype=self.output_array_dtype)
+        self.current_state_raw = np.zeros([CURRENT_STATE_DTYPE.itemsize], dtype=np.uint8)
+        self.current_state = self.current_state_raw.view(dtype=CURRENT_STATE_DTYPE)
         self.num_stringified_lines = 500
         self.stringified_lines = disasm.StringifiedHistory(self.num_stringified_lines)
         self.bootfile = None

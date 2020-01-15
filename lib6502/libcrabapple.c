@@ -10,6 +10,8 @@ int alt_page_select = 0; /* 0 = page 1, 1 = page 2 */
 int tv_line = 0;
 int tv_cycle = 0;
 
+a2_video_output_t current_a2_video;
+
 uint16_t hgr_page1[] = {
 	0x2000, 0x2400, 0x2800, 0x2c00, 0x3000, 0x3400, 0x3800, 0x3c00,
 	0x2080, 0x2480, 0x2880, 0x2c80, 0x3080, 0x3480, 0x3880, 0x3c80,
@@ -74,22 +76,33 @@ void liba2_init_graphics() {
 	tv_cycle = 0;
 }
 
-void liba2_get_current_state(a2_output_t *buf) {
-	buf->hires_graphics = hires_graphics;
-	buf->text_mode = text_mode;
-	buf->mixed_mode = mixed_mode;
-	buf->alt_page_select = alt_page_select;
-	buf->tv_line = tv_line;
-	buf->tv_cycle = tv_cycle;
+void liba2_export_state(emulator_state_t *buf) {
+	lib6502_emulator_state_t *state;
+	a2_video_output_t *video;
+
+	buf->emulator_id = LIB6502_EMULATOR_ID;
+	state = (lib6502_emulator_state_t *)SAVE_STATE_PTR(buf);
+	state->hires_graphics = hires_graphics;
+	state->text_mode = text_mode;
+	state->mixed_mode = mixed_mode;
+	state->alt_page_select = alt_page_select;
+	state->tv_line = tv_line;
+	state->tv_cycle = tv_cycle;
+
+	video = (a2_video_output_t *)VIDEO_PTR(buf);
+	memcpy(video, &current_a2_video, sizeof(a2_video_output_t));
 }
 
-void liba2_restore_state(a2_output_t *buf) {
-	hires_graphics = buf->hires_graphics;
-	text_mode = buf->text_mode;
-	mixed_mode = buf->mixed_mode;
-	alt_page_select = buf->alt_page_select;
-	tv_line = buf->tv_line;
-	tv_cycle = buf->tv_cycle;
+void liba2_import_state(emulator_state_t *buf) {
+	lib6502_emulator_state_t *state;
+
+	state = (lib6502_emulator_state_t *)SAVE_STATE_PTR(buf);
+	hires_graphics = state->hires_graphics;
+	text_mode = state->text_mode;
+	mixed_mode = state->mixed_mode;
+	alt_page_select = state->alt_page_select;
+	tv_line = state->tv_line;
+	tv_cycle = state->tv_cycle;
 }
 
 void liba2_read_softswitch(uint16_t addr) {
@@ -132,12 +145,12 @@ int liba2_get_scan_line_type(int line) {
 	return scan_line_type;
 }
 
-void liba2_copy_video(a2_output_t *output, uint8_t inst_cycles) {
+void liba2_copy_video(uint8_t inst_cycles) {
 	int line = tv_line - FIRST_OUTPUT_SCAN_LINE;
 	int cycle = tv_cycle - FIRST_OUTPUT_CYCLE;
 	uint16_t line_source;
+	a2_video_output_t *output = &current_a2_video;
 	uint8_t *hires_memory = output->video;
-	uint8_t scan_line_type;
 
 	if (line >= 0 && line < 192 && cycle > -8 && cycle < 40) {
 		hires_memory += (40 * line) + cycle;

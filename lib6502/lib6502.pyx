@@ -3,74 +3,51 @@ cimport numpy as np
 
 cdef extern:
     int lib6502_init_cpu(int, int)
-    int lib6502_clear_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
-    int lib6502_configure_state_arrays(np.uint8_t *buf, np.uint8_t *buf)
-    int lib6502_next_frame(np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf, np.uint8_t *buf)
-    void lib6502_show_next_instruction(np.uint8_t *buf)
-    void lib6502_get_current_state(np.uint8_t *buf)
-    void lib6502_restore_state(np.uint8_t *buf)
+    int lib6502_cold_start(np.uint32_t *buf)
+    int lib6502_next_frame(np.uint8_t *buf)
+    np.uint32_t *lib6502_export_steps()
+    np.uint8_t *lib6502_export_frame()
+    void lib6502_import_frame(np.uint8_t *buf)
     void lib6502_set_a2_emulation_mode(np.uint8_t value)
 
 def init_emulator(args):
     lib6502_init_cpu(262, 65)  # apple 2 speed
 
-def clear_state_arrays(np.ndarray input not None, np.ndarray output not None):
-    cdef np.uint8_t[:] ibuf
-    cdef np.uint8_t[:] obuf
+def cold_start(np.ndarray input not None):
+    cdef np.uint32_t[:] ibuf
 
-    ibuf = input.view(np.uint8)
-    obuf = output.view(np.uint8)
-    lib6502_clear_state_arrays(&ibuf[0], &obuf[0])
+    ibuf = input.view(np.uint32)
+    lib6502_cold_start(&ibuf[0])
 
-def configure_state_arrays(np.ndarray input not None, np.ndarray output not None):
-    cdef np.uint8_t[:] ibuf
-    cdef np.uint8_t[:] obuf
-
-    ibuf = input.view(np.uint8)
-    obuf = output.view(np.uint8)
-    lib6502_configure_state_arrays(&ibuf[0], &obuf[0])
-
-def next_frame(np.ndarray input not None, np.ndarray output not None, np.ndarray breakpoints not None, history_storage):
+def next_frame(np.ndarray input not None):
     cdef np.uint8_t[:] ibuf  # ignored for this emulator
-    cdef np.uint8_t[:] obuf
-    cdef np.uint8_t[:] dbuf
-    cdef np.uint8_t *hbuf
-    cdef np.uint8_t[:] tmp
-    if history_storage is not None:
-        tmp = history_storage.history_array.view(np.uint8)
-        hbuf = &tmp[0]
-    else:
-        hbuf = <np.uint8_t *>0
 
     ibuf = input.view(np.uint8)
-    obuf = output.view(np.uint8)
-    dbuf = breakpoints.view(np.uint8)
-    bpid = lib6502_next_frame(&ibuf[0], &obuf[0], &dbuf[0], hbuf)
-    return bpid
+    result = lib6502_next_frame(&ibuf[0])
+    return result
 
-def show_next_instruction(history_storage):
-    cdef np.uint8_t *hbuf
-    cdef np.uint8_t[:] tmp
-    if history_storage is not None:
-        tmp = history_storage.history_array.view(np.uint8)
-        hbuf = &tmp[0]
-    else:
-        hbuf = <np.uint8_t *>0
-    lib6502_show_next_instruction(hbuf)
+def export_steps():
+    cdef np.uint32_t *obuf
 
-def get_current_state(np.ndarray output not None):
-    cdef np.uint8_t[:] obuf
+    obuf = lib6502_export_steps()
+    count = obuf[0]  # number of uint32 elements in array
+    steps = np.PyArray_SimpleNewFromData(1, [count], np.NPY_UINT32, obuf)
+    np.PyArray_ENABLEFLAGS(steps, np.NPY_OWNDATA)
+    return steps
 
-    obuf = output.view(np.uint8)
-    lib6502_get_current_state(&obuf[0])
+def export_frame():
+    cdef np.uint8_t *obuf
 
-def load_disk(int disknum, char *filename, int readonly=0):
-    raise NotImplementedError
+    obuf = lib6502_export_frame()
+    count = obuf[0]  # number of uint8 elements in array
+    state = np.PyArray_SimpleNewFromData(1, [count], np.NPY_UINT8, obuf)
+    np.PyArray_ENABLEFLAGS(state, np.NPY_OWNDATA)
+    return state
 
-def restore_state(np.ndarray state not None):
+def import_frame(np.ndarray state not None):
     cdef np.uint8_t[:] sbuf
     sbuf = state.view(np.uint8)
-    lib6502_restore_state(&sbuf[0])
+    lib6502_import_frame(&sbuf[0])
 
 def set_a2_emulation_mode(int value):
     lib6502_set_a2_emulation_mode(value)

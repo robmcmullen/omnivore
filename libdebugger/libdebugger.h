@@ -7,33 +7,127 @@
 
 #define MAIN_MEMORY_SIZE (256*256)
 
+#define LIBDEBUGGER_SAVE_STATE_MAGIC 0x6462606c
+
+// macros to save variables to (possibly unaligned, possibly endian-swapped)
+// data buffer. NOTE: endian-swappiness not actually handled yet, assuming
+// little endian
+#define save16(buf, var) memcpy(buf, &var, 2)
+#define save32(buf, var) memcpy(buf, &var, 4)
+#define save64(buf, var) memcpy(buf, &var, 8)
+
+#define load16(var, buf) memcpy(&var, buf, 2)
+#define load32(var, buf) memcpy(&var, buf, 4)
+#define load64(var, buf) memcpy(&var, buf, 8)
+
+// header for save state file. All emulators must use a save state format that
+// uses this header; must be 128 bytes long to reserve space for future
+// compatibilty
 typedef struct {
-        int64_t cycles_since_power_on;
-        int64_t instructions_since_power_on;
-        int64_t cycles_user;
-        int64_t instructions_user;
-        int32_t frame_number;
-        int32_t current_cycle_in_frame;
-        int32_t final_cycle_in_frame;
-        int32_t current_instruction_in_frame;
-        int32_t scan_lines_since_power_on;
-        int32_t unused0[3];
+    uint32_t malloc_size; /* size of structure in bytes */
+    uint32_t magic; /* libdebugger magic number */
+    uint32_t frame_number;
+    uint32_t emulator_id; /* unique emulator ID number */
 
-        int16_t breakpoint_id;
-        int16_t current_scan_line_in_frame;
-        int16_t unused1[2];
+    // Frame input parameters
+    uint32_t input_offset; /* number of bytes from start to user input history */
+    uint32_t input_size; /* number of bytes in user input history */
 
-        /* flags */
-        uint8_t frame_status;
-        uint8_t use_memory_access;
-        uint8_t brk_into_debugger; /* enter debugger on BRK */
-        uint8_t unused2[5];
+    // Frame output parameters
+    uint32_t save_state_offset; /* number of bytes from start to save state data */
+    uint32_t save_state_size; /* number of bytes in save state data */
 
-        int64_t unused3[6]; /* 16 x uint64 in header (16*8 bytes) */
+    uint32_t video_offset; /* number of bytes from start to video data */
+    uint32_t video_size; /* number of bytes in video data */
 
-        uint8_t memory_access[MAIN_MEMORY_SIZE];
-        uint8_t access_type[MAIN_MEMORY_SIZE];
-} frame_status_t;
+    uint32_t audio_offset; /* number of bytes from start to audio data */
+    uint32_t audio_size; /* number of bytes in audio data */
+
+    uint8_t unused0[80];
+} emulator_state_t;
+
+#define INPUT_PTR(buf) ((char *)buf + buf->input_offset)
+#define SAVE_STATE_PTR(buf) ((char *)buf + buf->save_state_offset)
+#define VIDEO_PTR(buf) ((char *)buf + buf->video_offset)
+#define AUDIO_PTR(buf) ((char *)buf + buf->audio_offset)
+
+
+/* current state of emulator */
+typedef struct {  /* 32 bit alignment */
+    uint32_t frame_number;
+
+    /* instruction */
+    uint16_t pc; /* special two-byte register for the PC */
+    uint16_t opcode_ref_addr; /* address referenced in opcode */
+    uint8_t instruction_length; /* number of bytes in current instruction */
+    uint8_t instruction[255]; /* current instruction */
+
+    /* result of instruction */
+    uint8_t reg1[256]; /* single byte registers */
+    uint16_t reg2[256]; /* two-byte registers */
+    uint16_t computed_addr; /* computed address after indirection, indexing, etc. */
+    uint8_t ram[MAIN_MEMORY_SIZE]; /* complete 64K of RAM */
+    uint8_t access_type[MAIN_MEMORY_SIZE]; /* corresponds to RAM */
+} current_state_t;
+
+
+/* emulator operation record, fits in uint32_t */
+typedef struct {
+    uint8_t type;
+    uint8_t payload1;
+    uint8_t payload2;
+    uint8_t payload3;
+} op_record_t;
+
+
+// operation history array header, used as first several elements in array of
+// uint32_t of size of OP_HISTORY_T_SIZE + max_steps + max_lookup
+typedef struct {
+    uint32_t num_allocated; /* total number of uint32 in structure, including steps and lookup */
+    uint32_t frame_number;
+    uint32_t max_records; /* maximum space available for records */
+    uint32_t num_records; /* current number of records */
+    uint32_t max_lookup; /* max space available for instruction lookup table */
+    uint32_t num_lookup; /* current count of instruction lookup table */
+} op_history_t;
+
+// number of uint32_t in header before op record space in the instruction
+// history array
+#define OP_HISTORY_T_SIZE (sizeof(op_history_t) / sizeof(uint32_t))
+
+emulator_state_t *create_emulator_state(int save_size, int input_size, int video_size, int audio_size);
+
+op_history_t *create_op_history(int max_steps, int max_lookup);
+
+void clear_op_history(op_history_t *buf);
+
+op_history_t *copy_op_history(op_history_t *src);
+
+/* operation history utility functions */
+void op_history_start_frame(op_history_t *buf, uint16_t PC, int frame_number);
+
+void op_history_end_frame(op_history_t *buf, uint16_t PC);
+
+void op_history_add_instruction(op_history_t *buf, uint16_t PC, uint8_t *opcodes, uint8_t count);
+
+void op_history_new_pc(op_history_t *buf, uint16_t PC);
+
+void op_history_opcode_ref_addr(op_history_t *buf, uint16_t addr);
+
+void op_history_branch_taken(op_history_t *buf);
+
+void op_history_branch_not_taken(op_history_t *buf);
+
+void op_history_computed_address(op_history_t *buf, uint16_t addr);
+
+void op_history_read_address(op_history_t *buf, uint16_t addr, uint8_t value);
+
+void op_history_write_address(op_history_t *buf, uint16_t addr, uint8_t value);
+
+void op_history_one_byte_reg(op_history_t *buf, uint8_t reg, uint8_t value);
+
+void op_history_two_byte_reg(op_history_t *buf, uint8_t reg, uint16_t value);
+
 
 /* lower 4 bits: bit access flags */
 #define ACCESS_TYPE_READ 1
@@ -82,13 +176,13 @@ typedef struct {
 
 /* NOTE: breakpoint #0 is reserved for stepping the cpu */
 typedef struct {
-        int32_t num_breakpoints;
-        int32_t last_pc; /* allow -1 to signify invalid PC */
-        int32_t unused[14];
-        int64_t reference_value[NUM_BREAKPOINT_ENTRIES];
-        uint8_t breakpoint_type[NUM_BREAKPOINT_ENTRIES];
-        uint8_t breakpoint_status[NUM_BREAKPOINT_ENTRIES];
-        uint16_t tokens[TOKEN_LIST_SIZE];  /* indexed by breakpoint number * TOKENS_PER_BREAKPOINT */
+    int32_t num_breakpoints;
+    int32_t last_pc; /* allow -1 to signify invalid PC */
+    int32_t unused[14];
+    int64_t reference_value[NUM_BREAKPOINT_ENTRIES];
+    uint8_t breakpoint_type[NUM_BREAKPOINT_ENTRIES];
+    uint8_t breakpoint_status[NUM_BREAKPOINT_ENTRIES];
+    uint16_t tokens[TOKEN_LIST_SIZE];  /* indexed by breakpoint number * TOKENS_PER_BREAKPOINT */
 } breakpoints_t;
 
 
@@ -136,7 +230,7 @@ typedef struct {
 #define REG_C (211)
 #define REG_PC (212)
 #define REG_SP REG_S
-#define EMU_SCANLINE (213)
+#define EMU_SCAN_LINE (213)
 #define EMU_COLOR_CLOCK (214)
 #define EMU_VBI_START (215)  /* transition to VBI */
 #define EMU_IN_VBI (216)  /* inside VBI */
@@ -144,6 +238,8 @@ typedef struct {
 #define EMU_DLI_START (218)  /* transition to DLI */
 #define EMU_IN_DLI (219)  /* inside DLI */
 #define EMU_DLI_END (220)  /* transition out of DLI */
+#define REG_SR (221)
+#define REG_P REG_SR
 #define NUMBER (301 | VALUE_ARGUMENT)
 #define OPCODE_TYPE (302 | VALUE_ARGUMENT)
 
@@ -164,14 +260,8 @@ typedef struct {
 
 void libdebugger_init_array(breakpoints_t *breakpoints);
 
-typedef int (*cpu_state_callback_ptr)(uint16_t token, uint16_t addr);
-
-typedef int (*emu_frame_callback_ptr)(frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *entry);
-
 int libdebugger_brk_instruction(breakpoints_t *breakpoints);
 
-int libdebugger_check_breakpoints(breakpoints_t *, frame_status_t *, cpu_state_callback_ptr, int);
-
-int libdebugger_calc_frame(emu_frame_callback_ptr calc, uint8_t *memory, frame_status_t *output, breakpoints_t *breakpoints, emulator_history_t *history);
+int libdebugger_check_breakpoints(breakpoints_t *, op_history_t *, int);
 
 #endif /* LIBDEBUGGER_H */

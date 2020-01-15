@@ -8,8 +8,11 @@
 #include "libudis.h"
 
 uint16_t cycles_per_scan_line;
-long cycles_per_frame;
-
+uint32_t cycles_per_frame;
+int extra_cycles_in_previous_frame;
+uint32_t frame_number;
+op_history_t *current_op_history;
+op_history_t *current_input_history;
 int apple2_mode = 0;
 
 
@@ -43,415 +46,241 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 
 	cycles_per_scan_line = cycles_per;
 	cycles_per_frame = (long)(scan_lines * cycles_per_scan_line);
-	// printf("lib6502_init_cpu: cycles_per_frame=%d, cycles_per_scan_line=%d\n", cycles_per_frame, cycles_per_scan_line);
+	extra_cycles_in_previous_frame = 0;
+
+	// create instruction history with plenty of extra space. Since
+	// instructions are at least 2 cycles, there should be way fewer than
+	// cycles_per_frame instructions in a frame. And, for the number of delta
+	// entries, this assumes there won't be more than 10 deltas for every
+	// instruction
+	current_op_history = create_op_history(10 * cycles_per_frame, cycles_per_frame);
+
+	
+	// create input history with plenty of extra space; assuming that there
+	// won't be more than one input per CPU cycle
+	current_input_history = create_op_history(cycles_per_frame, cycles_per_frame);
+
+	frame_number = 0;
 
 	liba2_init_graphics();
 
 	lib6502_init_debug_kernel();
 }
 
-void lib6502_clear_state_arrays(void *input, output_t *output) {
-	frame_status_t *status = &output->status;
+emulator_state_t *lib6502_export_frame() {
+	emulator_state_t *buf;
+	lib6502_emulator_state_t *state;
+	int video_size, audio_size;
 
-	status->frame_number = 0;
-	status->frame_status = 0;
-	status->cycles_since_power_on = 0;
-	status->instructions_since_power_on = 0;
-	status->cycles_user = 0;
-	status->instructions_user = 0;
-	status->current_instruction_in_frame = 0;
-	status->use_memory_access = 1;
-	status->brk_into_debugger = 1;
+	if (apple2_mode) {
+		video_size = sizeof(a2_video_output_t);
+	}
+	else {
+		video_size = 0;
+	}
+	audio_size = 0;
+	buf = create_emulator_state(sizeof(lib6502_emulator_state_t), 0, video_size, audio_size);
+	buf->frame_number = frame_number;
+	buf->emulator_id = LIB6502_EMULATOR_ID;
+
+	state = (lib6502_emulator_state_t *)SAVE_STATE_PTR(buf);
+	state->cycles_per_scan_line = cycles_per_scan_line;
+	state->cycles_per_frame = cycles_per_frame;
+	state->apple2_mode = apple2_mode;
+	state->extra_cycles_in_previous_frame = extra_cycles_in_previous_frame;
+	save16(state->PC, PC);
+	state->A = A;
+	state->X = X;
+	state->Y = Y;
+	state->SP = SP;
+	state->SR = SR.byte;
+	memcpy(state->memory, memory, 1<<16);
+	if (apple2_mode) liba2_export_frame(buf);
+	return buf;
 }
 
-void lib6502_configure_state_arrays(void *input, output_t *output) {
-	frame_status_t *status = &output->status;
+void lib6502_import_frame(emulator_state_t *buf) {
+	lib6502_emulator_state_t *state;
 
-	status->final_cycle_in_frame = cycles_per_frame - 1;
-
-	// Initialize frame cycle count at max so first frame cycle count will
-	// start at zero
-	status->current_cycle_in_frame = cycles_per_frame - 1;
-	// printf("lib6502_clear_state_arrays: final_cycle_in_frame=%d, current_cycle_in_frame=%d\n", status->final_cycle_in_frame, status->current_cycle_in_frame);
+	frame_number = buf->frame_number;
+	state = (lib6502_emulator_state_t *)SAVE_STATE_PTR(buf);
+	cycles_per_scan_line = state->cycles_per_scan_line;
+	cycles_per_frame = state->cycles_per_frame;
+	apple2_mode = state->apple2_mode;
+	extra_cycles_in_previous_frame = state->extra_cycles_in_previous_frame;
+	A = state->A;
+	X = state->X;
+	Y = state->Y;
+	SP = state->SP;
+	save16(state->PC, PC);
+	SR.byte = state->SR;
+	memcpy(memory, state->memory, 1<<16);
+	if (apple2_mode) liba2_import_frame(buf);
 }
 
-void lib6502_get_current_state(output_t *buf) {
-	buf->A = A;
-	buf->X = X;
-	buf->Y = Y;
-	buf->SP = SP;
-	save16(buf->PC, PC);
-	buf->SR = SR.byte;
-	memcpy(buf->memory, memory, 1<<16);
-	if (apple2_mode) liba2_get_current_state((a2_output_t *)buf);
-}
-
-void lib6502_restore_state(output_t *buf) {
-	A = buf->A;
-	X = buf->X;
-	Y = buf->Y;
-	SP = buf->SP;
-	load16(PC, buf->PC);
-	SR.byte = buf->SR;
-	memcpy(memory, buf->memory, 1<<16);
-	if (apple2_mode) liba2_restore_state((a2_output_t *)buf);
-}
-
-uint16_t last_pc;
-
-int lib6502_show_current_instruction(history_6502_t *entry)
-{
-	int count;
-	uint8_t opcode;
-
-	opcode = memory[PC];
-	count = instruction_length_6502[opcode];
-	entry->pc = PC;
-	entry->num_bytes = count;
-	entry->flag = opcode_history_flags_6502[opcode];
-	entry->instruction[0] = opcode;
-	if (count > 1) entry->instruction[1] = memory[PC + 1];
-	if (count > 2) entry->instruction[2] = memory[PC + 2];
-	entry->a = A;
-	entry->x = X;
-	entry->y = Y;
-	entry->sp = SP;
-	entry->sr = SR.byte;
-	entry->before1 = 0;
-	entry->after1 = 0;
-	entry->before2 = 0;
-	entry->after2 = 0;
-	entry->before3 = 0;
-	entry->after3 = 0;
-	entry->tv_line = tv_line;
-	entry->tv_cycle = tv_line > 255 ? tv_cycle | 0x80 : tv_cycle;
-}
-
-int lib6502_step_cpu(output_t *output, history_6502_t *entry, breakpoints_t *breakpoints)
+int lib6502_step_cpu()
 {
 	int count, bpid;
-	uint8_t last_sp, opcode, cycles;
+	uint8_t last_sp, last_sr, opcode, cycles;
+	char flag;
 	intptr_t index;
-	uint16_t line;
+	uint16_t line, addr;
 	history_breakpoint_t *b;
-	frame_status_t *status = &output->status;
 
-	last_pc = PC;
 	last_sp = SP;
+	last_sr = SR.byte;
 
 	opcode = memory[PC];
 	inst = instructions[opcode];
 	count = lengths[inst.mode];
-	lib6502_show_current_instruction(entry);
-
-	bpid = libdebugger_check_breakpoints(breakpoints, status, &lib6502_register_callback, opcode == 0x4c);
-	if (bpid >= 0) {
-		status->frame_status = FRAME_BREAKPOINT;
-		status->breakpoint_id = bpid;
-		if (entry) {
-			b = (history_breakpoint_t *)entry;
-			b->breakpoint_id = bpid;
-			b->breakpoint_type = breakpoints->breakpoint_type[bpid];
-			b->disassembler_type = DISASM_NEXT_INSTRUCTION;
-			b->disassembler_type_cpu = DISASM_6502_HISTORY;
-		}
-		return bpid;
-	}
+	flag = opcode_history_flags_6502[opcode];
+ 
+	op_history_add_instruction(current_op_history, PC, &memory[PC], count);
+	op_history_one_byte_reg(current_op_history, EMU_COLOR_CLOCK, tv_cycle);
+	op_history_two_byte_reg(current_op_history, EMU_SCAN_LINE, tv_line);
 
 	write_addr = NULL;
 	read_addr = NULL;
 	result_flag = NOP;
+	opcode_ref_addr = -1;
 	extra_cycles = 0;
 	before_value_index = 0;
 
-	if (status->use_memory_access) {
-		status->memory_access[PC] = 255;
-		status->access_type[PC] = ACCESS_TYPE_EXECUTE;
-		if (count > 1) {
-			status->memory_access[PC + 1] = 255;
-			status->access_type[PC + 1] = ACCESS_TYPE_EXECUTE;
-		}
-		if (count > 2) {
-			status->memory_access[PC + 2] = 255;
-			status->access_type[PC + 2] = ACCESS_TYPE_EXECUTE;
-		}
+	inst.function();
+	if (result_flag == JUMP || result_flag == BRANCH_TAKEN) {
+		op_history_new_pc(current_op_history, PC);
+	}
+	else {
+		PC += count;
 	}
 
-	breakpoints->last_pc = PC;
-	inst.function();
-	if (SR.bits.brk && status->brk_into_debugger) {
-		/* automatically jump into debugger on BRK */
-		PC = breakpoints->last_pc;
-		bpid = libdebugger_brk_instruction(breakpoints);
-		status->frame_status = FRAME_BREAKPOINT;
-		status->breakpoint_id = bpid;
-		if (entry) {
-			b = (history_breakpoint_t *)entry;
-			b->breakpoint_id = bpid;
-			b->breakpoint_type = breakpoints->breakpoint_type[bpid];
-			b->disassembler_type = DISASM_NEXT_INSTRUCTION;
-			b->disassembler_type_cpu = DISASM_6502_HISTORY;
-		}
-		return bpid;
+	// record if the opcode references an address (e.g. LDA $8000, LDA $8000,X,
+	// STA ($80),X, etc.
+	if (opcode_ref_addr >= 0) {
+		op_history_opcode_ref_addr(current_op_history, opcode_ref_addr);
 	}
-	if (result_flag != JUMP) PC += count;
+
+	// // record actual address of a read or write, including any indexing
+	// // operation in the address, so if X = FF and the opcode is LDA $8000,X,
+	// // the address recorded here will be $80FF
+	// if (read_addr >= 0) {
+	// 	op_history_computed_addr(current_op_history, (uint8_t *)read_addr - memory);
+	// }
+	// else if (write_addr >= 0) {
+	// 	op_history_computed_addr(current_op_history, (uint8_t *)read_addr - memory);
+	// }
 
 	// 7 cycle instructions (e.g. ROL $nnnn,X) don't have a penalty cycle for
 	// crossing a page boundary.
 	if (inst.cycles == 7) extra_cycles = 0;
 	cycles = inst.cycles + extra_cycles;
 
-	if (apple2_mode) liba2_copy_video((a2_output_t *)output, cycles);
+	if (apple2_mode) liba2_copy_video(cycles);
 
-	entry->cycles = cycles;
 	if (result_flag == BRANCH_TAKEN) {
-		entry->flag = FLAG_BRANCH_TAKEN;
+		op_history_branch_taken(current_op_history);
 	}
 	else if (result_flag == BRANCH_NOT_TAKEN) {
-		entry->flag = FLAG_BRANCH_NOT_TAKEN;
+		op_history_branch_not_taken(current_op_history);
 	}
-	else if (entry->flag == FLAG_PEEK_MEMORY) {
-		entry->target_addr = (uint8_t *)read_addr - memory;
-		entry->before1 = *(uint8_t *)read_addr;
+	
+	if (flag == FLAG_PEEK_MEMORY || flag == FLAG_LOAD_A_FROM_MEMORY || flag == FLAG_LOAD_X_FROM_MEMORY || flag == FLAG_LOAD_Y_FROM_MEMORY) {
+		addr = (uint8_t *)read_addr - memory;
+		op_history_computed_address(current_op_history, addr);
+		op_history_read_address(current_op_history, addr, *(uint8_t *)read_addr);
 		if (apple2_mode) {
-			liba2_read_softswitch(entry->target_addr);
+			liba2_read_softswitch(addr);
 		}
 	}
-	else if (entry->flag == FLAG_STORE_A_IN_MEMORY || entry->flag == FLAG_STORE_X_IN_MEMORY || entry->flag == FLAG_STORE_Y_IN_MEMORY) {
-		entry->target_addr = (uint8_t *)write_addr - memory;
-		entry->before1 = before_value[0];
+	else if (flag == FLAG_STORE_A_IN_MEMORY || flag == FLAG_STORE_X_IN_MEMORY || flag == FLAG_STORE_Y_IN_MEMORY || flag == FLAG_MEMORY_ALTER) {
+		addr = (uint8_t *)write_addr - memory;
+		op_history_computed_address(current_op_history, addr);
+		op_history_write_address(current_op_history, addr, *(uint8_t *)read_addr);
 		if (apple2_mode) {
-			liba2_write_softswitch(entry->target_addr);
+			liba2_write_softswitch(addr);
 		}
 	}
-	else if (entry->flag == FLAG_MEMORY_ALTER) {
-		entry->target_addr = (uint8_t *)write_addr - memory;
-		entry->before1 = before_value[0];
-		entry->after1 = *(uint8_t *)write_addr;
-		if (apple2_mode) {
-			/* maybe read also? Does it get called twice? */
-			liba2_write_softswitch(entry->target_addr);
-		}
+	
+	if (flag == FLAG_REG_A || flag == FLAG_LOAD_A_FROM_MEMORY) {
+		op_history_one_byte_reg(current_op_history, REG_A, A);
 	}
-	else if (entry->a != A || entry->flag == FLAG_REG_A || entry->flag == FLAG_LOAD_A_FROM_MEMORY) {
-		if (entry->flag != 0) entry->flag = FLAG_REG_A;
-		entry->after1 = A;
-		if (apple2_mode) {
-			liba2_read_softswitch(entry->target_addr);
-		}
+	else if (flag == FLAG_REG_X || flag == FLAG_LOAD_X_FROM_MEMORY) {
+		op_history_one_byte_reg(current_op_history, REG_X, X);
 	}
-	else if (entry->x != X || entry->flag == FLAG_REG_X || entry->flag == FLAG_LOAD_X_FROM_MEMORY) {
-		if (entry->flag != 0) entry->flag = FLAG_REG_X;
-		entry->after1 = X;
-		if (apple2_mode) {
-			liba2_read_softswitch(entry->target_addr);
-		}
-	}
-	else if (entry->y != Y || entry->flag == FLAG_REG_Y || entry->flag == FLAG_LOAD_Y_FROM_MEMORY) {
-		if (entry->flag != 0) entry->flag = FLAG_REG_Y;
-		entry->after1 = Y;
-		if (apple2_mode) {
-			liba2_read_softswitch(entry->target_addr);
-		}
-	}
-	else if (entry->sp != SP) {
-		;
-	}
-	else if ((before_value_index > 0) && (write_addr >= memory) && (write_addr < memory + (256*256))) {
-		/* if write_addr outside of memory, the dest is a register */
-		entry->target_addr = (uint8_t *)write_addr - memory;
-		entry->after3 = before_value[0];
-		entry->after1 = *(uint8_t *)write_addr;
-		// entry->flag = FLAG_WRITE_ONE;
-	}
-	else if (write_addr && (write_addr >= memory) && (write_addr < memory + (256*256))) {
-		entry->target_addr = (uint8_t *)write_addr - memory;
-	}
-	else if (read_addr && (read_addr >= memory) && (read_addr < memory + (256*256))) {
-		entry->target_addr = (uint8_t *)read_addr - memory;
-		// entry->flag = FLAG_READ_ONE;
-	}
-	if (entry->sr != SR.byte) {
-		entry->flag |= FLAG_REG_SR;
-		entry->after3 = SR.byte;
+	else if (flag == FLAG_REG_Y || flag == FLAG_LOAD_Y_FROM_MEMORY) {
+		op_history_one_byte_reg(current_op_history, REG_Y, Y);
 	}
 
-	if (status->use_memory_access) {
-		if (read_addr != NULL) {
-			index = (intptr_t)read_addr - (intptr_t)(&memory[0]);
-			if (index >= 0 && index < MAIN_MEMORY_SIZE) {
-				status->memory_access[(uint16_t)index] = 255;
-				status->access_type[(uint16_t)index] = ACCESS_TYPE_READ;
-			}
-		}
-		if (write_addr != NULL) {
-			index = (intptr_t)write_addr - (intptr_t)(&memory[0]);
-			if (index >= 0 && index < MAIN_MEMORY_SIZE) {
-				status->memory_access[(uint16_t)index] = 255;
-				status->access_type[(uint16_t)index] = ACCESS_TYPE_WRITE;
-			}
-		}
-
-		/* Maximum of 3 bytes will have changed on the stack */
+	/* Maximum of 3 bytes will have changed on the stack */
+	if (last_sp < SP) {
+		last_sp++;
+		op_history_read_address(current_op_history, 0x100 + last_sp, memory[last_sp]);
 		if (last_sp < SP) {
 			last_sp++;
-			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
-			if (last_sp < SP) {
-				last_sp++;
-				status->memory_access[0x100 + last_sp] = 255;
-				status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
-			}
-			if (last_sp < SP) {
-				last_sp++;
-				status->memory_access[0x100 + last_sp] = 255;
-				status->access_type[0x100 + last_sp] = ACCESS_TYPE_READ;
-			}
+			op_history_read_address(current_op_history, 0x100 + last_sp, memory[last_sp]);
 		}
-		else if (last_sp > SP) {
-			status->memory_access[0x100 + last_sp] = 255;
-			status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
+		if (last_sp < SP) {
+			last_sp++;
+			op_history_read_address(current_op_history, 0x100 + last_sp, memory[last_sp]);
+		}
+		op_history_one_byte_reg(current_op_history, REG_SP, last_sp);
+	}
+	else if (last_sp > SP) {
+		op_history_write_address(current_op_history, 0x100 + last_sp, memory[last_sp]);
+		last_sp--;
+		if (last_sp > SP) {
+			op_history_write_address(current_op_history, 0x100 + last_sp, memory[last_sp]);
 			last_sp--;
-			if (last_sp > SP) {
-				status->memory_access[0x100 + last_sp] = 255;
-				status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
-				last_sp--;
-			}
-			if (last_sp > SP) {
-				status->memory_access[0x100 + last_sp] = 255;
-				status->access_type[0x100 + last_sp] = ACCESS_TYPE_WRITE;
-				last_sp--;
-			}
 		}
-	}
-
-	status->current_instruction_in_frame += 1;
-	status->instructions_since_power_on += 1;
-	status->current_cycle_in_frame += cycles;
-	status->cycles_since_power_on += cycles;
-	tv_cycle += cycles;
-	if (tv_cycle > cycles_per_scan_line) {
-		tv_cycle -= cycles_per_scan_line;
-		tv_line++;
-	}
-	return -1;
-}
-
-int lib6502_register_callback(uint16_t token, uint16_t addr) {
-	int value;
-	uint8_t opcode;
-
-	switch (token) {
-		case REG_A:
-		value = A;
-		break;
-
-		case REG_X:
-		value = X;
-		break;
-
-		case REG_Y:
-		value = Y;
-		break;
-
-		case REG_PC:
-		value = PC;
-		break;
-
-		case REG_SP:
-		value = SP;
-		break;
-
-		case OPCODE_TYPE:
-		opcode = memory[last_pc];
-		if (opcode == 0x60) value = 8;
-		else value = 0;
-#ifdef DEBUG_REGISTER_CALLBACK
-		printf("opcode_type at PC=%04x: opcode=%02x value=%02x\n", last_pc, opcode, value);
-#endif
-		break;
-
-		default:
-		value = 0;
-	}
-#ifdef DEBUG_REGISTER_CALLBACK
-	printf("lib6502_register_callback: token=%d addr=%04x value=%04x\n", token, addr, value);
-#endif
-	return value;
-}
-
-int lib6502_calc_frame(frame_status_t *status, breakpoints_t *breakpoints, emulator_history_t *history)
-{
-	int cycles, bpid, count;
-	history_6502_t *entry, dummy_entry;
-	history_frame_t *frame_entry;
-	output_t *output = (output_t *)status;
-
-	do {
-		last_pc = PC;
-		entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
-		if (!entry) entry = &dummy_entry;
-		status->breakpoint_id = -1;
-		bpid = lib6502_step_cpu(output, entry, breakpoints);
-		if (last_pc >= 0x5074 && last_pc < 0xC000) {
-			status->instructions_user += 1;
-			status->cycles_user += cycles;
-			// printf("pc=%04x user cycle = %ld\n", last_pc, status->cycles_user);
+		if (last_sp > SP) {
+			op_history_write_address(current_op_history, 0x100 + last_sp, memory[last_sp]);
+			last_sp--;
 		}
-		// printf("PC: %x, current_cycle_in_frame=%d, final_cycle_in_frame=%d, bpid=%d\n", last_pc, status->current_cycle_in_frame, status->final_cycle_in_frame, bpid);
-		if (bpid >= 0) {
-			return bpid;
-		}
-	} while (status->current_cycle_in_frame < status->final_cycle_in_frame);
-	tv_cycle = status->current_cycle_in_frame - status->final_cycle_in_frame;
-	tv_line = 0;
-
-	return -1;
-}
-
-void lib6502_show_next_instruction(emulator_history_t *history)
-{
-	history_6502_t *entry;
-	history_breakpoint_t *b;
-
-	entry = (history_6502_t *)libudis_get_next_entry(history, DISASM_6502_HISTORY);
-	if (entry) {
-		lib6502_show_current_instruction(entry);
-		b = (history_breakpoint_t *)entry;
-		b->breakpoint_id = 0;
-		b->breakpoint_type = BREAKPOINT_PAUSE_AT_FRAME_START;
-		b->disassembler_type = DISASM_NEXT_INSTRUCTION;
-		b->disassembler_type_cpu = DISASM_6502_HISTORY;
+		op_history_one_byte_reg(current_op_history, REG_SP, last_sp);
 	}
+
+	if (last_sr != SR.byte) {
+		op_history_one_byte_reg(current_op_history, REG_SR, SR.byte);
+	}
+
+	return cycles;
 }
 
-int lib6502_next_frame(history_input_t *input, output_t *output, breakpoints_t *breakpoints, emulator_history_t *history)
+int lib6502_next_frame(op_history_t *input)
 {
-	int bpid;
-	frame_status_t *status = &output->status;
+	int cycle_count, cycles;
 
 	if (apple2_mode) {
-		if (input->keychar > 0) {
-			printf("lib6502_next_frame: apple2_mode key = %x\n", input->keychar);
-		}
-		memory[0xc000] = input->keychar;
+		// if (input->keychar > 0) {
+		// 	printf("lib6502_next_frame: apple2_mode key = %x\n", input->keychar);
+		// }
+		// memory[0xc000] = input->keychar;
 	}
 
-	if (status->frame_status != FRAME_BREAKPOINT) {
-		// If we are starting a new frame, check if number of cycles in the
-		// previous frame was larger than the number of cycles in a frame. Any
-		// extra cycles recorded in the last frame are skipped at the start of
-		// this frame
-		status->current_cycle_in_frame -= status->final_cycle_in_frame;
-		if (status->current_cycle_in_frame < 0) {
-			printf("warning: frame %d starting at negative cycle offset %d\n", status->frame_number, status->current_cycle_in_frame);
+	op_history_start_frame(current_op_history, PC, frame_number);
+
+	// start cycle count after skipping any cycles that were processed last
+	// frame but where the instruction crossed over into this frame
+	cycle_count = extra_cycles_in_previous_frame;
+	tv_cycle = cycle_count;
+	tv_line = 0;
+	
+	while (cycle_count < cycles_per_frame) {
+		cycles = lib6502_step_cpu();
+		cycle_count += cycles;
+		tv_cycle += cycles;
+		if (tv_cycle > cycles_per_scan_line) {
+			tv_cycle -= cycles_per_scan_line;
+			tv_line++;
 		}
-		tv_cycle = status->current_cycle_in_frame;
-		tv_line = 0;
 	}
-	bpid = libdebugger_calc_frame(&lib6502_calc_frame, memory, status, breakpoints, history);
-	lib6502_get_current_state(output);
-	return bpid;
+
+	op_history_end_frame(current_op_history, PC);
+	return 0;
+}
+
+op_history_t *lib6502_copy_op_history() {
+	return copy_op_history(current_op_history);
 }
 
 void lib6502_set_a2_emulation_mode(int mode) {

@@ -3,30 +3,19 @@ import numpy as np
 
 MAIN_MEMORY_SIZE = 1<<16
 
-FRAME_STATUS_DTYPE = np.dtype([
-    ("cycles_since_power_on", np.uint64),
-    ("instructions_since_power_on", np.uint64),
-    ("cycles_user", np.uint64),
-    ("instructions_user", np.uint64),
+CURRENT_STATE_DTYPE = np.dtype([
     ("frame_number", np.uint32),
-    ("current_cycle_in_frame", np.uint32),
-    ("final_cycle_in_frame", np.uint32),
-    ("current_instruction_in_frame", np.uint32),
-    ("scan_lines_since_power_on", np.uint32),
-    ("unused0", np.uint32, 3),
 
-    ("breakpoint_id", np.int16),
-    ("current_scan_line_in_frame", np.int16),
-    ("unused1", np.uint16, 2),
+    ("pc", np.uint16),
+    ("opcode_ref_addr", np.uint16),
+    ("instruction_length", np.uint8),
+    ("instruction", np.uint8, 255),
 
-    ("frame_status", np.uint8),
-    ("use_memory_access", np.uint8),
-    ("brk_into_debugger", np.uint8),
-    ("unused2", np.uint8, 5),
+    ("reg_byte", np.uint8, 256),
+    ("reg_word", np.uint16, 256),
+    ("computed_addr", np.uint16),
 
-    ("unused3", np.uint64, 6), # fill header to 128 bytes
-
-    ("memory_access", np.uint8, MAIN_MEMORY_SIZE),
+    ("ram", np.uint8, MAIN_MEMORY_SIZE),
     ("access_type", np.uint8, MAIN_MEMORY_SIZE),
 ])
 

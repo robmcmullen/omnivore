@@ -30,8 +30,6 @@ class Generic6502(Emulator):
 
     low_level_interface = lib6502
 
-    history_entry_dtype = disasm.dd.HISTORY_6502_DTYPE
-
     @property
     def current_cpu_status(self):
         pc, a, x, y, sp, p, _ = self.cpu_state
