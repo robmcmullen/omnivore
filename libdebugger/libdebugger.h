@@ -99,6 +99,8 @@ emulator_state_t *create_emulator_state(int save_size, int input_size, int video
 
 op_history_t *create_op_history(int max_steps, int max_lookup);
 
+void print_op_history(op_history_t *buf);
+
 void clear_op_history(op_history_t *buf);
 
 op_history_t *copy_op_history(op_history_t *src);

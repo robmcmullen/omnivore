@@ -6,7 +6,7 @@
 
 int access_color_step = 5;
 
-emulator_state_t *libdebugger_create_emulator_state(int save_size, int input_size, int video_size, int audio_size) {
+emulator_state_t *create_emulator_state(int save_size, int input_size, int video_size, int audio_size) {
 	emulator_state_t *buf;
 	int total_size;
 
@@ -69,6 +69,10 @@ op_history_t *copy_op_history(op_history_t *src) {
 	memcpy(dest_data, src_data, src->num_lookup * sizeof(uint32_t));
 
 	return dest;
+}
+
+void print_op_history(op_history_t *buf) {
+	printf("op_history: allocated=%d, records:%d of %d, lookup: %d of %d\n", buf->num_allocated, buf->num_records, buf->max_records, buf->num_lookup, buf->max_lookup);
 }
 
 

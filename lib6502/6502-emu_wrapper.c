@@ -54,7 +54,7 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 	// entries, this assumes there won't be more than 10 deltas for every
 	// instruction
 	current_op_history = create_op_history(10 * cycles_per_frame, cycles_per_frame);
-
+	print_op_history(current_op_history);
 	
 	// create input history with plenty of extra space; assuming that there
 	// won't be more than one input per CPU cycle
@@ -65,6 +65,12 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 	liba2_init_graphics();
 
 	lib6502_init_debug_kernel();
+}
+
+int lib6502_cold_start(op_history_t *input)
+{
+	//load memory, configure emulator state, etc. to produce frame 0
+	return 0;
 }
 
 emulator_state_t *lib6502_export_frame() {
@@ -95,7 +101,7 @@ emulator_state_t *lib6502_export_frame() {
 	state->SP = SP;
 	state->SR = SR.byte;
 	memcpy(state->memory, memory, 1<<16);
-	if (apple2_mode) liba2_export_frame(buf);
+	if (apple2_mode) liba2_export_state(buf);
 	return buf;
 }
 
@@ -115,7 +121,7 @@ void lib6502_import_frame(emulator_state_t *buf) {
 	save16(state->PC, PC);
 	SR.byte = state->SR;
 	memcpy(memory, state->memory, 1<<16);
-	if (apple2_mode) liba2_import_frame(buf);
+	if (apple2_mode) liba2_import_state(buf);
 }
 
 int lib6502_step_cpu()
@@ -195,7 +201,7 @@ int lib6502_step_cpu()
 	else if (flag == FLAG_STORE_A_IN_MEMORY || flag == FLAG_STORE_X_IN_MEMORY || flag == FLAG_STORE_Y_IN_MEMORY || flag == FLAG_MEMORY_ALTER) {
 		addr = (uint8_t *)write_addr - memory;
 		op_history_computed_address(current_op_history, addr);
-		op_history_write_address(current_op_history, addr, *(uint8_t *)read_addr);
+		op_history_write_address(current_op_history, addr, *(uint8_t *)write_addr);
 		if (apple2_mode) {
 			liba2_write_softswitch(addr);
 		}
@@ -258,6 +264,7 @@ int lib6502_next_frame(op_history_t *input)
 	}
 
 	op_history_start_frame(current_op_history, PC, frame_number);
+	print_op_history(current_op_history);
 
 	// start cycle count after skipping any cycles that were processed last
 	// frame but where the instruction crossed over into this frame
@@ -267,6 +274,7 @@ int lib6502_next_frame(op_history_t *input)
 	
 	while (cycle_count < cycles_per_frame) {
 		cycles = lib6502_step_cpu();
+		print_op_history(current_op_history);
 		cycle_count += cycles;
 		tv_cycle += cycles;
 		if (tv_cycle > cycles_per_scan_line) {

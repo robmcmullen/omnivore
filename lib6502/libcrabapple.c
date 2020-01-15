@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "libcrabapple.h"
 #include "6502.h"
 

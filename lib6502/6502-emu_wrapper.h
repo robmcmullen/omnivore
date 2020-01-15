@@ -57,6 +57,8 @@ typedef struct {
 
 void lib6502_init_cpu(int scan_lines, int cycles_per_scan_line);
 
+int lib6502_cold_start(op_history_t *input);
+
 void lib6502_import_frame(emulator_state_t *state);
 
 emulator_state_t *lib6502_export_frame();
