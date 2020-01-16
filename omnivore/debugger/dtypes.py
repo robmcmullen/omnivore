@@ -5,11 +5,16 @@ MAIN_MEMORY_SIZE = 1<<16
 
 CURRENT_STATE_DTYPE = np.dtype([
     ("frame_number", np.uint32),
+    ("line_number", np.int32),
 
     ("pc", np.uint16),
     ("opcode_ref_addr", np.uint16),
     ("instruction_length", np.uint8),
     ("instruction", np.uint8, 255),
+
+    ("flag", np.uint16),
+    ("register_used", np.uint8),
+    ("unused", np.uint8),
 
     ("reg_byte", np.uint8, 256),
     ("reg_word", np.uint16, 256),
@@ -145,6 +150,8 @@ EMU_VBI_END = (217)  # transition out of VBI
 EMU_DLI_START = (218)  # transition to DLI
 EMU_IN_DLI = (219)  # inside DLI
 EMU_DLI_END = (220)  # transition out of DLI
+REG_SR = (221)
+REG_P = REG_SR
 NUMBER = (301 | VALUE_ARGUMENT)
 OPCODE_TYPE = (302 | VALUE_ARGUMENT)
 

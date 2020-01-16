@@ -125,15 +125,35 @@ void lib6502_import_frame(emulator_state_t *buf) {
 	if (apple2_mode) liba2_import_state(buf);
 }
 
-void lib6502_fill_current_state(current_state_t *buf) {
-	buf->frame_number = frame_number;
-	buf->pc = PC;
-	buf->reg_byte[REG_A] = A;
-	buf->reg_byte[REG_X] = X;
-	buf->reg_byte[REG_Y] = Y;
-	buf->reg_byte[REG_SP] = SP;
-	buf->reg_byte[REG_SR] = SR.byte;
-	memcpy(buf->memory, memory, 1<<16);
+void lib6502_fill_current_state(current_state_t *current) {
+	current->frame_number = frame_number;
+	current->line_number = -1; // no records processed yet
+	current->pc = PC;
+	current->reg_byte[REG_A] = A;
+	current->reg_byte[REG_X] = X;
+	current->reg_byte[REG_Y] = Y;
+	current->reg_byte[REG_SP] = SP;
+	current->reg_byte[REG_SR] = SR.byte;
+	memcpy(current->memory, memory, 1<<16);
+}
+
+// process a single operation in the history, using the lookup table in the
+// op_history_t structure to find the operation and processing all the records
+// for that operation
+void lib6502_eval_history(emulator_state_t *previous_frame, current_state_t *current, op_history_t *buf, int line_number) {
+	op_record_t *op;
+
+	// if the desired record is back in time, must start over from the save
+	// state and work forward.
+	if (line_number < current->line_number) {
+		lib6502_import_frame(previous_frame);
+		lib6502_fill_current_state(current);
+	}
+	while (line_number > current->line_number) {
+		op = get_record_from_line_number(buf, line_number);
+		eval_operation(current, op);
+		current->line_number++;
+	}
 }
 
 int lib6502_step_cpu()
@@ -164,6 +184,7 @@ int lib6502_step_cpu()
 	extra_cycles = 0;
 	before_value_index = 0;
 
+	//printf("%04x: A=%02x X=%02x Y=%02x SP=%02x SR=%02x\n", PC, A, X, Y, SP, SR.byte);
 	inst.function();
 	if (result_flag == JUMP || result_flag == BRANCH_TAKEN) {
 		op_history_new_pc(current_op_history, PC);

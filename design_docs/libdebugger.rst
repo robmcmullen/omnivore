@@ -254,8 +254,9 @@ function is used as the input for the first real frame of emulation.
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Performs one emulation frame, optionally taking an argument that will provide
-user inputs at instruction boundaries. Without any argument, the emulator will
-continue the current operation of the CPU without any user input.
+user inputs at specified points in the operation history. Without any argument,
+the emulator will continue the current operation of the CPU without any user
+input.
 
 The optional argument can be one of two things. First, it may be a list of user
 input changes, where the user inputs (keypresses, joystick moves, etc.) are
@@ -338,21 +339,32 @@ off from the parent frame (the frame before the change was made).
 
 
 
-op history
-==================================
+Emulator Operations and Operation History
+===================================================
 
-Every frame is broken down into the op history. It consists of 2
-categories: operations and the changes produced by those operations. The
-op history starts with a complete list of all the variables that will
-be tracked by the debugger; at minimum: the registers, stack pointer, status
+Every frame is broken down into an operation history (op history). It consists
+of 2 categories: operations and the changes produced by those operations. The
+op history starts with a complete list of all the variables that will be
+tracked by the debugger; at minimum: the registers, stack pointer, status
 register and program counter. Other variables could be tracked as well, and to
-minimize the size of the op history list, the list of variables of
-interest could be specified at runtime as a subset of all the available
-variables.
+minimize the size of the op history list, the list of variables of interest
+could be specified at runtime as a subset of all the available variables.
 
+An operation is a CPU instruction or event that changes the state of the
+emulator. The type of events that are not CPU instructions would be things like
+non-maskable interrupts or emulator events like the frame start or end markers.
 
-Encoding the op history
-===============================================
+An operation will have at least 2 records, the :ref:`Type 10 <type10>` record
+that signifies the instruction size, and at least one more record defining the
+type of operation. Most operations will have more than two records; a typical
+CPU instruction will produce 5 to 10 records.
+
+Because of the variable-length nature of the records, a separate lookup table
+is maintained to map the operation number with the location in the record array
+of the Type 10 record.
+
+Record Structure
+---------------------------
 
 The op history is allocated as a list of 32 bit unsigned integers,
 where internally the entries are used as a 4 byte array. Each 4 bytes are
@@ -374,7 +386,7 @@ In C, this is defined as a 4 byte structure:
       uint8_t payload1;
       uint8_t payload2;
       uint8_t payload3;
-   } instruction_delta_t;
+   } op_record_t;
 
 The types are:
 

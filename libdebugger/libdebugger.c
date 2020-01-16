@@ -95,6 +95,16 @@ static inline void add_new_op_lookup(op_history_t *buf) {
 	*lookup = buf->num_records;
 }
 
+op_record_t *get_record_from_line_number(op_history_t *buf, int line_number) {
+	op_record_t *op;
+	uint32_t *lookup;
+
+	// op_num = lookup[line_number]
+	lookup = (uint32_t *)buf + OP_HISTORY_T_SIZE + buf->max_records;
+	op = (op_record_t *)buf + OP_HISTORY_T_SIZE + lookup[line_number];
+	return op;
+}
+
 // Get pointer to next available op_record_t entry in op_history_t
 static inline op_record_t *next_record(op_history_t *buf) {
 	op_record_t *op;
@@ -256,6 +266,90 @@ void op_history_opcode_ref_addr(op_history_t *buf, uint16_t addr) {
 	op->payload3 = 0;
 }
 
+// process a single operation in the history, starting at the specified
+// op_history entry and continuing until the next Type 10 record or the frame
+// ends. Returns -1 on error
+int eval_operation(current_state_t *current, op_record_t *op) {
+	int count, reg, addr;
+
+	if (op->type != 0x10) {
+		return -1;
+	}
+	current->pc = op->payload1 + (op->payload2 << 8);
+	current->instruction_length = op->payload3;
+	current->flag = 0;
+	count = 0;
+	while (count < current->instruction_length) {
+		op++;
+		current->instruction[count++] = op->type;
+		current->instruction[count++] = op->payload1;
+		current->instruction[count++] = op->payload2;
+		current->instruction[count++] = op->payload3;
+	}
+	op++;
+	while (op->type != 0x10) {
+		switch (op->type) {
+			case 0x01:
+			reg = op->payload1;
+			current->register_used = reg;
+			current->reg_byte[reg] = op->payload2;
+			current->flag |= CURRENT_STATE_BYTE_REGISTER;
+			break;
+
+			case 0x02:
+			reg = op->payload1;
+			current->register_used = reg;
+			current->reg_word[op->payload1] = op->payload2 + (op->payload3 << 8);
+			current->flag |= CURRENT_STATE_WORD_REGISTER;
+			break;
+
+			case 0x03:
+			addr = op->payload1 + (op->payload2 << 8);
+			current->computed_addr = addr;
+			current->flag |= CURRENT_STATE_COMPUTED_ADDR | CURRENT_STATE_MEMORY_READ;
+			break;
+
+			case 0x04:
+			addr = op->payload1 + (op->payload2 << 8);
+			current->computed_addr = addr;
+			current->memory[addr] = op->payload3;
+			current->flag |= CURRENT_STATE_COMPUTED_ADDR | CURRENT_STATE_MEMORY_WRITE;
+			break;
+
+			case 0x05:
+			addr = op->payload1 + (op->payload2 << 8);
+			current->opcode_ref_addr = addr;
+			current->flag |= CURRENT_STATE_OPCODE_ADDR;
+			break;
+
+			case 0x06:
+			addr = op->payload1 + (op->payload2 << 8);
+			current->pc = addr;
+			current->flag |= CURRENT_STATE_JMP;
+			break;
+
+			case 0x07:
+			if (op->payload1) {
+				current->flag |= CURRENT_STATE_BRANCH_TAKEN;
+			}
+			current->flag |= CURRENT_STATE_BRANCH;
+			break;
+
+			case 0x30:
+			addr = op->payload1 + (op->payload2 << 8);
+			current->computed_addr = addr;
+			current->flag |= CURRENT_STATE_COMPUTED_ADDR;
+			break;
+
+			case 0x29:
+			// end of frame
+			goto done;
+		}
+		op++;
+	}
+done:
+	return 0;
+}
 
 
 void libdebugger_init_array(breakpoints_t *breakpoints) {

@@ -51,16 +51,31 @@ typedef struct {
 #define VIDEO_PTR(buf) ((char *)buf + buf->video_offset)
 #define AUDIO_PTR(buf) ((char *)buf + buf->audio_offset)
 
+#define CURRENT_STATE_JMP 1
+#define CURRENT_STATE_BRANCH 2
+#define CURRENT_STATE_BRANCH_TAKEN 4
+#define CURRENT_STATE_COMPUTED_ADDR 8
+#define CURRENT_STATE_MEMORY_READ 0x10
+#define CURRENT_STATE_MEMORY_WRITE 0x20
+#define CURRENT_STATE_BYTE_REGISTER 0x40
+#define CURRENT_STATE_WORD_REGISTER 0x80
+#define CURRENT_STATE_OPCODE_ADDR 0x100
 
 /* current state of emulator */
 typedef struct {  /* 32 bit alignment */
     uint32_t frame_number;
+    int32_t line_number;
 
     /* instruction */
     uint16_t pc; /* special two-byte register for the PC */
     uint16_t opcode_ref_addr; /* address referenced in opcode */
     uint8_t instruction_length; /* number of bytes in current instruction */
     uint8_t instruction[255]; /* current instruction */
+
+    /* flags */
+    uint16_t flag;
+    uint8_t register_used;
+    uint8_t unused;
 
     /* result of instruction */
     uint8_t reg_byte[256]; /* single byte registers */
@@ -129,6 +144,10 @@ void op_history_write_address(op_history_t *buf, uint16_t addr, uint8_t value);
 void op_history_one_byte_reg(op_history_t *buf, uint8_t reg, uint8_t value);
 
 void op_history_two_byte_reg(op_history_t *buf, uint8_t reg, uint16_t value);
+
+op_record_t *get_record_from_line_number(op_history_t *buf, int num);
+
+int eval_operation(current_state_t *current, op_record_t *op);
 
 
 /* lower 4 bits: bit access flags */
@@ -252,6 +271,7 @@ typedef struct {
 #define OPCODE_WRITE 2
 #define OPCODE_RETURN 4
 #define OPCODE_INTERRUPT 8
+#define OPCODE_BRANCH
 
 #define INTERRUPT_NONE 0
 #define INTERRUPT_START 1
