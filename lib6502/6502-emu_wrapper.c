@@ -119,7 +119,7 @@ void lib6502_import_frame(emulator_state_t *buf) {
 	X = state->X;
 	Y = state->Y;
 	SP = state->SP;
-	save16(state->PC, PC);
+	load16(PC, state->PC);
 	SR.byte = state->SR;
 	memcpy(memory, state->memory, 1<<16);
 	if (apple2_mode) liba2_import_state(buf);
