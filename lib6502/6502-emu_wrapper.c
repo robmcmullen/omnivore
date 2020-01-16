@@ -125,6 +125,17 @@ void lib6502_import_frame(emulator_state_t *buf) {
 	if (apple2_mode) liba2_import_state(buf);
 }
 
+void lib6502_fill_current_state(current_state_t *buf) {
+	buf->frame_number = frame_number;
+	buf->pc = PC;
+	buf->reg_byte[REG_A] = A;
+	buf->reg_byte[REG_X] = X;
+	buf->reg_byte[REG_Y] = Y;
+	buf->reg_byte[REG_SP] = SP;
+	buf->reg_byte[REG_SR] = SR.byte;
+	memcpy(buf->memory, memory, 1<<16);
+}
+
 int lib6502_step_cpu()
 {
 	int count, bpid;

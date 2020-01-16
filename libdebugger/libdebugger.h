@@ -63,10 +63,10 @@ typedef struct {  /* 32 bit alignment */
     uint8_t instruction[255]; /* current instruction */
 
     /* result of instruction */
-    uint8_t reg1[256]; /* single byte registers */
-    uint16_t reg2[256]; /* two-byte registers */
+    uint8_t reg_byte[256]; /* single byte registers */
+    uint16_t reg_word[256]; /* two-byte registers */
     uint16_t computed_addr; /* computed address after indirection, indexing, etc. */
-    uint8_t ram[MAIN_MEMORY_SIZE]; /* complete 64K of RAM */
+    uint8_t memory[MAIN_MEMORY_SIZE]; /* complete 64K of RAM */
     uint8_t access_type[MAIN_MEMORY_SIZE]; /* corresponds to RAM */
 } current_state_t;
 

@@ -63,6 +63,8 @@ void lib6502_import_frame(emulator_state_t *state);
 
 emulator_state_t *lib6502_export_frame();
 
+void lib6502_fill_current_state(current_state_t *buf);
+
 int lib6502_step_cpu();
 
 int lib6502_next_frame(op_history_t *input);

@@ -38,6 +38,7 @@ cdef extern:
     int lib6502_cold_start(np.uint32_t *buf)
     int lib6502_next_frame(np.uint8_t *buf)
     np.uint32_t *lib6502_copy_op_history()
+    void lib6502_fill_current_state(np.uint8_t *buf)
     np.uint32_t *lib6502_export_frame()
     void lib6502_import_frame(np.uint32_t *buf)
     void lib6502_set_a2_emulation_mode(np.uint8_t value)
@@ -92,6 +93,11 @@ def import_frame(np.ndarray state not None):
     sbuf = state.view(np.uint32)
     print(sbuf)
     lib6502_import_frame(&sbuf[0])
+
+def fill_current_state(np.ndarray state not None):
+    cdef np.uint8_t[:] sbuf
+    sbuf = state.view(np.uint8)
+    lib6502_fill_current_state(&sbuf[0])
 
 def set_a2_emulation_mode(int value):
     lib6502_set_a2_emulation_mode(value)
