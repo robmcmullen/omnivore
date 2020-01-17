@@ -159,7 +159,7 @@ void lib6502_eval_history(emulator_state_t *previous_frame, current_state_t *cur
 int lib6502_step_cpu()
 {
 	int count, bpid;
-	uint8_t last_sp, last_sr, opcode, cycles;
+	uint8_t last_sp, last_sr, opcode, cycles, last_a, last_x, last_y;
 	char flag;
 	intptr_t index;
 	uint16_t line, addr;
@@ -167,6 +167,9 @@ int lib6502_step_cpu()
 
 	last_sp = SP;
 	last_sr = SR.byte;
+	last_a = A;
+	last_x = X;
+	last_y = Y;
 
 	opcode = memory[PC];
 	inst = instructions[opcode];
@@ -240,16 +243,6 @@ int lib6502_step_cpu()
 		}
 	}
 	
-	if (flag == FLAG_REG_A || flag == FLAG_LOAD_A_FROM_MEMORY) {
-		op_history_one_byte_reg(current_op_history, REG_A, A);
-	}
-	else if (flag == FLAG_REG_X || flag == FLAG_LOAD_X_FROM_MEMORY) {
-		op_history_one_byte_reg(current_op_history, REG_X, X);
-	}
-	else if (flag == FLAG_REG_Y || flag == FLAG_LOAD_Y_FROM_MEMORY) {
-		op_history_one_byte_reg(current_op_history, REG_Y, Y);
-	}
-
 	/* Maximum of 3 bytes will have changed on the stack */
 	if (last_sp < SP) {
 		last_sp++;
@@ -280,6 +273,15 @@ int lib6502_step_cpu()
 
 	if (last_sr != SR.byte) {
 		op_history_one_byte_reg(current_op_history, REG_SR, SR.byte);
+	}
+	if (last_a != A) {
+		op_history_one_byte_reg(current_op_history, REG_A, A);
+	}
+	if (last_x != X) {
+		op_history_one_byte_reg(current_op_history, REG_X, X);
+	}
+	if (last_y != Y) {
+		op_history_one_byte_reg(current_op_history, REG_Y, Y);
 	}
 
 	return cycles;
