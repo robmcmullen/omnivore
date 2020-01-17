@@ -278,6 +278,7 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 	current->pc = op->payload1 + (op->payload2 << 8);
 	current->instruction_length = op->payload3;
 	current->flag = 0;
+	printf("found PC:%04x %d\n", current->pc, current->instruction_length);
 	count = 0;
 	while (count < current->instruction_length) {
 		op++;
@@ -293,6 +294,7 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 			reg = op->payload1;
 			current->register_used = reg;
 			current->reg_byte[reg] = op->payload2;
+			printf("storing %02x in reg %d\n", op->payload2, reg);
 			current->flag |= CURRENT_STATE_BYTE_REGISTER;
 			break;
 
@@ -345,6 +347,32 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 			// end of frame
 			goto done;
 		}
+		printf("  found op type %02x:", op->type);
+		if (current->flag & CURRENT_STATE_BYTE_REGISTER) {
+			printf(", byte reg %d=%x", current->register_used, current->reg_byte[current->register_used]);
+		}
+		if (current->flag & CURRENT_STATE_WORD_REGISTER) {
+			printf(", word reg %d=%x", current->register_used, current->reg_word[current->register_used]);
+		}
+		if (current->flag & CURRENT_STATE_COMPUTED_ADDR) {
+			printf(", computed addr=%04x", current->computed_addr);
+		}
+		if (current->flag & CURRENT_STATE_OPCODE_ADDR) {
+			printf(", opcode addr=%04x", current->opcode_ref_addr);
+		}
+		if (current->flag & CURRENT_STATE_BRANCH) {
+			printf(", branch");
+			if (current->flag & CURRENT_STATE_BRANCH_TAKEN) {
+				printf(" taken");
+			}
+			else {
+				printf(" not taken");
+			}
+		}
+		if (current->flag & CURRENT_STATE_JMP) {
+			printf(", new pc=%04x", current->pc);
+		}
+		printf("\n");
 		op++;
 	}
 done:
