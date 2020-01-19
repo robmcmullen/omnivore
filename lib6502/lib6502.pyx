@@ -41,7 +41,7 @@ cdef extern:
     void lib6502_fill_current_state(np.uint8_t *buf)
     np.uint32_t *lib6502_export_frame()
     void lib6502_import_frame(np.uint32_t *buf)
-    void lib6502_eval_history(np.uint32_t *previous_frame, np.uint8_t *current, np.uint32_t *buf, int line_number)
+    int lib6502_eval_history(np.uint32_t *previous_frame, np.uint8_t *current, np.uint32_t *buf, int line_number)
     void lib6502_set_a2_emulation_mode(np.uint8_t value)
 
 def init_emulator(args):
@@ -107,7 +107,7 @@ def eval_operation(np.ndarray frame not None, np.ndarray state not None, np.ndar
     fbuf = frame.view(np.uint32)
     sbuf = state.view(np.uint8)
     obuf = op_history.view(np.uint32)
-    lib6502_eval_history(&fbuf[0], &sbuf[0], &obuf[0], line_number)
+    return lib6502_eval_history(&fbuf[0], &sbuf[0], &obuf[0], line_number)
 
 def set_a2_emulation_mode(int value):
     lib6502_set_a2_emulation_mode(value)

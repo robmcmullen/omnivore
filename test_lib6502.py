@@ -66,6 +66,9 @@ if __name__ == "__main__":
     emu.fill_current_state(current_state)
     show_current_state(current_state)
 
-    for i in range(50):
-        emu.eval_operation(frame0, current_state, ops3, i)
+    for i in range(5000):
+        op = emu.eval_operation(frame0, current_state, ops3, i)
         show_current_state(current_state)
+        if op == 0x28:
+            print(f"FINISHED WITH FRAME, processed {i} operations")
+            break

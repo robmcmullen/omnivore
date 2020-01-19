@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "libdebugger.h"
+#define DEBUG_EVAL
 
 int access_color_step = 5;
 
@@ -273,12 +274,17 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 	int count, reg, addr;
 
 	if (op->type != 0x10) {
+#ifdef DEBUG_EVAL
+		printf("found %02x as op->type when expecting 0x10!\n", op->type);
+#endif
 		return -1;
 	}
 	current->pc = op->payload1 + (op->payload2 << 8);
 	current->instruction_length = op->payload3;
 	current->flag = 0;
+#ifdef DEBUG_EVAL
 	printf("found PC:%04x %d\n", current->pc, current->instruction_length);
+#endif
 	count = 0;
 	while (count < current->instruction_length) {
 		op++;
@@ -294,7 +300,9 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 			reg = op->payload1;
 			current->register_used = reg;
 			current->reg_byte[reg] = op->payload2;
+#ifdef DEBUG_EVAL
 			printf("storing %02x in reg %d\n", op->payload2, reg);
+#endif
 			current->flag |= CURRENT_STATE_BYTE_REGISTER;
 			break;
 
@@ -347,7 +355,8 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 			// end of frame
 			goto done;
 		}
-		printf("  found op type %02x:", op->type);
+#ifdef DEBUG_EVAL
+		printf("  found op type %02x", op->type);
 		if (current->flag & CURRENT_STATE_BYTE_REGISTER) {
 			printf(", byte reg %d=%x", current->register_used, current->reg_byte[current->register_used]);
 		}
@@ -373,10 +382,11 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 			printf(", new pc=%04x", current->pc);
 		}
 		printf("\n");
+#endif
 		op++;
 	}
 done:
-	return 0;
+	return op->type;
 }
 
 
