@@ -4,7 +4,7 @@
 
 #include "6502-emu_wrapper.h"
 #include "libcrabapple.h"
-#include "libdebugger.h"
+#include "libemu/libemu.h"
 #include "libudis.h"
 
 uint16_t cycles_per_scan_line;

@@ -6,7 +6,7 @@
 #include "6502.h"
 
 
-#include "libdebugger.h"
+#include "libemu/libemu.h"
 #include "libudis.h"
 
 /* emulator ID = "6502" */
