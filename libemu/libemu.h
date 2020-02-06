@@ -5,5 +5,8 @@
 #include "breakpoints.h"
 #include "op_history.h"
 #include "save_state.h"
+#include "input.h"
+#include "disasm.h"
+#include "util6502.h"
 
 #endif /* LIBEMU_H */

@@ -5,7 +5,7 @@
 
 #include "libudis.h"
 #include "stringify_udis_cpu.h"
-#include "libdebugger.h"
+#include "libemu/libemu.h"
 
 
 int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page) {
@@ -53,7 +53,7 @@ static inline char *STRING(char *t, int lc, char *str) {
     return t;
 }
 
-int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_data(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
     unsigned char *data;
 
@@ -87,7 +87,7 @@ int stringify_entry_data(history_entry_t *entry, char *t, char *hexdigits, int l
     return (int)(t - first_t);
 }
 
-int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_antic_dl(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     unsigned char opcode;
     char *first_t, *h;
     unsigned char *data;
@@ -190,7 +190,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
     return (int)(t - first_t);
 }
 
-int stringify_entry_jumpman_harvest(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_jumpman_harvest(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     unsigned char opcode;
     char *first_t, *h;
     unsigned char *data;
@@ -251,7 +251,7 @@ int stringify_entry_jumpman_harvest(history_entry_t *entry, char *t, char *hexdi
     return (int)(t - first_t);
 }
 
-int stringify_entry_frame_start(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_frame_start(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
     history_frame_t *frame = (history_frame_t *)entry;
 
@@ -261,7 +261,7 @@ int stringify_entry_frame_start(history_entry_t *entry, char *t, char *hexdigits
     return (int)(t - first_t);
 }
 
-int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_frame_end(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
     history_frame_t *frame = (history_frame_t *)entry;
 
@@ -273,7 +273,7 @@ int stringify_entry_frame_end(history_entry_t *entry, char *t, char *hexdigits, 
     return (int)(t - first_t);
 }
 
-int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_6502_cpu_registers(current_state_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     int val;
     char *first_t, *h;
     history_6502_t *entry = (history_6502_t *)h_entry;
@@ -297,7 +297,7 @@ int stringify_entry_6502_cpu_registers(history_entry_t *h_entry, char *t, char *
     return (int)(t - first_t);
 }
 
-int stringify_entry_6502_opcode(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_6502_opcode(current_state_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
     history_6502_t *entry = (history_6502_t *)h_entry;
 
@@ -317,7 +317,7 @@ int stringify_entry_6502_opcode(history_entry_t *h_entry, char *t, char *hexdigi
     return (int)(t - first_t);
 }
 
-int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_6502_history(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
 
     first_t = t;
@@ -333,7 +333,7 @@ int stringify_entry_6502_history(history_entry_t *entry, char *t, char *hexdigit
     return (int)(t - first_t);
 }
 
-int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_atari800_history(current_state_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t, *h;
     history_atari800_t *entry = (history_atari800_t *)h_entry;
 
@@ -354,7 +354,7 @@ int stringify_entry_atari800_history(history_entry_t *h_entry, char *t, char *he
     return (int)(t - first_t);
 }
 
-int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_6502_history_result(current_state_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     int val, changed, masked_flag;
     char *first_t, *h;
     history_6502_t *entry = (history_6502_t *)h_entry;
@@ -487,7 +487,7 @@ int stringify_entry_6502_history_result(history_entry_t *h_entry, char *t, char 
     return (int)(t - first_t);
 }
 
-int stringify_entry_atari800_vbi_start(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_atari800_vbi_start(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
 
     first_t = t;
@@ -495,7 +495,7 @@ int stringify_entry_atari800_vbi_start(history_entry_t *entry, char *t, char *he
     return (int)(t - first_t);
 }
 
-int stringify_entry_atari800_vbi_end(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_atari800_vbi_end(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
 
     first_t = t;
@@ -503,7 +503,7 @@ int stringify_entry_atari800_vbi_end(history_entry_t *entry, char *t, char *hexd
     return (int)(t - first_t);
 }
 
-int stringify_entry_atari800_dli_start(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_atari800_dli_start(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
 
     first_t = t;
@@ -511,7 +511,7 @@ int stringify_entry_atari800_dli_start(history_entry_t *entry, char *t, char *he
     return (int)(t - first_t);
 }
 
-int stringify_entry_atari800_dli_end(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_atari800_dli_end(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
 
     first_t = t;
@@ -519,7 +519,7 @@ int stringify_entry_atari800_dli_end(history_entry_t *entry, char *t, char *hexd
     return (int)(t - first_t);
 }
 
-int stringify_entry_breakpoint(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_breakpoint(current_state_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
     history_breakpoint_t *entry = (history_breakpoint_t *)h_entry;
 
@@ -545,7 +545,7 @@ int stringify_entry_breakpoint(history_entry_t *h_entry, char *t, char *hexdigit
     return (int)(t - first_t);
 }
 
-int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_unknown_disassembler(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     char *first_t;
 
     first_t = t;
@@ -554,21 +554,21 @@ int stringify_entry_unknown_disassembler(history_entry_t *entry, char *t, char *
     return (int)(t - first_t);
 }
 
-int stringify_entry_blank(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_blank(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     return 0;
 }
 
 
 extern string_func_t stringifier_map[];
 
-int stringify_entry_next_instruction(history_entry_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_next_instruction(current_state_t *h_entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
     history_breakpoint_t *entry = (history_breakpoint_t *)h_entry;
     string_func_t stringifier = stringifier_map[entry->disassembler_type_cpu];
 
     return stringifier(h_entry, t, hexdigits, lc, jmp_targets);
 }
 
-int stringify_entry_next_instruction_result(history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
+int stringify_entry_next_instruction_result(current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets) {
 
     return stringify_entry_breakpoint(entry, t, hexdigits, lc, jmp_targets);
 }

@@ -14,6 +14,7 @@
 #define CURRENT_STATE_BYTE_REGISTER 0x40
 #define CURRENT_STATE_WORD_REGISTER 0x80
 #define CURRENT_STATE_OPCODE_ADDR 0x100
+#define CURRENT_STATE_OTHER_DISASSEMBLER_TYPE 0x8000
 
 /* current state of emulator */
 typedef struct {  /* 32 bit alignment */
@@ -28,13 +29,16 @@ typedef struct {  /* 32 bit alignment */
 
     /* flags */
     uint16_t flag;
+    uint8_t nominal_disassembler_type;
+    uint8_t current_disassembler_type;
+
+    /* result of instruction */
+    uint16_t computed_addr; /* computed address after indirection/indexing */
     uint8_t register_used;
     uint8_t unused;
 
-    /* result of instruction */
     uint8_t reg_byte[256]; /* single byte registers */
     uint16_t reg_word[256]; /* two-byte registers */
-    uint16_t computed_addr; /* computed address after indirection, indexing, etc. */
     uint8_t memory[MAIN_MEMORY_SIZE]; /* complete 64K of RAM */
     uint8_t access_type[MAIN_MEMORY_SIZE]; /* corresponds to RAM */
 } current_state_t;
@@ -43,28 +47,33 @@ typedef struct {  /* 32 bit alignment */
 /* emulator operation record, fits in uint32_t */
 typedef struct {
     uint8_t type;
-    uint8_t payload1;
-    uint8_t payload2;
-    uint8_t payload3;
+    uint8_t num;
+    union {
+        uint8_t byte[2];
+        uint16_t word;
+    } payload;
 } op_record_t;
 
 
 // operation history array header, used as first several elements in array of
-// uint32_t of size of OP_HISTORY_T_SIZE + max_steps + max_lookup
+// uint32_t of size of OP_HISTORY_T_SIZE + max_steps + max_line_to_record +
+// max_byte_to_line
 typedef struct {
     uint32_t malloc_size; /* total number of bytes in structure, including steps and lookup */
     uint32_t frame_number;
     uint32_t max_records; /* maximum space available for records */
     uint32_t num_records; /* current number of records */
-    uint32_t max_lookup; /* max space available for instruction lookup table */
-    uint32_t num_lookup; /* current count of instruction lookup table */
+    uint32_t max_line_to_record; /* max for line-to-record lookup table */
+    uint32_t num_line_to_record; /* current count */
+    uint32_t max_byte_to_line; /* max for byte-to-line lookup table */
+    uint32_t num_byte_to_line; /* current count */
 } op_history_t;
 
 // number of uint32_t in header before op record space in the instruction
 // history array
 #define OP_HISTORY_T_SIZE (sizeof(op_history_t) / sizeof(uint32_t))
 
-op_history_t *create_op_history(int max_steps, int max_lookup);
+op_history_t *create_op_history(int max_steps, int max_line_to_record, int max_byte_to_line);
 
 void print_op_history(op_history_t *buf);
 

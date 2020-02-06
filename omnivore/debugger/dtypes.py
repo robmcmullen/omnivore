@@ -13,12 +13,15 @@ CURRENT_STATE_DTYPE = np.dtype([
     ("instruction", np.uint8, 255),
 
     ("flag", np.uint16),
+    ("nominal_disassembler", np.uint8),
+    ("current_disassembler", np.uint8),
+
+    ("computed_addr", np.uint16),
     ("register_used", np.uint8),
     ("unused", np.uint8),
 
     ("reg_byte", np.uint8, 256),
     ("reg_word", np.uint16, 256),
-    ("computed_addr", np.uint16),
 
     ("ram", np.uint8, MAIN_MEMORY_SIZE),
     ("access_type", np.uint8, MAIN_MEMORY_SIZE),

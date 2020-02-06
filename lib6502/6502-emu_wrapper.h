@@ -7,7 +7,6 @@
 
 
 #include "libemu/libemu.h"
-#include "libudis.h"
 
 /* emulator ID = "6502" */
 #define LIB6502_EMULATOR_ID 0x32303635
@@ -67,7 +66,7 @@ void lib6502_fill_current_state(current_state_t *buf);
 
 int lib6502_step_cpu();
 
-int lib6502_next_frame(op_history_t *input);
+int lib6502_next_frame(libemu_input_t *start_frame_input, op_history_t *mid_frame_input);
 
 op_history_t *lib6502_export_steps();
 

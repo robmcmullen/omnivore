@@ -5,7 +5,6 @@
 #include "6502-emu_wrapper.h"
 #include "libcrabapple.h"
 #include "libemu/libemu.h"
-#include "libudis.h"
 
 uint16_t cycles_per_scan_line;
 uint32_t cycles_per_frame;
@@ -53,12 +52,12 @@ void lib6502_init_cpu(int scan_lines, int cycles_per) {
 	// cycles_per_frame instructions in a frame. And, for the number of delta
 	// entries, this assumes there won't be more than 10 deltas for every
 	// instruction
-	current_op_history = create_op_history(10 * cycles_per_frame, cycles_per_frame);
+	current_op_history = create_op_history(10 * cycles_per_frame, cycles_per_frame, 0);
 	print_op_history(current_op_history);
 	
 	// create input history with plenty of extra space; assuming that there
 	// won't be more than one input per CPU cycle
-	current_input_history = create_op_history(cycles_per_frame, cycles_per_frame);
+	current_input_history = create_op_history(cycles_per_frame, cycles_per_frame, 0);
 
 	frame_number = 0;
 
@@ -128,6 +127,7 @@ void lib6502_import_frame(emulator_state_t *buf) {
 void lib6502_fill_current_state(current_state_t *current) {
 	current->frame_number = frame_number;
 	current->line_number = -1; // no records processed yet
+	current->nominal_disassembler_type = 10; // stringification type number
 	current->pc = PC;
 	current->reg_byte[REG_A] = A;
 	current->reg_byte[REG_X] = X;
@@ -158,12 +158,10 @@ void lib6502_eval_history(emulator_state_t *previous_frame, current_state_t *cur
 
 int lib6502_step_cpu()
 {
-	int count, bpid;
+	int count;
 	uint8_t last_sp, last_sr, opcode, cycles, last_a, last_x, last_y;
+	uint16_t addr;
 	char flag;
-	intptr_t index;
-	uint16_t line, addr;
-	history_breakpoint_t *b;
 
 	last_sp = SP;
 	last_sr = SR.byte;
@@ -226,7 +224,7 @@ int lib6502_step_cpu()
 		op_history_branch_not_taken(current_op_history);
 	}
 	
-	if (flag == FLAG_PEEK_MEMORY || flag == FLAG_LOAD_A_FROM_MEMORY || flag == FLAG_LOAD_X_FROM_MEMORY || flag == FLAG_LOAD_Y_FROM_MEMORY) {
+	if (flag == FLAG_READ_MEMORY || flag == FLAG_LOAD_A_FROM_MEMORY || flag == FLAG_LOAD_X_FROM_MEMORY || flag == FLAG_LOAD_Y_FROM_MEMORY) {
 		addr = (uint8_t *)read_addr - memory;
 		op_history_computed_address(current_op_history, addr);
 		op_history_read_address(current_op_history, addr, *(uint8_t *)read_addr);
@@ -234,7 +232,7 @@ int lib6502_step_cpu()
 			liba2_read_softswitch(addr);
 		}
 	}
-	else if (flag == FLAG_STORE_A_IN_MEMORY || flag == FLAG_STORE_X_IN_MEMORY || flag == FLAG_STORE_Y_IN_MEMORY || flag == FLAG_MEMORY_ALTER) {
+	else if (flag == FLAG_STORE_A_IN_MEMORY || flag == FLAG_STORE_X_IN_MEMORY || flag == FLAG_STORE_Y_IN_MEMORY || flag == FLAG_ALTER_MEMORY) {
 		addr = (uint8_t *)write_addr - memory;
 		op_history_computed_address(current_op_history, addr);
 		op_history_write_address(current_op_history, addr, *(uint8_t *)write_addr);
@@ -287,7 +285,7 @@ int lib6502_step_cpu()
 	return cycles;
 }
 
-int lib6502_next_frame(op_history_t *input)
+int lib6502_next_frame(libemu_input_t *start_frame_input, op_history_t *mid_frame_input)
 {
 	int cycle_count, cycles;
 

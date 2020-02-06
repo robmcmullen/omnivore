@@ -1,0 +1,20 @@
+#define FLAG_BRANCH_TAKEN 1
+#define FLAG_BRANCH_NOT_TAKEN 2
+#define FLAG_REPEATED_BYTES 3
+#define FLAG_TARGET_ADDR 4
+#define FLAG_LOAD_A_FROM_MEMORY 7
+#define FLAG_LOAD_X_FROM_MEMORY 8
+#define FLAG_LOAD_Y_FROM_MEMORY 9
+#define FLAG_ALTER_MEMORY 10
+#define FLAG_READ_MEMORY 12
+#define FLAG_RTI 17
+#define FLAG_RTS 18
+#define FLAG_STORE_A_IN_MEMORY 19
+#define FLAG_STORE_X_IN_MEMORY 20
+#define FLAG_STORE_Y_IN_MEMORY 21
+#define FLAG_JMP 22
+#define FLAG_JMP_INDIRECT 23
+
+extern char opcode_history_flags_6502[256];
+
+extern char instruction_length_6502[256];

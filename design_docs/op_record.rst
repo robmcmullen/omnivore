@@ -52,6 +52,17 @@ In C, this is defined as a 4 byte structure:
       uint8_t payload3;
    } op_record_t;
 
+which can be cast to another 4 byte structure where the final 2 bytes are
+combined into a 16 bit value:
+
+.. code-block::
+
+   typedef struct {
+      uint8_t type;
+      uint8_t arg;
+      uint16_t addr;
+   } op_record_16_t;
+
 The types are:
 
 .. csv-table:: Record Types
@@ -64,6 +75,7 @@ The types are:
    04, one byte value read from address
    05, computed indirect address used in opcode
    06, program counter (PC)
+   07, branch status
    10, instruction PC, size, & additional opcode records
    28, frame start
    29, frame end
@@ -140,11 +152,11 @@ Registers are defined:
 
 Records a change of a value in main memory
 
-   +----+----+----+-------------+
-   | 0  | 1  | 2  | 3           |
-   +----+----+----+-------------+
-   | 03 | Lo | Hi | New value   |
-   +----+----+----+-------------+
+   +----+-------------+----+----+
+   | 0  | 1           | 2  | 3  |
+   +----+-------------+----+----+
+   | 03 | New value   | Lo | Hi |
+   +----+-------------+----+----+
 
 
 04: One Byte Value Read From Address
@@ -152,11 +164,11 @@ Records a change of a value in main memory
 
 Records a value read from main memory
 
-   +----+----+----+-------+
-   | 0  | 1  | 2  | 3     |
-   +----+----+----+-------+
-   | 04 | Lo | Hi | Value |
-   +----+----+----+-------+
+   +----+-------+----+----+
+   | 0  | 1     | 2  | 3  |
+   +----+-------+----+----+
+   | 04 | Value | Lo | Hi |
+   +----+-------+----+----+
 
 .. _type05:
 
@@ -174,11 +186,11 @@ the following:
 must create an entry in the instruction list that holds that address that was
 accessed:
 
-   +----+----+----+--------+
-   | 0  | 1  | 2  | 3      |
-   +----+----+----+--------+
-   | 05 | Lo | Hi | unused |
-   +----+----+----+--------+
+   +----+--------+----+----+
+   | 0  | 1      | 2  | 3  |
+   +----+--------+----+----+
+   | 05 | unused | Lo | Hi |
+   +----+--------+----+----+
 
 
 06: Program Counter (pc)
@@ -188,11 +200,11 @@ Changing the program counter as the result of the opcode, other than proceeding
 on to the next instruction, must create an entry with the new PC. Examples
 would be JMP, JSR, Branch taken, NMI, etc.
 
-   +----+----+----+--------+
-   | 0  | 1  | 2  | 3      |
-   +----+----+----+--------+
-   | 06 | Lo | Hi | unused |
-   +----+----+----+--------+
+   +----+--------+----+----+
+   | 0  | 1      | 2  | 3  |
+   +----+--------+----+----+
+   | 06 | unused | Lo | Hi |
+   +----+--------+----+----+
 
 07: Branch Status
 ----------------------------------------------------------------------
@@ -215,11 +227,11 @@ where Taken? is 01 if the branch was taken or 00 if not.
 This entry type marks the start of a CPU instruction. This records the PC of
 the instruction and the number of bytes making up the opcode.
 
-   +----+----+----+------------------------+
-   | 0  | 1  | 2  | 3                      |
-   +----+----+----+------------------------+
-   | 10 | Lo | Hi | opcode length in bytes |
-   +----+----+----+------------------------+
+   +----+------------------------+----+----+
+   | 0  | 1                      | 2  | 3  |
+   +----+------------------------+----+----+
+   | 10 | opcode length in bytes | Lo | Hi |
+   +----+------------------------+----+----+
 
 This record also includes the opcode and operands in some additional 4-byte
 records immediately following this entry. A pseudo-instruction will have an
@@ -247,11 +259,11 @@ example, for a 5 byte opcode, the 2 extra records would be encoded as:
 Flag for the frame start, simply occurs as the first entry into the list of
 steps.
 
-   +------+----+----+-----+
-   |  0   | 1  | 2  |  3  |
-   +------+----+----+-----+
-   | 28   | Lo | Hi | XHi |
-   +------+----+----+-----+
+   +------+-----+----+----+
+   |  0   |  1  | 2  | 3  |
+   +------+-----+----+----+
+   | 28   | XHi | Lo | Hi |
+   +------+-----+----+----+
 
 The frame number is a 24 bit unsigned integer where XHi will be zero until the
 frame number becomes larger than 65535. Frame numbers start at 1, with zero
@@ -312,11 +324,13 @@ specified by the opcode. Note this is different than a :ref:`Type 05 record
 <type05>` because the Type 05 record indicates the *actual address used*, where
 the Type 30 record stores the address encoded into the opcode.
 
-   +----+----+----+--------+
-   | 0  | 1  | 2  | 3      |
-   +----+----+----+--------+
-   | 30 | Lo | Hi | unused |
-   +----+----+----+--------+
+The reference flag indicates the type of access: read, write, branch target.
+
+   +----+----------------+----+----+
+   | 0  | 1              | 2  | 3  |
+   +----+----------------+----+----+
+   | 30 | reference flag | Lo | Hi |
+   +----+----------------+----+----+
 
 E0: Emulator Configuration
 ----------------------------------------------------------------------
@@ -326,9 +340,9 @@ intial power-on state of the emulator. They are variable-length records
 consisting of the main E0 record and some number of additional records
 described by the lengths encoded in the record:
 
-   +----+----------------+----------------+----------------------------------+
-   | E0 | config size Lo | config size Hi | text description length in bytes |
-   +----+----------------+----------------+----------------------------------+
+   +----+----------------------------------+----------------+----------------+
+   | E0 | text description length in bytes | config size Lo | config size Hi |
+   +----+----------------------------------+----------------+----------------+
 
 The config data and text description length describe additional 4 byte records
 immediately following this record, in that order. Both the config data and text
@@ -394,17 +408,17 @@ The pointer is as defined in Type F0 records.
    | F1   | 24-bit pointer  |
    +------+-----+-----+-----+
 
-FF: Disassembler Type
+FF: Disassembler Type & Extra Opcode Info
 ----------------------------------------------------------------------
 
 This record changes the disassembler type to the specified value, and remains
 in effect until the next Type FF record is encountered.
 
-   +----+-------------------+--------+--------+
-   | 0  | 1                 | 2      | 3      |
-   +----+-------------------+--------+--------+
-   | FF | Disassembler type | unused | unused |
-   +----+-------------------+--------+--------+
+   +----+-------------------+-------------+--------+
+   | 0  | 1                 | 2           | 3      |
+   +----+-------------------+-------------+--------+
+   | FF | Disassembler type | cycle count | flag   |
+   +----+-------------------+-------------+--------+
 
 User Input Entries
 ==============================
@@ -417,11 +431,11 @@ When the user is debugging and changes a value in mid-frame, these records will 
 
 Flag to indicate the instruction number for the following user input records
 
-   +------+----+----+-----+
-   |  0   | 1  | 2  |  3  |
-   +------+----+----+-----+
-   | 28   | Lo | Hi | XHi |
-   +------+----+----+-----+
+   +------+-----+-----+-----+
+   |  0   |  1  |  2  |  3  |
+   +------+-----+-----+-----+
+   | 80   | 24-bit pointer  |
+   +------+-----+-----+-----+
 
 
 81: User Input: One Byte Register Value
@@ -436,6 +450,72 @@ Flag to indicate the instruction number for the following user input records
 86: User Input: Program Counter
 ----------------------------------------------------------------------
 
+87: User Input: Keyboard
+-------------------------------------------------
+
+Keyboard state
+
+   +----+---------+---------+-----------+
+   | 0  | 1       | 2       | 3         |
+   +----+---------+---------+-----------+
+   | 87 | Keychar | Keycode | Modifiers |
+   +----+-------- +---------+-----------+
+
+88: User Input: Digital Joystick
+-------------------------------------------------
+
+Value for 8-way digital joystick, direction is a bitfield where bits 0 - 3
+represent directions up|down|left|right. On is pressed, off is released.
+
+   +------+----------------+----------------+----------------+
+   | 0    | 1              | 2              | 3              |
+   +------+----------------+----------------+----------------+
+   | 88   | Port number    | Direction      | Buttons        |
+   +------+----------------+----------------+----------------+
+
+89: User Input: Analog Paddle
+-------------------------------------------------
+
+Value for 8-bit analog paddle
+
+   +------+----------------+----------------+----------------+
+   | 0    | 1              | 2              | 3              |
+   +------+----------------+----------------+----------------+
+   | 89   | Port number    | Value          | Buttons        |
+   +------+----------------+----------------+----------------+
 
 
+Op Records Used as Disassembly
+====================================
 
+Op records are used for each entry in a static disassembly. No result records,
+user input, or emulator state records are used, so the only records needed are:
+
+The types are:
+
+.. csv-table:: Record Types
+   :widths: 10,90
+
+   Type (hex), Description
+   10, instruction PC, size, & additional opcode records
+   30, referenced address
+   FF, disassembler type
+
+Each op record is 4 bytes, and the smallest number of records needed will be 3.
+The type 10 and type ff records are required, and the type 30 record is
+optional since not all opcodes will have a referenced address.
+
+Because the type 10 record is variable size, each entry in the disassembly op
+history list can be of arbitrary size (up to the limit of 256 bytes per
+opcode). For a 3-byte opcode that references an address, the set of records
+would look like:
+
+   +----+----+----+----+
+   | 10 | xx | xx | 03 |
+   +----+----+----+----+
+   | xx | xx | xx | 00 |
+   +----+----+----+----+
+   | ff | xx | xx | 00 |
+   +----+----+----+----+
+   | 30 | xx | xx | xx |
+   +----+----+----+----+

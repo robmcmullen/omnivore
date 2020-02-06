@@ -47,27 +47,13 @@ disassembler_type = {
     "antic_dl": 30,
     "jumpman_harvest": 31,
     "jumpman_level": 32,
-    "6502_history": 128,
-    "6502_history_result": 129,
-    "atari800_history": 130,
-    "atari800_history_result": 131,
-    "next_instruction": 132,
-    "next_instruction_result": 133,
-    "frame_start": 192,
-    "frame_end": 192,
-    "atari800_vbi_start": 194,
-    "atari800_vbi_end": 195,
-    "atari800_dli_start": 196,
-    "atari800_dli_end": 197,
-    "breakpoint": 253,
-    "user_defined": 254,
     "unknown_disassembler": 255,
 }
 disassembler_type_max = max(disassembler_type.values())
 
 CustomEntry = namedtuple('CustomParser', ['cpu_name', 'function_name', 'function_return_type', 'function_signature', 'cpu_description'])
 
-parser_signature = "history_entry_t *entry, unsigned char *src, unsigned int pc, unsigned int last_pc, jmp_targets_t *jmp_targets"
+parser_signature = "op_record_t *first, unsigned char *src, uint32_t *order, unsigned int pc, unsigned int last_pc, jmp_targets_t *jmp_targets"
 custom_parsers = [
     CustomEntry('data', 'parse_entry_data', 'int', parser_signature, 'Data'),
     CustomEntry('antic_dl', 'parse_entry_antic_dl', 'int', parser_signature, 'Antic Display List'),
@@ -76,26 +62,11 @@ custom_parsers = [
 
 CustomEntry = namedtuple('CustomStringifier', ['cpu_name', 'function_name', 'function_return_type', 'function_signature'])
 
-stringifier_signature = "history_entry_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets"
+stringifier_signature = "op_record_t *first, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets"
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
-    CustomEntry('frame_start', 'stringify_entry_frame_start', 'int', stringifier_signature),
-    CustomEntry('frame_end', 'stringify_entry_frame_end', 'int', stringifier_signature),
     CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
     CustomEntry('jumpman_harvest', 'stringify_entry_jumpman_harvest', 'int', stringifier_signature),
-    CustomEntry('6502_history', 'stringify_entry_6502_history', 'int', stringifier_signature),
-    CustomEntry('6502_history_result', 'stringify_entry_6502_history_result', 'int', stringifier_signature),
-    CustomEntry('atari800_history', 'stringify_entry_atari800_history', 'int', stringifier_signature),
-    CustomEntry('atari800_history_result', 'stringify_entry_6502_history_result', 'int', stringifier_signature),
-    CustomEntry('atari800_vbi_start', 'stringify_entry_atari800_vbi_start', 'int', stringifier_signature),
-    CustomEntry('atari800_vbi_end', 'stringify_entry_atari800_vbi_end', 'int', stringifier_signature),
-    CustomEntry('atari800_dli_start', 'stringify_entry_atari800_dli_start', 'int', stringifier_signature),
-    CustomEntry('atari800_dli_end', 'stringify_entry_atari800_dli_end', 'int', stringifier_signature),
-    CustomEntry('next_instruction', 'stringify_entry_next_instruction', 'int', stringifier_signature),
-    CustomEntry('next_instruction_result', 'stringify_entry_next_instruction_result', 'int', stringifier_signature),
-    CustomEntry('breakpoint', 'stringify_entry_breakpoint', 'int', stringifier_signature),
-    CustomEntry('user_defined', 'stringify_entry_blank', 'int', stringifier_signature),
-    CustomEntry('unknown_disassembler', 'stringify_entry_unknown_disassembler', 'int', stringifier_signature),
 ]
 
 
@@ -291,42 +262,51 @@ $RETURN_TYPE $NAME($SIGNATURE) {
 	unsigned int rel;
 	unsigned short addr;
 	unsigned char opcode, op1, op2, op3;
-	
-	opcode = *src++;
-	entry->instruction[0] = opcode;
-	entry->pc = (unsigned short)pc;
-	entry->target_addr = 0;
+	op_record_t *op = first;
+	op_record_t *typeff;
+	unsigned char flag = 0;
+	unsigned char *opcode_storage;
+
+	first->type = 0x10;
+	first->num = 1;
+	first->payload.word = (unsigned short)pc;
+	op++; /* reserve space for up to 4 bytes of "opcode" */
+	opcode_storage = (unsigned char *)op;
+	op++;
+	typeff = op;
+	typeff->type = 0xff;
+	typeff->num = DISASM_DATA;
+	typeff->payload.byte[0] = 0;
+	typeff->payload.byte[1] = 0;
+
+	opcode = src[*order++];
+	*opcode_storage++ = opcode;
 	switch(opcode) {
 $CASES
 	default:
 		goto truncated;
 	}
-	return entry->num_bytes;
 truncated:
-	entry->num_bytes = 1;
-truncated2:
-	entry->flag = 0;
-	entry->disassembler_type = DISASM_DATA;
-	return entry->num_bytes;
+	return op - first + 1;
 }
 """
 
     leadin_template = """
 	case 0x%x:
-		opcode = *src++;
-		entry->instruction[1] = opcode;
+		opcode = src[*order++];
+		*opcode_storage++ = opcode;
 		switch(opcode) {
 %s
 		default:
-			entry->num_bytes = 2;
-			goto truncated2;
+			first->num = 2;
+			goto truncated;
 		}
 		break;
 """
 
     def __init__(self, cpu):
         self.cpu = cpu
-        self.includes = ['#include <stdio.h>','#include <string.h>', '#include "libudis.h"']
+        self.includes = ['#include <stdio.h>','#include <stdint.h>','#include <string.h>', '#include "libemu.h"']
         self.cases = self.create_cases()
         self.function_name = self.function_name_template % self.cpu_name
 
@@ -379,7 +359,6 @@ truncated2:
             case.append(f"case {hex(op.opcode)}: /* {op.mnemonic} {self.cpu.address_modes[cat.mode]} */")
 
         body = []
-        body.append(f"\tentry->num_bytes = {cat.length};")
         body.extend(self.create_category(cat))
         flags = []
         if cat.operation_type:
@@ -387,8 +366,8 @@ truncated2:
         if cat.target_addr:
             flags.append("FLAG_TARGET_ADDR")
         if flags:
-            body.append(f"\tentry->flag = {' | '.join(flags)};")
-        body.append(f"\tentry->disassembler_type = {cat.disassembler_type_name};")
+            body.append(f"\ttypeff->payload.byte[1] = {' | '.join(flags)};")
+        body.append(f"\ttypeff->num = {cat.disassembler_type_name};")
         body.append("\tbreak;\n\n")
         case_text = "\n".join([extra_indent + line for line in case]) + "\n"
         body_text = "\n".join([extra_indent + line for line in body]) + "\n"
@@ -402,83 +381,108 @@ truncated2:
             pass # nothing extra to add to length and disassembler type
         else:
             body.append(f"\tif (pc + {cat.length} > last_pc) goto truncated;")
+            body.append(f"\tfirst->num = {cat.length};")
             if cat.length == 2:
                 if cat.leadin is None:
                     if cat.pcr:
-                        body.append(f"\top1 = *src;")
-                        body.append(f"\tentry->instruction[1] = op1;")
+                        body.append(f"\top1 = src[*order];")
+                        body.append(f"\t*opcode_storage++ = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
                         body.append(f"\tjmp_targets->discovered[rel] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = rel;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = rel;")
                     elif cat.target_addr:
-                        body.append(f"\top1 = *src;")
-                        body.append(f"\tentry->instruction[1] = op1;")
+                        body.append(f"\top1 = src[*order];")
+                        body.append(f"\t*opcode_storage++ = op1;")
                         body.append(f"\tjmp_targets->discovered[op1] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = op1;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = op1;")
                     else:
-                        body.append(f"\tentry->instruction[1] = *src;")
+                        body.append(f"\t*opcode_storage++ = src[*order];")
                 else:
                     pass
             elif cat.length == 3:
                 if cat.leadin is None:
                     order = self.cpu.argorder[cat.mode]
                     print(f"\t/* {order} */")
-                    body.append(f"\top1 = *src++;")
-                    body.append(f"\tentry->instruction[1] = op1;")
-                    body.append(f"\top2 = *src;")
-                    body.append(f"\tentry->instruction[2] = op2;")
+                    body.append(f"\top1 = src[*order++];")
+                    body.append(f"\t*opcode_storage++ = op1;")
+                    body.append(f"\top2 = src[*order];")
+                    body.append(f"\t*opcode_storage++ = op2;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
                         body.append(f"\tjmp_targets->discovered[addr] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = addr;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = addr;")
                 elif cat.leadin < 256:
                     if cat.pcr:
-                        body.append(f"\top1 = *src;")
-                        body.append(f"\tentry->instruction[2] = op1;")
+                        body.append(f"\top1 = src[*order];")
+                        body.append(f"\t*opcode_storage++ = op1;")
                         body.append(f"\tif (op1 > 127) dist = op1 - 256; else dist = op1;")
                         body.append(f"\trel = (pc + 2 + dist) & 0xffff;")
                         body.append(f"\tjmp_targets->discovered[rel] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = rel;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = rel;")
                     elif cat.target_addr:
-                        body.append(f"\top1 = *src;")
-                        body.append(f"\tentry->instruction[2] = op1;")
+                        body.append(f"\top1 = src[*order];")
+                        body.append(f"\t*opcode_storage++ = op1;")
                         body.append(f"\tjmp_targets->discovered[op1] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = op1;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = op1;")
                     else:
-                        body.append(f"\tentry->instruction[2] = *src;")
+                        body.append(f"\t*opcode_storage++ = src[*order];")
             elif cat.length == 4:
                 if cat.leadin is None:
                     order = self.cpu.argorder[cat.mode]
                     print(f"\t/* {order} */")
-                    body.append(f"\top1 = *src++;")
-                    body.append(f"\tentry->instruction[1] = op1;")
-                    body.append(f"\top2 = *src++;")
-                    body.append(f"\tentry->instruction[2] = op2;")
-                    body.append(f"\top3 = *src;")
-                    body.append(f"\tentry->instruction[3] = op3;")
+                    body.append(f"\top1 = src[*order++];")
+                    body.append(f"\t*opcode_storage++ = op1;")
+                    body.append(f"\top2 = src[*order++];")
+                    body.append(f"\t*opcode_storage++ = op2;")
+                    body.append(f"\top3 = src[*order];")
+                    body.append(f"\t*opcode_storage++ = op3;")
                     if cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
                         body.append(f"\tjmp_targets->discovered[addr] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = addr;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = addr;")
                 elif cat.leadin < 256:
                     order = self.cpu.argorder[cat.mode]
                     print(f"\t/* {order} */", cat)
-                    body.append(f"\top1 = *src++;")
-                    body.append(f"\tentry->instruction[2] = op1;")
-                    body.append(f"\top2 = *src;")
-                    body.append(f"\tentry->instruction[3] = op2;")
+                    body.append(f"\top1 = src[*order++];")
+                    body.append(f"\t*opcode_storage++ = op1;")
+                    body.append(f"\top2 = src[*order];")
+                    body.append(f"\t*opcode_storage++ = op2;")
                     if cat.pcr:
                         body.append("\taddr = op1 + 256 * op2;")
                         body.append("\tif (addr > 32768) addr -= 0x10000;")
                         # limit relative address to 64k address space
                         body.append("\trel = (pc + 2 + addr) & 0xffff;")
                         body.append(f"\tjmp_targets->discovered[rel] = {cat.disassembler_type_name};")
-                        body.append("\tentry->target_addr = rel;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = rel;")
                     elif cat.target_addr:
                         body.append(f"\taddr = (256 * {order[0]}) + {order[1]};")
                         body.append(f"\tjmp_targets->discovered[addr] = {cat.disassembler_type_name};")
-                        body.append(f"\tentry->target_addr = addr;")
+                        body.append(f"\top++;")
+                        body.append(f"\top->type = 0x30;")
+                        body.append(f"\top->num = FLAG_TARGET_ADDR;")
+                        body.append(f"\top->payload.word = addr;")
 
         return body
 
