@@ -195,9 +195,10 @@ cdef char *hexdigits_upper = "000102030405060708090A0B0C0D0E0F101112131415161718
 
 cdef int data_style = 0
 
-cdef class DisassemblyConfig:
+cdef class Disassembler:
     cdef np.uint8_t c_split_comments[256]
     cdef np.uint8_t default_disasm_type
+    cdef public np.ndarray op_history
     cdef public np.ndarray jmp_targets
     cdef jmp_targets_t *jmp_targets_data
 
@@ -215,7 +216,7 @@ cdef class DisassemblyConfig:
         cdef np.uint32_t[:] obuf
         cdef np.uint32_t *obuf_addr
 
-        requested = (size * 10, size, size)
+        requested = (size * 10, size + 256, size + 256)
         if self.op_history is not None:
             obuf = self.op_history.view(np.uint32)
             num_records = obuf[2]
@@ -234,13 +235,13 @@ cdef class DisassemblyConfig:
 
     def parse(self, segment, num_entries):
         cdef np.ndarray[np.uint8_t, ndim=1] src_copy = segment.container._data
-        cdef np.uint8_t *c_src = <np.uint8_t *>src_copy
+        cdef np.uint8_t *c_src = <np.uint8_t *>&src_copy[0]
         cdef np.ndarray[np.uint8_t, ndim=1] style_copy = segment.container._style
-        cdef np.uint8_t *c_style = <np.uint8_t *>style_copy
+        cdef np.uint8_t *c_style = <np.uint8_t *>&style_copy[0]
         cdef np.ndarray[np.uint8_t, ndim=1] disasm_type_copy = segment.container._disasm_type
-        cdef np.uint8_t *c_disasm_type = <np.uint8_t *>disasm_type_copy
+        cdef np.uint8_t *c_disasm_type = <np.uint8_t *>&disasm_type_copy[0]
         cdef np.ndarray[np.uint32_t, ndim=1] order_copy = segment.container_offset
-        cdef np.uint32_t *c_order = <np.uint32_t *>order_copy.data
+        cdef np.uint32_t *c_order = <np.uint32_t *>&order_copy[0]
         cdef int num_bytes = len(order_copy)
 
         self.check_op_history(num_bytes)

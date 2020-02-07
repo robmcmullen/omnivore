@@ -53,12 +53,12 @@ int disassemble(op_history_t *buf, int origin, int num_bytes, uint8_t *src, uint
         printf("ERROR: record array size (%d) not large enough for expected size (%d)\n", buf->max_records - buf->num_records, num_bytes * 10);
         return -1;
     }
-    if (buf->max_line_to_record - buf->num_line_to_record < num_bytes + 256) {
-        printf("ERROR: line storage array size (%d) not large enough for expected size (%d)\n", buf->max_line_to_record - buf->num_line_to_record, num_bytes + 256);
+    if (buf->max_line_to_record - buf->num_line_to_record < num_bytes) {
+        printf("ERROR: line storage array size (%d) not large enough for expected size (%d)\n", buf->max_line_to_record - buf->num_line_to_record, num_bytes);
         return -1;
     }
-    if (buf->max_byte_to_line - buf->num_byte_to_line < num_bytes + 256) {
-        printf("ERROR: byte index array size (%d) not large enough for expected size (%d)\n", buf->max_byte_to_line - buf->num_byte_to_line, num_bytes + 256);
+    if (buf->max_byte_to_line - buf->num_byte_to_line < num_bytes) {
+        printf("ERROR: byte index array size (%d) not large enough for expected size (%d)\n", buf->max_byte_to_line - buf->num_byte_to_line, num_bytes);
         return -1;
     }
 
@@ -80,7 +80,7 @@ int disassemble(op_history_t *buf, int origin, int num_bytes, uint8_t *src, uint
         count = index - first_index;
         printf("chunk here -> %x:%x = %d\n", first_index, index, current_disasm_type);
         processor = (parse_func_t *)(parser_map[current_disasm_type]);
-        origin = parse_chunk(buf, processor, origin, count, src, &order[index], first_index, jmp_targets);
+        origin = parse_chunk(buf, processor, origin, count, src, &order[first_index], first_index, jmp_targets);
         first_index = index;
         current_disasm_type = t;
     }
@@ -89,7 +89,7 @@ int disassemble(op_history_t *buf, int origin, int num_bytes, uint8_t *src, uint
     count = index - first_index;
     printf("final chunk here -> %x:%x = %d\n", first_index, index, current_disasm_type);
     processor = (parse_func_t *)(parser_map[current_disasm_type]);
-    origin = parse_chunk(buf, processor, origin, count, src, &order[index], first_index, jmp_targets);
+    origin = parse_chunk(buf, processor, origin, count, src, &order[first_index], first_index, jmp_targets);
 
 
     // parsed.fix_offset_labels()

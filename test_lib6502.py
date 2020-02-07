@@ -26,7 +26,7 @@ def show_op_history(ops):
         next_line = ops[8 + ops[2] + i + 1]
         print(f"{i:4}: {line:5}", end="")
         for j in range(line, next_line):
-            print(f" {int(ops3[8 + j]):08x}", end="")
+            print(f" {int(ops[8 + j]):08x}", end="")
         print()
 
 
