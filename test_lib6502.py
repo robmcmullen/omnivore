@@ -7,7 +7,7 @@ import time
 import numpy as np
 
 from omnivore.emulators.libemu import Emu6502
-from omnivore.debugger.dtypes import CURRENT_STATE_DTYPE, REG_A, REG_X, REG_Y, REG_SP, REG_SR
+from omnivore.debugger.dtypes import CURRENT_STATE_DTYPE, REG_A, REG_X, REG_Y, REG_SP, REG_SR, CURRENT_STATE_OTHER_DISASSEMBLER_TYPE
 
 
 def show_current_state(s):
@@ -21,7 +21,7 @@ def show_op_history(ops):
     print(f"records: max={int(ops[2])}, count={int(ops[3])}")
     print(f"line lookup: max={int(ops[4])}, count={int(ops[5])}")
     print(f"byte lookup: max={int(ops[6])}, count={int(ops[7])}")
-    for i in range(10):
+    for i in range(50):
         line = ops[8 + ops[2] + i]
         next_line = ops[8 + ops[2] + i + 1]
         print(f"{i:4}: {line:5}", end="")
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     for i in range(5000):
         op = emu.eval_operation(frame0, current_state, ops3, i)
         show_current_state(current_state)
-        if op == 0x28:
-            print(f"FINISHED WITH FRAME, processed {i} operations")
+        if current_state['flag'] == CURRENT_STATE_OTHER_DISASSEMBLER_TYPE and current_state['current_disassembler'] == 0x29:
+            print(f"FINISHED WITH FRAME, processed {i+1} operations")
             break
 
     show_op_history(ops3)

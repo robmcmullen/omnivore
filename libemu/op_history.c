@@ -85,6 +85,7 @@ op_record_t *get_record_from_line_number(op_history_t *buf, int line_number) {
 	uint32_t *lookup;
 
 	// op_num = lookup[line_number]
+	if (line_number >= buf->max_line_to_record) return NULL;
 	lookup = (uint32_t *)buf + OP_HISTORY_T_SIZE + buf->max_records;
 	op = (op_record_t *)buf + OP_HISTORY_T_SIZE + lookup[line_number];
 	return op;
@@ -370,5 +371,8 @@ int eval_operation(current_state_t *current, op_record_t *op) {
 		op++;
 	}
 done:
+#ifdef DEBUG_EVAL
+	printf("  finished; last op type: %02x\n", op->type);
+#endif
 	return op->type;
 }

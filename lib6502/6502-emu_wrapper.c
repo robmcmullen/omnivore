@@ -140,7 +140,7 @@ void lib6502_fill_current_state(current_state_t *current) {
 // process a single operation in the history, using the lookup table in the
 // op_history_t structure to find the operation and processing all the records
 // for that operation
-void lib6502_eval_history(emulator_state_t *previous_frame, current_state_t *current, op_history_t *buf, int line_number) {
+int lib6502_eval_history(emulator_state_t *previous_frame, current_state_t *current, op_history_t *buf, int line_number) {
 	op_record_t *op;
 
 	// if the desired record is back in time, must start over from the save
@@ -151,9 +151,11 @@ void lib6502_eval_history(emulator_state_t *previous_frame, current_state_t *cur
 	}
 	while (line_number > current->line_number) {
 		op = get_record_from_line_number(buf, line_number);
+		if (op == NULL) return -1;
 		eval_operation(current, op);
 		current->line_number++;
 	}
+	return op->type;
 }
 
 int lib6502_step_cpu()
