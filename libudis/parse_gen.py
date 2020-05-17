@@ -62,7 +62,7 @@ custom_parsers = [
 
 CustomEntry = namedtuple('CustomStringifier', ['cpu_name', 'function_name', 'function_return_type', 'function_signature'])
 
-stringifier_signature = "op_record_t *first, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets"
+stringifier_signature = "current_state_t *entry, char *t, char *hexdigits, int lc, jmp_targets_t *jmp_targets"
 custom_stringifiers = [
     CustomEntry('data', 'stringify_entry_data', 'int', stringifier_signature),
     CustomEntry('antic_dl', 'stringify_entry_antic_dl', 'int', stringifier_signature),
@@ -579,7 +579,7 @@ case 0x%x:
                 pass  # no arguments possible if 2 bytes with leadin
         elif cat.length == 3:
             if cat.pcr:
-                body.append(f"\trel = entry->target_addr;")
+                body.append(f"\trel = entry->opcode_ref_addr;")
             elif cat.leadin is None:
                 body.append(f"\top1 = entry->instruction[1];")
                 body.append(f"\top2 = entry->instruction[2];")
@@ -589,7 +589,7 @@ case 0x%x:
                 raise RuntimeError("length=3, not pcr or leadin")
         elif cat.length == 4:
             if cat.pcr:
-                body.append(f"\trel = entry->target_addr;")
+                body.append(f"\trel = entry->opcode_ref_addr;")
             elif cat.leadin is None:
                 body.append(f"\top1 = entry->instruction[1];")
                 body.append(f"\top2 = entry->instruction[2];")
