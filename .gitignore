@@ -18,6 +18,12 @@ cprof.*
 *.orig
 *.sav
 *.patch
+*.pdb
+*.pyc
+*.pyd
+*.obj
+*.lib
+*.exp
 .cache
 .pytest_cache
 out
