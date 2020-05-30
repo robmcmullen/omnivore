@@ -82,7 +82,11 @@ else:
     cputables_path = "atrip/disassemblers/cputables.py"
     parse_gen_path = "libudis/parse_udis_cpu.c"
     if not os.path.exists(cputables_path):
-        subprocess.run([sys.executable, 'libudis/cpugen.py'])
+        completed_process = subprocess.run([sys.executable, 'libudis/cpugen.py'])
+        if completed_process.returncode != 0:
+            if os.path.exists(cputables_path):
+                os.remove(cputables_path)
+            sys.exit("libudis/cpugen.py failed, stopping the build.")        
     out = {}
     exec(compile(open(cputables_path).read(), cputables_path, 'exec'), out)
     processors = out['processors']
@@ -95,8 +99,11 @@ else:
         sys.exit("Disassemblers not generated; try 'git submodule init; git submodule update' and rerun.")
 
     if not os.path.exists(parse_gen_path):
-        subprocess.run([sys.executable, 'libudis/parse_gen.py'])
-
+        completed_process = subprocess.run([sys.executable, 'libudis/parse_gen.py'])
+        if completed_process.returncode != 0:
+            if os.path.exists(parse_gen_path):
+                os.remove(parse_gen_path)
+            sys.exit("libudis/parse_gen.py failed, stopping the build.")
     extensions = [
         Extension("omnivore.arch.antic_speedups",
                   sources=["omnivore/arch/antic_speedups.pyx"],
