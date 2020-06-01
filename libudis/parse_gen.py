@@ -19,6 +19,16 @@ from collections import defaultdict, namedtuple
 import numpy as np
 from slugify import slugify
 
+# Make sure the user has python-slugify and not slugify (both
+# of which have the same name space).
+try:
+    if slugify.__version__ == "0.0.1":
+        print("Error: You have the wrong slugify installed!")
+        print("Please remove \"slugify\" and install \"python-slugify\"")
+        exit(1)
+except:
+    pass
+
 import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
