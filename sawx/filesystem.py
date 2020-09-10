@@ -1,3 +1,23 @@
+# A simple URI-style file load/save API that defaults to the "file://" protocol
+# if no scheme is specified.
+#
+# Usage is:
+#
+#  from sawx.filesystem import fsopen as open
+#
+# where fsopen masquarades as the standard Python open function. If no scheme is
+# specified, then fsopen simply calls open. If a scheme is speficied, this module
+# determines how to load/save the named resource. Some schemes are mapped to local
+# directories, and others are computed or can be intercepted by functions.
+#
+# Example schemes are:
+#
+#   icon://
+#   template://
+#   about://
+# 
+# For example, the "icon://" scheme looks up named graphics from a list of image
+# paths.
 import os
 import sys
 import glob
@@ -11,6 +31,8 @@ import logging
 log = logging.getLogger(__name__)
 
 
+# The "about://" filesystem is stored in this dict, and the only entry created
+# by default is "about:://app" which is created in the init_filesystems() function 
 about = {
 }
 

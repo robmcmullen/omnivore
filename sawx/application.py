@@ -58,6 +58,7 @@ class SawxApp(wx.App):
 </ul>
 """
 
+    # editor_id of the editor used when no match is found for the file data
     default_editor = "simple_editor"
 
     command_line_args = None

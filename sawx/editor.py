@@ -1,3 +1,5 @@
+# Base class and utilities for editors. An editor is a UI component that can
+# view and/or edit a particular type of document.
 import os
 import sys
 import json
@@ -77,6 +79,24 @@ def find_editor_class_by_id(editor_id):
 
 
 class SawxEditor:
+    """Base class for a UI component to edit or view a document.
+
+    Documents are of class :class:`SawxDocument` and the document type will be
+    determined before the editor is loaded. The document type can be modified
+    during the init process by subclassing :method:`preprocess_document`.
+
+    The menubar and toolbar that should be displayed for this editor are
+    described in class attributes initially, but can be overridden by instance
+    attributes. The descriptions for both menubars and toolbars are arrays of
+    text that the framework uses as class names to look up. `None` represents
+    a separator, and menubars may use nested lists to describe submenus. The
+    :attr:`module_search_order` describes the modules in which to search for
+    both menu actions and toolbar actions. See :mod:`sawx.action` for more
+    information on the types of actions and how they are implemented.
+
+    Keybindings are described using a dictionary mapping of the action name
+    to the keybinding string.
+    """
     editor_id = "sawx_base_editor"
     ui_name = "Sawx Framework Base Editor"
 

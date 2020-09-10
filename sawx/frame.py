@@ -24,6 +24,12 @@ progress_log = logging.getLogger("progress")
 
 
 class SawxFrame(wx.Frame):
+    """Class representing an multi-tabbed application window, optionally including a
+    menu bar, toolbar, and status bar. This is a wrapper over the wx.Frame class.
+
+    Menu bars and toolbars are dynamically created, and each tab can contain a different
+    type of :class:`Editor`.
+    """
     def __init__(self, editor, uri=None):
         wx.Frame.__init__(self, None , -1, uri or editor.title, size=wx.GetApp().last_window_size)
 
