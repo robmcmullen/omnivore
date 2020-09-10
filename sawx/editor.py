@@ -185,6 +185,7 @@ class SawxEditor:
         self.frame = None
         self.action_factory_lookup = {}
         self.document = self.preprocess_document(document, editor_kwargs)
+        self.init_default_values()
         self.process_keyword_arguments(editor_kwargs)
         self.create_event_bindings()
         self.last_loaded_uri = document.uri
@@ -292,6 +293,10 @@ class SawxEditor:
         See: `EmulationEditor` for an example
         """
         return source_document
+
+    def init_default_values(self):
+        """Hook to initialize default values for each new instance"""
+        pass
 
     def process_keyword_arguments(self, kwargs):
         pass
