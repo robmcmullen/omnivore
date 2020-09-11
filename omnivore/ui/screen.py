@@ -102,14 +102,14 @@ class BitmapScreen(wx.Panel, EmulatorScreenBase):
 
     def bitmap_benchmark(self):
         import time
-        t0 = time.clock()
+        t0 = time.perf_counter()
         for i in range(1000):
             self.get_bitmap_slow(frame)
-        print("slow x 1000: %f" % (time.clock() - t0))
-        t0 = time.clock()
+        print("slow x 1000: %f" % (time.perf_counter() - t0))
+        t0 = time.perf_counter()
         for i in range(1000):
             self.get_bitmap_fast(frame)
-        print("fast x 1000: %f" % (time.clock() - t0))
+        print("fast x 1000: %f" % (time.perf_counter() - t0))
 
     def set_scale(self, scale):
         """Scale a numpy array by an integer factor

@@ -42,7 +42,7 @@ class ProgressDialog(wx.Dialog):
         sizer.Add(self.finished, 0, flag=wx.EXPAND|wx.ALL, border=self.border)
 
         self.count = 0
-        self.last_pulse = time.clock()
+        self.last_pulse = time.perf_counter()
         self.time_delta = 0.01
 
         self.visible = False
@@ -107,7 +107,7 @@ class ProgressDialog(wx.Dialog):
         self.is_pulse = False
 
     def is_update_time(self):
-        t = time.clock()
+        t = time.perf_counter()
         if t - self.last_pulse > self.time_delta:
             self.last_pulse = t
             return True
@@ -241,7 +241,7 @@ class wxLogHandler(logging.Handler):
             return
         m = evt.message
         if m.startswith("START"):
-            self.time_t0 = time.clock()
+            self.time_t0 = time.perf_counter()
             d = self.open_dialog()
             if "=" in m:
                 _, text = m.split("=", 1)
@@ -280,7 +280,7 @@ class wxLogHandler(logging.Handler):
                 self.force_cursor()
                 d.set_pulse()
             elif m.startswith("TIME_DELTA"):
-                t = time.clock()
+                t = time.perf_counter()
                 self.force_cursor()
                 _, text = m.split("=", 1)
                 d.add_finished(text, t - self.time_t0)
