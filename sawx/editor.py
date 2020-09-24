@@ -481,6 +481,12 @@ class SawxEditor:
     #### popup menu utilities
 
     def show_popup(self, popup_menu_desc, popup_data=None):
+        """Popup a menu from a description list.
+
+        The menu description is in the same format as the menubar_desc class
+        attribute: a list of action names. The actions will be searched using
+        the search order listed in module_search_order.
+        """
         valid_id_map = {}
         menu = MenuDescription("popup", popup_menu_desc, self, valid_id_map, popup_data=popup_data)
         menu.sync_with_editor(valid_id_map)
