@@ -82,6 +82,10 @@ else:
     cputables_path = "atrip/disassemblers/cputables.py"
     parse_gen_path = "libudis/parse_udis_cpu.c"
     if not os.path.exists(cputables_path):
+        try:
+            import slugify
+        except ImportError:
+            sys.exit('Please install python-slugify first, e.g. "pip install python-slugify"')
         completed_process = subprocess.run([sys.executable, 'libudis/cpugen.py'])
         if completed_process.returncode != 0:
             if os.path.exists(cputables_path):
@@ -462,7 +466,7 @@ setup(
     'lz4',
     'construct<2.9',  # Construct 2.9 changed the String class
     'pytz',
-    'pyparsing',
+    'pyparsing<3.0',  # pyparsing API change in 3.0, apparently
     'configobj',
     'bson<1.0.0',
     'jsonpickle',
