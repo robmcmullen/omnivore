@@ -30,7 +30,7 @@ class AtariJumpmanBootSegment(AtariDosBootSegment):
         game.segments = [
             Segment(game, 0, 0x2000, name="Game Code, Part 1", length=0x800),
             Segment(game, 0x800, 0x2800, name="Level Definition", length=0x800),
-            Segment(game, 0x1000, 0x4000, name="Game Code, Part 2", length=0x4000),
+            Segment(game, 0x1000, 0x3000, name="Game Code, Part 2", length=0x4000),
         ]
         return [header, code, game]
 
