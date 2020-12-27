@@ -32,6 +32,9 @@ class JumpmanSelectMode(NormalSelectMode):
     def resync_objects(self):
         pass
 
+    def delete_objects(self):
+        pass
+
     @property
     def has_selection(self):
         return bool(self.objects)
