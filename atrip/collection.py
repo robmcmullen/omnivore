@@ -71,9 +71,14 @@ class Collection:
 
     def __str__(self):
         desc = ""
-        if len(self) > 1:
-            desc = f"{len(self)} item "
-        desc += f"{str(self.archiver)}"
+        if self.archiver.supports_multiple_containers:
+            if len(self) > 1:
+                desc = f"{len(self)} item "
+            desc += f"{str(self.archiver)}"
+            if len(self) == 1:
+                desc += f" of {str(self.containers[0])}"
+        elif len(self) == 1:
+            desc += f"{str(self.containers[0])}"
         return desc
 
     def __len__(self):

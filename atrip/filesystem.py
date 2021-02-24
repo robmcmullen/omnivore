@@ -38,6 +38,9 @@ class Filesystem:
         self.vtoc = self.calc_vtoc_segment()
         self.directory = self.calc_directory_segment()
         media.segments = list(self.filesystem_metadata_segments())
+    
+    def __str__(self):
+        return self.ui_name
 
     #### initialization
 
@@ -128,6 +131,9 @@ class Filesystem:
 
 class NoFilesystem(Filesystem):
     ui_name = "No Filesystem"
+    
+    def __str__(self):
+        return self.media.segments[0].ui_name
 
     def filesystem_metadata_segments(self):
         media = self.media

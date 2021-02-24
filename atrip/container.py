@@ -211,7 +211,7 @@ class Container:
     #### dunder methods
 
     def __str__(self):
-        return f"{self.basename}, size={len(self)}"
+        return f"{self.filesystem}: size={len(self)}"
 
     def __len__(self):
         return np.alen(self._data)
