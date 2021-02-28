@@ -1658,13 +1658,15 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
 
     def pan_mouse_wheel(self, evt):
         w = evt.GetWheelRotation()
-        dx = self.GetScrollPos(wx.HORIZONTAL)
-        dy = self.GetScrollPos(wx.VERTICAL)
-        dy -= w // self.view_params.text_font_char_height
-        self.Scroll(dx, dy)
-        self.main.Scroll(dx, dy)
-        self.top.Scroll(dx, 0)
-        self.left.Scroll(0, dy)
+        x = self.GetScrollPos(wx.HORIZONTAL)
+        y0 = self.GetScrollPos(wx.VERTICAL)
+        h = self.view_params.text_font_char_height
+        dy = (abs(w) + h) // h
+        y1 = y0 - dy if w > 0 else y0 + dy
+        self.Scroll(x, y1)
+        self.main.Scroll(x, y1)
+        self.top.Scroll(x, 0)
+        self.left.Scroll(0, y1)
         self.Refresh()
 
     def on_char(self, evt):
