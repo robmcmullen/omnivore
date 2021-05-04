@@ -71,7 +71,7 @@ setup(
     classifiers = [c.strip() for c in """\
         Development Status :: 5 - Production/Stable
         Intended Audience :: Developers
-        License :: OSI Approved :: GNU General Public License (GPL)
+        License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)
         Operating System :: MacOS
         Operating System :: Microsoft :: Windows
         Operating System :: OS Independent

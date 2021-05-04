@@ -103,6 +103,12 @@ On some distributions, you will need development libraries to install wxPython
 
     sudo apt-get install libgstreamer1.0-dev libgtk-3-dev libwebkit2gtk-4.0-dev
 
+Linux Mint does not have a C++ compiler installed by default, so additional
+packages are needed::
+    
+    sudo apt install g++ python3-dev
+
+
 And on Gentoo this is::
 
     emerge -av net-libs/webkit-gtk
@@ -245,35 +251,25 @@ Licenses
 ========
 
 Omnivore, the 8-bit binary editor, emulator, and debugger
-Copyright (c) 2014-2018 Rob McMullen (feedback@playermissile.com)
+Copyright (c) 2014-2021 Rob McMullen (feedback@playermissile.com)
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
 Other Licenses
 ---------------
 
-* `dirent.h <https://github.com/tronkko/dirent>`_ is Copyright (c) 2015 Toni Rönkkö. It is Windows compatibility code used in libatari800 and licensed under the MIT license which is GPL compatible. See the file LICENSE.MIT in the source distribution.
+* `dirent.h <https://github.com/tronkko/dirent>`_ is Copyright (c) 2015 Toni Rönkkö. It is Windows compatibility code used in libatari800 and licensed under the MIT license which is MPL compatible. See the file LICENSE.MIT in the source distribution.
 
-* atari800 is Copyright (c) 1995-1998 David Firth and Copyright (c) 1998-2018 Atari800 development team, licensed under the GPL, same as Omnivore itself.
+* atari800 is Copyright (c) 1995-1998 David Firth and Copyright (c) 1998-2018 Atari800 development team, licensed under the GNU GPL which is MPL compatible.
 
 * `6502-emu <https://github.com/DavidBuchanan314/6502-emu>`_ is Copyright (c) 2017 David Buchanan and licensed under the MIT license. See the file LICENSE.MIT in the source distribution.
 
 * `udis <https://github.com/jefftranter/udis>`_ is Copyright (c) Jeff Tranter. It is the basis for libudis, my fast C disassembler. It is licensed under the Apache 2.0 license. See the file LICENSE.apache in the source distribution.
 
-* `ATasm <http://atari.miribilist.com/atasm/>`_ is Copyright (c) 1998-2014 Mark Schmelzenbach and licensed under the GPL, the same as Omnivore itself.
+* `ATasm <http://atari.miribilist.com/atasm/>`_ is Copyright (c) 1998-2014 Mark Schmelzenbach and licensed under the GNU GPL which is MPL compatible.
 
 * `tinycthread <https://tinycthread.github.io/>`_ is Copyright (c) 2012 Marcus Geelnard and Copyright (c) 2013-2016 Evan Nemerson, licensed under the zlib/libpng license. See the file LICENSE.tinycthread in the source distribution.
 
