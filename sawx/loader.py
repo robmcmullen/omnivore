@@ -116,7 +116,10 @@ def identify_file(uri, match_multiple=False):
     file_guess = FileGuess(uri)
     for loader in loaders:
         log.debug(f"identify_file: trying loader {loader}")
-        file_metadata = loader.identify_loader(file_guess)
+        try:
+            file_metadata = loader.identify_loader(file_guess)
+        except AttributeError:
+            file_metadata = None
         if file_metadata:
             file_metadata['uri'] = uri
             mime_type = file_metadata['mime']
