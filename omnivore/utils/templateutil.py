@@ -10,7 +10,7 @@ machine_labels = {}
 def load_memory_map(keyword):
     global machine_labels
     try:
-        rwlabels = machine_labels[keyword]
+        rwlabels, rlabels, wlabels = machine_labels[keyword]
     except KeyError:
         try:
             text = get_template(keyword)
@@ -21,8 +21,8 @@ def load_memory_map(keyword):
                 log.error(f"Couldn't find memory map named '{keyword}'")
                 return MemoryMap(keyword)
         rwlabels, rlabels, wlabels = MemoryMap.from_text(keyword, text)
-        machine_labels[keyword] = rwlabels  # FIXME: temporary until get sets of memory map labels
-    return rwlabels
+        machine_labels[keyword] = rwlabels, rlabels, wlabels  # FIXME: temporary until get sets of memory map labels
+    return rwlabels, rlabels, wlabels
 
 available_memory_maps = {}
 

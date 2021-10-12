@@ -33,7 +33,7 @@ import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
 # mnemonic flags
-from atrip.disassemblers.flags import und, z80bit, lbl, pcr
+from atrip.disassemblers.flags import und, z80bit, lbl, pcr, udis_opcode_flag_store
 
 import logging
 log = logging.getLogger(__name__)
@@ -206,6 +206,10 @@ class Opcode:
     @property
     def pcr(self):
         return bool(self.flag & pcr)
+
+    @property
+    def store(self):
+        return bool(self.flag & udis_opcode_flag_store)
 
     @property
     def operation_type(self):
@@ -505,11 +509,12 @@ class HistoryStringifier(HistoryParser):
 
     template = """
 $RETURN_TYPE $NAME($SIGNATURE) {
-	int dist;
+	int dist, store;
 	unsigned char opcode, leadin, op1, op2, op3;
 	char *first_t, *h, *opstr;
 	unsigned short rel, addr;
 
+	store = 0;
 	first_t = t;
 	opcode = entry->instruction[0];
 	switch(opcode) {
@@ -556,7 +561,11 @@ case 0x%x:
         case.append(f"/* {cat.mode} {self.cpu.address_modes[cat.mode]} {'(undocumented) ' if cat.undoc else ''}*/")
         slug = label_target(cat)
         for op in opcodes:
-            case.append(f"case {hex(op.opcode)}: opstr = lc ? \"{op.mnemonic.lower()}\" : \"{op.mnemonic.upper()}\"; goto {slug};")
+            if op.store:
+                store = "store = 1; "
+            else:
+                store = ""
+            case.append(f"case {hex(op.opcode)}: opstr = lc ? \"{op.mnemonic.lower()}\" : \"{op.mnemonic.upper()}\"; {store}goto {slug};")
 
         case_text = "\n".join([extra_indent + line for line in case]) + "\n"
         body_text = ""
@@ -675,14 +684,14 @@ case 0x%x:
             lines.append(f"{indent}h = &hexdigits[({operand})*2]; *t++=*h++; *t++=*h++;")
 
         def flush_label1x8(op1):
-            lines.append(f"\tt += print_label_or_addr({op1}, jmp_targets, t, hexdigits, 1);")
+            lines.append(f"\tt += print_label_or_addr({op1}, jmp_targets, t, hexdigits, 1, store);")
 
         def flush_label2x8(op1, op2):
             lines.append(f"\taddr = {op2} + 256 * {op1};")
-            lines.append(f"\tt += print_label_or_addr(addr, jmp_targets, t, hexdigits, 0);")
+            lines.append(f"\tt += print_label_or_addr(addr, jmp_targets, t, hexdigits, 0, store);")
 
         def flush_label16(operand):
-            lines.append(f"\tt += print_label_or_addr({operand}, jmp_targets, t, hexdigits, 0);")
+            lines.append(f"\tt += print_label_or_addr({operand}, jmp_targets, t, hexdigits, 0, store);")
 
         def flush_hex16(operand):
             flush_hex("(%s>>8)" % operand)

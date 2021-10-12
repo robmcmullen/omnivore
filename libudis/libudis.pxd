@@ -44,6 +44,8 @@ ctypedef int (*print_label_bridge_t)(int addr, int rw);
 cdef struct jmp_targets_t:
     np.uint8_t discovered[256*256];
     label_storage_t *labels;
+    label_storage_t *rlabels;
+    label_storage_t *wlabels;
 
 ctypedef int (*parse_func_t)(history_entry_t *, unsigned char *, unsigned int, unsigned int, jmp_targets_t *)
 

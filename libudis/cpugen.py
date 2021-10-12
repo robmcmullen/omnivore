@@ -9,7 +9,7 @@ import glob
 import sys
 sys.path[0:0] = [os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]
 
-from atrip.disassemblers.flags import pcr, und, z80bit, lbl, comment, udis_opcode_flag_label, udis_opcode_flag_return, udis_opcode_flag_jump, udis_opcode_flag_branch
+from atrip.disassemblers.flags import pcr, und, z80bit, lbl, comment, udis_opcode_flag_label, udis_opcode_flag_return, udis_opcode_flag_jump, udis_opcode_flag_branch, udis_opcode_flag_store
 
 
 # These contain extra info not in udis. Originally they were in udis but they
@@ -28,6 +28,7 @@ cpu_extra = {
         branchOpcodes = set(["jsr"])
         modesExclude = set(["indirect"])
         returnOpcodes = set(["rts", "rti", "brk"])
+        storeOpcodes = set(["asl", "dec", "inc", "lsr", "ror", "rol", "sta", "stx", "sty", "slo", "rla", "sre", "rra", "sax", "dcp", "isc", "ahx", "shx", "shy", "tas"])
         """,
     '65816': """
          labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey", "indirectzeropage", "absoluteindexedindirect", "absolutelong", "absolutelongx", "absoluteindirectx", "absoluteindirectlong", "directpageindirect", "directpageindirectlong", "directpageindirectlongy", "blockmove"])
@@ -36,6 +37,7 @@ cpu_extra = {
          branchOpcodes = set(["jsr"])
          modesExclude = set(["indirect", "absoluteindexedindirect"])
          returnOpcodes = set(["rts", "rti", "brk"])
+         storeOpcodes = set(["asl", "dec", "inc", "lsr", "ror", "rol", "sta", "stx", "sty"])
         """,
     '65c02': """
         labelTargets = set(["absolute", "absolutex", "absolutey", "indirect", "indirectx", "indirecty", "zeropage", "zeropagex", "zeropagey", "absoluteindexedindirect"])
@@ -44,6 +46,7 @@ cpu_extra = {
         branchOpcodes = set(["jsr"])
         modesExclude = set(["indirect", "absoluteindexedindirect"])
         returnOpcodes = set(["rts", "rti", "brk"])
+        storeOpcodes = set(["asl", "dec", "inc", "lsr", "ror", "rol", "sta", "stx", "sty"])
         """,
     '6800': """
         labelTargets = set(["direct", "indexed", "extended"])
@@ -89,6 +92,7 @@ def fix_opcode_table(cpu, allow_undoc=False):
     branch_modes = cpu.get('branchModes', set())
     exclude_modes = cpu.get('modesExclude', set())
     ret = cpu.get('returnOpcodes', set())
+    store = cpu.get('storeOpcodes', set())
     possibilities = []
     nop = -1  # flag NOP as non-existent unless there's actually a NOP instruction
     found_undoc = False
@@ -105,6 +109,8 @@ def fix_opcode_table(cpu, allow_undoc=False):
                 continue
         if mode in labels:
             flag |= udis_opcode_flag_label
+        if mnemonic in store:
+            flag |= udis_opcode_flag_store
         if mnemonic in ret:
             flag |= udis_opcode_flag_return
         elif mode not in exclude_modes:

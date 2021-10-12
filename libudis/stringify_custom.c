@@ -8,7 +8,7 @@
 #include "libdebugger.h"
 
 
-int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page) {
+int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hexdigits, int zero_page, int store) {
     char *first_t, *h;
     label_description_t *desc;
     uint16_t index;
@@ -21,6 +21,16 @@ int print_label_or_addr(int addr, jmp_targets_t *jmp_targets, char *t, char *hex
         index = jmp_targets->labels->index[(addr & 0xffff)];
         // printf("\naddr=%lx index=%d\n", addr & 0xffff, index);
         if (index > 0) desc = &jmp_targets->labels->labels[index];
+        else if (store) {
+            index = jmp_targets->wlabels->index[(addr & 0xffff)];
+            // printf("\naddr=%lx index=%d\n", addr & 0xffff, index);
+            if (index > 0) desc = &jmp_targets->wlabels->labels[index];
+        }
+        else {
+            index = jmp_targets->rlabels->index[(addr & 0xffff)];
+            // printf("\naddr=%lx index=%d\n", addr & 0xffff, index);
+            if (index > 0) desc = &jmp_targets->rlabels->labels[index];
+        }
     }
     if (desc) {
         count = desc->text_length;
@@ -126,7 +136,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
             *t++='>';
         }
         else {
-            t += print_label_or_addr(entry->target_addr, jmp_targets, t, hexdigits, 0);
+            t += print_label_or_addr(entry->target_addr, jmp_targets, t, hexdigits, 0, 0);
         }
     }
     else {
@@ -157,7 +167,7 @@ int stringify_entry_antic_dl(history_entry_t *entry, char *t, char *hexdigits, i
                     *t++='>',*t++=' ';
                 }
                 else {
-                    t += print_label_or_addr(entry->target_addr, jmp_targets, t, hexdigits, 0);
+                    t += print_label_or_addr(entry->target_addr, jmp_targets, t, hexdigits, 0, 0);
                     *t++=' ';
                 }
             }

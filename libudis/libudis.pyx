@@ -143,10 +143,16 @@ cdef class StringifiedDisassembly:
             #         print(f"label {i:02x} {labels[i]}")
             #     except KeyError:
             #         pass
-            arr = labels.labels_raw
+            arr = labels[0].labels_raw
             self.jmp_targets_data.labels = <label_storage_t *>arr.data
+            arr = labels[1].labels_raw
+            self.jmp_targets_data.rlabels = <label_storage_t *>arr.data
+            arr = labels[2].labels_raw
+            self.jmp_targets_data.wlabels = <label_storage_t *>arr.data
         else:
             self.jmp_targets_data.labels = <label_storage_t *>0
+            self.jmp_targets_data.rlabels = <label_storage_t *>0
+            self.jmp_targets_data.wlabels = <label_storage_t *>0
 
         self.clear()
         # for disassembler_type in range(40):
@@ -433,10 +439,16 @@ cdef class StringifiedHistory:
         self.jmp_targets_data = <jmp_targets_t *>self.jmp_targets.data
 
         if labels is not None:
-            arr = labels.labels_raw
+            arr = labels[0].labels_raw
             self.jmp_targets_data.labels = <label_storage_t *>arr.data
+            arr = labels[1].labels_raw
+            self.jmp_targets_data.rlabels = <label_storage_t *>arr.data
+            arr = labels[2].labels_raw
+            self.jmp_targets_data.wlabels = <label_storage_t *>arr.data
         else:
             self.jmp_targets_data.labels = <label_storage_t *>0
+            self.jmp_targets_data.rlabels = <label_storage_t *>0
+            self.jmp_targets_data.wlabels = <label_storage_t *>0
 
     def __len__(self):
         return self.history_text.num_lines
