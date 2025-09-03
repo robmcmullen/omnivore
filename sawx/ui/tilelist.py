@@ -106,7 +106,7 @@ class TileListControl(wx.Panel):
             item = TileCategory(label)
             self.categories.append((item, len(self.items)))
             self.items.append(item)
-            for i in np.arange(np.alen(tiles)):
+            for i in np.arange(len(tiles)):
                 item = Tile(tiles[i:i+1], "")
                 self.items.append(item)
                 self.pattern_to_index[item.get_bytes] = i

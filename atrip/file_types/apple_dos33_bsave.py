@@ -20,8 +20,8 @@ class Dos33Bsave(FileType):
         within this segment.
 
         """
-        origin = self[0] + 256 * self[1]
-        expected_count = self[2] + 256 * self[3]
+        origin = int(self[0]) + 256 * int(self[1])
+        expected_count = int(self[2]) + 256 * int(self[3])
         count = len(self) - 4
         if count != expected_count:
             raise errors.InvalidBinaryFile(f"Extra data after BSAVE segment: found {count}, header specifies {expected_count} bytes")

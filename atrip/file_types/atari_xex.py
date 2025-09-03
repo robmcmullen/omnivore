@@ -17,13 +17,13 @@ except NameError:
 class RunAddressSegment(Segment):
     @property
     def run_address(self):
-        return self[0] + 256 * self[1]
+        return int(self[0]) + 256 * int(self[1])
 
 
 class InitAddressSegment(Segment):
     @property
     def init_address(self):
-        return self[0] + 256 * self[1]
+        return int(self[0]) + 256 * int(self[1])
 
 
 class ObjSegment(Segment):
@@ -35,14 +35,14 @@ class ObjSegment(Segment):
         within this segment.
 
         """
-        start = self[0] + 256 * self[1]
-        end = self[2] + 256 * self[3]
+        start = int(self[0]) + 256 * int(self[1])
+        end = int(self[2]) + 256 * int(self[3])
         count = end - start + 1
         if start == 0x2e0:
-            target = self[4] + 256 * self[5]
+            target = int(self[4]) + 256 * int(self[5])
             s = RunAddressSegment(self, 4, origin=start, name=f"RUNAD: JMP ${target:04x}", length=2)
         elif start == 0x2e2:
-            target = self[4] + 256 * self[5]
+            target = int(self[4]) + 256 * int(self[5])
             s = InitAddressSegment(self, 4, origin=start, name=f"INITAD: JSR ${target:04x}", length=2)
         else:
             s = Segment(self, 4, name=f"[${start:04x}-${end:04x}]", origin=start, length=count)
@@ -52,7 +52,7 @@ class ObjSegment(Segment):
 class AtariObjectFile(FileType):
     """Parse a binary chunk into segments according to the Atari DOS object
     file format.
-    
+
     Ref: http://www.atarimax.com/jindroush.atari.org/afmtexe.html
     """
     ui_name = "Atari 8-bit Object File"

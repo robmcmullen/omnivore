@@ -32,7 +32,7 @@ class ArrayWrapper:
         return f"ArrayWrapper at {hex(id(self))} count={len(self)} order={self.order}"
 
     def __len__(self):
-        return np.alen(self.order)
+        return len(self.order)
 
     def __and__(self, other):
         return self.np_data[self.order] & other
@@ -118,7 +118,7 @@ class Segment:
         return self._reverse_offset
 
     def __len__(self):
-        return np.alen(self.container_offset)
+        return len(self.container_offset)
 
     #### dunder methods and convenience functions to operate on data (not style)
 

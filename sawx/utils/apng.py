@@ -98,7 +98,7 @@ def chunks(png):
 		elif isnumpy(png):
 			with io.BytesIO() as f2:
 				im = PIL.Image.fromarray(png).save(f2, "PNG", optimize=True)
-				png = np.fromstring(f2.getvalue(), dtype=np.uint8)
+				png = np.frombuffer(f2.getvalue(), dtype=np.uint8)
 		else:
 			with io.BytesIO() as f2:
 				PIL.Image.open(png).save(f2, "PNG", optimize=True)

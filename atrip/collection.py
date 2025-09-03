@@ -82,7 +82,7 @@ class Collection:
         return desc
 
     def __len__(self):
-        return np.alen(self.containers)
+        return len(self.containers)
 
     def __getitem__(self, index):
         """Returns segment given the uuid, raising KeyError if not found

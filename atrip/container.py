@@ -214,7 +214,7 @@ class Container:
         return f"{self.filesystem}: size={len(self)}"
 
     def __len__(self):
-        return np.alen(self._data)
+        return len(self._data)
 
     def __and__(self, other):
         return self._data & other
@@ -495,7 +495,7 @@ class Container:
         comment_mask = style_bits.get_style_mask(comment=True)
         has_comments = np.where(style_base & style_bits.comment_bit_mask > 0)[0]
         both = np.intersect1d(comment_text_indexes, has_comments)
-        log.info("fixup comments: %d correctly marked, %d without style, %d empty text" % (np.alen(both), np.alen(comment_text_indexes) - np.alen(both), np.alen(has_comments) - np.alen(both)))
+        log.info("fixup comments: %d correctly marked, %d without style, %d empty text" % (len(both), len(comment_text_indexes) - len(both), len(has_comments) - len(both)))
         style_base &= comment_mask
         comment_style = style_bits.get_style_bits(comment=True)
         style_base[comment_text_indexes] |= comment_style

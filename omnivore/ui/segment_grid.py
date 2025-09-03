@@ -281,7 +281,7 @@ class SegmentGridControl(KeyBindingControlMixin, cg.CompactGrid):
             blob = clipboard_helpers.create_numpy_clipboard_blob(ranges, indexes, segment, self)
             data_objs.append(blob.data_obj)
             data_objs.append(blob.text_data_obj(self.view_params.text_copy_stringifier))
-            # elif np.alen(indexes) > 0:
+            # elif len(indexes) > 0:
             #     data = segment[indexes]
             #     s1 = data.tobytes()
             #     s2 = indexes.tobytes()

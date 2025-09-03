@@ -166,7 +166,7 @@ class BaseRenderer(object):
 
     def get_bitplanes(self, segment_viewer, bytes_per_row, nr, count, byte_values, style, colors):
         bitplanes = self.bitplanes
-        _, rem = divmod(np.alen(byte_values), bitplanes)
+        _, rem = divmod(len(byte_values), bitplanes)
         if rem > 0:
             byte_values = np.append(byte_values, np.zeros(rem, dtype=np.uint8))
             style = np.append(style, np.zeros(rem, dtype=np.uint8))

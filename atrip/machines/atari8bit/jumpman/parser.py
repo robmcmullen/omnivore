@@ -18,7 +18,7 @@ def is_valid_level_segment(segment, strict=True):
     if len(segment) >= 0x800 and segment[0x3f] == 0x4c and segment[0x48] == 0x20 and segment[0x4b] == 0x60 and segment[0x4c] == 0xff:
         # check for sane level definition table
         if strict:
-            addr = segment[0x38]*256 + segment[0x37]
+            addr = int(segment[0x38])*256 + int(segment[0x37])
             if addr >= segment.origin and addr < segment.origin + len(segment):
                 pass
             else:
@@ -175,7 +175,7 @@ class PixelList:
 
         # pass 2: create mask & image
         pixels = np.zeros((self.h, self.w), dtype=np.uint8)
-        mask = np.full((self.h, self.w), 0xff, dtype=np.uint8) 
+        mask = np.full((self.h, self.w), 0xff, dtype=np.uint8)
         for n, xoffset, yoffset, colors in self.pixel_list:
             x = bounds.xmin + xoffset
             y = bounds.ymin + yoffset
@@ -443,7 +443,7 @@ class Girder(JumpmanDrawObject):
     default_addr = 0x4000
     default_dy = 3
     sort_order = 0
-    drawing_codes = np.fromstring("\x04\x00\x00\x01\x01\x01\x01\x04\x00\x01\x01\x00\x01\x00\x04\x00\x02\x01\x01\x01\x01\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x04\x00\x00\x01\x01\x01\x01\x04\x00\x01\x01\x00\x01\x00\x04\x00\x02\x01\x01\x01\x01\xff", dtype=np.uint8)
 
 
 class DoubleWideGirder(JumpmanDrawObject):
@@ -469,7 +469,7 @@ class Ladder(JumpmanDrawObject):
     vertical_only = True
     sort_order = 10
     valid_x_mask = 0xfe  # Even pixels only
-    drawing_codes = np.fromstring("\x02\x00\x00\x02\x02\x02\x06\x00\x02\x02\x02\x00\x01\x02\x02\x02\x06\x01\x02\x02\x08\x00\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x00\x03\x02\x02\x02\x06\x03\x02\x02\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x02\x00\x00\x02\x02\x02\x06\x00\x02\x02\x02\x00\x01\x02\x02\x02\x06\x01\x02\x02\x08\x00\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x00\x03\x02\x02\x02\x06\x03\x02\x02\xff", dtype=np.uint8)
 
     def update_table(self, state):
         state.add_ladder(self)
@@ -482,7 +482,7 @@ class UpRope(JumpmanDrawObject):
     default_dy = 4
     vertical_only = True
     sort_order = 20
-    drawing_codes = np.fromstring("\x01\x00\x00\x01\x01\x01\x01\x01\x01\x00\x02\x01\x01\x01\x03\x01\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x01\x00\x00\x01\x01\x01\x01\x01\x01\x00\x02\x01\x01\x01\x03\x01\xff", dtype=np.uint8)
 
 
 class DownRope(JumpmanDrawObject):
@@ -493,7 +493,7 @@ class DownRope(JumpmanDrawObject):
     vertical_only = True
     sort_order = 30
     valid_x_mask = 0xfe  # Even pixels only
-    drawing_codes = np.fromstring("\x01\x00\x00\x02\x01\x00\x01\x02\x01\x01\x02\x02\x01\x01\x03\x02\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x01\x00\x00\x02\x01\x00\x01\x02\x01\x01\x02\x02\x01\x01\x03\x02\xff", dtype=np.uint8)
 
     def update_table(self, state):
         state.add_downrope(self)
@@ -505,7 +505,7 @@ class Coin(JumpmanDrawObject):
     default_dy = 3
     single = True
     sort_order = 40
-    drawing_codes = np.fromstring("\x04\x00\x00\x00\x03\x03\x00\x04\x00\x01\x03\x00\x00\x03\x04\x00\x02\x00\x03\x03\x00\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x04\x00\x00\x00\x03\x03\x00\x04\x00\x01\x03\x00\x00\x03\x04\x00\x02\x00\x03\x03\x00\xff", dtype=np.uint8)
 
     def harvest_entry(self, hx, hy):
         # default to empty painting table list at 0x284c
@@ -516,7 +516,7 @@ class EraseGirder(JumpmanDrawObject):
     name = "girder_erase"
     default_addr = 0x4016
     sort_order = 35
-    drawing_codes = np.fromstring("\x04\x00\x00\x00\x00\x00\x00\x04\x00\x01\x00\x00\x00\x00\x04\x00\x02\x00\x00\x00\x00\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x04\x00\x00\x00\x00\x00\x00\x04\x00\x01\x00\x00\x00\x00\x04\x00\x02\x00\x00\x00\x00\xff", dtype=np.uint8)
 
 
 class EraseLadder(JumpmanDrawObject):
@@ -527,7 +527,7 @@ class EraseLadder(JumpmanDrawObject):
     vertical_only = True
     sort_order = 36
     valid_x_mask = 0xfe  # Even pixels only
-    drawing_codes = np.fromstring("\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\xff", dtype=np.uint8)
 
 
 class EraseRope(JumpmanDrawObject):
@@ -537,7 +537,7 @@ class EraseRope(JumpmanDrawObject):
     default_dy = 4
     vertical_only = True
     sort_order = 37
-    drawing_codes = np.fromstring("\x02\x00\x00\x00\x00\x02\x00\x01\x00\x00\x02\x00\x02\x00\x00\x02\x00\x03\x00\x00\xff", dtype=np.uint8)
+    drawing_codes = np.frombuffer(b"\x02\x00\x00\x00\x00\x02\x00\x01\x00\x00\x02\x00\x02\x00\x00\x02\x00\x03\x00\x00\xff", dtype=np.uint8)
 
 
 class LevelDef:
@@ -725,7 +725,7 @@ class ScreenState(LevelDef):
     # The following commented out code generates the text string
     #circle = np.zeros((7, 8), dtype=np.uint8)
     #circle[0,2:6] = circle[6,2:6] = circle[2:5,0] = circle[2:5,7] = circle[1,1] = circle[1,6] = circle[5,6] = circle[5,1] = style_bits.match_bit_mask
-    trigger_circle = np.fromstring('\x00\x00    \x00\x00\x00 \x00\x00\x00\x00 \x00 \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00 \x00 \x00\x00\x00\x00 \x00\x00\x00    \x00\x00', dtype=np.uint8).reshape((7,8))
+    trigger_circle = np.frombuffer(b'\x00\x00    \x00\x00\x00 \x00\x00\x00\x00 \x00 \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00 \x00 \x00\x00\x00\x00 \x00\x00\x00    \x00\x00', dtype=np.uint8).reshape((7,8))
 
     def draw_object(self, obj, highlight=False):
         if obj.drawing_codes is None:
@@ -885,7 +885,7 @@ class JumpmanLevelBuilder:
                 arg2 = data[index + 1]
                 index += 2
                 if c == 0xfc:
-                    addr = arg2 * 256 + arg1
+                    addr = int(arg2) * 256 + int(arg1)
                 elif c == 0xfd:
                     x = int(arg1)
                     y = int(arg2)
@@ -929,7 +929,7 @@ class JumpmanLevelBuilder:
             entry = data[index:index + 7]
             log.debug("harvest entry: ck=%x x=%x y=%x trig=%02x%02x paint=%02x%02x" % (entry[0], entry[1], entry[2], entry[4], entry[3], entry[6], entry[5]))
 
-            addr = entry[5] + 256*entry[6]
+            addr = int(entry[5]) + 256*int(entry[6])
             paint_objs = []
             if addr >= origin and addr <= origin + len(d):
                 paint_objs = self.parse_objects(d[addr - origin:])
@@ -939,7 +939,7 @@ class JumpmanLevelBuilder:
             elif addr != 0x284c:
                 log.error("  trigger paint addr %04x not found in segment!" % addr)
 
-            addr = entry[3] + 256*entry[4]
+            addr = int(entry[3]) + 256*int(entry[4])
             if addr == 0x284b:
                 addr = None
 

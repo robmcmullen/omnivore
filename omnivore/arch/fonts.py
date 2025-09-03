@@ -57,7 +57,7 @@ class AnticFont(object):
         if 'np_data' in font_data:
             data = font_data['np_data']
         else:
-            data = np.fromstring(font_data['data_bytes'], dtype=np.uint8)
+            data = np.frombuffer(font_data['data_bytes'], dtype=np.uint8)
         self.font_data = font_data
 
         m = segment_viewer

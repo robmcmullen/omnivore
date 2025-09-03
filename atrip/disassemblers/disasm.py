@@ -305,11 +305,11 @@ if __name__ == "__main__":
         except TypeError:
             print("Invalid hex digits!")
             sys.exit()
-        binary = np.fromstring(binary, dtype=np.uint8)
+        binary = np.frombuffer(binary, dtype=np.uint8)
         process(binary)
     else:
         for filename in args.filenames:
             with open(filename, 'rb') as fh:
                 binary = fh.read()
-            binary = np.fromstring(binary, dtype=np.uint8)
+            binary = np.frombuffer(binary, dtype=np.uint8)
             process(binary)

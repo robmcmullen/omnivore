@@ -113,7 +113,7 @@ class TextBlob(ClipboardBlob):
             value = data_obj.GetText().encode('utf-8')
         else:
             raise ClipboardError("Unsupported format type for %s: %s" % (self.data_format_name, ", ".join([str(f) in fmts])))
-        self.data = np.fromstring(value, dtype=np.uint8)
+        self.data = np.frombuffer(value, dtype=np.uint8)
 
 
 class JumpmanBlob(ClipboardBlob):

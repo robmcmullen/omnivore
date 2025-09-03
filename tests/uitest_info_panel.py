@@ -40,8 +40,8 @@ class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, wx.DefaultSize)
         data = np.arange(0x800, dtype=np.uint8)
-        data[0:0x50] = np.fromstring("01\x1b1\x1b1\x1b1\xa0I\xc6\x94\xaax\x0f\x00\x00B\x80E\x1b1\xe00:\xbe\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Ws\x8e\xab\x00\x00\x86\x86\x0fT\x86\x8a\xff\xca\x00d\x00\xd0\x07\x00,F,\x80(\x01\x10L\xfdO!\x00\x00L\x00\x00 K(`\xff\x00\x8e,", dtype=np.uint8)
-        data[0x3ec:0x400] = np.fromstring("abdceabdceabcdeabcde", dtype=np.uint8)
+        data[0:0x50] = np.frombuffer("01\x1b1\x1b1\x1b1\xa0I\xc6\x94\xaax\x0f\x00\x00B\x80E\x1b1\xe00:\xbe\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Ws\x8e\xab\x00\x00\x86\x86\x0fT\x86\x8a\xff\xca\x00d\x00\xd0\x07\x00,F,\x80(\x01\x10L\xfdO!\x00\x00L\x00\x00 K(`\xff\x00\x8e,", dtype=np.uint8)
+        data[0x3ec:0x400] = np.frombuffer("abdceabdceabcdeabcde", dtype=np.uint8)
         r = SegmentData(data)
         segment = DefaultSegment(r, 0x2800)
         editor = MockEditor(segment)

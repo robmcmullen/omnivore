@@ -169,7 +169,7 @@ class TestChunkBreak(object):
             fh.write("\n".join(text1) + "\n")
 
     def test_bad(self):
-        data = np.fromstring("\x8dp0L\xaa8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pppM\x00p\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\x8d\x8d\x06\x16\x8e\r", dtype=np.uint8)
+        data = np.frombuffer("\x8dp0L\xaa8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pppM\x00p\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\x8d\x8d\x06\x16\x8e\r", dtype=np.uint8)
         style = np.empty(len(data), dtype=np.uint8)
         style[0:17] = 0
         style[17:] = 2

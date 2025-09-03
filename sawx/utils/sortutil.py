@@ -36,7 +36,7 @@ def indexes_to_ranges(indexes):
     groups = np.split(indexes, np.where(np.diff(indexes) != 1)[0] + 1)
     ranges = []
     for group in groups:
-        if np.alen(group) > 0:
+        if len(group) > 0:
             ranges.append((int(group[0]), int(group[-1]) + 1))
     return ranges
 

@@ -328,7 +328,7 @@ class TextEditField(InfoField):
 
     def parsed_to_bytes(self, parsed_data):
         raw = np.zeros([self.byte_count],dtype=np.uint8)
-        text = np.fromstring(parsed_data, dtype=np.uint8)
+        text = np.frombuffer(parsed_data, dtype=np.uint8)
         text = text[0:self.byte_count]
         text = self.map_parsed_to_bytes(text)
         raw[0:len(text)] = text
@@ -351,7 +351,7 @@ class AtasciiC0(TextEditField):
 
     def parsed_to_bytes(self, parsed_data):
         raw = np.zeros([self.byte_count],dtype=np.uint8) | self.high_bits
-        text = np.fromstring(parsed_data, dtype=np.uint8)
+        text = np.frombuffer(parsed_data, dtype=np.uint8)
         text = text[0:self.byte_count]
         text = self.map_parsed_to_bytes(text)
         # Center text
@@ -490,7 +490,7 @@ class CoinsNeededField(DropDownField):
         except AttributeError:
             return 0
         num = e.num_coins
-        value = reduce_from_little_endian(raw)
+        value = int(reduce_from_little_endian(raw))
         diff = num - value
         if diff < 0:
             diff = 0
@@ -584,7 +584,7 @@ class InfoPanel(PANELTYPE):
         return field
 
     def is_valid_data(self):
-        """Override this in subclasses to disable entire panel if there is 
+        """Override this in subclasses to disable entire panel if there is
         no valid data to show.
         """
         return True

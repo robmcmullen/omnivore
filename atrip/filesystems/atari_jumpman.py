@@ -167,7 +167,7 @@ class AtariJumpmanLevelTesterBootSegment(AtariDosBootSegment):
         self.bldadr = 0x700
         start, size = media.get_index_of_sector(4)
         i = 9
-        count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
+        count = int(media[i]) + 256 * int(media[i+1]) + 256 * 256 *int(media[i + 2])
         if start + count > len(media) or start + count < len(media) - 128:
             raise errors.NotEnoughSpaceOnDisk(f"KBoot header reports size {count}; media only {len(media)}")
         else:
@@ -187,7 +187,7 @@ class AtariJumpmanLevelTesterDirectory(AtariJumpmanDirectory):
     def find_first_level(self, media):
         start, size = media.get_index_of_sector(4)
         i = 9
-        count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
+        count = int(media[i]) + 256 * int(media[i+1]) + 256 * 256 *int(media[i + 2])
         if start + count > len(media) or start + count < len(media) - 128:
             raise errors.NotEnoughSpaceOnDisk(f"Jumpman Level Tester header reports size {count}; media only {len(media)}")
         else:

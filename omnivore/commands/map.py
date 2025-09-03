@@ -123,7 +123,7 @@ class PasteRectangularCommand(SegmentCommand):
         undo.flags.byte_values_changed = True
         #undo.flags.index_range = i1, i2
         old_data = d[r1:r2,c1:c2].copy()
-        new_data = np.fromstring(self.data, dtype=np.uint8).reshape(self.rows, self.cols)
+        new_data = np.frombuffer(self.data, dtype=np.uint8).reshape(self.rows, self.cols)
         d[r1:r2, c1:c2] = new_data[0:r2 - r1, 0:c2 - c1]
         undo.data = (r1, c1, r2, c2, last, old_data, )
         self.undo_info = undo

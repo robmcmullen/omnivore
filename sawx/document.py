@@ -140,7 +140,7 @@ class SawxDocument:
         return f"Document: uuid={self.uuid}, mime={self.mime}, {self.uri}"
 
     def __len__(self):
-        return np.alen(self.raw_data)
+        return len(self.raw_data)
 
     def __getitem__(self, val):
         return self.raw_data[val]

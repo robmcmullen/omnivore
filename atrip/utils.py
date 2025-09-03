@@ -63,7 +63,7 @@ def bool_to_ranges(matches):
     groups = np.split(w, np.where(np.diff(w) != 1)[0] + 1)
     ranges = []
     for group in groups:
-        if np.alen(group) > 0:
+        if len(group) > 0:
             ranges.append((int(group[0]), int(group[-1]) + 1))
     return ranges
 
@@ -144,7 +144,7 @@ def collapse_to_ranges(src, compact=False):
     groups = np.split(src, np.where(np.diff(src) != 1)[0] + 1)
     ranges = []
     for group in groups:
-        if np.alen(group) > 0:
+        if len(group) > 0:
             start = int(group[0])
             end = int(group[-1]) + 1
             if compact and end == start + 1:

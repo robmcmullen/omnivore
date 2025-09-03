@@ -26,7 +26,7 @@ class KBootDirent(Dirent):
         media = self.filesystem.media
         start, size = media.get_index_of_sector(4)
         i = 9
-        count = media[i] + 256 * media[i+1] + 256 * 256 *media[i + 2]
+        count = int(media[i]) + 256 * int(media[i+1]) + 256 * 256 *int(media[i + 2])
         if start + count > len(media) or start + count < len(media) - 128:
             raise errors.NotEnoughSpaceOnDisk(f"KBoot header reports size {count}; media only {len(media)}")
         else:
@@ -112,7 +112,7 @@ def add_xexboot_header(bytes, bootcode=None, title=b"DEMO", author=b"an atari us
         # assume that the user supplied everything desired in their own code!
         title = ""
         author = ""
-    bootsize = np.alen(bootcode)
+    bootsize = len(bootcode)
     v = bootcode[9:11].view(dtype="<u2")
     v[0] = xex_size
 

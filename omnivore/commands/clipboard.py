@@ -54,8 +54,8 @@ class ClipboardCommand(SegmentCommand):
 
     def get_data(self, orig):
         data = self.blob.data
-        data_len = np.alen(data)
-        orig_len = np.alen(orig)
+        data_len = len(data)
+        orig_len = len(orig)
         if data_len > orig_len > 1:
             data_len = orig_len
         return data[0:data_len]
@@ -64,7 +64,7 @@ class ClipboardCommand(SegmentCommand):
         s = self.blob
         style_data = s.style
         if style_data is not None:
-            style = s.style[0:np.alen(data)]
+            style = s.style[0:len(data)]
         else:
             style = None
         return style
@@ -75,12 +75,12 @@ class ClipboardCommand(SegmentCommand):
         data = self.get_data(self.segment.data[indexes])
         log.debug("orig data: %s" % self.segment.data[indexes])
         log.debug("new data: %s" % data)
-        indexes = indexes[0:np.alen(data)]
+        indexes = indexes[0:len(data)]
         log.debug("indexes truncated to data length: %s" % str(indexes))
         s = self.blob
         if s.relative_comment_indexes is not None:
             log.debug("relative comment indexes: %s" % (str(s.relative_comment_indexes)))
-            subset = s.relative_comment_indexes[s.relative_comment_indexes < np.alen(indexes)]
+            subset = s.relative_comment_indexes[s.relative_comment_indexes < len(indexes)]
             log.debug("comment index subset: %s" % str(subset))
             comment_indexes = indexes[subset]
             log.debug("new comment indexes: %s" % str(comment_indexes))
@@ -147,8 +147,8 @@ class PasteAndRepeatCommand(PasteCommand):
 
     def get_data(self, orig):
         data = self.data
-        data_len = np.alen(data)
-        orig_len = np.alen(orig)
+        data_len = len(data)
+        orig_len = len(orig)
         if orig_len > data_len:
             reps = (orig_len // data_len) + 1
             data = np.tile(data, reps)
@@ -187,7 +187,7 @@ class PasteRectCommand(SegmentCommand):
         undo.flags.byte_values_changed = True
         #undo.flags.index_range = i1, i2
         old_data = d[r1:r2,c1:c2].copy()
-        new_data = np.fromstring(s.data, dtype=np.uint8).reshape(s.num_rows, s.num_cols)
+        new_data = np.frombuffer(s.data, dtype=np.uint8).reshape(s.num_rows, s.num_cols)
         d[r1:r2, c1:c2] = new_data[0:r2 - r1, 0:c2 - c1]
         undo.data = (r1, c1, r2, c2, last, old_data, )
         self.undo_info = undo

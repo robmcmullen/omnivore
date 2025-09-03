@@ -108,8 +108,8 @@ class JumpmanPlayfieldModel:
             raise RuntimeError
         source = self.segment
         start = source.origin
-        level_addr = source[0x37] + source[0x38]*256
-        harvest_addr = source[0x4e] + source[0x4f]*256
+        level_addr = int(source[0x37]) + int(source[0x38])*256
+        harvest_addr = int(source[0x4e]) + int(source[0x4f])*256
         log.debug("level def table: %x, harvest table: %x" % (level_addr, harvest_addr))
         last = source.origin + len(source)
         if level_addr > start and harvest_addr > start and level_addr < last and harvest_addr < last:

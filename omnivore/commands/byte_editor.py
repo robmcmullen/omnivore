@@ -138,7 +138,7 @@ class RampUpCommand(SetSelectionCommand):
     ui_name = "Ramp Up"
 
     def get_data(self, orig):
-        num = np.alen(orig)
+        num = len(orig)
         if type(self.data) == slice:
             first = self.data.start
             last = self.data.stop
@@ -157,7 +157,7 @@ class RampDownCommand(SetSelectionCommand):
     ui_name = "Ramp Down"
 
     def get_data(self, orig):
-        num = np.alen(orig)
+        num = len(orig)
         if type(self.data) == slice:
             first = self.data.start
             last = self.data.stop

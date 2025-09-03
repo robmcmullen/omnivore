@@ -79,7 +79,7 @@ class TileWrapControl(wx.Panel):
             self.categories.append(t)
             w = wx.WrapSizer()
             for tiles in items[1:]:
-                for i in np.arange(np.alen(tiles)):
+                for i in np.arange(len(tiles)):
                     data = tiles[i:i+1]
                     bmp = self.segment_viewer.machine.antic_font.get_image(data[0], self.zoom)
                     btn = TileButton(panel, -1, bmp, style=wx.BORDER_NONE|wx.BU_EXACTFIT)

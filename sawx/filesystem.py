@@ -15,7 +15,7 @@
 #   icon://
 #   template://
 #   about://
-# 
+#
 # For example, the "icon://" scheme looks up named graphics from a list of image
 # paths.
 import os
@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 
 
 # The "about://" filesystem is stored in this dict, and the only entry created
-# by default is "about:://app" which is created in the init_filesystems() function 
+# by default is "about:://app" which is created in the init_filesystems() function
 about = {
 }
 
@@ -163,7 +163,7 @@ class WxIconFileSystemHandler(wx.FileSystemHandler):
             except FileNotFoundError as e:
                 log.error(str(e))
                 return None
-            data = np.fromstring(fh.read(), dtype=np.uint8)
+            data = np.frombuffer(fh.read(), dtype=np.uint8)
             log.debug("Created %s in wxMemoryFS" % path)
             wx.MemoryFSHandler.AddFileWithMimeType(path, data, "image/png")
 
@@ -234,30 +234,30 @@ def glob_in_paths(paths):
 def get_image_path(rel_path, module=None, file=None, up_one_level=False, excludes=[]):
     """Get the image path for static images relative to the specified module
     or file.
-    
+
     The image path will be modified to find images in py2exe/py2app
     locations assuming that the data files have been added using the above
     get_py2exe_data_files function.
-    
+
     Either the module or file keyword parameter may be specified to provide
     a relative module or file name.  The module may be specified either by
     reference to an imported module, or by a dotted string.  The file must be
     specified using the __file__ keyword.  If both are specified, file takes
     precedence.
-    
+
     For example, in omnivore, the images are located in a directory "icons" in
     main sawx directory (e.g. sawx/icons):
-        
+
     import sawx
     image_path = get_image_path("icons", sawx)
-    
+
     will return the absolute path of "omnivore/icons".
-    
+
     An example using the file keyword: if the current module is in the
     sawx/framework directory, then the call to:
-    
+
     get_image_path("icons", file=__file__)
-    
+
     will contain the absolute path to the sawx/framework/icons directory.
     """
     if file is None:
