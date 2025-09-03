@@ -518,7 +518,7 @@ class ConstantWidthImageCache(VirtualTableImageCache):
 
 class VariableWidthLineRenderer(VirtualTableLineRenderer):
     """Table where each row can have a different number of cells
-    
+
     The constraint is that every column in a given row is always the same size;
     that is, each column is the same multiple of cells. Other rows may have
     their own cell width per column, only within a row is every column the same
@@ -557,7 +557,7 @@ class VariableWidthLineRenderer(VirtualTableLineRenderer):
         :param items_per_row: number of entries in each line of the array
         :param col_widths: array, entry containing the number of cells (width)
             required to display that items in that column
-        
+
         Args:
             widths (list): one entry per row, number of cells in a column
         """
@@ -725,7 +725,7 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         w, h = self.GetClientSize()
         last_x, last_y = self.parent.CalcUnscrolledPosition(w, h)
         #print("size: w,h=%d,%d empty: x,y=%d,%d last: x,y=%d,%d origin=%d,%d" % (w, h, empty_x, empty_y, last_x, last_y, px, py))
- 
+
         dc.SetBrush(self.parent.view_params.empty_brush)
         dc.SetPen(wx.TRANSPARENT_PEN)
 
@@ -936,13 +936,13 @@ class BaseGridDrawControl(wx.ScrolledCanvas):
         if row < sy:
             sy2 = row
         elif row >= sy + self.fully_visible_rows - 1:
-            sy2 = max(0, row - (self.fully_visible_rows - 1))
+            sy2 = max(0, int(row) - (self.fully_visible_rows - 1))
         else:
             sy2 = sy
         if cell < sx:
             sx2 = cell
         elif self.fully_visible_cells > 0 and cell >= sx + self.fully_visible_cells - 1:
-            sx2 = max(0, cell - (self.fully_visible_cells - 1))
+            sx2 = max(0, int(cell) - (self.fully_visible_cells - 1))
         else:
             sx2 = sx
         caret_log.debug(f"ensure_visible: row={row}, cell={cell} sx={sx} sy={sy} sx2={sx2} sy2={sy2} fully_vis: {self.fully_visible_rows}, {self.fully_visible_cells}")
@@ -1393,7 +1393,7 @@ class ColLabelWindow(AuxWindow):
             dc.SetBackground(wx.Brush(s.view_params.col_header_bg_color))
             dc.Clear()
             for rect, offset, header in s.line_renderer.get_col_labels(s, cell, s.main.visible_cells):
-                dc.DrawText(header, rect.x + offset, 0)
+                dc.DrawText(header, int(rect.x + offset), 0)
             if debug_refresh:
                 cell, _ = s.GetViewStart()
                 self.draw_col_label_text("%d" % self.refresh_count, cell, 1, dc)
@@ -1646,7 +1646,7 @@ class CompactGrid(wx.ScrolledWindow, MouseEventMixin):
         else:
             dx = self.GetScrollPos(wx.HORIZONTAL)
             dy = evt.GetPosition()
-       
+
         pos = (dx ,dy)
         #print "scrolling..." + str(pos) + str(evt.GetPosition())
         self.Scroll(dx, dy)
@@ -1895,7 +1895,7 @@ class NonUniformGridWindow(CompactGrid):
         super().set_view_param_defaults()
         self.want_col_header = False
 
-       
+
 #For testing
 if __name__ == '__main__':
     class FakeList(object):

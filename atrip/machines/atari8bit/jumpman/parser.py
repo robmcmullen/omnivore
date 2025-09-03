@@ -103,17 +103,17 @@ class DrawObjectBounds:
 
     def add_point(self, x, y):
         if self.xmin is None:
-            self.xmin = self.ymin = x
-            self.xmax = self.ymax = y
+            self.xmin = self.ymin = int(x)
+            self.xmax = self.ymax = int(y)
         else:
             if x < self.xmin:
-                self.xmin = x
+                self.xmin = int(x)
             elif x > self.xmax:
-                self.xmax = x
+                self.xmax = int(x)
             if y < self.ymin:
-                self.ymin = y
+                self.ymin = int(y)
             elif y > self.ymax:
-                self.ymax = y
+                self.ymax = int(y)
 
     def add_bounds(self, other):
         if self.xmin is None:
