@@ -150,7 +150,7 @@ class SawxDocument:
         return self.undo_stack.is_dirty()
 
     def to_bytes(self):
-        return self.raw_data.tostring()
+        return self.raw_data.tobytes()
 
     def load_permute(self, editor):
         if self.permute:
@@ -266,7 +266,7 @@ class SawxDocument:
         return True
 
     def calc_raw_data_to_save(self):
-        return self.raw_data.tostring()
+        return self.raw_data.tobytes()
 
     def save_raw_data(self, uri, raw_data):
         fh = open(uri, 'wb')

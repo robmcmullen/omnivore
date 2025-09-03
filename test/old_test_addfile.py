@@ -61,7 +61,7 @@ class BaseFilesystemModifyTest:
         assert len(self.image.files) == self.num_files_in_sample + 1
 
         data2 = self.image.find_file("RAMP50K.BIN")
-        assert data.tostring() == data2
+        assert data.tobytes() == data2
 
     def test_many_small(self):
         entries = [

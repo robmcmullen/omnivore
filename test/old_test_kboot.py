@@ -42,7 +42,7 @@ class TestKbootHeader:
         data = np.fromfile("../samples/air_defense_v18.xex", dtype=np.uint8)
         image = self.check_size(data)
         with open("../samples/air_defense_v18.atr", "wb") as fh:
-            txt = image.tostring()
+            txt = image.tobytes()
             fh.write(txt)
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ class BitmapScreen(wx.Panel, EmulatorScreenBase):
     def get_bitmap_slow(self, frame):
         scaled = self.scale_frame(frame)
         h, w, _ = scaled.shape
-        image = wx.ImageFromData(w, h, scaled.tostring())
+        image = wx.ImageFromData(w, h, scaled.tobytes())
         bmp = wx.BitmapFromImage(image)
         return bmp
 

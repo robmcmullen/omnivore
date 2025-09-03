@@ -91,7 +91,7 @@ class PasteCommentsCommand(ClearCommentCommand):
             ranges = [(cursor, len(segment))]
         ClearCommentCommand.__init__(self, segment, ranges, bytes)
         self.cursor = cursor
-        self.comments = bytes.tostring().splitlines()
+        self.comments = bytes.tobytes().splitlines()
         self.num_lines = len(self.comments)
 
     def __str__(self):

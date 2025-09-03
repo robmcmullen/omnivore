@@ -109,7 +109,7 @@ def sample():
         for i in range(num_lines):
             start = p.text_starts[i]
             count = p.line_lengths[i]
-            text = p.text_buffer[start:start + count].tostring()
+            text = p.text_buffer[start:start + count].tobytes()
             print(f"text[{start}:{start + count}] = {text}, {e[i]}")
 
     driver = DisassemblyConfig()

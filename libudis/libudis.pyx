@@ -61,14 +61,14 @@ cdef class TextStorage:
                 info = &self.label_info_data[i]
                 start = info.text_start_index
                 count = info.line_length
-                lines.append(self.text_buffer[start:start + count].tostring())
+                lines.append(self.text_buffer[start:start + count].tobytes())
             return lines
         elif isinstance(index, int):
             i = index
             info = &self.label_info_data[i]
             start = info.text_start_index
             count = info.line_length
-            return self.text_buffer[start:start + count].tostring()
+            return self.text_buffer[start:start + count].tobytes()
         else:
             raise TypeError(f"index must be int or slice, not {type(index)}")
 
@@ -80,7 +80,7 @@ cdef class TextStorage:
             info = &self.label_info_data[i]
             start = info.text_start_index
             count = info.line_length
-            yield self.text_buffer[start:start + count].tostring()
+            yield self.text_buffer[start:start + count].tobytes()
 
     cdef clear(self):
         self.num_lines = 0

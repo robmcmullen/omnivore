@@ -38,7 +38,7 @@ CHUNK_BEFORE_IDAT = {
 
 def is_png(png):
 	"""Test if ``png`` is a valid PNG file by checking the signature.
-	
+
 	:arg png: If ``png`` is a :any:`path-like object` or :any:`file-like object`
 		object, read the content into bytes.
 	:type png: path-like, file-like, or bytes
@@ -46,7 +46,7 @@ def is_png(png):
 	"""
 	if isinstance(png, str) or hasattr(png, "__fspath__"):
 		with open(png, "rb") as f:
-			png_header = f.read(8)		
+			png_header = f.read(8)
 	elif hasattr(png, "read"):
 		position = png.tell()
 		png_header = png.read(8)
@@ -58,12 +58,12 @@ def is_png(png):
 	else:
 		raise TypeError("Must be file, bytes, or str but get {}"
 				.format(type(png)))
-			
+
 	return png_header == PNG_SIGN
-			
+
 def chunks_read(b):
-	"""Parse PNG bytes into different chunks, yielding (type, data). 
-	
+	"""Parse PNG bytes into different chunks, yielding (type, data).
+
 	@type is a string of chunk type.
 	@data is the bytes of the chunk. Including length, type, data, and crc.
 	"""
@@ -78,11 +78,11 @@ def chunks_read(b):
 
 def chunks(png):
 	"""Yield ``(chunk_type, chunk_raw_data)`` from ``png``.
-	
+
 	.. note::
-	
+
 		``chunk_raw_data`` includes chunk length, type, and CRC.
-	
+
 	:arg png: If ``png`` is a :any:`path-like object` or :any:`file-like object`
 		object, read the content into bytes.
 	:type png: path-like, file-like, or bytes
@@ -103,20 +103,20 @@ def chunks(png):
 			with io.BytesIO() as f2:
 				PIL.Image.open(png).save(f2, "PNG", optimize=True)
 				png = f2.getvalue()
-	
+
 	if isinstance(png, str) or hasattr(png, "__fspath__"):
 		# path like
 		with open(png, "rb") as f:
-			png = f.read()		
+			png = f.read()
 	elif hasattr(png, "read"):
 		# file like
 		png = png.read()
 	elif isnumpy(png):
 		# numpy array
-		png = png.tostring()
-		
+		png = png.tobytes()
+
 	return chunks_read(png)
-		
+
 def make_chunk(type, data):
 	"""Create a raw chunk by composing chunk's ``type`` and ``data``. It
 	calculates chunk length and CRC for you.
@@ -129,7 +129,7 @@ def make_chunk(type, data):
 	data = type.encode("latin-1") + data
 	out += data + struct.pack("!I", binascii.crc32(data) & 0xffffffff)
 	return out
-	
+
 class PNG:
 	"""Represent PNG image. This class should only be initiated with
 	classmethods."""
@@ -139,7 +139,7 @@ class PNG:
 		self.width = None
 		self.height = None
 		self.chunks = []
-		
+
 	def init(self):
 		"""Extract some info from chunks"""
 		for type, data in self.chunks:
@@ -147,15 +147,15 @@ class PNG:
 				self.hdr = data
 			elif type == "IEND":
 				self.end = data
-				
+
 		if self.hdr:
 			# grab w, h info
 			self.width, self.height = struct.unpack("!II", self.hdr[8:16])
-			
+
 	@classmethod
 	def open(cls, png):
 		"""Open a PNG file.
-		
+
 		:arg png: See :func:`chunks`.
 		:rtype: :class:`PNG`
 		"""
@@ -163,11 +163,11 @@ class PNG:
 		o.chunks = list(chunks(png))
 		o.init()
 		return o
-		
+
 	@classmethod
 	def from_chunks(cls, chunks):
 		"""Construct PNG from raw chunks.
-		
+
 		:arg chunks: A list of ``(chunk_type, chunk_raw_data)``. Also see
 			:func:`chunks`.
 		:type chunks: list[tuple(str, bytes)]
@@ -176,16 +176,16 @@ class PNG:
 		o.chunks = chunks
 		o.init()
 		return o
-		
+
 	def to_bytes(self):
 		"""Convert entire image to bytes.
-		
+
 		:rtype: bytes
 		"""
 		chunks = [PNG_SIGN]
 		chunks.extend(c[1] for c in self.chunks)
 		return b"".join(chunks)
-		
+
 	def save(self, file):
 		"""Save entire image to a file.
 
@@ -197,7 +197,7 @@ class PNG:
 				f.write(self.to_bytes())
 		else:
 			file.write(self.to_bytes())
-		
+
 class FrameControl:
 	"""A data class holding fcTL info."""
 	def __init__(self, width=None, height=None, x_offset=0, y_offset=0, delay=100, delay_den=1000, depose_op=1, blend_op=0):
@@ -211,18 +211,18 @@ class FrameControl:
 		self.delay_den = delay_den
 		self.depose_op = depose_op
 		self.blend_op = blend_op
-		
+
 	def to_bytes(self):
 		"""Convert to bytes.
-		
+
 		:rtype: bytes
 		"""
 		return struct.pack("!IIIIHHbb", self.width, self.height, self.x_offset, self.y_offset, self.delay, self.delay_den, self.depose_op, self.blend_op)
-		
+
 	@classmethod
 	def from_bytes(cls, b):
 		"""Contruct fcTL info from bytes.
-		
+
 		:arg bytes b: The length of ``b`` must be *28*, excluding sequence
 			number and CRC.
 		"""
@@ -231,11 +231,11 @@ class FrameControl:
 class APNG:
 	"""Represent APNG image."""
 	def __init__(self, num_plays=0):
-		"""APNG is composed by multiple PNGs, which can be inserted with 
+		"""APNG is composed by multiple PNGs, which can be inserted with
 		:meth:`append`.
-		
+
 		:arg int num_plays: Number of times to loop. 0 = infinite.
-			
+
 		:var frames: Frames of APNG, a list of ``(png, control)`` tuple.
 		:vartype frames: list[tuple(PNG, FrameControl)]
 		:var int num_plays: same as ``num_plays``.
@@ -245,10 +245,10 @@ class APNG:
 
 	def __str__(self):
 		return f"APNG: {len(self.frames)} frames, # plays={self.num_plays}"
-		
+
 	def append(self, png, **options):
 		"""Read a PNG file and append one frame.
-		
+
 		:arg png: See :meth:`PNG.open`.
 		:arg options: See :class:`FrameControl`.
 		"""
@@ -259,35 +259,35 @@ class APNG:
 		if control.height is None:
 			control.height = png.height
 		self.frames.append((png, control))
-		
+
 	def to_bytes(self):
 		"""Convert entire image to bytes.
-		
+
 		:rtype: bytes
 		"""
-		
+
 		# grab the chunks we needs
 		out = [PNG_SIGN]
-		# FIXME: it's tricky to define "other_chunks". HoneyView stop the 
+		# FIXME: it's tricky to define "other_chunks". HoneyView stop the
 		# animation if it sees chunks other than fctl or idat, so we put other
 		# chunks to the end of the file
 		other_chunks = []
 		seq = 0
-		
+
 		# for first frame
 		png, control = self.frames[0]
-		
+
 		# header
 		out.append(png.hdr)
-		
+
 		# acTL
 		out.append(make_chunk("acTL", struct.pack("!II", len(self.frames), self.num_plays)))
-		
+
 		# fcTL
 		if control:
 			out.append(make_chunk("fcTL", struct.pack("!I", seq) + control.to_bytes()))
 			seq += 1
-		
+
 		# and others...
 		idat_chunks = []
 		for type, data in png.chunks:
@@ -299,7 +299,7 @@ class APNG:
 				continue
 			out.append(data)
 		out.extend(idat_chunks)
-		
+
 		# FIXME: we should do some optimization to frames...
 		# for other frames
 		for png, control in self.frames[1:]:
@@ -308,7 +308,7 @@ class APNG:
 				make_chunk("fcTL", struct.pack("!I", seq) + control.to_bytes())
 			)
 			seq += 1
-			
+
 			# and others...
 			for type, data in png.chunks:
 				if type in ("IHDR", "IEND") or type in CHUNK_BEFORE_IDAT:
@@ -321,23 +321,23 @@ class APNG:
 					seq += 1
 				else:
 					other_chunks.append(data)
-		
+
 		# end
 		out.extend(other_chunks)
 		out.append(png.end)
-		
+
 		return b"".join(out)
-		
+
 	@classmethod
 	def from_files(cls, files, **options):
 		"""Create APNG from multiple files.
-		
+
 		This is same as::
-		
+
 			im = APNG()
 			for file in files:
 				im.append(file, **options)
-				
+
 		:arg list files: A list of file. See :meth:`PNG.open`.
 		:arg options: Options for :class:`FrameControl`.
 		:rtype: APNG
@@ -346,24 +346,24 @@ class APNG:
 		for file in files:
 			o.append(file, **options)
 		return o
-		
+
 	@classmethod
 	def open(cls, file):
 		"""Open an APNG file.
-		
+
 		:arg file: See :func:`chunks`.
 		:rtype: APNG
 		"""
 		hdr = None
 		head_chunks = []
 		end = ("IEND", make_chunk("IEND", b""))
-		
+
 		frame_chunks = []
 		frames = []
 		num_plays = 0
-		
+
 		control = None
-		
+
 		for type, data in chunks(file):
 			if type == "IHDR":
 				hdr = data
@@ -376,7 +376,7 @@ class APNG:
 					# IDAT inside chunk, go to next frame
 					frame_chunks.append(end)
 					frames.append((PNG.from_chunks(frame_chunks), control))
-					
+
 					control = FrameControl.from_bytes(data[12:-4])
 					hdr = make_chunk("IHDR", struct.pack("!II", control.width, control.height) + hdr[16:-4])
 					frame_chunks = [("IHDR", hdr)]
@@ -398,12 +398,12 @@ class APNG:
 				head_chunks.append((type, data))
 			else:
 				frame_chunks.append((type, data))
-				
+
 		o = cls()
 		o.frames = frames
 		o.num_plays = num_plays
 		return o
-		
+
 	def save(self, file):
 		"""Save entire image to a file.
 
