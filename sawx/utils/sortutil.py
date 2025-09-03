@@ -29,7 +29,7 @@ def collapse_overlapping_ranges(ranges):
 def ranges_to_indexes(ranges):
     if len(ranges) == 0:
         return np.zeros([0], dtype=np.uint32)
-    return np.hstack((np.arange(r[0], r[1], dtype=np.uint32) for r in ranges))
+    return np.hstack(list(np.arange(r[0], r[1], dtype=np.uint32) for r in ranges))
 
 
 def indexes_to_ranges(indexes):
@@ -87,7 +87,7 @@ def rect_ranges_to_indexes(row_width, start_offset, ranges):
         num_cols = c2 - c1 + 1
         num_rows = r2 - r1 + 1
         log.debug("range: %x-%x, (%d,%d) -> (%d,%d), nr=%d nc=%d zeroc=%x" % (start, end, r1, c1, r2, c2, num_rows, num_cols, first_row_column_zero))
-        rect_indexes = np.hstack((np.arange(i + c1 + first_row_column_zero, i + c1 + first_row_column_zero + num_cols, dtype=np.uint32) for i in range(0, num_rows * row_width, row_width)))
+        rect_indexes = np.hstack(list(np.arange(i + c1 + first_row_column_zero, i + c1 + first_row_column_zero + num_cols, dtype=np.uint32) for i in range(0, num_rows * row_width, row_width)))
         indexes = np.hstack((indexes, rect_indexes))
 
     unique_indexes = np.unique(indexes)
