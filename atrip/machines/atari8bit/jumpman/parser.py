@@ -871,7 +871,7 @@ class JumpmanLevelBuilder:
         last = len(data)
         index = 0
         while index < last:
-            c = data[index]
+            c = int(data[index])
             log.debug("index=%d, command=%x" % (index, c))
             self.pick_index += 1
             index += 1
@@ -916,7 +916,7 @@ class JumpmanLevelBuilder:
         # might be coins
         harvest_info = []
         while index < last:
-            c = data[index]
+            c = int(data[index])
             if c >= 0xf0:
                 # ordinarily, the table is suppost to be delimited by an 0xff,
                 # but Grand Puzzle II has a bug in the harvest table definition
