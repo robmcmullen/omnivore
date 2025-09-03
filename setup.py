@@ -4,10 +4,16 @@ import subprocess
 from setuptools import setup, find_packages, Extension
 import glob
 from distutils.command.clean import clean
-try:
-    import numpy as np
-except ImportError:
-    sys.exit('Please install numpy first, e.g. "pip install numpy"')
+print(sys.path)
+class np:
+    def get_include():
+        return "/home/rob/venv/wx/lib/python3.12/site-packages/numpy/_core/include"
+
+#import numpy as np
+# try:
+#     import numpy as np
+# except ImportError:
+#     sys.exit('Please install numpy first, e.g. "pip install numpy"')
 
 if sys.version_info < (3, 6):
     sys.exit('Omnivore requires Python 3.6 or higher')
@@ -76,7 +82,7 @@ class clean_py(clean):
                     pass
 
 if "clean" in sys.argv:
-    # prevent extensions from being 
+    # prevent extensions from being
     ext_modules = []
 else:
     cputables_path = "atrip/disassemblers/cputables.py"
@@ -90,7 +96,7 @@ else:
         if completed_process.returncode != 0:
             if os.path.exists(cputables_path):
                 os.remove(cputables_path)
-            sys.exit("libudis/cpugen.py failed, stopping the build.")        
+            sys.exit("libudis/cpugen.py failed, stopping the build.")
     out = {}
     exec(compile(open(cputables_path).read(), cputables_path, 'exec'), out)
     processors = out['processors']
