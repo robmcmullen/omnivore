@@ -104,11 +104,11 @@ cdef class TextStorage:
             print(f"CYTHON ERROR! Text buffer size {self.text_buffer_size} exceeded in TextStorage, attempted to save {self.text_index} bytes")
         #print(f"stored line {i}, max={self.max_lines}, storage: index={self.text_index}, max={self.text_buffer_size}")
 
-    def get_label_data_addr(self):
-        return long(<long>&self.label_info_data[0])
+    # def get_label_data_addr(self):
+    #     return long(<long>&self.label_info_data[0])
 
-    def get_text_storage_addr(self):
-        return long(<long>&self.text_buffer_data[0])
+    # def get_text_storage_addr(self):
+    #     return long(<long>&self.text_buffer_data[0])
 
 
 cdef class StringifiedDisassembly:
