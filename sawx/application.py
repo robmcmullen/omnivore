@@ -178,7 +178,7 @@ class SawxApp(wx.App):
 
     def MacOpenFiles(self, filenames):
         """OSX specific routine to handle files that are dropped on the icon
-        
+
         """
         if self.command_line_args is not None:
             # MacOpenFiles gets called for command line arguments, so this flag
@@ -211,7 +211,7 @@ class SawxApp(wx.App):
     def activate_timer(self, start=True):
         if start:
             log.debug("restarting toolbar timer")
-            wx.CallAfter(self.toolbar_timer.Start, self.toolbar_check_interval * 1000)
+            wx.CallAfter(self.toolbar_timer.Start, int(self.toolbar_check_interval * 1000))
             log.debug("restarted toolbar timer")
         else:
             log.debug("halting toolbar timer")

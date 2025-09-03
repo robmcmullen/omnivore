@@ -224,7 +224,7 @@ class EmulationDocument(DiskImageDocument):
 
     def start_timer(self, repeat=False, delay=None, forceupdate=True):
         if not self.emulation_timer.IsRunning():
-            self.emulation_timer.StartOnce(self.framerate * 1000)
+            self.emulation_timer.StartOnce(int(self.framerate * 1000))
 
     def stop_timer(self, repeat=False, delay=None, forceupdate=True):
         self.emulation_timer.Stop()
@@ -247,7 +247,7 @@ class EmulationDocument(DiskImageDocument):
             if next_time <= 0.001:
                 log.warning("need to drop frames!")
                 next_time = .001
-            self.emulation_timer.StartOnce(next_time * 1000)
+            self.emulation_timer.StartOnce(int(next_time * 1000))
         else:
             self.emulator_update_screen_event(True)
             self.priority_level_refresh_event(100)
