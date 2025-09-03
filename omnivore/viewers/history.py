@@ -72,8 +72,8 @@ class InstructionHistoryTable(cg.VirtualTable):
                 x = h['tv_cycle']
                 y = h['tv_line']
                 if x & 0x80:
-                    x = x & 0x7f
-                    y = y | 0x100
+                    x = int(x) & 0x7f
+                    y = int(y) | 0x100
                 yield "%3d %3d" % (y, x)
             elif t == flags.DISASM_FRAME_START or t == flags.DISASM_FRAME_END:
                 h = h.view(dtype=dd.HISTORY_FRAME_DTYPE)
