@@ -304,13 +304,13 @@ class Emulator(Debugger):
         self.coldstart()
 
     def parse_state(self):
-        base = np.byte_bounds(self.output_raw)[0]
-        self.state_start_offset = np.byte_bounds(self.state_array)[0] - base
+        base = np.lib.array_utils.byte_bounds(self.output_raw)[0]
+        self.state_start_offset = np.lib.array_utils.byte_bounds(self.state_array)[0] - base
 
-        memaccess_offset = np.byte_bounds(self.memory_access_array)[0] - base
-        memtype_offset = np.byte_bounds(self.access_type_array)[0] - base
-        video_offset = np.byte_bounds(self.video_array)[0] - base
-        audio_offset = np.byte_bounds(self.audio_array)[0] - base
+        memaccess_offset = np.lib.array_utils.byte_bounds(self.memory_access_array)[0] - base
+        memtype_offset = np.lib.array_utils.byte_bounds(self.access_type_array)[0] - base
+        video_offset = np.lib.array_utils.byte_bounds(self.video_array)[0] - base
+        audio_offset = np.lib.array_utils.byte_bounds(self.audio_array)[0] - base
         self.save_state_memory_blocks = [
             (memaccess_offset, self.memory_access_array.nbytes, 0, "Memory Access"),
             (memtype_offset, self.access_type_array.nbytes, 0, "Access Type"),
