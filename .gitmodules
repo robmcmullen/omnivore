@@ -9,3 +9,7 @@
 [submodule "libudis/udis"]
 	path = libudis/udis
 	url = git@github.com:robmcmullen/udis.git
+[submodule "libimgui/imgui"]
+	path = libimgui/imgui
+	url = git@github.com:robmcmullen/imgui.git
+	branch = docking
