@@ -12,9 +12,10 @@
 #include <windows.h>        // SetProcessDPIAware()
 #endif
 
-#include "imgui_drawframe.h"
+#include "drawframe.h"
 
 // Main code
+extern "C" {
 int mainloop() {
     // Setup SDL
     #ifdef _WIN32
@@ -201,4 +202,5 @@ int mainloop() {
     SDL_Quit();
 
     return 0;
+}
 }
