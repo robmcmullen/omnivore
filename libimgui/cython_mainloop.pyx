@@ -5,3 +5,6 @@ cdef extern from "mainloop.h":
 
 def mainentry():
     mainloop()
+
+cdef public int call_to_python():
+    print("in python")

@@ -14,6 +14,7 @@
 #include <SDL_keyboard.h>
 #include <SDL_keycode.h>
 #include "drawframe.h"
+#include "cython_mainloop.h"
 
 void check_event(SDL_Event &event, bool &done) {
     if (event.type == SDL_KEYDOWN) {
@@ -96,5 +97,5 @@ void draw_frame(ImGuiIO& io, bool& done) {
             show_another_window = false;
         ImGui::End();
     }
-
+    call_to_python();
 }
